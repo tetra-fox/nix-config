@@ -1,0 +1,21 @@
+{ ... }:
+
+{
+  nix = {
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      auto-optimise-store = true;
+    };
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than +8"; # keep last 8 generations
+    };
+  };
+
+  # TODO: move this to features/nixpkgs/system.nix
+  nixpkgs.config.allowUnfree = true;
+}

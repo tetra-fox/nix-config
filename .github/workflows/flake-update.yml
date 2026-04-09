@@ -1,0 +1,37 @@
+name: Update flake inputs
+
+on:
+  schedule:
+    - cron: "0 11 * * 0" # every sunday at 11:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update-flake-lock:
+    name: Update flake inputs
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v34
+
+      - name: Update flake inputs
+        run: nix flake update
+
+      # https://github.com/actions/checkout#push-a-commit-using-the-built-in-token
+      - name: Commit changes
+        run: |
+          if git diff --quiet HEAD -- flake.lock; then
+            echo "flake.lock unchanged, skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          git commit -m "chore: bump flake inputs"
+          git push
