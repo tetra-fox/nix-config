@@ -11,7 +11,8 @@
     };
     gc = {
       automatic = true;
-      dates = "daily";
+      dates = "weekly";
+      persistent = true;
       options = "--delete-older-than +8"; # keep last 8 generations
     };
   };
