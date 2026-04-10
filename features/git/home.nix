@@ -14,11 +14,14 @@
       type = lib.types.str;
     };
     signingKey = lib.mkOption {
-      type = lib.types.str;
+      type = lib.types.nullOr lib.types.str;
+      default = null;
     };
   };
 
-  config = {
+  config = let
+    signingEnabled = config.my.git.identity.signingKey != null;
+  in {
     home.packages = with pkgs; [
       git-credential-oauth
     ];
@@ -30,12 +33,20 @@
         user = {
           name = config.my.git.identity.name;
           email = config.my.git.identity.email;
+        } // lib.optionalAttrs signingEnabled {
           signingKey = config.my.git.identity.signingKey;
         };
 
         init.defaultBranch = "main";
         push.autoSetupRemote = true;
 
+        credential = {
+          helper = [
+            "cache --timeout 21600"
+            "oauth"
+          ];
+        };
+      } // lib.optionalAttrs signingEnabled {
         gpg = {
           format = "ssh";
         };
@@ -46,13 +57,6 @@
 
         commit = {
           gpgsign = true;
-        };
-
-        credential = {
-          helper = [
-            "cache --timeout 21600"
-            "oauth"
-          ];
         };
       };
     };
