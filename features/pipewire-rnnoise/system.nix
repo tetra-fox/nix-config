@@ -14,6 +14,11 @@
           name = "rnnoise-dynamic.lua";
           type = "script/lua";
           provides = "custom.rnnoise-dynamic";
+          arguments = {
+            "vad.threshold" = 60.0;
+            "vad.grace-ms" = 200;
+            "vad.retro-grace-ms" = 0;
+          };
         }
       ];
       "wireplumber.profiles".main."custom.rnnoise-dynamic" = "required";

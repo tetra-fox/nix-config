@@ -5,13 +5,20 @@
 -- alsa_input.* source as it appears, and tears it down when the
 -- real source goes away.
 
-Log = Log.open_topic("s-rnnoise-dynamic")
+Log                      = Log.open_topic("s-rnnoise-dynamic")
 
-local rnnoise_so =
+local rnnoise_so         =
 "@rnnoise_plugin@/lib/ladspa/librnnoise_ladspa.so"
 
+local raw_args           = ...
+local args               = (raw_args and raw_args:parse(1)) or {}
+
+local vad_threshold      = args["vad.threshold"] or 60.0
+local vad_grace_ms       = args["vad.grace-ms"] or 200
+local vad_retro_grace_ms = args["vad.retro-grace-ms"] or 0
+
 -- node.id -> LocalModule. Dropping the reference unloads the module.
-local filter_modules = {}
+local filter_modules     = {}
 
 local function sanitize(s)
   return (s:gsub("[^%w]", "_"))
@@ -43,9 +50,9 @@ local function build_filter_args(node)
           plugin  = rnnoise_so,
           label   = label,
           control = Json.Object {
-            ["VAD Threshold (%)"]          = 60.0,
-            ["VAD Grace Period (ms)"]      = 200,
-            ["Retroactive VAD Grace (ms)"] = 0,
+            ["VAD Threshold (%)"]          = vad_threshold,
+            ["VAD Grace Period (ms)"]      = vad_grace_ms,
+            ["Retroactive VAD Grace (ms)"] = vad_retro_grace_ms,
           },
         },
       },
