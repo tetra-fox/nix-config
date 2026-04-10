@@ -17,6 +17,7 @@
     features.nix.system
     features.nvidia.system
     features.onepassword.system
+    # features.openrgb.system
     features.pipewire.system
     features.pipewire-rnnoise.system
     features.sshd.system
