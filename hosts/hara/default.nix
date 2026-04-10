@@ -12,6 +12,7 @@
     features.bluetooth.system
     features.cosmic.system
     features.docker.system
+    features.fstrim.system
     features.greetd.system
     features.hyprland.system
     features.nix.system
@@ -77,6 +78,8 @@
   };
 
   services.printing.enable = true;
+
+  boot.loader.systemd-boot.consoleMode = "max";
 
   # paws off!
   system.stateVersion = "25.11";
