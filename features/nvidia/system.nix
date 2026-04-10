@@ -7,6 +7,7 @@
       open = false; # fuck it we ball
       modesetting.enable = true;
       powerManagement.enable = true;
+      nvidiaSettings = true;
     };
   };
 
