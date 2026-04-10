@@ -23,16 +23,9 @@
     features.pipewire-rnnoise.system
     features.sshd.system
     features.steam.system
+    features.systemd-boot.system
     features.zsh.system
   ];
-
-  boot = {
-    loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
-    };
-    kernelPackages = pkgs.linuxPackages_latest;
-  };
 
   networking = {
     networkmanager.enable = true;
@@ -78,8 +71,6 @@
   };
 
   services.printing.enable = true;
-
-  boot.loader.systemd-boot.consoleMode = "max";
 
   # paws off!
   system.stateVersion = "25.11";
