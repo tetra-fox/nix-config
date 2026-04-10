@@ -13,13 +13,17 @@ in
     apple.sf-pro-nerd # for waybar
     apple.ny
     apple-color-emoji-linux
+    inter
   ];
 
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
       serif = [ "New York" ];
-      sansSerif = [ "SF Pro" ];
+      sansSerif = [
+        "Inter"
+        "SF Pro"
+      ];
       monospace = [ "CaskaydiaCove Nerd Font" ];
       emoji = [ "Apple Color Emoji" ];
     };
