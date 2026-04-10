@@ -1,4 +1,4 @@
-{ ... }:
+{ username, ... }:
 
 {
   virtualisation.docker = {
@@ -18,5 +18,10 @@
       enable = true;
       dates = "weekly";
     };
+  };
+  users.users.${username} = {
+    extraGroups = [
+      "docker"
+    ];
   };
 }
