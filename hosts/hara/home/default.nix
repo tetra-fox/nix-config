@@ -12,12 +12,13 @@
     features.cosmic.home
     features.cursor.home
     features.fastfetch.home
+    # features.firefox.home
     features.fonts.home
     features.git.home
     features.helix.home
     features.hyprland.home
     features.kitty.home
-    # features.openrgb.home
+    features.openrgb.home
     features.ssh.home
     features.starship.home
     features.walker.home
