@@ -33,5 +33,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add flake.lock
-          git commit -m "chore: bump flake inputs"
+          git commit -m "chore(flake): bump flake inputs"
           git push
