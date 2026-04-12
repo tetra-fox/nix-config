@@ -4,7 +4,7 @@
 
 "features" are programs and/or their `home-manager` configuration
 
-features are automatically discovered in `features` by [a helper](lib/default.nix#L43-61)
+features are automatically discovered in `features` by [a helper](lib/default.nix#L43-L61)
 
 features will contain one or both of `system.nix` and `home.nix`
 
