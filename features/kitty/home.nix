@@ -14,7 +14,7 @@
 
     # See https://sw.kovidgoyal.net/kitty/faq/#things-behave-differently-when-running-kitty-from-system-launcher-vs-from-another-terminal
     environment = {
-      read_from_shell = "PATH LANG LC_* XDG_* EDITOR VISUAL";
+      "read_from_shell" = "PATH LANG LC_* XDG_* EDITOR VISUAL";
     };
 
     font = {
@@ -23,6 +23,6 @@
     };
 
     # see https://github.com/kovidgoyal/kitty-themes/tree/master/themes
-    themeFile = "cherry-midnight";
+    themeFile = "Catppuccin-Mocha";
   };
 }
