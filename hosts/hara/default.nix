@@ -11,6 +11,7 @@
     quirks
     features.bluetooth.system
     features.cosmic.system
+    # features.ddcci-driver.system
     features.docker.system
     features.fstrim.system
     features.greetd.system
@@ -18,7 +19,7 @@
     features.nix.system
     features.nvidia.system
     features.onepassword.system
-    features.openrgb.system
+    # features.openrgb.system
     features.pipewire.system
     features.pipewire-rnnoise.system
     features.sshd.system

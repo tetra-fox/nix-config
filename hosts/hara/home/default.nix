@@ -18,9 +18,10 @@
     features.helix.home
     features.hyprland.home
     features.kitty.home
-    features.openrgb.home
+    # features.openrgb.home
     features.ssh.home
     features.starship.home
+    features.steam.home
     features.walker.home
     features.waybar.home
     features.zsh.home
