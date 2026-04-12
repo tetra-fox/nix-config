@@ -1,105 +1,102 @@
-{ inputs }:
+inputs:
 
 let
+  inherit (inputs.nixpkgs) lib;
+
   username = "tetra";
-  shared = {
-    wallpapers = ../shared/wallpapers;
+  shared.wallpapers = ../shared/wallpapers;
+
+  dirs = {
+    pkgs = ../pkgs;
+    features = ../features;
+    hosts = ../hosts;
+    quirks = ../quirks;
   };
 
-  pkgsDir = ../pkgs;
-  featuresDir = ../features;
-  hostsDir = ../hosts;
-  quirksDir = ../quirks;
+  commonArgs = {
+    inherit
+      inputs
+      username
+      features
+      shared
+      ;
+  };
 
-  overlays = [
-    (
-      _: prev:
-      let
-        entries = builtins.readDir pkgsDir;
-        pkgFiles = builtins.filter (n: entries.${n} == "regular" && builtins.match ".*\\.nix" n != null) (
-          builtins.attrNames entries
-        );
-      in
-      builtins.listToAttrs (
-        map (n: {
-          name = builtins.replaceStrings [ ".nix" ] [ "" ] n;
-          value = prev.callPackage (pkgsDir + "/${n}") { };
-        }) pkgFiles
-      )
-    )
-  ];
+  # auto-overlay: every .nix file in pkgs/ becomes a package
+  pkgsOverlay =
+    _: prev:
+    let
+      nixFiles = lib.pipe (builtins.readDir dirs.pkgs) [
+        (lib.filterAttrs (_: type: type == "regular"))
+        builtins.attrNames
+        (builtins.filter (lib.hasSuffix ".nix"))
+      ];
+    in
+    lib.listToAttrs (
+      map (file: {
+        name = lib.removeSuffix ".nix" file;
+        value = prev.callPackage (dirs.pkgs + "/${file}") { };
+      }) nixFiles
+    );
 
+  # feature discovery: each directory in features/ may contain system.nix and/or home.nix
   features =
     let
+      featureNames = lib.pipe (builtins.readDir dirs.features) [
+        (lib.filterAttrs (_: type: type == "directory"))
+        builtins.attrNames
+      ];
       mkFeature =
         name:
         let
-          dir = featuresDir + "/${name}";
-          has = file: builtins.pathExists (dir + "/${file}");
+          dir = dirs.features + "/${name}";
+          addModule =
+            file:
+            lib.optionalAttrs (builtins.pathExists (dir + "/${file}")) {
+              ${lib.removeSuffix ".nix" file} = dir + "/${file}";
+            };
         in
-        (if has "system.nix" then { system = dir + "/system.nix"; } else { })
-        // (if has "home.nix" then { home = dir + "/home.nix"; } else { });
-      entries = builtins.readDir featuresDir;
-      dirs = builtins.filter (n: entries.${n} == "directory") (builtins.attrNames entries);
+        addModule "system.nix" // addModule "home.nix";
     in
-    builtins.listToAttrs (
-      map (name: {
-        inherit name;
-        value = mkFeature name;
-      }) dirs
-    );
+    lib.genAttrs featureNames mkFeature;
 
-  mkHM = userModules: {
-    users.${username}.imports = userModules;
-    extraSpecialArgs = {
-      inherit
-        inputs
-        username
-        features
-        shared
-        ;
+  mkHomeManager = homeModules: {
+    home-manager = {
+      users.${username}.imports = homeModules;
+      extraSpecialArgs = commonArgs;
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      backupFileExtension = "bak";
     };
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    backupFileExtension = "bak";
   };
 
   mkHost =
     {
       name,
       system,
-      extraHomeModules ? [ ],
       extraModules ? [ ],
+      extraHomeModules ? [ ],
     }:
     let
-      isDarwin = builtins.match ".*-darwin" system != null;
+      isDarwin = lib.hasSuffix "-darwin" system;
       builder = if isDarwin then inputs.nix-darwin.lib.darwinSystem else inputs.nixpkgs.lib.nixosSystem;
       hmModule =
         if isDarwin then
           inputs.home-manager.darwinModules.home-manager
         else
           inputs.home-manager.nixosModules.home-manager;
-      quirksPath = quirksDir + "/${name}";
-      hasQuirks = builtins.pathExists quirksPath;
-      baseSpecialArgs = {
-        inherit
-          inputs
-          username
-          features
-          shared
-          ;
-      };
-      specialArgs = baseSpecialArgs // (if hasQuirks then { quirks = quirksPath; } else { });
+      hostDir = dirs.hosts + "/${name}";
+      quirksPath = dirs.quirks + "/${name}";
+      specialArgs =
+        commonArgs // lib.optionalAttrs (builtins.pathExists quirksPath) { quirks = quirksPath; };
     in
     builder {
       inherit system specialArgs;
       modules = [
-        { nixpkgs.overlays = overlays; }
-        (hostsDir + "/${name}")
+        { nixpkgs.overlays = [ pkgsOverlay ]; }
+        hostDir
         hmModule
-        {
-          home-manager = mkHM ([ (hostsDir + "/${name}/home") ] ++ extraHomeModules);
-        }
+        (mkHomeManager ([ (hostDir + "/home") ] ++ extraHomeModules))
       ]
       ++ extraModules;
     };

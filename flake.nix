@@ -45,7 +45,7 @@
   outputs =
     { self, ... }@inputs:
     let
-      lib = import ./lib { inherit inputs; };
+      inherit (import ./lib inputs) mkHost;
     in
     {
       formatter = inputs.nixpkgs.lib.genAttrs [
@@ -56,7 +56,7 @@
       ] (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
 
       nixosConfigurations = {
-        hara = lib.mkHost {
+        hara = mkHost {
           name = "hara";
           system = "x86_64-linux";
           extraModules = [
@@ -68,7 +68,7 @@
       };
 
       darwinConfigurations = {
-        myputer = lib.mkHost {
+        myputer = mkHost {
           name = "myputer";
           system = "x86_64-darwin";
         };
