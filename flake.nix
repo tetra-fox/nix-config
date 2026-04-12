@@ -10,6 +10,7 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixpkgs-xr.url = "github:nix-community/nixpkgs-xr";
 
     # look & feel
     apple-fonts.url = "github:Lyndeno/apple-fonts.nix";
@@ -58,7 +59,10 @@
         hara = lib.mkHost {
           name = "hara";
           system = "x86_64-linux";
-          extraModules = [ inputs.nur.modules.nixos.default ];
+          extraModules = [
+            inputs.nur.modules.nixos.default
+            inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
+          ];
           extraHomeModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
         };
       };
