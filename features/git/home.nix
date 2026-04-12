@@ -19,46 +19,50 @@
     };
   };
 
-  config = let
-    signingEnabled = config.my.git.identity.signingKey != null;
-  in {
-    home.packages = with pkgs; [
-      git-credential-oauth
-    ];
+  config =
+    let
+      signingEnabled = config.my.git.identity.signingKey != null;
+    in
+    {
+      home.packages = with pkgs; [
+        git-credential-oauth
+      ];
 
-    programs.git = {
-      enable = true;
+      programs.git = {
+        enable = true;
 
-      settings = {
-        user = {
-          name = config.my.git.identity.name;
-          email = config.my.git.identity.email;
-        } // lib.optionalAttrs signingEnabled {
-          signingKey = config.my.git.identity.signingKey;
-        };
+        settings = {
+          user = {
+            name = config.my.git.identity.name;
+            email = config.my.git.identity.email;
+          }
+          // lib.optionalAttrs signingEnabled {
+            signingKey = config.my.git.identity.signingKey;
+          };
 
-        init.defaultBranch = "main";
-        push.autoSetupRemote = true;
+          init.defaultBranch = "main";
+          push.autoSetupRemote = true;
 
-        credential = {
-          helper = [
-            "cache --timeout 21600"
-            "oauth"
-          ];
-        };
-      } // lib.optionalAttrs signingEnabled {
-        gpg = {
-          format = "ssh";
-        };
+          credential = {
+            helper = [
+              "cache --timeout 21600"
+              "oauth"
+            ];
+          };
+        }
+        // lib.optionalAttrs signingEnabled {
+          gpg = {
+            format = "ssh";
+          };
 
-        "gpg \"ssh\"" = {
-          program = "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
-        };
+          "gpg \"ssh\"" = {
+            program = "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
+          };
 
-        commit = {
-          gpgsign = true;
+          commit = {
+            gpgsign = true;
+          };
         };
       };
     };
-  };
 }
