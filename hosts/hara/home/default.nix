@@ -12,7 +12,7 @@
     features.cosmic.home
     features.cursor.home
     features.fastfetch.home
-    # features.firefox.home
+    features.firefox.home
     features.fonts.home
     features.git.home
     features.helix.home
@@ -47,7 +47,7 @@
 
   home.packages = with pkgs; [
     # apps
-    firefox
+    # firefox
     telegram-desktop
     discord
     signal-desktop

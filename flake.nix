@@ -10,6 +10,10 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    betterfox-nix = {
+      url = "github:HeitorAugustoLN/betterfox-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixpkgs-xr.url = "github:nix-community/nixpkgs-xr";
 
     # look & feel
@@ -63,7 +67,10 @@
             inputs.nur.modules.nixos.default
             inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
           ];
-          extraHomeModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
+          extraHomeModules = [
+            inputs.cosmic-manager.homeManagerModules.cosmic-manager
+            inputs.betterfox-nix.homeModules.betterfox
+          ];
         };
       };
 
