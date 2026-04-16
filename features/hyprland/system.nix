@@ -5,6 +5,11 @@
     enable = true;
   };
 
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
+
   environment.systemPackages = with pkgs; [
     # Qt Wayland support — required for Qt apps to render natively on Wayland
     # instead of falling back to XWayland.
