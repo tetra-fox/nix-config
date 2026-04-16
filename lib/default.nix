@@ -22,7 +22,7 @@ let
       ;
   };
 
-  # auto-overlay: every .nix file in pkgs/ becomes a package
+  # auto-overlay: every .nix file in pkgs/ becomes a package, plus flake-sourced packages
   pkgsOverlay =
     _: prev:
     let
@@ -37,7 +37,10 @@ let
         name = lib.removeSuffix ".nix" file;
         value = prev.callPackage (dirs.pkgs + "/${file}") { };
       }) nixFiles
-    );
+    )
+    // {
+      snappy-switcher = inputs.snappy-switcher.packages.${prev.stdenv.hostPlatform.system}.default;
+    };
 
   # feature discovery: each directory in features/ may contain system.nix and/or home.nix
   features =
