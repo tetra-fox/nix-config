@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  inputs,
   ...
 }:
 
@@ -11,31 +10,25 @@ let
   browser = "firefox";
   file_manager = "dolphin";
   main_mod = "SUPER";
-
-  clipse = "hyprctl clients -j | jq -e \'.[] | select(.class==\"clipse\")\' >/dev/null && hyprctl dispatch killwindow class:clipse || kitty --class clipse -e clipse";
-  snappy = inputs.snappy-switcher.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   imports = [
     ./hyprpaper
     ./hyprcursor.nix
     ./swaync.nix
+    ./waybar
+    ./snappy-switcher
+    ./clipse.nix
+    ./hyprshot.nix
+    ./1password.nix
   ];
 
   home.packages = with pkgs; [
     hyprpicker
     hyprshutdown
-    wl-clipboard # needed for clipse
   ];
 
-  programs.hyprshot.enable = true;
-
-  services = {
-    clipse.enable = true;
-    hyprpolkitagent.enable = true;
-  };
-
-  xdg.configFile."snappy-switcher/config.ini".text = builtins.readFile ./snappy-switcher.ini;
+  services.hyprpolkitagent.enable = true;
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -89,19 +82,10 @@ in
         "${main_mod},GRAVE,exec,${terminal}"
         "${main_mod},E,exec,dolphin"
         "${main_mod},SPACE,exec,${menu}"
-        "${main_mod},V,exec,${clipse}"
 
         "${main_mod},mouse:274,togglefloating"
 
         "${main_mod},C,exec,hyprpicker -a"
-        "L_Control&L_Shift,3,exec,hyprshot -m output -m active -z --clipboard-only"
-        "L_Control&L_Shift,4,exec,hyprshot -m region -z --clipboard-only"
-
-        "L_Control&L_Shift,SPACE,exec,1password --quick-access"
-        "L_Control,BACKSLASH,exec,1password --fill"
-
-        "L_ALT,TAB,exec,${snappy}/bin/snappy-switcher next"
-        "L_ALT&L_SHIFT,TAB,exec,${snappy}/bin/snappy-switcher prev"
 
         "${main_mod},Q,killactive"
         "${main_mod},M,exec,hyprshutdown"
@@ -192,10 +176,6 @@ in
         disable_hyprland_logo = true;
       };
 
-      windowrule = [
-        "match:class clipse, float on, size 622 652, pin on"
-      ];
-
       layerrule = [
         # "blur,waybar"
       ];
@@ -203,8 +183,6 @@ in
       exec-once = [
         "systemctl --user enable --now hyprpolkitagent.service"
         "waybar"
-        "${snappy}/bin/snappy-switcher --daemon"
-        "1password --silent"
         "telegram-desktop -startintray"
         "discord --start-minimized"
         "firefox"

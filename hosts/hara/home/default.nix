@@ -24,7 +24,6 @@
     features.steam.home
     features.surge-dm.home
     features.walker.home
-    features.waybar.home
     features.zsh.home
   ];
 
