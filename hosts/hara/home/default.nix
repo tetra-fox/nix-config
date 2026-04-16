@@ -22,6 +22,7 @@
     features.ssh.home
     features.starship.home
     features.steam.home
+    features.surge-dm.home
     features.walker.home
     features.waybar.home
     features.zsh.home

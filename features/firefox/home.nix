@@ -26,8 +26,11 @@ in
         "browser.startup.homepage" = "about:blank";
         "browser.newtabpage.enabled" = false;
         "extensions.autoDisableScopes" = 0;
-        "extensions.activeThemeID" = "firefox-compact-dark@mozilla.org";
+        "extensions.activeThemeID" = "{f2b832a9-f0f5-4532-934c-74b25eb23fb9}";
         "browser.ml.chat.shortcuts" = false;
+
+        "media.eme.enabled" = true;
+        "media.gmp-widevinecdm.enabled" = true;
 
         "signon.rememberSignons" = false;
         "extensions.formautofill.addresses.enabled" = false;
@@ -44,6 +47,7 @@ in
               "_a4c4eda4-fb84-4a84-b4a1-f7c1cbf2a1ad_-browser-action"
               "firefox-extension_steamdb_info-browser-action"
               "_7a7a4a92-a2a0-41d1-9fd7-1e92480d612d_-browser-action"
+              "surge_surge-downloader_com-browser-action"
             ];
             "nav-bar" = [
               "back-button"
@@ -63,7 +67,6 @@ in
             ];
             "vertical-tabs" = [ ];
             PersonalToolbar = [
-              "import-button"
               "personal-bookmarks"
             ];
           };
@@ -93,6 +96,11 @@ in
         };
       };
 
+      bookmarks = {
+        force = true;
+        settings = import ./bookmarks.nix;
+      };
+
       extensions = {
         force = true;
         packages =
@@ -109,6 +117,8 @@ in
           ])
           ++ (with customExtensions; [
             scam
+            matte-black
+            surge
           ]);
 
         settings = {
