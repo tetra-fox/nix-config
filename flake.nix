@@ -26,6 +26,7 @@
         home-manager.follows = "home-manager";
       };
     };
+    snappy-switcher.url = "github:OpalAayan/snappy-switcher";
 
     # apps
     elephant.url = "github:abenz1267/elephant";

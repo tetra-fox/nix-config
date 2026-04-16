@@ -1,4 +1,9 @@
-{ pkgs, config, ... }:
+{
+  pkgs,
+  config,
+  inputs,
+  ...
+}:
 
 let
   terminal = "kitty";
@@ -8,6 +13,7 @@ let
   main_mod = "SUPER";
 
   clipse = "hyprctl clients -j | jq -e \'.[] | select(.class==\"clipse\")\' >/dev/null && hyprctl dispatch killwindow class:clipse || kitty --class clipse -e clipse";
+  snappy = inputs.snappy-switcher.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   imports = [
@@ -28,6 +34,8 @@ in
     clipse.enable = true;
     hyprpolkitagent.enable = true;
   };
+
+  xdg.configFile."snappy-switcher/config.ini".text = builtins.readFile ./snappy-switcher.ini;
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -91,6 +99,9 @@ in
 
         "L_Control&L_Shift,SPACE,exec,1password --quick-access"
         "L_Control,BACKSLASH,exec,1password --fill"
+
+        "L_ALT,TAB,exec,${snappy}/bin/snappy-switcher next"
+        "L_ALT&L_SHIFT,TAB,exec,${snappy}/bin/snappy-switcher prev"
 
         "${main_mod},Q,killactive"
         "${main_mod},M,exec,hyprshutdown"
@@ -192,6 +203,7 @@ in
       exec-once = [
         "systemctl --user enable --now hyprpolkitagent.service"
         "waybar"
+        "${snappy}/bin/snappy-switcher --daemon"
         "1password --silent"
         "telegram-desktop -startintray"
         "discord --start-minimized"
