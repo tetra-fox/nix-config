@@ -5,7 +5,7 @@
     name = "rose-pine-hyprcursor";
     hyprcursor = {
       enable = true;
-      size = 24;
+      size = 32;
     };
     package = pkgs.rose-pine-hyprcursor;
   };
