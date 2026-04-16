@@ -7,15 +7,13 @@ let
   file_manager = "dolphin";
   main_mod = "SUPER";
 
-  uapp = cmd: "uwsm app -- ${cmd}";
-  uservice = cmd: "uwsm app -t service -- ${cmd}";
-
   clipse = "hyprctl clients -j | jq -e \'.[] | select(.class==\"clipse\")\' >/dev/null && hyprctl dispatch killwindow class:clipse || kitty --class clipse -e clipse";
 in
 {
   imports = [
     ./hyprpaper
     ./hyprcursor.nix
+    ./swaync.nix
   ];
 
   home.packages = with pkgs; [
@@ -31,21 +29,33 @@ in
     hyprpolkitagent.enable = true;
   };
 
-  # ensure that session variables are passed to uwsm-managed apps
-  xdg.configFile."uwsm/env".source =
-    "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh";
-
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = false;
+    systemd.enable = true;
     package = null;
     portalPackage = null;
 
     settings = {
       # environment variables
       env = [
-        "LIBVA_DRIVER_NAME=nvidia"
-        "__GLX_VENDOR_LIBRARY_NAME=nvidia"
+        # nvidia
+        "LIBVA_DRIVER_NAME,nvidia"
+        "GBM_BACKEND,nvidia-drm"
+        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+
+        # gtk/wayland
+        "GDK_BACKEND,wayland,x11,*"
+        "CLUTTER_BACKEND,wayland"
+
+        # qt/wayland
+        "QT_AUTO_SCREEN_SCALE_FACTOR,1"
+        "QT_QPA_PLATFORM,wayland;xcb"
+        "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
+
+        # xdg
+        "XDG_CURRENT_DESKTOP,Hyprland"
+        "XDG_SESSION_TYPE,wayland"
+        "XDG_SESSION_DESKTOP,Hyprland"
       ];
 
       # display configuration
@@ -68,24 +78,21 @@ in
 
       # keybinds
       bind = [
-        # apps (uwsm app -- … keeps them under the systemd session, not Hyprland's cgroup)
-        "${main_mod},GRAVE,exec,${uapp terminal}"
-        "${main_mod},E,exec,${uapp "org.kde.dolphin.desktop"}"
-        "${main_mod},SPACE,exec,${uapp menu}"
-        # hyprctl toggle / kill — not a plain app spawn
+        "${main_mod},GRAVE,exec,${terminal}"
+        "${main_mod},E,exec,dolphin"
+        "${main_mod},SPACE,exec,${menu}"
         "${main_mod},V,exec,${clipse}"
 
         "${main_mod},mouse:274,togglefloating"
 
-        "${main_mod},C,exec,${uapp "hyprpicker -a"}"
-        "L_Control&L_Shift,3,exec,${uapp "hyprshot -m output -m active -z --clipboard-only"}"
-        "L_Control&L_Shift,4,exec,${uapp "hyprshot -m region -z --clipboard-only"}"
+        "${main_mod},C,exec,hyprpicker -a"
+        "L_Control&L_Shift,3,exec,hyprshot -m output -m active -z --clipboard-only"
+        "L_Control&L_Shift,4,exec,hyprshot -m region -z --clipboard-only"
 
-        "L_Control&L_Shift,SPACE,exec,${uapp "1password --quick-access"}"
-        "L_Control,BACKSLASH,exec,${uapp "1password --fill"}"
+        "L_Control&L_Shift,SPACE,exec,1password --quick-access"
+        "L_Control,BACKSLASH,exec,1password --fill"
 
-        "${main_mod},Q,killactive" # close window
-        # session / power UI — leave outside uwsm app
+        "${main_mod},Q,killactive"
         "${main_mod},M,exec,hyprshutdown"
       ];
 
@@ -182,14 +189,13 @@ in
         # "blur,waybar"
       ];
 
-      # autolaunch (uwsm app -- …); polkit stays a normal user service
       exec-once = [
         "systemctl --user enable --now hyprpolkitagent.service"
-        "${uservice "waybar"}"
-        "${uapp "1password --silent"}"
-        "${uapp "telegram-desktop -startintray"}"
-        "${uapp "discord --start-minimized"}"
-        "${uservice "firefox.desktop"}"
+        "waybar"
+        "1password --silent"
+        "telegram-desktop -startintray"
+        "discord --start-minimized"
+        "firefox"
       ];
     };
   };

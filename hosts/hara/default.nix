@@ -63,6 +63,9 @@
     eza
   ];
 
+  programs.dconf.enable = true;
+  services.dbus.implementation = "broker";
+
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [

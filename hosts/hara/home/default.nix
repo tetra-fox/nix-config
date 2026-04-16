@@ -40,11 +40,12 @@
   home.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # tell electron to use wayland.
     QT_QPA_PLATFORMTHEME = "qt6ct";
-    QT_STYLE_OVERRIDE = "adwaita-dark"; # Qt dark mode
-    GTK_THEME = "Adwaita-dark"; # GTK dark mode
   };
 
   systemd.user.sessionVariables = config.home.sessionVariables;
+
+  # XDG portal color-scheme — GTK4, Qt6, Firefox, Chromium query this
+  dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [
     # apps
