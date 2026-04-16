@@ -21,6 +21,7 @@ in
     ./clipse.nix
     ./hyprshot.nix
     ./1password.nix
+    ./hyprlock
   ];
 
   home.packages = with pkgs; [
