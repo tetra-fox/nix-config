@@ -29,15 +29,12 @@
     highPriority = true;
   };
 
-  users.users.${username}.extraGroups = [
-    "video"
-    "render"
-  ];
-
   systemd.user.services.monado.environment = {
     STEAMVR_LH_ENABLE = "1";
+    # LH_STANDBY_ON_EXIT = "1";
     XRT_COMPOSITOR_COMPUTE = "1";
     IPC_EXIT_WHEN_IDLE = "1";
+    IPC_EXIT_WHEN_IDLE_DELAY_MS = "30000"; # 30s xr session timeout
 
     # fixes vkAcquireXlibDisplayEXT: VK_ERROR_UNKNOWN (0x000058b7a0764a80)
     # https://wiki.vronlinux.org/docs/fossvr/monado/#nvidia-specific-vkacquirexlibdisplayext-vk_error_unknown-0x000058b7a0764a80
@@ -50,7 +47,24 @@
   };
 
   environment.systemPackages = with pkgs; [
-    lighthouse-steamvr
+    wayvr
   ];
 
+  # steamvr-like base station power management
+  systemd.user.services.lighthouse-power-management = {
+    description = "Lighthouse Power Management";
+
+    bindsTo = [ "monado.service" ];
+    before = [ "monado.service" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+
+      ExecStart = "${pkgs.lighthouse-steamvr}/bin/lighthouse -s on -b LHB-460730FA -b LHB-E0CEB24B";
+      ExecStop = "${pkgs.lighthouse-steamvr}/bin/lighthouse -s standby -b LHB-460730FA -b LHB-E0CEB24B";
+    };
+
+    wantedBy = [ "default.target" ];
+  };
 }
