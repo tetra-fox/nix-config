@@ -5,7 +5,25 @@
   ...
 }:
 
+let
+  qt-qml = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+    publisher = "theqtcompany";
+    name = "qt-qml";
+    version = "1.13.0";
+    sha256 = "0walz6d6miawdkbgwmgqvmshbznigh65rx2nfn3wyh6bnmxf5z2q";
+  };
+  qt-core = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+    publisher = "theqtcompany";
+    name = "qt-core";
+    version = "1.13.0";
+    sha256 = "18rq8my8c58lsfpqn3p4xvl1llh0bgxqxy49dpnz4fczc8k2h87x";
+  };
+in
 {
+  home.packages = with pkgs; [
+    kdePackages.qtdeclarative # provides qmlls
+  ];
+
   programs.vscode = {
     enable = true;
     package = pkgs.code-cursor;
@@ -16,8 +34,12 @@
         catppuccin.catppuccin-vsc
         vscode-icons-team.vscode-icons
 
-        # language support
+        # language support - nix
         jnoortheen.nix-ide
+
+        # language support - qt (i know its not a language)
+        qt-core
+        qt-qml
 
         # language support - rust
         rust-lang.rust-analyzer
@@ -34,7 +56,7 @@
         svelte.svelte-vscode
 
         # tooling
-        # anthropic.claude-code
+        anthropic.claude-code
         esbenp.prettier-vscode
       ];
       userSettings = {

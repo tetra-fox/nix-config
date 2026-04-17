@@ -40,6 +40,7 @@ let
     )
     // {
       snappy-switcher = inputs.snappy-switcher.packages.${prev.stdenv.hostPlatform.system}.default;
+      quickshell = inputs.quickshell.packages.${prev.stdenv.hostPlatform.system}.default;
     };
 
   # feature discovery: each directory in features/ may contain system.nix and/or home.nix

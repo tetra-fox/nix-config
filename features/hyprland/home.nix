@@ -16,7 +16,7 @@ in
     ./hyprpaper
     ./hyprcursor.nix
     ./swaync.nix
-    ./waybar
+    ./quickshell
     ./snappy-switcher
     ./clipse.nix
     ./hyprshot.nix
@@ -95,6 +95,20 @@ in
       bindm = [
         "${main_mod},mouse:272,movewindow" # rearrange windows with LMB
         "${main_mod},mouse:273,resizewindow" # resize windows with RMB
+      ];
+
+      bindl = [
+        # media keys
+        ",XF86AudioPlay,exec,playerctl play-pause"
+        ",XF86AudioNext,exec,playerctl next"
+        ",XF86AudioPrev,exec,playerctl previous"
+        ",XF86AudioMute,exec,wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+      ];
+
+      bindel = [
+        # media keys
+        ",XF86AudioRaiseVolume,exec,wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
+        ",XF86AudioLowerVolume,exec,wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
       ];
 
       general = {
@@ -178,12 +192,11 @@ in
       };
 
       layerrule = [
-        # "blur,waybar"
+        "match:class quickshell-bar,blur on,ignore_alpha 0.1"
       ];
 
       exec-once = [
         "systemctl --user enable --now hyprpolkitagent.service"
-        "waybar"
         "telegram-desktop -startintray"
         "discord --start-minimized"
         "firefox"

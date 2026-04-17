@@ -27,6 +27,10 @@
       };
     };
     snappy-switcher.url = "github:OpalAayan/snappy-switcher";
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # apps
     elephant.url = "github:abenz1267/elephant";
