@@ -59,8 +59,8 @@ in
 
       # keybinds
       bind = [
-        "${main_mod},GRAVE,exec,app2unit --${terminal}"
-        "${main_mod},E,exec,app2unit --dolphin"
+        "${main_mod},GRAVE,exec,app2unit -- ${terminal}"
+        "${main_mod},E,exec,app2unit -- dolphin"
 
         "${main_mod},SPACE,exec,${menu}" # walker
         "${main_mod},mouse:274,togglefloating"
@@ -179,9 +179,9 @@ in
       ];
 
       exec-once = [
-        "app2unit --Telegram -startintray"
-        "app2unit --discord --start-minimized"
-        "app2unit --firefox"
+        "app2unit -- Telegram -startintray"
+        "app2unit -- discord --start-minimized"
+        "app2unit -- firefox"
       ];
     };
   };

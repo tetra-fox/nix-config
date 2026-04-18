@@ -14,7 +14,7 @@
     ];
 
     exec-once = [
-      "app2unit --${pkgs.snappy-switcher}/bin/snappy-switcher --daemon"
+      "app2unit -- ${pkgs.snappy-switcher}/bin/snappy-switcher --daemon"
     ];
   };
 }
