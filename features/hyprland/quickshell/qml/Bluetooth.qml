@@ -4,12 +4,14 @@ import QtQuick
 Item {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
-    readonly property bool enabled:   true
+    readonly property bool enabled: true
     readonly property bool connected: false
 
-    implicitWidth:  btn.implicitWidth
+    implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
     BarButton {

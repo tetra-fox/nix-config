@@ -1,4 +1,5 @@
-import Quickshell
+pragma ComponentBehavior: Bound
+
 import Quickshell.Services.SystemTray
 import QtQuick
 
@@ -6,7 +7,9 @@ import QtQuick
 Row {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property var panelWindow
 
@@ -16,8 +19,9 @@ Row {
         model: SystemTray.items
 
         TrayIcon {
+            id: trayIconDelegate
             required property var modelData
-            item:        modelData
+            item: trayIconDelegate.modelData
             panelWindow: root.panelWindow
         }
     }

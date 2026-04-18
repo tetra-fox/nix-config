@@ -4,40 +4,54 @@ import QtQuick
 Item {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property string icon
-    property color  iconColor: theme.textPrimary
-    property bool   isOpen:    false
-    property int    iconSize:  theme.fontIcon
+    property color iconColor: theme.textPrimary
+    property bool isOpen: false
+    property int iconSize: theme.fontIcon
 
     signal clicked(var mouse)
 
-    implicitWidth:  bg.width
+    implicitWidth: bg.width
     implicitHeight: bg.height
 
     Rectangle {
         id: bg
-        width:  iconText.implicitWidth + theme.iconPadH
+        width: iconText.implicitWidth + theme.iconPadH
         height: iconText.implicitHeight + theme.iconPadV
         radius: theme.radiusMd
 
         color: {
-            if (area.pressed)       return theme.pressedBg
-            if (root.isOpen)        return theme.openBg
-            if (area.containsMouse) return theme.hoverBg
-            return "transparent"
+            if (area.pressed)
+                return theme.pressedBg;
+            if (root.isOpen)
+                return theme.openBg;
+            if (area.containsMouse)
+                return theme.hoverBg;
+            return "transparent";
         }
-        Behavior on color { ColorAnimation { duration: theme.animFast; easing.type: Easing.OutQuad } }
+        Behavior on color {
+            ColorAnimation {
+                duration: theme.animFast
+                easing.type: Easing.OutQuad
+            }
+        }
 
         Text {
             id: iconText
             anchors.centerIn: parent
-            text:           root.icon
-            color:          root.iconColor
+            text: root.icon
+            color: root.iconColor
             font.pixelSize: root.iconSize
-            font.family:    theme.fontFamily
-            Behavior on color { ColorAnimation { duration: theme.animFast } }
+            font.family: theme.fontFamily
+            Behavior on color {
+                ColorAnimation {
+                    duration: theme.animFast
+                }
+            }
         }
 
         MouseArea {

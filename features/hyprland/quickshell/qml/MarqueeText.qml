@@ -4,9 +4,9 @@ import QtQuick
 Item {
     id: root
 
-    property alias text:  label.text
+    property alias text: label.text
     property alias color: label.color
-    property alias font:  label.font
+    property alias font: label.font
 
     property bool hovered: false
 
@@ -27,10 +27,22 @@ Item {
             running: root.hovered && root.overflows
             loops: Animation.Infinite
 
-            PauseAnimation   { duration: 700 }
-            NumberAnimation  { to: -root.scrollDist; duration: root.scrollDist * 18; easing.type: Easing.Linear }
-            PauseAnimation   { duration: 700 }
-            NumberAnimation  { to: 0; duration: 300; easing.type: Easing.InOutQuad }
+            PauseAnimation {
+                duration: 700
+            }
+            NumberAnimation {
+                to: -root.scrollDist
+                duration: root.scrollDist * 18
+                easing.type: Easing.Linear
+            }
+            PauseAnimation {
+                duration: 700
+            }
+            NumberAnimation {
+                to: 0
+                duration: 300
+                easing.type: Easing.InOutQuad
+            }
         }
 
         // snap back when hover ends mid-scroll

@@ -1,4 +1,5 @@
-import Quickshell
+pragma ComponentBehavior: Bound
+
 import Quickshell.Hyprland
 import QtQuick
 
@@ -6,7 +7,9 @@ import QtQuick
 Rectangle {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     required property var workspace
 
@@ -19,19 +22,23 @@ Rectangle {
     radius: theme.radiusSm
 
     color: {
-        if (urgent)  return theme.danger
-        if (focused) return theme.accent
-        return theme.inactiveBg
+        if (urgent)
+            return theme.danger;
+        if (focused)
+            return theme.accent;
+        return theme.inactiveBg;
     }
 
     Behavior on color {
-        ColorAnimation { duration: theme.animNormal }
+        ColorAnimation {
+            duration: theme.animNormal
+        }
     }
 
     Text {
         id: label
         anchors.centerIn: parent
-        text: workspace.name
+        text: root.workspace.name
         color: root.focused ? theme.textActive : theme.textInactive
         font.pixelSize: theme.fontMd
         font.family: theme.fontFamily

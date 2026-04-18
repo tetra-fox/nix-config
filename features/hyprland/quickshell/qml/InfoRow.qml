@@ -5,19 +5,21 @@ import QtQuick.Layouts
 RowLayout {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property string label
-    property alias  value: val.text
-    property alias  elide: val.elide
+    property alias value: val.text
+    property alias elide: val.elide
 
     Layout.fillWidth: true
 
     Text {
-        text:              root.label
-        color:             theme.textLabel
-        font.pixelSize:    theme.fontSm
-        font.family:       theme.fontFamily
+        text: root.label
+        color: theme.textLabel
+        font.pixelSize: theme.fontSm
+        font.family: theme.fontFamily
         Layout.minimumWidth: 64
     }
 

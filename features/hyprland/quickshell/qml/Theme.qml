@@ -5,37 +5,37 @@ QtObject {
 
     // ── typography ───────────────────────────────────────────────────────────
     readonly property string fontFamily: "monospace"
-    readonly property int fontXs:     10  // chevrons, tiny indicators
-    readonly property int fontSm:     11  // section labels
-    readonly property int fontMd:     12  // body text, workspace numbers
-    readonly property int fontBase:   13  // clock
-    readonly property int fontIcon:   15  // bar-level icons
+    readonly property int fontXs: 10  // chevrons, tiny indicators
+    readonly property int fontSm: 11  // section labels
+    readonly property int fontMd: 12  // body text, workspace numbers
+    readonly property int fontBase: 13  // clock
+    readonly property int fontIcon: 15  // bar-level icons
     readonly property int fontIconLg: 16  // popup-level icons
 
     // ── colors ───────────────────────────────────────────────────────────────
     // Text
-    readonly property color textActive:    "#ffffff"    // focused / selected
-    readonly property color textPrimary:   "#dddddd"    // primary text
+    readonly property color textActive: "#ffffff"    // focused / selected
+    readonly property color textPrimary: "#dddddd"    // primary text
     readonly property color textSecondary: "#cfcfcf"    // secondary / percentages
-    readonly property color textLabel:     "#bdbdbd"    // section labels, headers
-    readonly property color textInactive:  "#aaaaaa"    // inactive / dim
+    readonly property color textLabel: "#bdbdbd"    // section labels, headers
+    readonly property color textInactive: "#aaaaaa"    // inactive / dim
 
     // Surfaces
-    readonly property color panelBg:      "#ce161616"  // pill / popup background
-    readonly property color panelBorder:  "#26ffffff"   // pill border — white overlay, adapts to surface color
-    readonly property color hoverBg:      "#26ffffff"  // hover state — white overlay, preserves transparency
-    readonly property color pressedBg:    "#40ffffff"  // pressed state — stronger white overlay
-    readonly property color openBg:       Qt.alpha(accent, 0.15)  // popup-open state — accent tint overlay
-    readonly property color inactiveBg:   "#e02e2e2e"  // inactive workspace pill, dividers
-    readonly property color separatorBg:  "#252525"    // device-list separators
+    readonly property color panelBg: "#ce161616"  // pill / popup background
+    readonly property color panelBorder: "#26ffffff"   // pill border — white overlay, adapts to surface color
+    readonly property color hoverBg: "#26ffffff"  // hover state — white overlay, preserves transparency
+    readonly property color pressedBg: "#40ffffff"  // pressed state — stronger white overlay
+    readonly property color openBg: Qt.alpha(accent, 0.15)  // popup-open state — accent tint overlay
+    readonly property color inactiveBg: "#e02e2e2e"  // inactive workspace pill, dividers
+    readonly property color separatorBg: "#252525"    // device-list separators
 
     // Palette
-    readonly property color colorPink:   "#ff34a8"   // primary accent
+    readonly property color colorPink: "#ff34a8"   // primary accent
     readonly property color colorPurple: "#b06bff"   // secondary / aux accent
-    readonly property color colorBlue:   "#4facf7"   // upload, info
-    readonly property color colorGreen:  "#3dc97a"   // connected, success
+    readonly property color colorBlue: "#4facf7"   // upload, info
+    readonly property color colorGreen: "#3dc97a"   // connected, success
     readonly property color colorYellow: "#f0b429"   // caution, warning
-    readonly property color colorRed:    "#f05268"   // error, danger
+    readonly property color colorRed: "#f05268"   // error, danger
 
     // Semantic
     readonly property color accent: colorPink
@@ -47,24 +47,24 @@ QtObject {
     readonly property int radiusLg: 6  // panels and popups
 
     // ── layout ───────────────────────────────────────────────────────────────
-    readonly property int barHeight:    30  // pill height
-    readonly property int barVPad:      4   // vertical gap between pill and screen edge (bar = barHeight + barVPad*2)
+    readonly property int barHeight: 30  // pill height
+    readonly property int barVPad: 4   // vertical gap between pill and screen edge (bar = barHeight + barVPad*2)
     readonly property int centerMaxWidth: 400  // center pill width cap
-    readonly property int pillHPad:     12  // horizontal padding inside a pill
-    readonly property int pillMargin:   8   // horizontal gap between pill and screen edge
-    readonly property int iconPadH:     10  // horizontal padding around icon hit targets
-    readonly property int iconPadV:     6   // vertical padding around icon hit targets
+    readonly property int pillHPad: 12  // horizontal padding inside a pill
+    readonly property int pillMargin: 8   // horizontal gap between pill and screen edge
+    readonly property int iconPadH: 10  // horizontal padding around icon hit targets
+    readonly property int iconPadV: 6   // vertical padding around icon hit targets
     readonly property int trayIconSize: 15  // system tray icon size
-    readonly property int workspacePillHeight:  19  // individual workspace pill height
-    readonly property int workspacePillHPad:    15  // total horizontal padding inside workspace pill
+    readonly property int workspacePillHeight: 19  // individual workspace pill height
+    readonly property int workspacePillHPad: 15  // total horizontal padding inside workspace pill
     readonly property int workspacePillSpacing: 4   // gap between workspace pills
-    readonly property int traySpacing:          6   // gap between tray icons
-    readonly property int barSectionSpacing:    12  // gap between sections in the right bar pill
-    readonly property int popupItemHeight:      26  // menu row height in popups
+    readonly property int traySpacing: 6   // gap between tray icons
+    readonly property int barSectionSpacing: 12  // gap between sections in the right bar pill
+    readonly property int popupItemHeight: 26  // menu row height in popups
     readonly property int popupSeparatorHeight: 9   // separator row height in popups
 
     // ── animation ────────────────────────────────────────────────────────────
-    readonly property int animFast:   80   // snappy color transitions
+    readonly property int animFast: 80   // snappy color transitions
     readonly property int animNormal: 120  // workspace / device color transitions
-    readonly property int animSlow:   150  // height / layout transitions
+    readonly property int animSlow: 150  // height / layout transitions
 }

@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Controls
@@ -7,16 +9,18 @@ import QtQuick.Layouts
 ColumnLayout {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property string label
     property string icon
-    property bool   muted
-    property real   volume
+    property bool muted
+    property real volume
     property list<PwNode> devices
     property PwNode activeDevice
 
-    signal toggleMute()
+    signal toggleMute
     signal setVolume(real v)
     signal selectDevice(PwNode d)
 
@@ -28,25 +32,29 @@ ColumnLayout {
         spacing: 12
 
         BarButton {
-            icon:      root.icon
+            icon: root.icon
             iconColor: root.muted ? theme.danger : theme.textPrimary
-            iconSize:  theme.fontIconLg
+            iconSize: theme.fontIconLg
             onClicked: _ => root.toggleMute()
         }
 
         Slider {
             id: sl
             Layout.fillWidth: true
-            from: 0; to: 1.5
+            from: 0
+            to: 1.5
             value: root.volume
 
             property bool resetOnRelease: false
 
-            onMoved: { if (!resetOnRelease) root.setVolume(value) }
+            onMoved: {
+                if (!resetOnRelease)
+                    root.setVolume(value);
+            }
             onPressedChanged: {
                 if (!pressed && resetOnRelease) {
-                    resetOnRelease = false
-                    resetTimer.start()
+                    resetOnRelease = false;
+                    resetTimer.start();
                 }
             }
 
@@ -84,7 +92,10 @@ ColumnLayout {
                         color: theme.accent
                         Behavior on width {
                             enabled: !sl.pressed
-                            NumberAnimation { duration: 180; easing.type: Easing.OutExpo }
+                            NumberAnimation {
+                                duration: 180
+                                easing.type: Easing.OutExpo
+                            }
                         }
                     }
 
@@ -107,31 +118,61 @@ ColumnLayout {
                 height: 16
                 Behavior on x {
                     enabled: !sl.pressed
-                    NumberAnimation { duration: 180; easing.type: Easing.OutExpo }
+                    NumberAnimation {
+                        duration: 180
+                        easing.type: Easing.OutExpo
+                    }
                 }
 
                 // glow ring — blooms when grabbed
                 Rectangle {
                     anchors.centerIn: parent
-                    width: 28; height: 28
+                    width: 28
+                    height: 28
                     radius: 14
-                    color: Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b,
-                                   sl.pressed ? 0.22 : sl.hovered ? 0.15 : 0)
+                    color: Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, sl.pressed ? 0.22 : sl.hovered ? 0.15 : 0)
                     scale: sl.pressed ? 1.7 : sl.hovered ? 1.2 : 0.7
-                    Behavior on color { ColorAnimation { duration: theme.animFast } }
-                    Behavior on scale { NumberAnimation { duration: theme.animNormal; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: theme.animFast
+                        }
+                    }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: theme.animNormal
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.4
+                        }
+                    }
                 }
 
                 // handle — pill when dragging, circle at rest
                 Rectangle {
                     anchors.centerIn: parent
-                    width:  sl.pressed ? 8  : sl.hovered ? 16 : 14
+                    width: sl.pressed ? 8 : sl.hovered ? 16 : 14
                     height: sl.pressed ? 20 : sl.hovered ? 16 : 14
                     radius: height / 2
-                    color:  sl.pressed ? theme.accent : theme.textPrimary
-                    Behavior on width  { NumberAnimation { duration: theme.animNormal; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
-                    Behavior on height { NumberAnimation { duration: theme.animNormal; easing.type: Easing.OutBack; easing.overshoot: 1.8 } }
-                    Behavior on color  { ColorAnimation  { duration: theme.animNormal; easing.type: Easing.OutExpo } }
+                    color: sl.pressed ? theme.accent : theme.textPrimary
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: theme.animNormal
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.8
+                        }
+                    }
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: theme.animNormal
+                            easing.type: Easing.OutBack
+                            easing.overshoot: 1.8
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: theme.animNormal
+                            easing.type: Easing.OutExpo
+                        }
+                    }
                 }
             }
         }
@@ -140,7 +181,7 @@ ColumnLayout {
             text: Math.round(root.volume * 100) + "%"
             color: theme.textSecondary
             font.pixelSize: theme.fontMd
-            font.family:    theme.fontFamily
+            font.family: theme.fontFamily
             Layout.minimumWidth: 40
             horizontalAlignment: Text.AlignRight
         }
@@ -158,35 +199,47 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: headerRow.implicitHeight + 14
             radius: theme.radiusMd
-            color:  headerHover.containsMouse ? theme.hoverBg : "transparent"
-            Behavior on color { ColorAnimation { duration: theme.animFast } }
+            color: headerHover.containsMouse ? theme.hoverBg : "transparent"
+            Behavior on color {
+                ColorAnimation {
+                    duration: theme.animFast
+                }
+            }
 
             RowLayout {
                 id: headerRow
-                anchors { fill: parent; leftMargin: 8; rightMargin: 8; topMargin: 6; bottomMargin: 6 }
+                anchors {
+                    fill: parent
+                    leftMargin: 8
+                    rightMargin: 8
+                    topMargin: 6
+                    bottomMargin: 6
+                }
                 spacing: 8
 
                 Text {
-                    text:           root.label
-                    color:          theme.textLabel
+                    text: root.label
+                    color: theme.textLabel
                     font.pixelSize: theme.fontSm
-                    font.family:    theme.fontFamily
+                    font.family: theme.fontFamily
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: root.activeDevice
-                        ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name)
-                        : "-"
-                    color:          theme.textPrimary
+                    text: root.activeDevice ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name) : "-"
+                    color: theme.textPrimary
                     font.pixelSize: theme.fontMd
-                    font.family:    theme.fontFamily
-                    elide:          Text.ElideRight
+                    font.family: theme.fontFamily
+                    elide: Text.ElideRight
                 }
                 Text {
-                    text:  deviceSelector.expanded ? "▴" : "▾"
+                    text: deviceSelector.expanded ? "▴" : "▾"
                     color: headerHover.containsMouse ? theme.textActive : theme.textLabel
                     font.pixelSize: theme.fontXs
-                    Behavior on color { ColorAnimation { duration: theme.animFast } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: theme.animFast
+                        }
+                    }
                 }
             }
 
@@ -194,8 +247,8 @@ ColumnLayout {
                 id: headerHover
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape:  Qt.PointingHandCursor
-                onClicked:    deviceSelector.expanded = !deviceSelector.expanded
+                cursorShape: Qt.PointingHandCursor
+                onClicked: deviceSelector.expanded = !deviceSelector.expanded
             }
         }
 
@@ -207,7 +260,10 @@ ColumnLayout {
 
             property real _height: deviceSelector.expanded ? deviceList.implicitHeight : 0
             Behavior on _height {
-                NumberAnimation { duration: theme.animSlow; easing.type: Easing.InOutQuad }
+                NumberAnimation {
+                    duration: theme.animSlow
+                    easing.type: Easing.InOutQuad
+                }
             }
 
             Column {
@@ -218,47 +274,73 @@ ColumnLayout {
                     model: root.devices
 
                     delegate: Item {
-                        required property PwNode modelData
-                        required property int    index
+                        id: deviceItem
 
-                        width:          parent.width
+                        required property PwNode modelData
+                        required property int index
+
+                        width: parent.width
                         implicitHeight: deviceRow.implicitHeight + 16
 
                         Rectangle {
-                            anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: 8; rightMargin: 8 }
-                            height:  1
-                            color:   theme.separatorBg
-                            visible: index > 0
+                            anchors {
+                                top: parent.top
+                                left: parent.left
+                                right: parent.right
+                                leftMargin: 8
+                                rightMargin: 8
+                            }
+                            height: 1
+                            color: theme.separatorBg
+                            visible: deviceItem.index > 0
                         }
 
                         Rectangle {
                             anchors.fill: parent
                             radius: theme.radiusMd
-                            color:  deviceItemHover.containsMouse ? theme.hoverBg : "transparent"
-                            Behavior on color { ColorAnimation { duration: theme.animFast } }
+                            color: deviceItemHover.containsMouse ? theme.hoverBg : "transparent"
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: theme.animFast
+                                }
+                            }
                         }
 
                         RowLayout {
                             id: deviceRow
-                            anchors { fill: parent; leftMargin: 12; rightMargin: 8; topMargin: 6; bottomMargin: 6 }
+                            anchors {
+                                fill: parent
+                                leftMargin: 12
+                                rightMargin: 8
+                                topMargin: 6
+                                bottomMargin: 6
+                            }
                             spacing: 10
 
                             Text {
-                                text:           "󰓃"
+                                text: "󰓃"
                                 font.pixelSize: theme.fontMd
-                                font.family:    theme.fontFamily
-                                color: modelData === root.activeDevice ? theme.accent : "transparent"
-                                Behavior on color { ColorAnimation { duration: theme.animNormal } }
+                                font.family: theme.fontFamily
+                                color: deviceItem.modelData === root.activeDevice ? theme.accent : "transparent"
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: theme.animNormal
+                                    }
+                                }
                             }
 
                             MarqueeText {
                                 Layout.fillWidth: true
-                                text:    modelData.description || modelData.nickname || modelData.name
-                                color:   modelData === root.activeDevice ? theme.textActive : theme.textInactive
+                                text: deviceItem.modelData.description || deviceItem.modelData.nickname || deviceItem.modelData.name
+                                color: deviceItem.modelData === root.activeDevice ? theme.textActive : theme.textInactive
                                 hovered: deviceItemHover.containsMouse
                                 font.pixelSize: theme.fontMd
-                                font.family:    theme.fontFamily
-                                Behavior on color { ColorAnimation { duration: theme.animNormal } }
+                                font.family: theme.fontFamily
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: theme.animNormal
+                                    }
+                                }
                             }
                         }
 
@@ -266,10 +348,10 @@ ColumnLayout {
                             id: deviceItemHover
                             anchors.fill: parent
                             hoverEnabled: true
-                            cursorShape:  Qt.PointingHandCursor
+                            cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.selectDevice(modelData)
-                                deviceSelector.expanded = false
+                                root.selectDevice(deviceItem.modelData);
+                                deviceSelector.expanded = false;
                             }
                         }
                     }

@@ -1,11 +1,12 @@
-import Quickshell
 import Quickshell.Hyprland
 import QtQuick
 
 Text {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property var screen
 
@@ -16,17 +17,19 @@ Text {
     Connections {
         target: Hyprland
         function onActiveToplevelChanged() {
-            const t = Hyprland.activeToplevel
+            const t = Hyprland.activeToplevel;
             if (t && t.monitor === root.monitor)
-                root.lastToplevel = t
+                root.lastToplevel = t;
         }
     }
 
     readonly property var toplevel: {
-        const t = Hyprland.activeToplevel
-        if (t?.monitor === monitor) return t
-        if (lastToplevel?.workspace === monitor?.activeWorkspace) return lastToplevel
-        return null
+        const t = Hyprland.activeToplevel;
+        if (t?.monitor === monitor)
+            return t;
+        if (lastToplevel?.workspace === monitor?.activeWorkspace)
+            return lastToplevel;
+        return null;
     }
 
     readonly property string title: toplevel?.lastIpcObject?.initialTitle ?? toplevel?.lastIpcObject?.class ?? ""
