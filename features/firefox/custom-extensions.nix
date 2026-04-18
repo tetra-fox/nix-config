@@ -44,4 +44,16 @@ in
       license = licenses.mit;
     };
   };
+
+  json-alexander = buildFirefoxXpiAddon {
+    pname = "json-alexander";
+    version = "1.1.0";
+    addonId = "json-alexander@local";
+    url = "https://raw.githubusercontent.com/wesbos/JSON-Alexander/main/json-alexander.zip";
+    sha256 = "0rdmraqnaa16asx577nams6vibv3vg19vikgyac0dsz941p94721";
+    meta = with lib; {
+      homepage = "https://github.com/wesbos/JSON-Alexander";
+      license = licenses.mit;
+    };
+  };
 }

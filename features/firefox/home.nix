@@ -34,6 +34,8 @@ in
         "extensions.activeThemeID" = "{f2b832a9-f0f5-4532-934c-74b25eb23fb9}";
         "browser.ml.chat.shortcuts" = false;
 
+        "devtools.jsonview.enabled" = false;
+
         "media.eme.enabled" = true;
         "media.gmp-widevinecdm.enabled" = true;
 
@@ -124,6 +126,7 @@ in
             scam
             matte-black
             surge
+            json-alexander
           ]);
 
         settings = {
