@@ -65,6 +65,11 @@ in
       userSettings = {
         "workbench.colorTheme" = "Catppuccin Mocha";
         "workbench.iconTheme" = "vscode-icons";
+        "workbench.editorAssociations" = {
+          "{git,gitlens,chat-editing-snapshot-text-model,copilot,git-graph,git-graph-3}:/**/*.qrc" =
+            "default";
+          "*.qrc" = "qt-core.qrcEditor";
+        };
 
         "editor.fontFamily" = "Cascadia Code";
         "editor.fontSize" = 14;
