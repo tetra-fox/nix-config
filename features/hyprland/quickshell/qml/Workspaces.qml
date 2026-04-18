@@ -6,11 +6,13 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     required property var screen
 
-    implicitWidth:  row.implicitWidth
+    implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
     RowLayout {
@@ -20,8 +22,8 @@ Item {
 
         Repeater {
             model: {
-                const monitor = Hyprland.monitors.values.find(m => m.name === root.screen.name)
-                return Hyprland.workspaces.values.filter(ws => monitor ? ws.monitor === monitor : true)
+                const monitor = Hyprland.monitors.values.find(m => m.name === root.screen.name);
+                return Hyprland.workspaces.values.filter(ws => monitor ? ws.monitor === monitor : true);
             }
 
             delegate: WorkspacePill {

@@ -6,42 +6,50 @@ import QtQuick.Effects
 Item {
     id: root
 
-    Theme { id: theme }
+    Theme {
+        id: theme
+    }
 
     property var panelWindow
 
     // ── state ─────────────────────────────────────────────────────────────────
-    property string ifname:    ""
-    property string gateway:   ""
+    property string ifname: ""
+    property string gateway: ""
     property string operstate: ""
-    property string ip:        ""
-    property int    prefix:    0
-    property string mac:       ""
-    property string ip6:       ""
-    property int    mtu:       0
-    property int    speed:     -1
-    property string duplex:    ""
-    property string dns:       ""
-    property real   rxBytes:   0
-    property real   txBytes:   0
-    property real   rxRate:    -1
-    property real   txRate:    -1
-    property var    samples:   []   // [{rx, tx}] rolling 5s window
-    property real   displayMax:  1  // animated y-axis ceiling
-    property real   scrollPhase: 0  // 0→1 per sample interval, drives 60fps repaint
-    property bool   _scaleInited: false
+    property string ip: ""
+    property int prefix: 0
+    property string mac: ""
+    property string ip6: ""
+    property int mtu: 0
+    property int speed: -1
+    property string duplex: ""
+    property string dns: ""
+    property real rxBytes: 0
+    property real txBytes: 0
+    property real rxRate: -1
+    property real txRate: -1
+    property var samples: []   // [{rx, tx}] rolling 5s window
+    property real displayMax: 1  // animated y-axis ceiling
+    property real scrollPhase: 0  // 0→1 per sample interval, drives 60fps repaint
+    property bool _scaleInited: false
 
     Behavior on displayMax {
         enabled: root._scaleInited
-        NumberAnimation { duration: 800; easing.type: Easing.OutQuint }
+        NumberAnimation {
+            duration: 800
+            easing.type: Easing.OutQuint
+        }
     }
 
-    onScrollPhaseChanged: if (popup.visible) graph.requestPaint()
+    onScrollPhaseChanged: if (popup.visible)
+        graph.requestPaint()
 
     NumberAnimation {
         id: scrollAnim
-        target: root; property: "scrollPhase"
-        from: 0.0; to: 1.0
+        target: root
+        property: "scrollPhase"
+        from: 0.0
+        to: 1.0
         duration: 250
         easing.type: Easing.Linear
     }
@@ -54,23 +62,30 @@ Item {
 
     // ── helpers ───────────────────────────────────────────────────────────────
     function formatBytes(b) {
-        if (b >= 1073741824) return (b / 1073741824).toFixed(2) + " GB"
-        if (b >= 1048576)    return (b / 1048576).toFixed(2)    + " MB"
-        if (b >= 1024)       return (b / 1024).toFixed(1)       + " KB"
-        return Math.round(b) + " B"
+        if (b >= 1073741824)
+            return (b / 1073741824).toFixed(2) + " GB";
+        if (b >= 1048576)
+            return (b / 1048576).toFixed(2) + " MB";
+        if (b >= 1024)
+            return (b / 1024).toFixed(1) + " KB";
+        return Math.round(b) + " B";
     }
 
     function formatRate(bps) {
-        if (bps < 0)         return ""
-        if (bps >= 1048576)  return (bps / 1048576).toFixed(2)  + " MB/s"
-        if (bps >= 1024)     return (bps / 1024).toFixed(1)     + " KB/s"
-        return Math.round(bps) + " B/s"
+        if (bps < 0)
+            return "";
+        if (bps >= 1048576)
+            return (bps / 1048576).toFixed(2) + " MB/s";
+        if (bps >= 1024)
+            return (bps / 1024).toFixed(1) + " KB/s";
+        return Math.round(bps) + " B/s";
     }
 
     function prefixToMask(p) {
-        if (p <= 0 || p > 32) return "-"
-        const m = (-1 << (32 - p)) >>> 0
-        return `${(m>>>24)&0xFF}.${(m>>>16)&0xFF}.${(m>>>8)&0xFF}.${m&0xFF}`
+        if (p <= 0 || p > 32)
+            return "-";
+        const m = (-1 << (32 - p)) >>> 0;
+        return `${(m >>> 24) & 0xFF}.${(m >>> 16) & 0xFF}.${(m >>> 8) & 0xFF}.${m & 0xFF}`;
     }
 
     // ── processes ─────────────────────────────────────────────────────────────
@@ -85,27 +100,32 @@ Item {
             onRead: data => routeProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
+            if (running) {
+                _buf = "";
+                return;
+            }
             try {
-                const r = JSON.parse(_buf)?.[0]
+                const r = JSON.parse(_buf)?.[0];
                 if (r?.dev) {
-                    root.ifname  = r.dev
-                    root.gateway = r.gateway ?? ""
-                    addrProc.running  = true
-                    addr6Proc.running = true
-                    linkProc.running  = true
-                    speedProc.running  = true
-                    duplexProc.running = true
-                    dnsProc.running    = true
+                    root.ifname = r.dev;
+                    root.gateway = r.gateway ?? "";
+                    addrProc.running = true;
+                    addr6Proc.running = true;
+                    linkProc.running = true;
+                    speedProc.running = true;
+                    duplexProc.running = true;
+                    dnsProc.running = true;
                 } else {
-                    root.ifname = root.gateway = root.ip = root.ip6 = root.mac = root.dns = root.duplex = ""
-                    root.prefix = root.mtu = 0
-                    root.rxBytes = root.txBytes = 0
-                    root.rxRate = root.txRate = -1
-                    root.speed = -1
-                    root.operstate = ""
+                    root.ifname = root.gateway = root.ip = root.ip6 = root.mac = root.dns = root.duplex = "";
+                    root.prefix = root.mtu = 0;
+                    root.rxBytes = root.txBytes = 0;
+                    root.rxRate = root.txRate = -1;
+                    root.speed = -1;
+                    root.operstate = "";
                 }
-            } catch (_) { root.ifname = "" }
+            } catch (_) {
+                root.ifname = "";
+            }
         }
     }
 
@@ -119,11 +139,14 @@ Item {
             onRead: data => addrProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
+            if (running) {
+                _buf = "";
+                return;
+            }
             try {
-                const r = JSON.parse(_buf)?.[0]
-                root.ip     = r?.addr_info?.[0]?.local    ?? ""
-                root.prefix = r?.addr_info?.[0]?.prefixlen ?? 0
+                const r = JSON.parse(_buf)?.[0];
+                root.ip = r?.addr_info?.[0]?.local ?? "";
+                root.prefix = r?.addr_info?.[0]?.prefixlen ?? 0;
             } catch (_) {}
         }
     }
@@ -138,12 +161,17 @@ Item {
             onRead: data => addr6Proc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
+            if (running) {
+                _buf = "";
+                return;
+            }
             try {
-                const addrs  = JSON.parse(_buf)?.[0]?.addr_info ?? []
-                const global = addrs.find(a => a.scope === "global")
-                root.ip6 = global ? `${global.local}/${global.prefixlen}` : ""
-            } catch (_) { root.ip6 = "" }
+                const addrs = JSON.parse(_buf)?.[0]?.addr_info ?? [];
+                const global = addrs.find(a => a.scope === "global");
+                root.ip6 = global ? `${global.local}/${global.prefixlen}` : "";
+            } catch (_) {
+                root.ip6 = "";
+            }
         }
     }
 
@@ -157,45 +185,53 @@ Item {
             onRead: data => linkProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
+            if (running) {
+                _buf = "";
+                return;
+            }
             try {
-                const r   = JSON.parse(_buf)?.[0]
-                const now = Date.now()
-                const rx  = r?.stats64?.rx?.bytes ?? 0
-                const tx  = r?.stats64?.tx?.bytes ?? 0
+                const r = JSON.parse(_buf)?.[0];
+                const now = Date.now();
+                const rx = r?.stats64?.rx?.bytes ?? 0;
+                const tx = r?.stats64?.tx?.bytes ?? 0;
 
                 if (root._prevTs > 0) {
-                    const dt    = (now - root._prevTs) / 1000
-                    root.rxRate = (rx - root._prevRx) / dt
-                    root.txRate = (tx - root._prevTx) / dt
+                    const dt = (now - root._prevTs) / 1000;
+                    root.rxRate = (rx - root._prevRx) / dt;
+                    root.txRate = (tx - root._prevTx) / dt;
 
-                    const s = root.samples.slice()
-                    s.push({rx: Math.max(0, root.rxRate), tx: Math.max(0, root.txRate)})
+                    const s = root.samples.slice();
+                    s.push({
+                        rx: Math.max(0, root.rxRate),
+                        tx: Math.max(0, root.txRate)
+                    });
                     // Keep one extra sample so scrolling can add points off-screen smoothly.
-                    while (s.length > 21) s.shift()
-                    root.samples = s
+                    while (s.length > 21)
+                        s.shift();
+                    root.samples = s;
 
-                    let mx = 1
-                    for (const p of s) mx = Math.max(mx, p.rx, p.tx)
+                    let mx = 1;
+                    for (const p of s)
+                        mx = Math.max(mx, p.rx, p.tx);
                     // Snap the scale to the first observed max; animate afterwards.
                     if (!root._scaleInited) {
-                        root.displayMax = mx
-                        root._scaleInited = true
+                        root.displayMax = mx;
+                        root._scaleInited = true;
                     } else {
-                        root.displayMax = mx
+                        root.displayMax = mx;
                     }
 
-                    scrollAnim.restart()
+                    scrollAnim.restart();
                 }
 
-                root._prevTs   = now
-                root._prevRx   = rx
-                root._prevTx   = tx
-                root.rxBytes   = rx
-                root.txBytes   = tx
-                root.mac       = r?.address   ?? ""
-                root.mtu       = r?.mtu       ?? 0
-                root.operstate = r?.operstate ?? ""
+                root._prevTs = now;
+                root._prevRx = rx;
+                root._prevTx = tx;
+                root.rxBytes = rx;
+                root.txBytes = tx;
+                root.mac = r?.address ?? "";
+                root.mtu = r?.mtu ?? 0;
+                root.operstate = r?.operstate ?? "";
             } catch (_) {}
         }
     }
@@ -210,9 +246,12 @@ Item {
             onRead: data => speedProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
-            const n = parseInt(_buf.trim())
-            root.speed = isNaN(n) ? -1 : n
+            if (running) {
+                _buf = "";
+                return;
+            }
+            const n = parseInt(_buf.trim());
+            root.speed = isNaN(n) ? -1 : n;
         }
     }
 
@@ -226,8 +265,11 @@ Item {
             onRead: data => duplexProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
-            root.duplex = _buf.trim()
+            if (running) {
+                _buf = "";
+                return;
+            }
+            root.duplex = _buf.trim();
         }
     }
 
@@ -241,20 +283,29 @@ Item {
             onRead: data => dnsProc._buf += data
         }
         onRunningChanged: {
-            if (running) { _buf = ""; return }
-            const match = _buf.match(/:\s*(.+)/)
-            root.dns = match ? match[1].trim() : ""
+            if (running) {
+                _buf = "";
+                return;
+            }
+            const match = _buf.match(/:\s*(.+)/);
+            root.dns = match ? match[1].trim() : "";
         }
     }
 
-    Process { id: launcher; command: ["nm-connection-editor"] }
+    Process {
+        id: launcher
+        command: ["nm-connection-editor"]
+    }
 
     Component.onCompleted: routeProc.running = true
 
     // 30s background poll
     Timer {
-        interval: 30000; running: true; repeat: true
-        onTriggered: if (!routeProc.running) routeProc.running = true
+        interval: 30000
+        running: true
+        repeat: true
+        onTriggered: if (!routeProc.running)
+            routeProc.running = true
     }
 
     // 250ms live rate poll - only while popup is open
@@ -262,11 +313,12 @@ Item {
         interval: 250
         running: popup.visible
         repeat: true
-        onTriggered: if (!linkProc.running) linkProc.running = true
+        onTriggered: if (!linkProc.running)
+            linkProc.running = true
     }
 
     // ── button ────────────────────────────────────────────────────────────────
-    implicitWidth:  btn.implicitWidth
+    implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
     BarButton {
@@ -274,7 +326,9 @@ Item {
         icon: root.connected ? "󰈀" : "󰤭"
         iconColor: root.connected ? theme.textPrimary : theme.textInactive
         isOpen: popup.visible
-        onClicked: _ => { popup.visible = !popup.visible }
+        onClicked: _ => {
+            popup.visible = !popup.visible;
+        }
     }
 
     // ── popup ─────────────────────────────────────────────────────────────────
@@ -282,23 +336,29 @@ Item {
         id: popup
         panelWindow: root.panelWindow
 
-        implicitWidth:  320
+        implicitWidth: 320
         implicitHeight: col.implicitHeight + theme.pillHPad * 2
 
         onVisibleChanged: {
             if (visible) {
-                root._prevTs = 0
-                root.samples = []
-                root.displayMax = 1
-                root._scaleInited = false
-                graph.requestPaint()
-                if (!linkProc.running) linkProc.running = true
+                root._prevTs = 0;
+                root.samples = [];
+                root.displayMax = 1;
+                root._scaleInited = false;
+                graph.requestPaint();
+                if (!linkProc.running)
+                    linkProc.running = true;
             }
         }
 
         ColumnLayout {
             id: col
-            anchors { top: parent.top; left: parent.left; right: parent.right; margins: theme.pillHPad }
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                margins: theme.pillHPad
+            }
             spacing: 10
 
             // header
@@ -322,20 +382,19 @@ Item {
                 // state badge - shows operstate + link speed when UP
                 Rectangle {
                     visible: root.operstate !== ""
-                    radius:  theme.radiusSm
-                    color:   root.operstate === "UP" ? Qt.rgba(theme.colorGreen.r,  theme.colorGreen.g,  theme.colorGreen.b,  0.18)
-                                                       : Qt.rgba(theme.colorRed.r,    theme.colorRed.g,    theme.colorRed.b,    0.18)
-                    width:   stateLabel.implicitWidth + 8
-                    height:  stateLabel.implicitHeight + 4
+                    radius: theme.radiusSm
+                    color: root.operstate === "UP" ? Qt.rgba(theme.colorGreen.r, theme.colorGreen.g, theme.colorGreen.b, 0.18) : Qt.rgba(theme.colorRed.r, theme.colorRed.g, theme.colorRed.b, 0.18)
+                    width: stateLabel.implicitWidth + 8
+                    height: stateLabel.implicitHeight + 4
 
                     // ping ring source — invisible, captured as layer for MultiEffect
                     Rectangle {
                         id: pingRingSource
                         anchors.centerIn: parent
-                        width:  parent.width  + 6
+                        width: parent.width + 6
                         height: parent.height + 6
                         radius: parent.radius
-                        color:  "transparent"
+                        color: "transparent"
                         visible: false
                         layer.enabled: true
                     }
@@ -343,32 +402,84 @@ Item {
                     // ping ring — expands and blurs outward on a loop when UP
                     MultiEffect {
                         id: pingRing
-                        source:       pingRingSource
+                        source: pingRingSource
                         anchors.centerIn: parent
-                        width:        pingRingSource.width
-                        height:       pingRingSource.height
-                        blurEnabled:  true
-                        blurMax:      12
-                        blur:         0
-                        opacity:      0
-                        scale:        1.0
+                        width: pingRingSource.width
+                        height: pingRingSource.height
+                        blurEnabled: true
+                        blurMax: 12
+                        blur: 0
+                        opacity: 0
+                        scale: 1.0
 
                         SequentialAnimation {
-                            loops:   Animation.Infinite
+                            loops: Animation.Infinite
                             running: root.operstate === "UP"
-                            PropertyAction { target: pingRing;       property: "scale";        value: 0.92 }
-                            PropertyAction { target: pingRing;       property: "opacity";      value: 0.8  }
-                            PropertyAction { target: pingRing;       property: "blur";         value: 1.0  }
-                            PropertyAction { target: pingRingSource; property: "border.width"; value: 1.5  }
-                            PropertyAction { target: pingRingSource; property: "border.color"; value: Qt.lighter(theme.colorGreen, 1.2) }
-                            ParallelAnimation {
-                                NumberAnimation { target: pingRing;       property: "scale";        to: 1.32; duration: 1200; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: pingRing;       property: "opacity";      to: 0;    duration: 1200; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: pingRing;       property: "blur";         to: 5.0;  duration: 1200; easing.type: Easing.OutCubic }
-                                NumberAnimation { target: pingRingSource; property: "border.width"; to: 3.0;  duration: 1200; easing.type: Easing.OutCubic }
-                                ColorAnimation { target: pingRingSource; property: "border.color"; to: theme.colorGreen; duration: 1200; easing.type: Easing.OutCubic }
+                            PropertyAction {
+                                target: pingRing
+                                property: "scale"
+                                value: 0.92
                             }
-                            PauseAnimation { duration: 1400 }
+                            PropertyAction {
+                                target: pingRing
+                                property: "opacity"
+                                value: 0.8
+                            }
+                            PropertyAction {
+                                target: pingRing
+                                property: "blur"
+                                value: 1.0
+                            }
+                            PropertyAction {
+                                target: pingRingSource
+                                property: "border.width"
+                                value: 1.5
+                            }
+                            PropertyAction {
+                                target: pingRingSource
+                                property: "border.color"
+                                value: Qt.lighter(theme.colorGreen, 1.2)
+                            }
+                            ParallelAnimation {
+                                NumberAnimation {
+                                    target: pingRing
+                                    property: "scale"
+                                    to: 1.32
+                                    duration: 1200
+                                    easing.type: Easing.OutCubic
+                                }
+                                NumberAnimation {
+                                    target: pingRing
+                                    property: "opacity"
+                                    to: 0
+                                    duration: 1200
+                                    easing.type: Easing.OutCubic
+                                }
+                                NumberAnimation {
+                                    target: pingRing
+                                    property: "blur"
+                                    to: 5.0
+                                    duration: 1200
+                                    easing.type: Easing.OutCubic
+                                }
+                                NumberAnimation {
+                                    target: pingRingSource
+                                    property: "border.width"
+                                    to: 3.0
+                                    duration: 1200
+                                    easing.type: Easing.OutCubic
+                                }
+                                ColorAnimation {
+                                    target: pingRingSource
+                                    property: "border.color"
+                                    to: theme.colorGreen
+                                    duration: 1200
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                            PauseAnimation {
+                                duration: 1400
+                            }
                         }
                     }
 
@@ -376,20 +487,28 @@ Item {
                         id: stateLabel
                         anchors.centerIn: parent
                         text: {
-                            if (root.operstate !== "UP" || root.speed <= 0) return root.operstate
-                            const duplex = root.duplex === "full" ? " FDX"
-                                         : root.duplex === "half" ? " HDX" : ""
-                            return root.operstate + " · " + root.speed + " Mbps" + duplex
+                            if (root.operstate !== "UP" || root.speed <= 0)
+                                return root.operstate;
+                            const duplex = root.duplex === "full" ? " FDX" : root.duplex === "half" ? " HDX" : "";
+                            return root.operstate + " · " + root.speed + " Mbps" + duplex;
                         }
                         color: root.operstate === "UP" ? theme.colorGreen : theme.colorRed
                         font.pixelSize: theme.fontXs
                         font.family: theme.fontFamily
 
                         SequentialAnimation on color {
-                            loops:   Animation.Infinite
+                            loops: Animation.Infinite
                             running: root.operstate === "UP"
-                            ColorAnimation { to: Qt.lighter(theme.colorGreen, 1.2); duration: 2000; easing.type: Easing.InOutSine }
-                            ColorAnimation { to: theme.colorGreen;                  duration: 2000; easing.type: Easing.InOutSine }
+                            ColorAnimation {
+                                to: Qt.lighter(theme.colorGreen, 1.2)
+                                duration: 2000
+                                easing.type: Easing.InOutSine
+                            }
+                            ColorAnimation {
+                                to: theme.colorGreen
+                                duration: 2000
+                                easing.type: Easing.InOutSine
+                            }
                         }
                     }
                 }
@@ -403,11 +522,19 @@ Item {
                 spacing: 5
                 visible: root.connected
 
-                InfoRow { label: "MAC"; value: root.mac || "-" }
-                InfoRow { label: "MTU"; value: root.mtu > 0 ? String(root.mtu) : "-" }
+                InfoRow {
+                    label: "MAC"
+                    value: root.mac || "-"
+                }
+                InfoRow {
+                    label: "MTU"
+                    value: root.mtu > 0 ? String(root.mtu) : "-"
+                }
             }
 
-            Separator { visible: root.connected }
+            Separator {
+                visible: root.connected
+            }
 
             // ipv4
             ColumnLayout {
@@ -415,12 +542,32 @@ Item {
                 spacing: 5
                 visible: root.connected
 
-                Text { text: "IPv4"; color: theme.textLabel; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                Text {
+                    text: "IPv4"
+                    color: theme.textLabel
+                    font.pixelSize: theme.fontSm
+                    font.family: theme.fontFamily
+                }
 
-                InfoRow { label: "Address"; value: root.ip ? root.ip + "/" + root.prefix : "-";      elide: Text.ElideRight }
-                InfoRow { label: "Subnet";  value: root.prefix > 0 ? root.prefixToMask(root.prefix) : "-" }
-                InfoRow { label: "Gateway"; value: root.gateway || "-" }
-                InfoRow { label: "DNS";     value: root.dns; elide: Text.ElideRight; visible: root.dns !== "" }
+                InfoRow {
+                    label: "Address"
+                    value: root.ip ? root.ip + "/" + root.prefix : "-"
+                    elide: Text.ElideRight
+                }
+                InfoRow {
+                    label: "Subnet"
+                    value: root.prefix > 0 ? root.prefixToMask(root.prefix) : "-"
+                }
+                InfoRow {
+                    label: "Gateway"
+                    value: root.gateway || "-"
+                }
+                InfoRow {
+                    label: "DNS"
+                    value: root.dns
+                    elide: Text.ElideRight
+                    visible: root.dns !== ""
+                }
             }
 
             // ipv6
@@ -431,12 +578,23 @@ Item {
 
                 Separator {}
 
-                Text { text: "IPv6"; color: theme.textLabel; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                Text {
+                    text: "IPv6"
+                    color: theme.textLabel
+                    font.pixelSize: theme.fontSm
+                    font.family: theme.fontFamily
+                }
 
-                InfoRow { label: "Address"; value: root.ip6; elide: Text.ElideRight }
+                InfoRow {
+                    label: "Address"
+                    value: root.ip6
+                    elide: Text.ElideRight
+                }
             }
 
-            Separator { visible: root.connected }
+            Separator {
+                visible: root.connected
+            }
 
             // traffic
             ColumnLayout {
@@ -444,78 +602,83 @@ Item {
                 spacing: 5
                 visible: root.connected
 
-                Text { text: "Traffic"; color: theme.textLabel; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                Text {
+                    text: "Traffic"
+                    color: theme.textLabel
+                    font.pixelSize: theme.fontSm
+                    font.family: theme.fontFamily
+                }
 
                 // scrolling graph
                 Rectangle {
                     Layout.fillWidth: true
                     height: 52
                     radius: theme.radiusSm
-                    color:  Qt.rgba(0, 0, 0, 0.25)
-                    clip:   true
+                    color: Qt.rgba(0, 0, 0, 0.25)
+                    clip: true
 
                     Canvas {
                         id: graph
                         anchors.fill: parent
 
                         onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.clearRect(0, 0, width, height)
+                            const ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
 
-                            const samples = root.samples
-                            const n = samples.length
-                            const pad    = 4
+                            const samples = root.samples;
+                            const n = samples.length;
+                            const pad = 4;
                             if (n < 2) {
-                                ctx.beginPath()
-                                ctx.moveTo(0, height - pad)
-                                ctx.lineTo(width, height - pad)
-                                ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.10)
-                                ctx.lineWidth = 1
-                                ctx.stroke()
-                                return
+                                ctx.beginPath();
+                                ctx.moveTo(0, height - pad);
+                                ctx.lineTo(width, height - pad);
+                                ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.10);
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                                return;
                             }
 
-                            const maxSamples = 20
-                            const step   = width / (maxSamples - 1)
-                            const availH = height - pad * 2
-                            const maxVal = Math.max(1, root.displayMax)
+                            const maxSamples = 20;
+                            const step = width / (maxSamples - 1);
+                            const availH = height - pad * 2;
+                            const maxVal = Math.max(1, root.displayMax);
 
                             const pts = samples.map((s, i) => ({
-                                x:  (n <= maxSamples) ? (i * step) : (i * step - root.scrollPhase * step),
-                                ry: height - pad - (s.rx / maxVal) * availH,
-                                ty: height - pad - (s.tx / maxVal) * availH,
-                            }))
+                                        x: (n <= maxSamples) ? (i * step) : (i * step - root.scrollPhase * step),
+                                        ry: height - pad - (s.rx / maxVal) * availH,
+                                        ty: height - pad - (s.tx / maxVal) * availH
+                                    }));
 
                             function fill(yKey, color) {
-                                ctx.beginPath()
-                                ctx.moveTo(pts[0].x, height)
-                                ctx.lineTo(pts[0].x, pts[0][yKey])
+                                ctx.beginPath();
+                                ctx.moveTo(pts[0].x, height);
+                                ctx.lineTo(pts[0].x, pts[0][yKey]);
                                 for (let i = 1; i < n; i++) {
-                                    const cx = (pts[i-1].x + pts[i].x) / 2
-                                    ctx.bezierCurveTo(cx, pts[i-1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey])
+                                    const cx = (pts[i - 1].x + pts[i].x) / 2;
+                                    ctx.bezierCurveTo(cx, pts[i - 1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
                                 }
-                                ctx.lineTo(pts[n-1].x, height)
-                                ctx.closePath()
-                                ctx.fillStyle = color
-                                ctx.fill()
+                                ctx.lineTo(pts[n - 1].x, height);
+                                ctx.closePath();
+                                ctx.fillStyle = color;
+                                ctx.fill();
                             }
 
                             function line(yKey, color) {
-                                ctx.beginPath()
-                                ctx.moveTo(pts[0].x, pts[0][yKey])
+                                ctx.beginPath();
+                                ctx.moveTo(pts[0].x, pts[0][yKey]);
                                 for (let i = 1; i < n; i++) {
-                                    const cx = (pts[i-1].x + pts[i].x) / 2
-                                    ctx.bezierCurveTo(cx, pts[i-1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey])
+                                    const cx = (pts[i - 1].x + pts[i].x) / 2;
+                                    ctx.bezierCurveTo(cx, pts[i - 1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
                                 }
-                                ctx.strokeStyle = color
-                                ctx.lineWidth = 1.5
-                                ctx.stroke()
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1.5;
+                                ctx.stroke();
                             }
 
-                            fill("ty", Qt.rgba(theme.colorBlue.r, theme.colorBlue.g, theme.colorBlue.b, 0.12))
-                            line("ty", theme.colorBlue)
-                            fill("ry", Qt.rgba(theme.colorPink.r, theme.colorPink.g, theme.colorPink.b, 0.15))
-                            line("ry", theme.colorPink)
+                            fill("ty", Qt.rgba(theme.colorBlue.r, theme.colorBlue.g, theme.colorBlue.b, 0.12));
+                            line("ty", theme.colorBlue);
+                            fill("ry", Qt.rgba(theme.colorPink.r, theme.colorPink.g, theme.colorPink.b, 0.15));
+                            line("ry", theme.colorPink);
                         }
                     }
                 }
@@ -525,34 +688,56 @@ Item {
 
                     RowLayout {
                         spacing: 6
-                        Text { text: "↓"; color: theme.colorPink; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                        Text {
+                            text: "↓"
+                            color: theme.colorPink
+                            font.pixelSize: theme.fontSm
+                            font.family: theme.fontFamily
+                        }
                         ColumnLayout {
                             spacing: 1
-                            Text { text: root.formatBytes(root.rxBytes); color: theme.textPrimary; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                            Text {
+                                text: root.formatBytes(root.rxBytes)
+                                color: theme.textPrimary
+                                font.pixelSize: theme.fontSm
+                                font.family: theme.fontFamily
+                            }
                             Text {
                                 visible: root.rxRate >= 0
-                                text:    root.rxRate >= 0 ? root.formatRate(root.rxRate) : ""
-                                color:   theme.textSecondary
+                                text: root.rxRate >= 0 ? root.formatRate(root.rxRate) : ""
+                                color: theme.textSecondary
                                 font.pixelSize: theme.fontXs
-                                font.family:    theme.fontFamily
+                                font.family: theme.fontFamily
                             }
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
 
                     RowLayout {
                         spacing: 6
-                        Text { text: "↑"; color: theme.colorBlue; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                        Text {
+                            text: "↑"
+                            color: theme.colorBlue
+                            font.pixelSize: theme.fontSm
+                            font.family: theme.fontFamily
+                        }
                         ColumnLayout {
                             spacing: 1
-                            Text { text: root.formatBytes(root.txBytes); color: theme.textPrimary; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                            Text {
+                                text: root.formatBytes(root.txBytes)
+                                color: theme.textPrimary
+                                font.pixelSize: theme.fontSm
+                                font.family: theme.fontFamily
+                            }
                             Text {
                                 visible: root.txRate >= 0
-                                text:    root.txRate >= 0 ? root.formatRate(root.txRate) : ""
-                                color:   theme.textSecondary
+                                text: root.txRate >= 0 ? root.formatRate(root.txRate) : ""
+                                color: theme.textSecondary
                                 font.pixelSize: theme.fontXs
-                                font.family:    theme.fontFamily
+                                font.family: theme.fontFamily
                             }
                         }
                     }
@@ -564,7 +749,10 @@ Item {
             PopupItem {
                 Layout.fillWidth: true
                 text: "More settings..."
-                onClicked: { launcher.running = true; popup.visible = false }
+                onClicked: {
+                    launcher.running = true;
+                    popup.visible = false;
+                }
             }
         }
     }
