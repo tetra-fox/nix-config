@@ -30,9 +30,11 @@ Item {
     property var    samples:   []   // [{rx, tx}] rolling 5s window
     property real   displayMax:  1  // animated y-axis ceiling
     property real   scrollPhase: 0  // 0→1 per sample interval, drives 60fps repaint
+    property bool   _scaleInited: false
 
     Behavior on displayMax {
-        NumberAnimation { duration: 800; easing.type: Easing.OutCubic }
+        enabled: root._scaleInited
+        NumberAnimation { duration: 800; easing.type: Easing.OutQuint }
     }
 
     onScrollPhaseChanged: if (popup.visible) graph.requestPaint()
@@ -170,12 +172,19 @@ Item {
 
                     const s = root.samples.slice()
                     s.push({rx: Math.max(0, root.rxRate), tx: Math.max(0, root.txRate)})
-                    while (s.length > 20) s.shift()
+                    // Keep one extra sample so scrolling can add points off-screen smoothly.
+                    while (s.length > 21) s.shift()
                     root.samples = s
 
                     let mx = 1
                     for (const p of s) mx = Math.max(mx, p.rx, p.tx)
-                    root.displayMax = mx
+                    // Snap the scale to the first observed max; animate afterwards.
+                    if (!root._scaleInited) {
+                        root.displayMax = mx
+                        root._scaleInited = true
+                    } else {
+                        root.displayMax = mx
+                    }
 
                     scrollAnim.restart()
                 }
@@ -280,9 +289,9 @@ Item {
         onVisibleChanged: {
             if (visible) {
                 root._prevTs = 0
-                // Two zeros: canvas needs n ≥ 2; flat baseline until live samples arrive.
-                root.samples = [{rx: 0, tx: 0}, {rx: 0, tx: 0}]
+                root.samples = []
                 root.displayMax = 1
+                root._scaleInited = false
                 graph.requestPaint()
                 if (!linkProc.running) linkProc.running = true
             }
@@ -456,17 +465,24 @@ Item {
 
                             const samples = root.samples
                             const n = samples.length
-                            if (n < 2) return
+                            const pad    = 4
+                            if (n < 2) {
+                                ctx.beginPath()
+                                ctx.moveTo(0, height - pad)
+                                ctx.lineTo(width, height - pad)
+                                ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.10)
+                                ctx.lineWidth = 1
+                                ctx.stroke()
+                                return
+                            }
 
                             const maxSamples = 20
                             const step   = width / (maxSamples - 1)
-                            const xOff   = root.scrollPhase * step
-                            const pad    = 4
                             const availH = height - pad * 2
                             const maxVal = Math.max(1, root.displayMax)
 
                             const pts = samples.map((s, i) => ({
-                                x:  width - (n - 1 - i) * step - xOff,
+                                x:  (n <= maxSamples) ? (i * step) : (i * step - root.scrollPhase * step),
                                 ry: height - pad - (s.rx / maxVal) * availH,
                                 ty: height - pad - (s.tx / maxVal) * availH,
                             }))
