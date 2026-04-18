@@ -1,6 +1,6 @@
 import QtQuick
 
-// icon button used throughout the bar. set isOpen: true when its popup is open
+// icon button used in the bar. set isOpen: true when its popup is visible
 Item {
     id: root
 
@@ -33,10 +33,10 @@ Item {
         Text {
             id: iconText
             anchors.centerIn: parent
-            text: root.icon
-            color: root.iconColor
+            text:           root.icon
+            color:          root.iconColor
             font.pixelSize: root.iconSize
-            font.family: theme.fontFamily
+            font.family:    theme.fontFamily
             Behavior on color { ColorAnimation { duration: theme.animFast } }
         }
 

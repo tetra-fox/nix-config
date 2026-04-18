@@ -3,14 +3,13 @@ import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-// workspace pills for one screen. click to switch
+// workspace pills for one screen
 Item {
     id: root
 
-    // passed in from Bar.qml
     required property var screen
 
-    implicitWidth: row.implicitWidth
+    implicitWidth:  row.implicitWidth
     implicitHeight: row.implicitHeight
 
     RowLayout {
@@ -19,15 +18,9 @@ Item {
         spacing: 4
 
         Repeater {
-            // filter to workspaces on this screen
             model: {
-                const monitorWorkspaces = Hyprland.workspaces.values.filter(ws => {
-                    const monitor = Hyprland.monitors.values.find(
-                        m => m.name === root.screen.name
-                    )
-                    return monitor ? ws.monitor === monitor : true
-                })
-                return monitorWorkspaces
+                const monitor = Hyprland.monitors.values.find(m => m.name === root.screen.name)
+                return Hyprland.workspaces.values.filter(ws => monitor ? ws.monitor === monitor : true)
             }
 
             delegate: WorkspacePill {

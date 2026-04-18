@@ -117,7 +117,7 @@ in
 
         border_size = 1;
 
-        "col.active_border" = "rgba(771f82ee)";
+        "col.active_border" = "rgba(ff34a8ee)";
         "col.inactive_border" = "rgba(59595922)";
 
         resize_on_border = false;
@@ -135,8 +135,8 @@ in
         blur = {
           enabled = true;
           size = 3;
-          passes = 3;
-          vibrancy = 0.1696;
+          passes = 2;
+          vibrancy = 0.3696;
         };
       };
 
@@ -166,8 +166,8 @@ in
           "fadeOut, 1, 1.46, almostLinear"
 
           "layers, 1, 3.81, easeOutQuint"
-          "layersIn, 1, 2, easeOutQuint, fade"
-          "layersOut, 1, 1.5, linear, fade"
+          "layersIn, 1, 1.5, easeOutQuint, fade"
+          "layersOut, 1, 1, linear, fade"
           "fadeLayersIn, 1, 1.79, almostLinear"
           "fadeLayersOut, 1, 1.39, almostLinear"
 
@@ -192,7 +192,8 @@ in
       };
 
       layerrule = [
-        "match:class quickshell-bar,blur on,ignore_alpha 0.1"
+        "match:namespace quickshell-bar,blur on,ignore_alpha 0.1"
+        "match:namespace quickshell-popup,blur on,ignore_alpha 0.1"
       ];
 
       exec-once = [

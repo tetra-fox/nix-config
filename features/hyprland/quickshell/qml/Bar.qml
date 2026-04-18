@@ -9,12 +9,7 @@ PanelWindow {
 
     Theme { id: theme }
 
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
-
+    anchors { top: true; left: true; right: true }
     implicitHeight: 38
     color: "transparent"
 
@@ -28,100 +23,53 @@ PanelWindow {
         opacity: Hyprland.focusedWorkspace?.monitor === root.monitor ? 1.0 : 0.3
         Behavior on opacity { NumberAnimation { duration: theme.animSlow; easing.type: Easing.InOutQuad } }
 
-        // ── Left pill — workspaces ───────────────────────────────────────────
-        Rectangle {
-            anchors {
-                left: parent.left
-                verticalCenter: parent.verticalCenter
-                leftMargin: theme.pillMargin
-            }
-            height: theme.barHeight
+        // left - workspaces
+        Pill {
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: theme.pillMargin }
             implicitWidth: leftRow.implicitWidth + theme.pillHPad * 2
-            radius: theme.radiusLg
-            color: theme.panelBg
-            border.width: 1
-            border.color: theme.panelBorder
 
             RowLayout {
                 id: leftRow
-                anchors {
-                    fill: parent
-                    leftMargin: theme.pillHPad
-                    rightMargin: theme.pillHPad
-                }
+                anchors { fill: parent; leftMargin: theme.pillHPad; rightMargin: theme.pillHPad }
                 spacing: 6
-
-                Workspaces {
-                    screen: root.screen
-                }
+                Workspaces { screen: root.screen }
             }
         }
 
-        // ── Center pill — active window ──────────────────────────────────────
-        Rectangle {
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                verticalCenter: parent.verticalCenter
-            }
-            height: theme.barHeight
-            width: Math.min(centerContent.implicitWidth + theme.pillHPad * 2, theme.centerMaxWidth)
-            radius: theme.radiusLg
-            color: theme.panelBg
-            border.width: 1
-            border.color: theme.panelBorder
-            visible: centerContent.title.length > 0
+        // center - active window
+        Pill {
+            anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+            width:   Math.min(activeWin.implicitWidth + theme.pillHPad * 2, theme.centerMaxWidth)
+            visible: activeWin.title.length > 0
 
             ActiveWindow {
-                id: centerContent
+                id: activeWin
                 anchors {
                     verticalCenter: parent.verticalCenter
-                    left: parent.left
+                    left:  parent.left
                     right: parent.right
-                    leftMargin: theme.pillHPad
+                    leftMargin:  theme.pillHPad
                     rightMargin: theme.pillHPad
                 }
                 screen: root.screen
             }
         }
 
-        // ── Right pill — tray + volume + clock ───────────────────────────────
-        Rectangle {
-            anchors {
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-                rightMargin: theme.pillMargin
-            }
-            height: theme.barHeight
+        // right - tray + controls + clock
+        Pill {
+            anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: theme.pillMargin }
             implicitWidth: rightRow.implicitWidth + theme.pillHPad * 2
-            radius: theme.radiusLg
-            color: theme.panelBg
-            border.width: 1
-            border.color: theme.panelBorder
 
             RowLayout {
                 id: rightRow
-                anchors {
-                    fill: parent
-                    leftMargin: theme.pillHPad
-                    rightMargin: theme.pillHPad
-                }
+                anchors { fill: parent; leftMargin: theme.pillHPad; rightMargin: theme.pillHPad }
                 spacing: 12
 
-                Tray {
-                    panelWindow: root
-                }
-
-                Network {
-                    panelWindow: root
-                }
-
+                Tray      { panelWindow: root }
+                Network   { panelWindow: root }
                 Bluetooth {}
-
-                Volume {
-                    panelWindow: root
-                }
-
-                Clock {}
+                Volume    { panelWindow: root }
+                Clock     {}
             }
         }
     }

@@ -1,6 +1,6 @@
 import QtQuick
 
-// bluetooth stub. TODO: wire up bluez/dbus and add a popup
+// bluetooth stub - TODO: wire up bluez/dbus and add a popup
 Item {
     id: root
 

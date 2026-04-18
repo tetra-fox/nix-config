@@ -12,7 +12,7 @@ QtObject {
     readonly property int fontIcon:   15  // bar-level icons
     readonly property int fontIconLg: 16  // popup-level icons
 
-    // ── colours ───────────────────────────────────────────────────────────────
+    // ── colors ───────────────────────────────────────────────────────────────
     // Text
     readonly property color textActive:    "#ffffff"    // focused / selected
     readonly property color textPrimary:   "#dddddd"    // primary text
@@ -29,9 +29,17 @@ QtObject {
     readonly property color inactiveBg:   "#2e2e2e"    // inactive workspace pill, dividers
     readonly property color separatorBg:  "#252525"    // device-list separators
 
+    // Palette
+    readonly property color colorPink:   "#ff34a8"   // primary accent
+    readonly property color colorPurple: "#b06bff"   // secondary / aux accent
+    readonly property color colorBlue:   "#4facf7"   // upload, info
+    readonly property color colorGreen:  "#3dc97a"   // connected, success
+    readonly property color colorYellow: "#f0b429"   // caution, warning
+    readonly property color colorRed:    "#f05268"   // error, danger
+
     // Semantic
-    readonly property color accent: '#ff1ba4'  // focused workspace, active device
-    readonly property color danger: "#c9626b"  // muted audio, urgent workspace
+    readonly property color accent: colorPink
+    readonly property color danger: colorRed
 
     // ── shape ────────────────────────────────────────────────────────────────
     readonly property int radiusSm: 3  // workspace pill
@@ -48,7 +56,7 @@ QtObject {
     readonly property int trayIconSize: 15  // system tray icon size
 
     // ── animation ────────────────────────────────────────────────────────────
-    readonly property int animFast:   80   // snappy colour transitions
-    readonly property int animNormal: 120  // workspace / device colour transitions
+    readonly property int animFast:   80   // snappy color transitions
+    readonly property int animNormal: 120  // workspace / device color transitions
     readonly property int animSlow:   150  // height / layout transitions
 }

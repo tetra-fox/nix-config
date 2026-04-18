@@ -43,7 +43,6 @@
 
   systemd.user.sessionVariables = config.home.sessionVariables;
 
-  # XDG portal color-scheme — GTK4, Qt6, Firefox, Chromium query this
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [
@@ -62,6 +61,7 @@
     # system
     kdePackages.dolphin
     overskride
+    vulkan-tools # vulkaninfo, vkcube
 
     #dev
     rustup

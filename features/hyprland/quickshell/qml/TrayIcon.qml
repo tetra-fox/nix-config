@@ -2,21 +2,22 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import QtQuick
 
-// single tray icon. left-click activates, right-click opens a context menu
+// single tray icon - left-click activates, right-click opens context menu
 Item {
     id: root
 
     Theme { id: theme }
 
     required property SystemTrayItem item
-    property var panelWindow
+    property var  panelWindow
+    property real popupX: 0
 
-    implicitWidth: hitTarget.width
+    implicitWidth:  hitTarget.width
     implicitHeight: hitTarget.height
 
     Rectangle {
         id: hitTarget
-        width: theme.trayIconSize + theme.iconPadH
+        width:  theme.trayIconSize + theme.iconPadH
         height: theme.trayIconSize + theme.iconPadV
         radius: theme.radiusMd
 
@@ -30,10 +31,10 @@ Item {
 
         Image {
             anchors.centerIn: parent
-            width: theme.trayIconSize
+            width:  theme.trayIconSize
             height: theme.trayIconSize
             source: root.item.icon
-            sourceSize.width: width
+            sourceSize.width:  width
             sourceSize.height: height
             smooth: true
         }
@@ -45,10 +46,15 @@ Item {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
-                if (mouse.button === Qt.RightButton && root.item.hasMenu)
+                if (mouse.button === Qt.RightButton && root.item.hasMenu) {
+                    if (!popup.visible)
+                        root.popupX = root.panelWindow
+                            ? root.mapToItem(root.panelWindow.contentItem, 0, 0).x
+                            : 0
                     popup.visible = !popup.visible
-                else
+                } else {
                     root.item.activate()
+                }
             }
         }
     }
@@ -58,58 +64,34 @@ Item {
         menu: root.item.menu
     }
 
-    PopupWindow {
+    PopupPanel {
         id: popup
+        panelWindow:       root.panelWindow
+        alignRight:        false
+        horizontalMargin:  root.popupX
 
-        anchor.window: root.panelWindow
-        anchor.rect: {
-            if (!root.panelWindow) return Qt.rect(0, 0, 0, 0)
-            var pos = root.mapToItem(root.panelWindow.contentItem, 0, 0)
-            return Qt.rect(pos.x, root.panelWindow.implicitHeight, hitTarget.width, 0)
-        }
-
-        implicitWidth: 200
+        implicitWidth:  200
         implicitHeight: menuCol.implicitHeight + 8
 
-        grabFocus: true
-        visible: false
-        color: "transparent"
+        Column {
+            id: menuCol
+            anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 4; bottomMargin: 4 }
 
-        Rectangle {
-            anchors.fill: parent
-            radius: theme.radiusLg
-            color: theme.panelBg
-            border.width: 1
-            border.color: theme.panelBorder
-            clip: true
+            Repeater {
+                model: menuOpener.children
 
-            Column {
-                id: menuCol
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                    topMargin: 4
-                    bottomMargin: 4
-                }
-
-                Repeater {
-                    model: menuOpener.children
-
-                    delegate: PopupItem {
-                        required property var modelData
-                        width: menuCol.width
-                        text: modelData.text ?? ""
-                        enabled: modelData.enabled ?? true
-                        isSeparator: modelData.isSeparator
-                        onClicked: {
-                            modelData.triggered()
-                            popup.visible = false
-                        }
+                delegate: PopupItem {
+                    required property var modelData
+                    width: menuCol.width
+                    text:        modelData.text ?? ""
+                    enabled:     modelData.enabled ?? true
+                    isSeparator: modelData.isSeparator
+                    onClicked: {
+                        modelData.triggered()
+                        popup.visible = false
                     }
                 }
             }
         }
     }
-
 }

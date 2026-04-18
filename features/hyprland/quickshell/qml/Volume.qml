@@ -11,16 +11,11 @@ Item {
 
     property var panelWindow
 
-    implicitWidth: btn.implicitWidth
+    implicitWidth:  btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
-    PwObjectTracker {
-        objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
-    }
-
-    PwObjectTracker {
-        objects: [...sinks, ...sources]
-    }
+    PwObjectTracker { objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource] }
+    PwObjectTracker { objects: [...sinks, ...sources] }
 
     readonly property PwNode sink:   Pipewire.defaultAudioSink
     readonly property PwNode source: Pipewire.defaultAudioSource
@@ -46,73 +41,49 @@ Item {
         }
     }
 
-    PopupWindow {
+    PopupPanel {
         id: popup
+        panelWindow: root.panelWindow
 
-        anchor.window: root.panelWindow
-        anchor.rect.x: root.panelWindow ? root.panelWindow.width - implicitWidth - theme.pillMargin : 0
-        anchor.rect.y: root.panelWindow ? root.panelWindow.implicitHeight : 0
-
-        implicitWidth: 320
-        implicitHeight: column.implicitHeight + 24
+        implicitWidth:  320
+        implicitHeight: col.implicitHeight + theme.pillHPad * 2
 
         Behavior on implicitHeight {
             NumberAnimation { duration: theme.animSlow; easing.type: Easing.InOutQuad }
         }
 
-        grabFocus: true
-        visible: false
-        color: "transparent"
+        ColumnLayout {
+            id: col
+            anchors { fill: parent; margins: theme.pillHPad }
+            spacing: 20
 
-        Rectangle {
-            anchors.fill: parent
-            radius: theme.radiusLg
-            color: theme.panelBg
-            border.width: 1
-            border.color: theme.panelBorder
-            clip: true
+            AudioSection {
+                label: "Output"
+                icon:  root.muted ? "󰝟" : "󰕾"
+                muted: root.muted
+                volume: root.volume
+                devices: root.sinks
+                activeDevice: Pipewire.defaultAudioSink
+                Layout.fillWidth: true
+                onToggleMute:  root.sink.audio.muted = !root.muted
+                onSetVolume:   v => root.sink.audio.volume = v
+                onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
+            }
 
-            ColumnLayout {
-                id: column
-                anchors.fill: parent
-                anchors.margins: theme.pillHPad
-                spacing: 20
+            Separator { color: theme.inactiveBg }
 
-                AudioSection {
-                    label: "Output"
-                    icon: root.muted ? "󰝟" : "󰕾"
-                    muted: root.muted
-                    volume: root.volume
-                    devices: root.sinks
-                    activeDevice: Pipewire.defaultAudioSink
-                    Layout.fillWidth: true
-
-                    onToggleMute: root.sink.audio.muted = !root.muted
-                    onSetVolume: v => root.sink.audio.volume = v
-                    onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: theme.inactiveBg
-                }
-
-                AudioSection {
-                    label: "Input"
-                    icon: root.micMuted ? "󰍭" : "󰍬"
-                    muted: root.micMuted
-                    volume: root.micVolume
-                    devices: root.sources
-                    activeDevice: Pipewire.defaultAudioSource
-                    Layout.fillWidth: true
-
-                    onToggleMute: root.source.audio.muted = !root.micMuted
-                    onSetVolume: v => root.source.audio.volume = v
-                    onSelectDevice: d => Pipewire.preferredDefaultAudioSource = d
-                }
+            AudioSection {
+                label: "Input"
+                icon:  root.micMuted ? "󰍭" : "󰍬"
+                muted: root.micMuted
+                volume: root.micVolume
+                devices: root.sources
+                activeDevice: Pipewire.defaultAudioSource
+                Layout.fillWidth: true
+                onToggleMute:  root.source.audio.muted = !root.micMuted
+                onSetVolume:   v => root.source.audio.volume = v
+                onSelectDevice: d => Pipewire.preferredDefaultAudioSource = d
             }
         }
     }
-
 }
