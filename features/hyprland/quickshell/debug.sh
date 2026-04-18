@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Kill any existing instance first so we get a clean run
-quickshell kill --path "$(dirname "$0")/qml" 2>/dev/null
+QML_DIR="$(dirname "$0")/qml"
 
-exec quickshell \
-    --path "$(dirname "$0")/qml" \
+systemctl --user stop quickshell.service
+
+trap 'systemctl --user start quickshell.service' EXIT
+
+quickshell \
+    --path "$QML_DIR" \
     --log-times \
     -vv
