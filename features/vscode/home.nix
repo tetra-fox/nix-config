@@ -18,6 +18,12 @@ let
     version = "1.13.0";
     sha256 = "18rq8my8c58lsfpqn3p4xvl1llh0bgxqxy49dpnz4fczc8k2h87x";
   };
+  qml-format = pkgs.vscode-utils.extensionFromVscodeMarketplace {
+    publisher = "delgan";
+    name = "qml-format";
+    version = "1.1.0";
+    sha256 = "sha256-QOovj9loSWAgaBCwW3HBPD/Wr7GwVppSRcCJ4R5X/as=";
+  };
 in
 {
   programs.vscode = {
@@ -36,6 +42,7 @@ in
         # language support - qt (i know its not a language)
         qt-core
         qt-qml
+        qml-format
 
         # language support - rust
         rust-lang.rust-analyzer
@@ -81,6 +88,11 @@ in
 
         "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
         "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
+        "qmlFormat.command" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlformat";
+
+        "[qml]" = {
+          "editor.defaultFormatter" = "delgan.qml-format";
+        };
 
         "[markdown]" = {
           "editor.wordWrap" = "on";

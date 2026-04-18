@@ -10,7 +10,7 @@
 {
   imports = [
     features.cosmic.home
-    features.cursor.home
+    features.vscode.home
     features.fastfetch.home
     features.firefox.home
     features.fonts.home
