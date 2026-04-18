@@ -25,6 +25,7 @@ in
   ];
 
   home.packages = with pkgs; [
+    app2unit
     hyprpicker
     hyprshutdown
   ];
@@ -33,33 +34,11 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = true;
+    systemd.enable = false;
     package = null;
     portalPackage = null;
 
     settings = {
-      # environment variables
-      env = [
-        # nvidia
-        "LIBVA_DRIVER_NAME,nvidia"
-        "GBM_BACKEND,nvidia-drm"
-        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-
-        # gtk/wayland
-        "GDK_BACKEND,wayland,x11,*"
-        "CLUTTER_BACKEND,wayland"
-
-        # qt/wayland
-        "QT_AUTO_SCREEN_SCALE_FACTOR,1"
-        "QT_QPA_PLATFORM,wayland;xcb"
-        "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
-
-        # xdg
-        "XDG_CURRENT_DESKTOP,Hyprland"
-        "XDG_SESSION_TYPE,wayland"
-        "XDG_SESSION_DESKTOP,Hyprland"
-      ];
-
       # display configuration
       monitor = [
         "DP-1,preferred,0x0,1.666"
@@ -80,9 +59,8 @@ in
 
       # keybinds
       bind = [
-        "${main_mod},GRAVE,exec,${terminal}"
-        "${main_mod},E,exec,dolphin"
-        "${main_mod},SPACE,exec,${menu}"
+        "${main_mod},GRAVE,exec,app2unit --${terminal}"
+        "${main_mod},E,exec,app2unit --dolphin"
 
         "${main_mod},mouse:274,togglefloating"
 
@@ -97,7 +75,10 @@ in
         "${main_mod},mouse:273,resizewindow" # resize windows with RMB
       ];
 
+      # locked = fires even when an app has grabbed keyboard input (e.g. Minecraft via LWJGL)
       bindl = [
+        "${main_mod},SPACE,exec,${menu}"
+
         # media keys
         ",XF86AudioPlay,exec,playerctl play-pause"
         ",XF86AudioNext,exec,playerctl next"
@@ -134,9 +115,10 @@ in
 
         blur = {
           enabled = true;
-          size = 3;
-          passes = 2;
-          vibrancy = 0.3696;
+          size = 8;
+          passes = 1;
+          brightness = 1.0;
+          vibrancy = 1;
         };
       };
 
@@ -197,10 +179,9 @@ in
       ];
 
       exec-once = [
-        "systemctl --user enable --now hyprpolkitagent.service"
-        "telegram-desktop -startintray"
-        "discord --start-minimized"
-        "firefox"
+        "app2unit --Telegram -startintray"
+        "app2unit --discord --start-minimized"
+        "app2unit --firefox"
       ];
     };
   };

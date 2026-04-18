@@ -48,10 +48,6 @@ Item {
         implicitWidth:  320
         implicitHeight: col.implicitHeight + theme.pillHPad * 2
 
-        Behavior on implicitHeight {
-            NumberAnimation { duration: theme.animSlow; easing.type: Easing.InOutQuad }
-        }
-
         ColumnLayout {
             id: col
             anchors { fill: parent; margins: theme.pillHPad }

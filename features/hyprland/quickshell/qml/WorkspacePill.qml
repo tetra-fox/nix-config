@@ -13,8 +13,8 @@ Rectangle {
     readonly property bool focused: Hyprland.focusedWorkspace?.id === workspace.id
     readonly property bool urgent: workspace.lastIpcObject?.urgent ?? false
 
-    implicitWidth: label.implicitWidth + 15
-    implicitHeight: 19
+    implicitWidth: label.implicitWidth + theme.workspacePillHPad
+    implicitHeight: theme.workspacePillHeight
 
     radius: theme.radiusSm
 

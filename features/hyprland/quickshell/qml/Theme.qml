@@ -21,12 +21,12 @@ QtObject {
     readonly property color textInactive:  "#aaaaaa"    // inactive / dim
 
     // Surfaces
-    readonly property color panelBg:      "#e0161616"  // pill / popup background
-    readonly property color panelBorder:  "#3a3a3a"    // pill border
-    readonly property color hoverBg:      "#2a2a2a"    // hover state
-    readonly property color pressedBg:    "#1c1c1c"    // pressed state
-    readonly property color openBg:       "#2c2630"    // popup-open state (accent tint)
-    readonly property color inactiveBg:   "#2e2e2e"    // inactive workspace pill, dividers
+    readonly property color panelBg:      "#ce161616"  // pill / popup background
+    readonly property color panelBorder:  "#26ffffff"   // pill border — white overlay, adapts to surface color
+    readonly property color hoverBg:      "#26ffffff"  // hover state — white overlay, preserves transparency
+    readonly property color pressedBg:    "#40ffffff"  // pressed state — stronger white overlay
+    readonly property color openBg:       Qt.alpha(accent, 0.15)  // popup-open state — accent tint overlay
+    readonly property color inactiveBg:   "#e02e2e2e"  // inactive workspace pill, dividers
     readonly property color separatorBg:  "#252525"    // device-list separators
 
     // Palette
@@ -48,12 +48,20 @@ QtObject {
 
     // ── layout ───────────────────────────────────────────────────────────────
     readonly property int barHeight:    30  // pill height
+    readonly property int barVPad:      4   // vertical gap between pill and screen edge (bar = barHeight + barVPad*2)
     readonly property int centerMaxWidth: 400  // center pill width cap
     readonly property int pillHPad:     12  // horizontal padding inside a pill
-    readonly property int pillMargin:   8   // gap between pill and screen edge
+    readonly property int pillMargin:   8   // horizontal gap between pill and screen edge
     readonly property int iconPadH:     10  // horizontal padding around icon hit targets
     readonly property int iconPadV:     6   // vertical padding around icon hit targets
     readonly property int trayIconSize: 15  // system tray icon size
+    readonly property int workspacePillHeight:  19  // individual workspace pill height
+    readonly property int workspacePillHPad:    15  // total horizontal padding inside workspace pill
+    readonly property int workspacePillSpacing: 4   // gap between workspace pills
+    readonly property int traySpacing:          6   // gap between tray icons
+    readonly property int barSectionSpacing:    12  // gap between sections in the right bar pill
+    readonly property int popupItemHeight:      26  // menu row height in popups
+    readonly property int popupSeparatorHeight: 9   // separator row height in popups
 
     // ── animation ────────────────────────────────────────────────────────────
     readonly property int animFast:   80   // snappy color transitions

@@ -51,7 +51,7 @@
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
-        ExecStart = "${pkgs.telegram-desktop}/bin/telegram-desktop -startintray";
+        ExecStart = "${pkgs.telegram-desktop}/bin/Telegram -startintray";
       };
       Install = {
         WantedBy = [ "cosmic-session.target" ];
@@ -125,7 +125,7 @@
             output = "all";
             source = (
               cosmicLib.cosmic.mkRON "enum" {
-                value = [ "${shared.wallpapers}/milad-fakurian-drqGSDR-IUs-unsplash.jpg" ];
+                value = [ "${shared.wallpapers}/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg" ];
                 variant = "Path";
               }
             );

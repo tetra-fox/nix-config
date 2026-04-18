@@ -1,7 +1,7 @@
 { shared, ... }:
 
 let
-  wallpaper = toString (shared.wallpapers + "/milad-fakurian-drqGSDR-IUs-unsplash.jpg");
+  wallpaper = toString (shared.wallpapers + "/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg");
 in
 {
   programs.hyprlock = {

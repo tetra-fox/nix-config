@@ -202,9 +202,11 @@ ColumnLayout {
         // clip container - animates height so layout reflows properly
         Item {
             Layout.fillWidth: true
+            Layout.preferredHeight: _height
             clip: true
-            implicitHeight: deviceSelector.expanded ? deviceList.implicitHeight : 0
-            Behavior on implicitHeight {
+
+            property real _height: deviceSelector.expanded ? deviceList.implicitHeight : 0
+            Behavior on _height {
                 NumberAnimation { duration: theme.animSlow; easing.type: Easing.InOutQuad }
             }
 

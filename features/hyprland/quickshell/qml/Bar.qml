@@ -10,7 +10,7 @@ PanelWindow {
     Theme { id: theme }
 
     anchors { top: true; left: true; right: true }
-    implicitHeight: 38
+    implicitHeight: theme.barHeight + theme.barVPad * 2
     color: "transparent"
 
     WlrLayershell.namespace: "quickshell-bar"
@@ -63,7 +63,7 @@ PanelWindow {
             RowLayout {
                 id: rightRow
                 anchors { fill: parent; leftMargin: theme.pillHPad; rightMargin: theme.pillHPad }
-                spacing: 12
+                spacing: theme.barSectionSpacing
 
                 Tray      { panelWindow: root }
                 Network   { panelWindow: root }

@@ -1,7 +1,7 @@
 { shared, ... }:
 
 let
-  imagePath = toString (shared.wallpapers + "/milad-fakurian-drqGSDR-IUs-unsplash.jpg");
+  imagePath = toString (shared.wallpapers + "/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg");
 in
 {
   services.hyprpaper = {

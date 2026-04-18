@@ -6,7 +6,7 @@
     configs.default = ./qml;
     systemd = {
       enable = true;
-      target = "hyprland-session.target";
+      target = "wayland-session@hyprland.desktop.target";
     };
   };
 }

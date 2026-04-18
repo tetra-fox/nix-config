@@ -37,8 +37,28 @@
   };
 
   home.sessionVariables = {
-    NIXOS_OZONE_WL = "1"; # tell electron to use wayland.
+    # electron/ozone
+    NIXOS_OZONE_WL = "1";
+
+    # xdg session
+    XDG_SESSION_TYPE = "wayland";
+    XDG_CURRENT_DESKTOP = "Hyprland";
+    XDG_SESSION_DESKTOP = "Hyprland";
+
+    # gtk
+    GDK_BACKEND = "wayland,x11,*";
+    CLUTTER_BACKEND = "wayland";
+
+    # qt
+    QT_QPA_PLATFORM = "wayland;xcb";
     QT_QPA_PLATFORMTHEME = "qt6ct";
+    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
+    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+
+    # nvidia
+    LIBVA_DRIVER_NAME = "nvidia";
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
   };
 
   systemd.user.sessionVariables = config.home.sessionVariables;
@@ -55,6 +75,15 @@
     cider-2
     bitwig-studio
     tenacity
+
+    (prismlauncher.override {
+      jdks = [
+        javaPackages.compiler.temurin-bin.jre-25
+        javaPackages.compiler.temurin-bin.jre-21
+        javaPackages.compiler.temurin-bin.jre-17
+        javaPackages.compiler.temurin-bin.jre-8
+      ];
+    })
 
     (bottles.override { removeWarningPopup = true; })
 

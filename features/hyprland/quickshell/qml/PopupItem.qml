@@ -12,7 +12,7 @@ Item {
 
     signal clicked()
 
-    implicitHeight: isSeparator ? 9 : 26
+    implicitHeight: isSeparator ? theme.popupSeparatorHeight : theme.popupItemHeight
 
     Rectangle {
         visible: isSeparator

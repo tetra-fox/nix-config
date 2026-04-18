@@ -7,6 +7,8 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    Theme { id: theme }
+
     required property var screen
 
     implicitWidth:  row.implicitWidth
@@ -15,7 +17,7 @@ Item {
     RowLayout {
         id: row
         anchors.fill: parent
-        spacing: 4
+        spacing: theme.workspacePillSpacing
 
         Repeater {
             model: {

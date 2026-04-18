@@ -6,9 +6,11 @@ import QtQuick
 Row {
     id: root
 
+    Theme { id: theme }
+
     property var panelWindow
 
-    spacing: 6
+    spacing: theme.traySpacing
 
     Repeater {
         model: SystemTray.items
