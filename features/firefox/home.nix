@@ -1,4 +1,9 @@
-{ username, pkgs, ... }:
+{
+  username,
+  pkgs,
+  config,
+  ...
+}:
 let
   customExtensions = import ./custom-extensions.nix {
     inherit pkgs;
@@ -98,7 +103,7 @@ in
 
       bookmarks = {
         force = true;
-        settings = import ./bookmarks.nix;
+        settings = import ./bookmarks.nix { inherit config; };
       };
 
       extensions = {
