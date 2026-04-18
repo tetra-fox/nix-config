@@ -17,6 +17,7 @@
     features.hyprland.system
     features.nix.system
     features.nvidia.system
+    features.obs-studio.system
     features.onepassword.system
     # features.openrgb.system
     features.pipewire.system

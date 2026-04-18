@@ -18,6 +18,7 @@
     features.helix.home
     features.hyprland.home
     features.kitty.home
+    features.obs-studio.home
     # features.openrgb.home
     features.ssh.home
     features.starship.home
