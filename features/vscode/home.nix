@@ -29,7 +29,7 @@ in
   programs.vscode = {
     enable = true;
     package = pkgs.code-cursor;
-    mutableExtensionsDir = true;
+    mutableExtensionsDir = false;
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
         # looks
