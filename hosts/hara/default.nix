@@ -11,7 +11,6 @@
     quirks
     features.bluetooth.system
     features.cosmic.system
-    # features.ddcci-driver.system
     features.docker.system
     features.fstrim.system
     features.greetd.system
