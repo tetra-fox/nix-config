@@ -20,10 +20,6 @@ let
   };
 in
 {
-  home.packages = with pkgs; [
-    kdePackages.qtdeclarative # provides qmlls
-  ];
-
   programs.vscode = {
     enable = true;
     package = pkgs.code-cursor;
@@ -82,6 +78,9 @@ in
         "[json]" = {
           "editor.defaultFormatter" = "esbenp.prettier-vscode";
         };
+
+        "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
+        "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
 
         "[markdown]" = {
           "editor.wordWrap" = "on";
