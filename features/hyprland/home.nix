@@ -62,6 +62,7 @@ in
         "${main_mod},GRAVE,exec,app2unit --${terminal}"
         "${main_mod},E,exec,app2unit --dolphin"
 
+        "${main_mod},SPACE,exec,${menu}" # walker
         "${main_mod},mouse:274,togglefloating"
 
         "${main_mod},C,exec,hyprpicker -a"
@@ -75,10 +76,7 @@ in
         "${main_mod},mouse:273,resizewindow" # resize windows with RMB
       ];
 
-      # locked = fires even when an app has grabbed keyboard input (e.g. Minecraft via LWJGL)
       bindl = [
-        "${main_mod},SPACE,exec,${menu}"
-
         # media keys
         ",XF86AudioPlay,exec,playerctl play-pause"
         ",XF86AudioNext,exec,playerctl next"
@@ -171,6 +169,8 @@ in
       misc = {
         force_default_wallpaper = -1;
         disable_hyprland_logo = true;
+        focus_on_activate = true;
+        layers_hog_keyboard_focus = true;
       };
 
       layerrule = [
