@@ -58,6 +58,7 @@ Item {
 
     PopupWindow {
         id: popup
+        anchorItem: btn
         panelWindow: root.panelWindow
 
         contentWidth: 320

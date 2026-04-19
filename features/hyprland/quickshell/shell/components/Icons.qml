@@ -63,6 +63,14 @@ QtObject {
     readonly property string restart: "\uF053"
     readonly property string power: "\uF8C7"
 
+    // ── media ────────────────────────────────────────────────────────────────
+    readonly property string playArrow: "\uE037"
+    readonly property string pause: "\uE034"
+    readonly property string skipPrevious: "\uE045"
+    readonly property string skipNext: "\uE044"
+    readonly property string musicNote: "\uE405"
+    readonly property string stopCircle: "\uE4DB"
+
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"

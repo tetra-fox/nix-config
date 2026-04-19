@@ -14,13 +14,14 @@ PanelWindow { // qmllint disable uncreatable-type
 
     default property alias content: backdrop.data
     property var panelWindow
-    property bool alignRight: true
-    property real horizontalMargin: theme.pillMargin
+    property Item anchorItem: null  // widget/button to center the popup over
 
     // contentHeight must be set by the caller (e.g. implicitHeight: col.implicitHeight + padding)
     // The window itself is oversized so the compositor never needs to resize it, eliminating jitter.
     property real contentWidth: 200
     property real contentHeight: 200
+
+    property real _margin: theme.pillMargin
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-popup"
@@ -28,11 +29,9 @@ PanelWindow { // qmllint disable uncreatable-type
 
     screen: panelWindow?.screen
     anchors.top: true
-    anchors.right: alignRight
-    anchors.left: !alignRight
+    anchors.left: true
     margins.top: 0    // qmllint disable missing-property unqualified unresolved-type
-    margins.right: alignRight ? horizontalMargin : 0    // qmllint disable missing-property unqualified
-    margins.left: alignRight ? 0 : horizontalMargin    // qmllint disable missing-property unqualified
+    margins.left: _margin    // qmllint disable missing-property unqualified
     exclusiveZone: 0
 
     // Window is fixed at a generous max size — never resized by content changes.
@@ -42,8 +41,16 @@ PanelWindow { // qmllint disable uncreatable-type
     visible: false
     color: "transparent"
 
-    onVisibleChanged: if (visible)
-        openAnim.restart()
+    onVisibleChanged: {
+        if (!visible)
+            return;
+        if (root.anchorItem && root.panelWindow) {
+            const mapped = root.anchorItem.mapToItem(root.panelWindow.contentItem, 0, 0);
+            const screenW = root.screen?.width ?? 1920;
+            root._margin = Math.max(theme.pillMargin, Math.min(mapped.x, screenW - root.contentWidth - theme.pillMargin));
+        }
+        openAnim.restart();
+    }
 
     HyprlandFocusGrab {
         windows: root.panelWindow ? [root, root.panelWindow] : [root]

@@ -90,6 +90,7 @@ Item {
     PopupWindow {
         id: popup
         panelWindow: root.panelWindow
+        anchorItem: btn
 
         contentWidth: 320
         contentHeight: col.implicitHeight + theme.pillHPad * 2

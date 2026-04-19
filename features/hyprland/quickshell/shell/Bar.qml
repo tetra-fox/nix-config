@@ -99,6 +99,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 }
                 spacing: theme.barSectionSpacing
 
+                MediaPlayer {
+                    panelWindow: root
+                }
                 Tray {
                     panelWindow: root
                 }

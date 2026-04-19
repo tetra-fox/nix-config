@@ -16,7 +16,6 @@ Item {
 
     required property SystemTrayItem item
     property var panelWindow
-    property real popupX: 0
 
     implicitWidth: hitTarget.width
     implicitHeight: hitTarget.height
@@ -60,13 +59,10 @@ Item {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
-                if (mouse.button === Qt.RightButton && root.item.hasMenu) {
-                    if (!popup.visible)
-                        root.popupX = root.panelWindow ? root.mapToItem(root.panelWindow.contentItem, 0, 0).x : 0;
+                if (mouse.button === Qt.RightButton && root.item.hasMenu)
                     popup.visible = !popup.visible;
-                } else {
+                else
                     root.item.activate();
-                }
             }
         }
     }
@@ -78,14 +74,11 @@ Item {
 
     PopupWindow {
         id: popup
-        // qmllint disable missing-property
         panelWindow: root.panelWindow
-        alignRight: false
-        horizontalMargin: root.popupX
+        anchorItem: hitTarget
 
         contentWidth: 200
         contentHeight: menuCol.implicitHeight + 8
-        // qmllint enable missing-property
 
         Column {
             id: menuCol
