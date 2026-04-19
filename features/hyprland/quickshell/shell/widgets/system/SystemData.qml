@@ -75,13 +75,6 @@ Item {
 
     readonly property string _scriptsDir: Qt.resolvedUrl("../../scripts").toString().replace("file://", "")
 
-    FileView {
-        id: hostnameFile
-        path: "/etc/hostname"
-        preload: true
-        onLoaded: root.hostname = text().trim()
-    }
-
     BufferedProcess {
         id: staticProc
         command: ["sh", root._scriptsDir + "/static-info.sh"]
@@ -93,6 +86,9 @@ Item {
                 const key = line.substring(0, eq);
                 const val = line.substring(eq + 1);
                 switch (key) {
+                case "hostname":
+                    root.hostname = val;
+                    break;
                 case "kernel":
                     root.kernel = val;
                     break;
@@ -170,21 +166,9 @@ Item {
         }
     }
 
-    FileView {
-        id: tempFile
-        path: "/sys/class/thermal/thermal_zone0/temp"
-        onLoaded: root.cpuTemp = parseInt(text().trim()) || -1
-    }
-
-    FileView {
-        id: freqFile
-        path: "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
-        onLoaded: root.cpuFreq = parseInt(text().trim()) || -1
-    }
-
     BufferedProcess {
-        id: gpuDiskProc
-        command: ["sh", root._scriptsDir + "/poll-gpu-disk.sh"]
+        id: hwProc
+        command: ["sh", root._scriptsDir + "/poll-hw.sh"]
         onFinished: output => {
             for (const line of output.trim().split("\n")) {
                 const eq = line.indexOf("=");
@@ -193,6 +177,12 @@ Item {
                 const key = line.substring(0, eq);
                 const val = line.substring(eq + 1);
                 switch (key) {
+                case "cputemp":
+                    root.cpuTemp = parseInt(val);
+                    break;
+                case "cpufreq":
+                    root.cpuFreq = parseInt(val);
+                    break;
                 case "gpu":
                     root.gpuPercent = parseInt(val);
                     break;
@@ -223,10 +213,8 @@ Item {
     function pollAll() {
         loadavgFile.reload();
         meminfoFile.reload();
-        tempFile.reload();
-        freqFile.reload();
-        if (!gpuDiskProc.running)
-            gpuDiskProc.running = true;
+        if (!hwProc.running)
+            hwProc.running = true;
     }
 
     onActiveChanged: {

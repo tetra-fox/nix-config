@@ -14,7 +14,7 @@ ColumnLayout {
         id: icons
     }
 
-    required property var data
+    required property var sysData
 
     Layout.fillWidth: true
     spacing: 10
@@ -60,12 +60,12 @@ ColumnLayout {
 
     Header {
         icon: icons.dns
-        title: root.data.hostname || "..."
-        subtitle: root.data.user + " • uid " + root.data.uid
+        title: root.sysData.hostname || "..."
+        subtitle: root.sysData.user + " • uid " + root.sysData.uid
         badgeVisible: true
         badgeActive: true
         badgeColor: theme.colorGreen
-        badgeText: root.data.formatUptime(root.data.uptime)
+        badgeText: root.sysData.formatUptime(root.sysData.uptime)
     }
 
     Separator {}
@@ -77,25 +77,25 @@ ColumnLayout {
         SysInfoRow {
             icon: icons.deployedCode
             label: "OS"
-            value: root.data.os || "..."
+            value: root.sysData.os || "..."
         }
 
         SysInfoRow {
             icon: icons.code
             label: "Kernel"
-            value: root.data.kernel || "..."
+            value: root.sysData.kernel || "..."
         }
 
         SysInfoRow {
             icon: icons.terminal
             label: "Shell"
-            value: root.data.shell
+            value: root.sysData.shell
         }
 
         SysInfoRow {
             icon: icons.monitoring
             label: "Processes"
-            value: root.data.procs
+            value: root.sysData.procs
         }
     }
 }

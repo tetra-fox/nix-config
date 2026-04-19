@@ -14,7 +14,7 @@ ColumnLayout {
         id: icons
     }
 
-    required property var data
+    required property var sysData
 
     Layout.fillWidth: true
     spacing: 8
@@ -26,14 +26,14 @@ ColumnLayout {
 
         UsageBar {
             icon: icons.developerBoard
-            label: "CPU" + (root.data.cpuCores > 0 ? " • " + root.data.cpuCores + " cores" : "")
-            value: root.data.cpuCores > 0 ? root.data.load1 / root.data.cpuCores : 0
-            detail: root.data.load1.toFixed(2) + "  " + root.data.load5.toFixed(2) + "  " + root.data.load15.toFixed(2)
+            label: "CPU" + (root.sysData.cpuCores > 0 ? " • " + root.sysData.cpuCores + " cores" : "")
+            value: root.sysData.cpuCores > 0 ? root.sysData.load1 / root.sysData.cpuCores : 0
+            detail: root.sysData.load1.toFixed(2) + "  " + root.sysData.load5.toFixed(2) + "  " + root.sysData.load15.toFixed(2)
         }
 
         Text {
-            visible: root.data.cpuModel !== ""
-            text: root.data.cpuModel + (root.data.cpuFreq > 0 ? " • " + (root.data.cpuFreq / 1000000).toFixed(1) + " GHz" : "") + (root.data.cpuTemp > 0 ? " • " + Math.round(root.data.cpuTemp / 1000) + "°C" : "")
+            visible: root.sysData.cpuModel !== ""
+            text: root.sysData.cpuModel + (root.sysData.cpuFreq > 0 ? " • " + (root.sysData.cpuFreq / 1000000).toFixed(1) + " GHz" : "") + (root.sysData.cpuTemp > 0 ? " • " + Math.round(root.sysData.cpuTemp / 1000) + "°C" : "")
             color: theme.textInactive
             font.pixelSize: theme.fontXs
             font.family: theme.fontFamily
@@ -46,35 +46,35 @@ ColumnLayout {
     UsageBar {
         icon: icons.memory
         label: "Memory"
-        value: root.data.memTotal > 0 ? root.data.memUsed / root.data.memTotal : 0
-        detail: root.data.memTotal > 0 ? root.data.formatBytesCompact(root.data.memUsed, root.data.memTotal) : "..."
+        value: root.sysData.memTotal > 0 ? root.sysData.memUsed / root.sysData.memTotal : 0
+        detail: root.sysData.memTotal > 0 ? root.sysData.formatBytesCompact(root.sysData.memUsed, root.sysData.memTotal) : "..."
     }
 
     // Swap
     UsageBar {
-        visible: root.data.swapTotal > 0
+        visible: root.sysData.swapTotal > 0
         icon: icons.swapHoriz
         label: "Swap"
-        value: root.data.swapTotal > 0 ? root.data.swapUsed / root.data.swapTotal : 0
-        detail: root.data.formatBytesCompact(root.data.swapUsed, root.data.swapTotal)
+        value: root.sysData.swapTotal > 0 ? root.sysData.swapUsed / root.sysData.swapTotal : 0
+        detail: root.sysData.formatBytesCompact(root.sysData.swapUsed, root.sysData.swapTotal)
     }
 
     // GPU
     ColumnLayout {
-        visible: root.data.gpuPercent >= 0
+        visible: root.sysData.gpuPercent >= 0
         Layout.fillWidth: true
         spacing: 4
 
         UsageBar {
             icon: icons.desktopWindows
             label: "GPU"
-            value: root.data.gpuPercent / 100
-            detail: root.data.gpuPercent + "%"
+            value: root.sysData.gpuPercent / 100
+            detail: root.sysData.gpuPercent + "%"
         }
 
         Text {
-            visible: root.data.gpuModel !== "" || root.data.gpuTemp > 0
-            text: (root.data.gpuModel || "") + (root.data.gpuTemp > 0 ? (root.data.gpuModel !== "" ? " • " : "") + root.data.gpuTemp + "°C" : "")
+            visible: root.sysData.gpuModel !== "" || root.sysData.gpuTemp > 0
+            text: (root.sysData.gpuModel || "") + (root.sysData.gpuTemp > 0 ? (root.sysData.gpuModel !== "" ? " • " : "") + root.sysData.gpuTemp + "°C" : "")
             color: theme.textInactive
             font.pixelSize: theme.fontXs
             font.family: theme.fontFamily
@@ -85,18 +85,18 @@ ColumnLayout {
 
     // VRAM
     UsageBar {
-        visible: root.data.vramTotal > 0
+        visible: root.sysData.vramTotal > 0
         icon: icons.memory
         label: "VRAM"
-        value: root.data.vramTotal > 0 ? root.data.vramUsed / root.data.vramTotal : 0
-        detail: root.data.formatBytesCompact(root.data.vramUsed, root.data.vramTotal)
+        value: root.sysData.vramTotal > 0 ? root.sysData.vramUsed / root.sysData.vramTotal : 0
+        detail: root.sysData.formatBytesCompact(root.sysData.vramUsed, root.sysData.vramTotal)
     }
 
     // Disk
     UsageBar {
         icon: icons.hardDrive
         label: "Disk /"
-        value: root.data.diskTotal > 0 ? root.data.diskUsed / root.data.diskTotal : 0
-        detail: root.data.diskTotal > 0 ? root.data.formatBytesCompact(root.data.diskUsed, root.data.diskTotal) : "..."
+        value: root.sysData.diskTotal > 0 ? root.sysData.diskUsed / root.sysData.diskTotal : 0
+        detail: root.sysData.diskTotal > 0 ? root.sysData.formatBytesCompact(root.sysData.diskUsed, root.sysData.diskTotal) : "..."
     }
 }

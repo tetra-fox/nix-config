@@ -74,13 +74,13 @@ Item {
             spacing: 10
 
             SystemInfoSection {
-                data: sysData
+                sysData: sysData
             }
 
             Separator {}
 
             HardwareSection {
-                data: sysData
+                sysData: sysData
             }
 
             Separator {}
