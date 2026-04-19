@@ -168,7 +168,8 @@ Item {
                     running: root.scanning && !root.connectedDevice
                     interval: 600
                     repeat: true
-                    onRunningChanged: if (!running) parent.scanIndex = 0
+                    onRunningChanged: if (!running)
+                        parent.scanIndex = 0
                     onTriggered: parent.scanIndex = (parent.scanIndex + 1) % parent.scanFrames.length
                 }
             }
@@ -189,7 +190,8 @@ Item {
                     accentColor: theme.colorRed
                     onClicked: {
                         const dev = root.connectedDevice;
-                        if (!dev) return;
+                        if (!dev)
+                            return;
                         dev.disconnect();
                         dev.forget();
                     }

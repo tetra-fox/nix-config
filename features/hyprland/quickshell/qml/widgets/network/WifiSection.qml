@@ -246,7 +246,8 @@ Item {
                 running: Networking.wifiEnabled && !root.activeNetwork
                 interval: 400
                 repeat: true
-                onRunningChanged: if (!running) parent.scanIndex = 0
+                onRunningChanged: if (!running)
+                    parent.scanIndex = 0
                 onTriggered: parent.scanIndex = (parent.scanIndex + 1) % parent.scanFrames.length
             }
         }
@@ -267,7 +268,8 @@ Item {
                 accentColor: theme.colorRed
                 onClicked: {
                     const net = root.activeNetwork;
-                    if (!net) return;
+                    if (!net)
+                        return;
                     net.disconnect();
                     net.forget();
                 }

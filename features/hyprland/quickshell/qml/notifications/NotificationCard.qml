@@ -44,17 +44,31 @@ Item {
     SequentialAnimation {
         id: enterAnim
         ParallelAnimation {
-            PropertyAction { target: card; property: "scale"; value: 0.82 }
-            PropertyAction { target: slideY; property: "x"; value: 16 }
+            PropertyAction {
+                target: card
+                property: "scale"
+                value: 0.82
+            }
+            PropertyAction {
+                target: slideY
+                property: "x"
+                value: 16
+            }
         }
         ParallelAnimation {
             NumberAnimation {
-                target: card; property: "scale"; to: 1.0
-                duration: 280; easing.type: Easing.OutExpo
+                target: card
+                property: "scale"
+                to: 1.0
+                duration: 280
+                easing.type: Easing.OutExpo
             }
             NumberAnimation {
-                target: slideY; property: "x"; to: 0
-                duration: 200; easing.type: Easing.OutExpo
+                target: slideY
+                property: "x"
+                to: 0
+                duration: 200
+                easing.type: Easing.OutExpo
             }
         }
     }

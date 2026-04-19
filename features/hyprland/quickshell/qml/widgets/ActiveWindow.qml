@@ -24,7 +24,6 @@ Text {
         }
     }
 
-
     readonly property var toplevel: {
         const t = Hyprland.activeToplevel;
         if (t?.monitor === monitor)
@@ -35,10 +34,10 @@ Text {
     }
 
     readonly property var titleOverrides: ({
-        "discord": "Discord",
-        "1password": "1Password",
-        "org.telegram.desktop": "Telegram",
-    })
+            "discord": "Discord",
+            "1password": "1Password",
+            "org.telegram.desktop": "Telegram"
+        })
 
     readonly property string windowClass: toplevel?.lastIpcObject?.class ?? ""
     readonly property string title: titleOverrides[windowClass] ?? toplevel?.lastIpcObject?.initialTitle ?? windowClass
