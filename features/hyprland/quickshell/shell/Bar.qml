@@ -102,10 +102,10 @@ PanelWindow { // qmllint disable uncreatable-type
                 Tray {
                     panelWindow: root
                 }
-                Network {
+                Bluetooth {
                     panelWindow: root
                 }
-                Bluetooth {
+                Network {
                     panelWindow: root
                 }
                 Volume {
