@@ -68,7 +68,7 @@ in
         "${main_mod},C,exec,hyprpicker -a"
 
         "${main_mod},Q,killactive"
-        "${main_mod},M,exec,hyprshutdown"
+        "${main_mod}&L_SHIFT,ESCAPE,exec,hyprshutdown && uwsm stop"
       ];
 
       bindm = [
