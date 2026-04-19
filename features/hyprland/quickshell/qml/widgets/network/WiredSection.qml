@@ -67,7 +67,9 @@ Item {
         onFinished: output => {
             try {
                 root.ip = JSON.parse(output)?.[0]?.addr_info?.[0]?.local ?? "";
-            } catch (_) { root.ip = ""; }
+            } catch (_) {
+                root.ip = "";
+            }
         }
     }
 
@@ -132,8 +134,10 @@ Item {
         running: root.ifname !== ""
         repeat: true
         onTriggered: {
-            if (!linkProc.running) linkProc.running = true;
-            if (!addrProc.running) addrProc.running = true;
+            if (!linkProc.running)
+                linkProc.running = true;
+            if (!addrProc.running)
+                addrProc.running = true;
         }
     }
 
@@ -142,7 +146,11 @@ Item {
 
     ColumnLayout {
         id: col
-        anchors { top: parent.top; left: parent.left; right: parent.right }
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
         spacing: 5
 
         // toggle row
@@ -190,8 +198,14 @@ Item {
             spacing: 5
             visible: root.connected
 
-            InfoRow { label: "MAC"; value: root.mac || "-" }
-            InfoRow { label: "MTU"; value: root.mtu > 0 ? String(root.mtu) : "-" }
+            InfoRow {
+                label: "MAC"
+                value: root.mac || "-"
+            }
+            InfoRow {
+                label: "MTU"
+                value: root.mtu > 0 ? String(root.mtu) : "-"
+            }
         }
     }
 }

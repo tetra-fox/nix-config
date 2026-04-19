@@ -72,13 +72,15 @@ ColumnLayout {
 
             Canvas {
                 id: spinner
-                width: theme.fontSm; height: theme.fontSm
+                width: theme.fontSm
+                height: theme.fontSm
                 visible: root.loading
                 property real angle: 0
 
                 RotationAnimation on angle {
                     loops: Animation.Infinite
-                    from: 0; to: 360
+                    from: 0
+                    to: 360
                     duration: 800
                     running: spinner.visible
                 }

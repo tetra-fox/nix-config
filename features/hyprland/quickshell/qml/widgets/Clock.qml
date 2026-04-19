@@ -53,13 +53,19 @@ Item {
         radius: theme.radiusMd
 
         color: {
-            if (area.pressed) return theme.pressedBg;
-            if (popup.visible) return theme.openBg;
-            if (area.containsMouse) return theme.hoverBg;
+            if (area.pressed)
+                return theme.pressedBg;
+            if (popup.visible)
+                return theme.openBg;
+            if (area.containsMouse)
+                return theme.hoverBg;
             return theme.withAlpha(theme.hoverBg, 0);
         }
         Behavior on color {
-            ColorAnimation { duration: theme.animFast; easing.type: Easing.OutQuad }
+            ColorAnimation {
+                duration: theme.animFast
+                easing.type: Easing.OutQuad
+            }
         }
 
         Text {
@@ -83,7 +89,9 @@ Item {
     Process {
         id: proc
         running: false
-        onExited: (code, status) => { running = false; }
+        onExited: (code, status) => {
+            running = false;
+        }
     }
 
     function run(cmd) {

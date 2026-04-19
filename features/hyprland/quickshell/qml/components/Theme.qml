@@ -36,7 +36,9 @@ QtObject {
     readonly property color inactiveBg: "#e02e2e2e"  // inactive workspace pill, dividers
     readonly property color separatorBg: "#3a3a3a"    // device-list separators
     // ── color helpers ───────────────────────────────────────────────────────
-    function withAlpha(color, alpha) { return Qt.rgba(color.r, color.g, color.b, alpha); }
+    function withAlpha(color, alpha) {
+        return Qt.rgba(color.r, color.g, color.b, alpha);
+    }
     readonly property color black: "#000000"
     readonly property color white: "#ffffff"
 

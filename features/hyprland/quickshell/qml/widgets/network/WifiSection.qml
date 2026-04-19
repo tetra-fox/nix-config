@@ -28,9 +28,11 @@ Item {
     onScannerEnabledChanged: {
         if (!scannerEnabled) {
             root.showAllNetworks = false;
-            if (wifiDevice) wifiDevice.scannerEnabled = false;
+            if (wifiDevice)
+                wifiDevice.scannerEnabled = false;
         } else if (!activeNetwork) {
-            if (wifiDevice) wifiDevice.scannerEnabled = true;
+            if (wifiDevice)
+                wifiDevice.scannerEnabled = true;
         }
         if (scannerEnabled && activeNetwork && !iwLinkProc.running)
             iwLinkProc.running = true;
@@ -68,18 +70,29 @@ Item {
 
     function securityText(sec) {
         switch (sec) {
-        case WifiSecurityType.Sae: return "WPA3";
-        case WifiSecurityType.Wpa3SuiteB192: return "WPA3 Suite B";
-        case WifiSecurityType.Wpa2Psk: return "WPA2";
-        case WifiSecurityType.Wpa2Eap: return "WPA2 Enterprise";
-        case WifiSecurityType.WpaPsk: return "WPA";
-        case WifiSecurityType.WpaEap: return "WPA Enterprise";
+        case WifiSecurityType.Sae:
+            return "WPA3";
+        case WifiSecurityType.Wpa3SuiteB192:
+            return "WPA3 Suite B";
+        case WifiSecurityType.Wpa2Psk:
+            return "WPA2";
+        case WifiSecurityType.Wpa2Eap:
+            return "WPA2 Enterprise";
+        case WifiSecurityType.WpaPsk:
+            return "WPA";
+        case WifiSecurityType.WpaEap:
+            return "WPA Enterprise";
         case WifiSecurityType.StaticWep:
-        case WifiSecurityType.DynamicWep: return "WEP";
-        case WifiSecurityType.Leap: return "LEAP";
-        case WifiSecurityType.Owe: return "OWE";
-        case WifiSecurityType.Open: return "Open";
-        default: return "";
+        case WifiSecurityType.DynamicWep:
+            return "WEP";
+        case WifiSecurityType.Leap:
+            return "LEAP";
+        case WifiSecurityType.Owe:
+            return "OWE";
+        case WifiSecurityType.Open:
+            return "Open";
+        default:
+            return "";
         }
     }
 
@@ -148,7 +161,9 @@ Item {
 
     Connections {
         target: root.wifiDevice?.networks ?? null
-        function onCountChanged() { root.refreshNetworks(); }
+        function onCountChanged() {
+            root.refreshNetworks();
+        }
     }
 
     Timer {
@@ -195,8 +210,10 @@ Item {
         // header row
         Header {
             icon: {
-                if (!Networking.wifiEnabled) return icons.wifiOff;
-                if (root.activeNetwork) return icons.wifi;
+                if (!Networking.wifiEnabled)
+                    return icons.wifiOff;
+                if (root.activeNetwork)
+                    return icons.wifi;
                 return scanFrames[scanIndex];
             }
             iconColor: root.activeNetwork ? theme.textPrimary : theme.textInactive
@@ -206,16 +223,23 @@ Item {
             badgeActive: root.activeNetwork !== null
             badgePulsing: (root.connectingNetwork !== null || root.disconnectingNetwork !== null) && root.activeNetwork === null
             badgeColor: {
-                if (root.activeNetwork) return theme.colorGreen;
-                if (root.disconnectingNetwork) return theme.colorRed;
-                if (root.connectingNetwork) return theme.colorYellow;
+                if (root.activeNetwork)
+                    return theme.colorGreen;
+                if (root.disconnectingNetwork)
+                    return theme.colorRed;
+                if (root.connectingNetwork)
+                    return theme.colorYellow;
                 return theme.colorRed;
             }
             badgeText: {
-                if (root.activeNetwork) return "Connected";
-                if (root.disconnectingNetwork) return "Disconnecting";
-                if (root.connectingNetwork) return "Connecting";
-                if (Networking.wifiEnabled) return "Disconnected";
+                if (root.activeNetwork)
+                    return "Connected";
+                if (root.disconnectingNetwork)
+                    return "Disconnecting";
+                if (root.connectingNetwork)
+                    return "Connecting";
+                if (Networking.wifiEnabled)
+                    return "Disconnected";
                 return "";
             }
 
@@ -250,7 +274,9 @@ Item {
                 }
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
         }
 
         // details — visible when connected
@@ -259,15 +285,27 @@ Item {
             spacing: 5
             visible: root.activeNetwork !== null
 
-            InfoRow { label: "MAC"; value: (root.wifiDevice?.address ?? "-").toLowerCase() }
+            InfoRow {
+                label: "MAC"
+                value: (root.wifiDevice?.address ?? "-").toLowerCase()
+            }
             InfoRow {
                 label: "Security"
                 value: root.activeNetwork ? root.securityText(root.activeNetwork.security) : ""
                 visible: value !== ""
             }
-            InfoRow { label: "Signal"; value: root.iwSignal !== 0 ? root.iwSignal + " dBm" : "-" }
-            InfoRow { label: "Frequency"; value: root.formatFreq(root.iwFreq) }
-            InfoRow { label: "TX Rate"; value: root.iwTxBitrate || "-" }
+            InfoRow {
+                label: "Signal"
+                value: root.iwSignal !== 0 ? root.iwSignal + " dBm" : "-"
+            }
+            InfoRow {
+                label: "Frequency"
+                value: root.formatFreq(root.iwFreq)
+            }
+            InfoRow {
+                label: "TX Rate"
+                value: root.iwTxBitrate || "-"
+            }
         }
 
         // other networks — inside accordion when connected, flat list when not

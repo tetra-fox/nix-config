@@ -1,6 +1,5 @@
 import qs.components
 import qs.widgets
-import qs.dialogs
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland

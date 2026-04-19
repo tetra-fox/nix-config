@@ -21,14 +21,14 @@ Rectangle {
 
     radius: theme.radiusSm
     color: theme.withAlpha(root.accentColor, 0.18)
-    implicitWidth:  label.implicitWidth + 8
+    implicitWidth: label.implicitWidth + 8
     implicitHeight: label.implicitHeight + 4
 
     // ── ping ring ─────────────────────────────────────────────────────────────
     Rectangle {
         id: ringSource
         anchors.centerIn: parent
-        width:  parent.width  + 6
+        width: parent.width + 6
         height: parent.height + 6
         radius: parent.radius
         color: "transparent"
@@ -41,7 +41,7 @@ Rectangle {
         id: ring
         source: ringSource
         anchors.centerIn: parent
-        width:  ringSource.width
+        width: ringSource.width
         height: ringSource.height
         blurEnabled: true
         blurMax: 12
@@ -58,17 +58,59 @@ Rectangle {
                 ring.blur = 0;
                 ringSource.border.width = 0;
             }
-            PropertyAction { target: ring;       property: "scale";   value: 0.92 }
-            PropertyAction { target: ring;       property: "opacity"; value: 0.8 }
-            PropertyAction { target: ring;       property: "blur";    value: 1.0 }
-            PropertyAction { target: ringSource; property: "border.width"; value: 1.5 }
-            ParallelAnimation {
-                NumberAnimation { target: ring;       property: "scale";        to: 1.32; duration: 1200; easing.type: Easing.OutCubic }
-                NumberAnimation { target: ring;       property: "opacity";      to: 0;    duration: 1200; easing.type: Easing.OutCubic }
-                NumberAnimation { target: ring;       property: "blur";         to: 5.0;  duration: 1200; easing.type: Easing.OutCubic }
-                NumberAnimation { target: ringSource; property: "border.width"; to: 3.0;  duration: 1200; easing.type: Easing.OutCubic }
+            PropertyAction {
+                target: ring
+                property: "scale"
+                value: 0.92
             }
-            PauseAnimation { duration: 1400 }
+            PropertyAction {
+                target: ring
+                property: "opacity"
+                value: 0.8
+            }
+            PropertyAction {
+                target: ring
+                property: "blur"
+                value: 1.0
+            }
+            PropertyAction {
+                target: ringSource
+                property: "border.width"
+                value: 1.5
+            }
+            ParallelAnimation {
+                NumberAnimation {
+                    target: ring
+                    property: "scale"
+                    to: 1.32
+                    duration: 1200
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: ring
+                    property: "opacity"
+                    to: 0
+                    duration: 1200
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: ring
+                    property: "blur"
+                    to: 5.0
+                    duration: 1200
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: ringSource
+                    property: "border.width"
+                    to: 3.0
+                    duration: 1200
+                    easing.type: Easing.OutCubic
+                }
+            }
+            PauseAnimation {
+                duration: 1400
+            }
         }
     }
 
@@ -84,8 +126,16 @@ Rectangle {
         SequentialAnimation on color {
             loops: Animation.Infinite
             running: root.active
-            ColorAnimation { to: Qt.lighter(root.accentColor, 1.2); duration: 2000; easing.type: Easing.InOutSine }
-            ColorAnimation { to: root.accentColor;                   duration: 2000; easing.type: Easing.InOutSine }
+            ColorAnimation {
+                to: Qt.lighter(root.accentColor, 1.2)
+                duration: 2000
+                easing.type: Easing.InOutSine
+            }
+            ColorAnimation {
+                to: root.accentColor
+                duration: 2000
+                easing.type: Easing.InOutSine
+            }
         }
     }
 
@@ -94,9 +144,22 @@ Rectangle {
         id: pulseAnim
         loops: Animation.Infinite
         running: root.pulsing
-        NumberAnimation { target: root; property: "opacity"; to: 0.4; duration: 300; easing.type: Easing.InOutSine }
-        NumberAnimation { target: root; property: "opacity"; to: 1.0; duration: 300; easing.type: Easing.InOutSine }
+        NumberAnimation {
+            target: root
+            property: "opacity"
+            to: 0.4
+            duration: 300
+            easing.type: Easing.InOutSine
+        }
+        NumberAnimation {
+            target: root
+            property: "opacity"
+            to: 1.0
+            duration: 300
+            easing.type: Easing.InOutSine
+        }
     }
 
-    onPulsingChanged: if (!pulsing) opacity = 1.0
+    onPulsingChanged: if (!pulsing)
+        opacity = 1.0
 }

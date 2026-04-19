@@ -86,12 +86,32 @@ PanelWindow { // qmllint disable uncreatable-type
     SequentialAnimation {
         id: openAnim
         ParallelAnimation {
-            PropertyAction { target: panel; property: "scale"; value: 0.88 }
-            PropertyAction { target: panel; property: "opacity"; value: 0 }
+            PropertyAction {
+                target: panel
+                property: "scale"
+                value: 0.88
+            }
+            PropertyAction {
+                target: panel
+                property: "opacity"
+                value: 0
+            }
         }
         ParallelAnimation {
-            NumberAnimation { target: panel; property: "scale"; to: 1.0; duration: 260; easing.type: Easing.OutExpo }
-            NumberAnimation { target: panel; property: "opacity"; to: 1.0; duration: 180; easing.type: Easing.OutQuad }
+            NumberAnimation {
+                target: panel
+                property: "scale"
+                to: 1.0
+                duration: 260
+                easing.type: Easing.OutExpo
+            }
+            NumberAnimation {
+                target: panel
+                property: "opacity"
+                to: 1.0
+                duration: 180
+                easing.type: Easing.OutQuad
+            }
         }
     }
 
@@ -127,7 +147,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 font.weight: Font.Medium
             }
 
-            Item { implicitHeight: theme.iconPadV }
+            Item {
+                implicitHeight: theme.iconPadV
+            }
 
             // body
             Text {
@@ -139,7 +161,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 wrapMode: Text.WordWrap
             }
 
-            Item { implicitHeight: theme.pillHPad }
+            Item {
+                implicitHeight: theme.pillHPad
+            }
 
             // buttons
             RowLayout {
@@ -154,7 +178,12 @@ PanelWindow { // qmllint disable uncreatable-type
                     color: cancelArea.pressed ? theme.pressedBg : cancelArea.containsMouse ? theme.hoverBg : theme.withAlpha(theme.hoverBg, 0)
                     border.width: 1
                     border.color: theme.panelBorder
-                    Behavior on color { ColorAnimation { duration: theme.animFast; easing.type: Easing.OutQuad } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: theme.animFast
+                            easing.type: Easing.OutQuad
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -182,7 +211,12 @@ PanelWindow { // qmllint disable uncreatable-type
                     implicitHeight: theme.popupItemHeight
                     radius: theme.radiusMd
                     color: confirmArea.pressed ? Qt.darker(theme.danger, 1.3) : confirmArea.containsMouse ? theme.danger : theme.withAlpha(theme.danger, 0.75)
-                    Behavior on color { ColorAnimation { duration: theme.animFast; easing.type: Easing.OutQuad } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: theme.animFast
+                            easing.type: Easing.OutQuad
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent

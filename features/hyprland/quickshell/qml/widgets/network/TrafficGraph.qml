@@ -62,16 +62,22 @@ Item {
     }
 
     function formatBytes(b) {
-        if (b >= 1073741824) return (b / 1073741824).toFixed(2) + " GB";
-        if (b >= 1048576)    return (b / 1048576).toFixed(2) + " MB";
-        if (b >= 1024)       return (b / 1024).toFixed(1) + " KB";
+        if (b >= 1073741824)
+            return (b / 1073741824).toFixed(2) + " GB";
+        if (b >= 1048576)
+            return (b / 1048576).toFixed(2) + " MB";
+        if (b >= 1024)
+            return (b / 1024).toFixed(1) + " KB";
         return Math.round(b) + " B";
     }
 
     function formatRate(bps) {
-        if (bps < 0)         return "";
-        if (bps >= 1048576)  return (bps / 1048576).toFixed(2) + " MB/s";
-        if (bps >= 1024)     return (bps / 1024).toFixed(1) + " KB/s";
+        if (bps < 0)
+            return "";
+        if (bps >= 1048576)
+            return (bps / 1048576).toFixed(2) + " MB/s";
+        if (bps >= 1024)
+            return (bps / 1024).toFixed(1) + " KB/s";
         return Math.round(bps) + " B/s";
     }
 
@@ -94,14 +100,20 @@ Item {
                     root.txRate = (tx - root._prevTx) / dt;
 
                     const s = root.samples.slice();
-                    s.push({ rx: Math.max(0, root.rxRate), tx: Math.max(0, root.txRate) });
-                    while (s.length > 21) s.shift();
+                    s.push({
+                        rx: Math.max(0, root.rxRate),
+                        tx: Math.max(0, root.txRate)
+                    });
+                    while (s.length > 21)
+                        s.shift();
                     root.samples = s;
 
                     let mx = 1;
-                    for (const p of s) mx = Math.max(mx, p.rx, p.tx);
+                    for (const p of s)
+                        mx = Math.max(mx, p.rx, p.tx);
                     root.displayMax = mx;
-                    if (!root._scaleInited) root._scaleInited = true;
+                    if (!root._scaleInited)
+                        root._scaleInited = true;
                     scrollAnim.restart();
                 }
 
@@ -125,7 +137,11 @@ Item {
     // ── UI ────────────────────────────────────────────────────────────────────
     ColumnLayout {
         id: col
-        anchors { top: parent.top; left: parent.left; right: parent.right }
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
         spacing: 5
 
         Text {
@@ -148,7 +164,9 @@ Item {
 
                 Connections {
                     target: root
-                    function onGraphRepaintNeeded() { graph.requestPaint(); }
+                    function onGraphRepaintNeeded() {
+                        graph.requestPaint();
+                    }
                 }
 
                 onPaint: {
@@ -174,20 +192,20 @@ Item {
                     const maxVal = Math.max(1, root.displayMax);
 
                     const pts = samples.map((s, i) => ({
-                        x:  (n <= maxSamples) ? (i * step) : (i * step - root.scrollPhase * step),
-                        ry: height - pad - (s.rx / maxVal) * availH,
-                        ty: height - pad - (s.tx / maxVal) * availH
-                    }));
+                                x: (n <= maxSamples) ? (i * step) : (i * step - root.scrollPhase * step),
+                                ry: height - pad - (s.rx / maxVal) * availH,
+                                ty: height - pad - (s.tx / maxVal) * availH
+                            }));
 
                     function fill(yKey, color) {
                         ctx.beginPath();
                         ctx.moveTo(pts[0].x, height);
                         ctx.lineTo(pts[0].x, pts[0][yKey]);
                         for (let i = 1; i < n; i++) {
-                            const cx = (pts[i-1].x + pts[i].x) / 2;
-                            ctx.bezierCurveTo(cx, pts[i-1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
+                            const cx = (pts[i - 1].x + pts[i].x) / 2;
+                            ctx.bezierCurveTo(cx, pts[i - 1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
                         }
-                        ctx.lineTo(pts[n-1].x, height);
+                        ctx.lineTo(pts[n - 1].x, height);
                         ctx.closePath();
                         ctx.fillStyle = color;
                         ctx.fill();
@@ -197,8 +215,8 @@ Item {
                         ctx.beginPath();
                         ctx.moveTo(pts[0].x, pts[0][yKey]);
                         for (let i = 1; i < n; i++) {
-                            const cx = (pts[i-1].x + pts[i].x) / 2;
-                            ctx.bezierCurveTo(cx, pts[i-1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
+                            const cx = (pts[i - 1].x + pts[i].x) / 2;
+                            ctx.bezierCurveTo(cx, pts[i - 1][yKey], cx, pts[i][yKey], pts[i].x, pts[i][yKey]);
                         }
                         ctx.strokeStyle = color;
                         ctx.lineWidth = 1.5;
@@ -218,23 +236,57 @@ Item {
 
             RowLayout {
                 spacing: 6
-                Text { text: "↓"; color: theme.colorPink; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                Text {
+                    text: "↓"
+                    color: theme.colorPink
+                    font.pixelSize: theme.fontSm
+                    font.family: theme.fontFamily
+                }
                 ColumnLayout {
                     spacing: 1
-                    Text { text: root.formatBytes(root.rxBytes); color: theme.textPrimary; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
-                    Text { visible: root.rxRate >= 0; text: root.rxRate >= 0 ? root.formatRate(root.rxRate) : ""; color: theme.textSecondary; font.pixelSize: theme.fontXs; font.family: theme.fontFamily }
+                    Text {
+                        text: root.formatBytes(root.rxBytes)
+                        color: theme.textPrimary
+                        font.pixelSize: theme.fontSm
+                        font.family: theme.fontFamily
+                    }
+                    Text {
+                        visible: root.rxRate >= 0
+                        text: root.rxRate >= 0 ? root.formatRate(root.rxRate) : ""
+                        color: theme.textSecondary
+                        font.pixelSize: theme.fontXs
+                        font.family: theme.fontFamily
+                    }
                 }
             }
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
 
             RowLayout {
                 spacing: 6
-                Text { text: "↑"; color: theme.colorBlue; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
+                Text {
+                    text: "↑"
+                    color: theme.colorBlue
+                    font.pixelSize: theme.fontSm
+                    font.family: theme.fontFamily
+                }
                 ColumnLayout {
                     spacing: 1
-                    Text { text: root.formatBytes(root.txBytes); color: theme.textPrimary; font.pixelSize: theme.fontSm; font.family: theme.fontFamily }
-                    Text { visible: root.txRate >= 0; text: root.txRate >= 0 ? root.formatRate(root.txRate) : ""; color: theme.textSecondary; font.pixelSize: theme.fontXs; font.family: theme.fontFamily }
+                    Text {
+                        text: root.formatBytes(root.txBytes)
+                        color: theme.textPrimary
+                        font.pixelSize: theme.fontSm
+                        font.family: theme.fontFamily
+                    }
+                    Text {
+                        visible: root.txRate >= 0
+                        text: root.txRate >= 0 ? root.formatRate(root.txRate) : ""
+                        color: theme.textSecondary
+                        font.pixelSize: theme.fontXs
+                        font.family: theme.fontFamily
+                    }
                 }
             }
         }

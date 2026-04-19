@@ -29,11 +29,16 @@ Item {
     visible: root.hasAny
 
     function fetch() {
-        if (root.ifname === "") return;
-        if (!routeProc.running) routeProc.running = true;
-        if (!addrProc.running) addrProc.running = true;
-        if (!addr6Proc.running) addr6Proc.running = true;
-        if (!dnsProc.running) dnsProc.running = true;
+        if (root.ifname === "")
+            return;
+        if (!routeProc.running)
+            routeProc.running = true;
+        if (!addrProc.running)
+            addrProc.running = true;
+        if (!addr6Proc.running)
+            addr6Proc.running = true;
+        if (!dnsProc.running)
+            dnsProc.running = true;
     }
 
     function clear() {
@@ -49,7 +54,8 @@ Item {
     }
 
     function prefixToMask(p) {
-        if (p <= 0 || p > 32) return "-";
+        if (p <= 0 || p > 32)
+            return "-";
         const m = (-1 << (32 - p)) >>> 0;
         return `${(m >>> 24) & 0xFF}.${(m >>> 16) & 0xFF}.${(m >>> 8) & 0xFF}.${m & 0xFF}`;
     }
@@ -59,8 +65,11 @@ Item {
         id: routeProc
         command: ["ip", "-j", "-4", "route", "show", "default", "dev", root.ifname]
         onFinished: output => {
-            try { root.gateway = JSON.parse(output)?.[0]?.gateway ?? ""; }
-            catch (_) { root.gateway = ""; }
+            try {
+                root.gateway = JSON.parse(output)?.[0]?.gateway ?? "";
+            } catch (_) {
+                root.gateway = "";
+            }
         }
     }
 
@@ -72,7 +81,10 @@ Item {
                 const r = JSON.parse(output)?.[0];
                 root.ip = r?.addr_info?.[0]?.local ?? "";
                 root.prefix = r?.addr_info?.[0]?.prefixlen ?? 0;
-            } catch (_) { root.ip = ""; root.prefix = 0; }
+            } catch (_) {
+                root.ip = "";
+                root.prefix = 0;
+            }
         }
     }
 
@@ -84,7 +96,9 @@ Item {
                 const addrs = JSON.parse(output)?.[0]?.addr_info ?? [];
                 const global = addrs.find(a => a.scope === "global");
                 root.ip6 = global ? `${global.local}/${global.prefixlen}` : "";
-            } catch (_) { root.ip6 = ""; }
+            } catch (_) {
+                root.ip6 = "";
+            }
         }
     }
 
@@ -107,7 +121,11 @@ Item {
     // ── UI ────────────────────────────────────────────────────────────────────
     ColumnLayout {
         id: col
-        anchors { top: parent.top; left: parent.left; right: parent.right }
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
         spacing: 10
 
         ColumnLayout {
@@ -121,13 +139,30 @@ Item {
                 font.pixelSize: theme.fontSm
                 font.family: theme.fontFamily
             }
-            InfoRow { label: "Address"; value: root.ip + "/" + root.prefix; elide: Text.ElideRight }
-            InfoRow { label: "Subnet";  value: root.prefix > 0 ? root.prefixToMask(root.prefix) : "-" }
-            InfoRow { label: "Gateway"; value: root.gateway || "-" }
-            InfoRow { label: "DNS";     value: root.dns; elide: Text.ElideRight; visible: root.dns !== "" }
+            InfoRow {
+                label: "Address"
+                value: root.ip + "/" + root.prefix
+                elide: Text.ElideRight
+            }
+            InfoRow {
+                label: "Subnet"
+                value: root.prefix > 0 ? root.prefixToMask(root.prefix) : "-"
+            }
+            InfoRow {
+                label: "Gateway"
+                value: root.gateway || "-"
+            }
+            InfoRow {
+                label: "DNS"
+                value: root.dns
+                elide: Text.ElideRight
+                visible: root.dns !== ""
+            }
         }
 
-        Separator { visible: root.hasIpv4 && root.hasIpv6 }
+        Separator {
+            visible: root.hasIpv4 && root.hasIpv6
+        }
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -140,7 +175,11 @@ Item {
                 font.pixelSize: theme.fontSm
                 font.family: theme.fontFamily
             }
-            InfoRow { label: "Address"; value: root.ip6; elide: Text.ElideRight }
+            InfoRow {
+                label: "Address"
+                value: root.ip6
+                elide: Text.ElideRight
+            }
         }
     }
 }

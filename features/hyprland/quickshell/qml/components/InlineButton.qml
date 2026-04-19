@@ -20,8 +20,16 @@ Rectangle {
     color: area.pressed ? theme.pressedBg : area.containsMouse ? theme.hoverBg : theme.withAlpha(theme.white, 0.06)
     border.width: 1
     border.color: area.containsMouse ? theme.withAlpha(root.accentColor, 0.3) : theme.withAlpha(theme.white, 0.06)
-    Behavior on color { ColorAnimation { duration: theme.animFast } }
-    Behavior on border.color { ColorAnimation { duration: theme.animFast } }
+    Behavior on color {
+        ColorAnimation {
+            duration: theme.animFast
+        }
+    }
+    Behavior on border.color {
+        ColorAnimation {
+            duration: theme.animFast
+        }
+    }
 
     Text {
         id: label
@@ -30,7 +38,11 @@ Rectangle {
         color: area.containsMouse ? root.accentColor : theme.textInactive
         font.pixelSize: theme.fontXs
         font.family: theme.fontFamily
-        Behavior on color { ColorAnimation { duration: theme.animFast } }
+        Behavior on color {
+            ColorAnimation {
+                duration: theme.animFast
+            }
+        }
     }
 
     MouseArea {

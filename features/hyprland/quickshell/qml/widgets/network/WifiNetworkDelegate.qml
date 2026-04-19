@@ -32,7 +32,13 @@ Rectangle {
 
     Rectangle {
         id: sep
-        anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: 8; rightMargin: 8 }
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            leftMargin: 8
+            rightMargin: 8
+        }
         height: 1
         color: theme.separatorBg
         visible: root.showSeparator
@@ -149,7 +155,8 @@ Rectangle {
 
         TextInput {
             id: passInput
-            onVisibleChanged: if (visible) forceActiveFocus()
+            onVisibleChanged: if (visible)
+                forceActiveFocus()
             anchors {
                 fill: parent
                 leftMargin: 8
@@ -180,5 +187,4 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
     }
-
 }

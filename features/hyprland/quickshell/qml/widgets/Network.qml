@@ -71,7 +71,9 @@ Item {
                 Layout.fillWidth: true
             }
 
-            Separator { visible: connDetails.visible }
+            Separator {
+                visible: connDetails.visible
+            }
 
             ConnectionDetails {
                 id: connDetails
@@ -80,7 +82,9 @@ Item {
                 polling: popup.visible && root.anyConnected
             }
 
-            Separator { visible: traffic.visible }
+            Separator {
+                visible: traffic.visible
+            }
 
             TrafficGraph {
                 id: traffic

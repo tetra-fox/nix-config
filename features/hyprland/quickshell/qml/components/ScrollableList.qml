@@ -51,22 +51,42 @@ Item {
 
     // fade edges
     Rectangle {
-        anchors { left: parent.left; right: parent.right; top: parent.top }
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+        }
         height: 24
         visible: flick.contentY > 1
         gradient: Gradient {
-            GradientStop { position: 0.0; color: theme.panelBg }
-            GradientStop { position: 1.0; color: "transparent" }
+            GradientStop {
+                position: 0.0
+                color: theme.panelBg
+            }
+            GradientStop {
+                position: 1.0
+                color: "transparent"
+            }
         }
     }
 
     Rectangle {
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
         height: 24
         visible: flick.contentY < flick.contentHeight - flick.height - 1
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 1.0; color: theme.panelBg }
+            GradientStop {
+                position: 0.0
+                color: "transparent"
+            }
+            GradientStop {
+                position: 1.0
+                color: theme.panelBg
+            }
         }
     }
 }

@@ -199,27 +199,27 @@ ColumnLayout {
         label: root.label
         value: root.activeDevice ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name) : "-"
 
-            ScrollableList {
-                width: parent.width
-                maxItems: 5
+        ScrollableList {
+            width: parent.width
+            maxItems: 5
 
-                Repeater {
-                    model: root.devices
+            Repeater {
+                model: root.devices
 
-                    delegate: SelectableItem {
-                        required property PwNode modelData
-                        required property int index
+                delegate: SelectableItem {
+                    required property PwNode modelData
+                    required property int index
 
-                        width: parent.width
-                        text: modelData.description || modelData.nickname || modelData.name
-                        active: modelData === root.activeDevice
-                        showSeparator: index > 0
-                        onSelected: {
-                            root.selectDevice(modelData);
-                            deviceSelector.expanded = false;
-                        }
+                    width: parent.width
+                    text: modelData.description || modelData.nickname || modelData.name
+                    active: modelData === root.activeDevice
+                    showSeparator: index > 0
+                    onSelected: {
+                        root.selectDevice(modelData);
+                        deviceSelector.expanded = false;
                     }
                 }
             }
+        }
     }
 }
