@@ -26,21 +26,17 @@ Item {
 
     property bool scannerEnabled: false
     onScannerEnabledChanged: {
-        if (!scannerEnabled) {
+        if (!scannerEnabled)
             root.showAllNetworks = false;
-            if (wifiDevice)
-                wifiDevice.scannerEnabled = false;
-        } else if (!activeNetwork) {
-            if (wifiDevice)
-                wifiDevice.scannerEnabled = true;
-        }
         if (scannerEnabled && activeNetwork && !iwLinkProc.running)
             iwLinkProc.running = true;
     }
 
-    onShowAllNetworksChanged: {
-        if (wifiDevice)
-            wifiDevice.scannerEnabled = showAllNetworks || (scannerEnabled && !activeNetwork);
+    Binding {
+        when: root.wifiDevice !== null
+        target: root.wifiDevice
+        property: "scannerEnabled"
+        value: root.scannerEnabled && (root.showAllNetworks || !root.activeNetwork)
     }
 
     // keep showAllNetworks in sync with the accordion
@@ -243,7 +239,7 @@ Item {
                 return "";
             }
 
-            property var scanFrames: [icons.wifiSignal1, icons.wifiSignal2, icons.wifiSignal3, icons.wifi, icons.wifiSignal3, icons.wifiSignal2]
+            property var scanFrames: [icons.wifiSignal0, icons.wifiSignal1, icons.wifiSignal2, icons.wifiSignal3, icons.wifi, icons.wifiSignal3, icons.wifiSignal2, icons.wifiSignal1]
             property int scanIndex: 0
 
             Timer {

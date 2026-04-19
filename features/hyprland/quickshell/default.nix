@@ -11,6 +11,7 @@
   };
 
   home.packages = with pkgs; [
+    blueman
     iproute2
     iw
     material-symbols

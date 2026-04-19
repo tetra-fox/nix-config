@@ -1,6 +1,7 @@
 import QtQuick
 
 // Material Symbols Rounded codepoint aliases.
+// https://github.com/google/material-design-icons/blob/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints
 // Usage: Icons { id: icons } then icons.wifi, icons.volumeUp, etc.
 QtObject {
 
@@ -21,7 +22,9 @@ QtObject {
 
     // ── bluetooth ────────────────────────────────────────────────────────────
     readonly property string bluetooth: "\uE1A7"
+    readonly property string bluetoothConnected: "\uE1A8"
     readonly property string bluetoothDisabled: "\uE1A9"
+    readonly property string bluetoothSearching: "\uE1AA"
 
     // ── audio ────────────────────────────────────────────────────────────────
     readonly property string volumeUp: "\uE050"

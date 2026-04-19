@@ -105,7 +105,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 Network {
                     panelWindow: root
                 }
-                Bluetooth {}
+                Bluetooth {
+                    panelWindow: root
+                }
                 Volume {
                     panelWindow: root
                 }

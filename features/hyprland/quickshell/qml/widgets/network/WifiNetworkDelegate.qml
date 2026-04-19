@@ -26,7 +26,7 @@ Rectangle {
     signal connectWithPsk(string psk)
     signal expandToggled
 
-    implicitHeight: (root.showSeparator ? sep.height : 0) + rowContent.height + (root.expanded ? pskField.implicitHeight + 12 : 0)
+    implicitHeight: (root.showSeparator ? sep.height : 0) + rowContent.height + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
     radius: theme.radiusMd
     color: rowArea.pressed ? theme.pressedBg : rowArea.containsMouse ? theme.hoverBg : "transparent"
 
@@ -54,8 +54,22 @@ Rectangle {
         target: root.network
         function onConnectionFailed(reason) {
             root.psk = "";
-            root.expandToggled();
+            if (!root.network.known)
+                root.expandToggled();
         }
+    }
+
+    MouseArea {
+        id: rowArea
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+        }
+        height: rowContent.height
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.clicked()
     }
 
     RowLayout {
@@ -93,31 +107,11 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        // forget saved credentials
-        Text {
-            text: icons.delete_
-            color: forgetArea.pressed ? theme.colorRed : theme.textInactive
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
-            visible: rowArea.containsMouse && root.network.known && !root.network.connected
-
-            MouseArea {
-                id: forgetArea
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.forgotNetwork()
-            }
-        }
-
-        // disconnect icon — only for connected network
-        Text {
-            text: icons.close
-            color: theme.colorRed
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
-            visible: root.network.connected && rowArea.containsMouse
+        InlineButton {
+            text: "Forget"
+            accentColor: theme.colorRed
+            visible: root.network.known && !root.network.connected
+            onClicked: root.forgotNetwork()
         }
     }
 
@@ -175,16 +169,27 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        id: rowArea
+    RowLayout {
+        id: pskActions
         anchors {
-            left: parent.left
             right: parent.right
-            top: parent.top
+            top: pskField.bottom
+            topMargin: 6
+            rightMargin: 6
         }
-        height: rowContent.height
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        visible: root.expanded
+        spacing: 6
+
+        InlineButton {
+            text: "Cancel"
+            onClicked: root.expandToggled()
+        }
+
+        InlineButton {
+            text: "Connect"
+            accentColor: theme.colorGreen
+            onClicked: root.connectWithPsk(root.psk)
+        }
     }
+
 }
