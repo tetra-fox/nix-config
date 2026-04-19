@@ -288,11 +288,11 @@ Item {
 
             InfoRow {
                 label: "MAC"
-                value: (root.wifiDevice?.address ?? "-").toLowerCase()
+                value: (root.wifiDevice?.address ?? "-").toLowerCase() // qmllint disable missing-property
             }
             InfoRow {
                 label: "Security"
-                value: root.activeNetwork ? root.securityText(root.activeNetwork.security) : ""
+                value: root.activeNetwork ? root.securityText(root.activeNetwork.security) : "" // qmllint disable unresolved-type
                 visible: value !== ""
             }
             InfoRow {

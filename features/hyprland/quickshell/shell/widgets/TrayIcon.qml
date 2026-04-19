@@ -78,12 +78,14 @@ Item {
 
     PopupWindow {
         id: popup
+        // qmllint disable missing-property
         panelWindow: root.panelWindow
         alignRight: false
         horizontalMargin: root.popupX
 
         contentWidth: 200
         contentHeight: menuCol.implicitHeight + 8
+        // qmllint enable missing-property
 
         Column {
             id: menuCol

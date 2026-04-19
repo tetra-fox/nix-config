@@ -250,10 +250,10 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                visible: root.notif.actions.length > 0
+                visible: root.notif.actions.length > 0 // qmllint disable unresolved-type
 
                 Repeater {
-                    model: root.notif.actions
+                    model: root.notif.actions // qmllint disable unresolved-type
 
                     Rectangle {
                         id: actionBtn

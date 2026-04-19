@@ -27,7 +27,7 @@ ScrollableList {
         onTriggered: {
             for (let i = 0; i < repeater.count; i++) {
                 const item = repeater.itemAt(i);
-                if (item && item.network === root.expandedNetwork) {
+                if (item && item.network === root.expandedNetwork) { // qmllint disable missing-property
                     root.ensureVisible(item);
                     break;
                 }

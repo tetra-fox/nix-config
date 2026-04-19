@@ -22,7 +22,7 @@ Item {
     implicitHeight: btn.implicitHeight
 
     // ── adapter ──────────────────────────────────────────────────────────────
-    readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter
+    readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter // qmllint disable unresolved-type
     readonly property bool powered: adapter?.enabled ?? false
     readonly property bool scanning: adapter?.discovering ?? false
 
@@ -35,7 +35,7 @@ Item {
     readonly property var connectingDevice: {
         if (!adapter)
             return null;
-        return adapter.devices.values.find(d => d.state === BluetoothDeviceState.Connecting) ?? null;
+        return adapter.devices.values.find(d => d.state === BluetoothDeviceState.Connecting) ?? null; // qmllint disable unresolved-type
     }
 
     function refreshDevices() {
@@ -45,14 +45,14 @@ Item {
             root.availableDevices = [];
             return;
         }
-        const all = root.adapter.devices.values.slice();
+        const all = root.adapter.devices.values.slice(); // qmllint disable unresolved-type
         root.connectedDevices = all.filter(d => d.connected).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         root.pairedDevices = all.filter(d => d.paired && !d.connected).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         root.availableDevices = all.filter(d => !d.paired && !d.connected && (d.name || d.deviceName)).sort((a, b) => (a.name || a.deviceName || "").localeCompare(b.name || b.deviceName || ""));
     }
 
     Connections {
-        target: root.adapter?.devices ?? null
+        target: root.adapter?.devices ?? null // qmllint disable unresolved-type
         function onCountChanged() {
             root.refreshDevices();
         }

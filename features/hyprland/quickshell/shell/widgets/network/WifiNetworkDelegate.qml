@@ -46,7 +46,7 @@ Item {
             top: parent.top
         }
         icon: {
-            const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown;
+            const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown; // qmllint disable unresolved-type
             const sig = root.network.signalStrength;
             if (secured)
                 return sig >= 0.75 ? icons.wifiLocked : sig >= 0.5 ? icons.wifiSignal3Locked : sig >= 0.3 ? icons.wifiSignal2Locked : sig >= 0.1 ? icons.wifiSignal1Locked : icons.wifiSignal0Locked;
