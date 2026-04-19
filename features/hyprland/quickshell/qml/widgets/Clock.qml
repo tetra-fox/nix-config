@@ -1,6 +1,6 @@
 import qs.components
 import qs.dialogs
-import Quickshell.Io
+import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -86,17 +86,8 @@ Item {
         }
     }
 
-    Process {
-        id: proc
-        running: false
-        onExited: (code, status) => {
-            running = false;
-        }
-    }
-
     function run(cmd) {
-        proc.command = ["sh", "-c", cmd];
-        proc.running = true;
+        Hyprland.dispatch(cmd);
     }
 
     function confirm(title, body, actionLabel, cmd) {
@@ -126,17 +117,17 @@ Item {
             MenuItem {
                 text: "  Log out"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Log out?", "Are you sure you want to log out?", "Log out", "hyprctl dispatch exec hyprshutdown -p 'uwsm stop'")
+                onClicked: root.confirm("Log out?", "Are you sure you want to log out?", "Log out", "exec hyprshutdown -p 'uwsm stop'")
             }
             MenuItem {
                 text: "  Reboot"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Reboot?", "Are you sure you want to reboot?", "Reboot", "hyprctl dispatch exec hyprshutdown -p 'uwsm stop; systemctl reboot'")
+                onClicked: root.confirm("Reboot?", "Are you sure you want to reboot?", "Reboot", "exec hyprshutdown -p 'uwsm stop; systemctl reboot'")
             }
             MenuItem {
                 text: "  Shut down"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Shut down?", "Are you sure you want to shut down?", "Shut down", "hyprctl dispatch exec hyprshutdown -p 'uwsm stop; systemctl poweroff'")
+                onClicked: root.confirm("Shut down?", "Are you sure you want to shut down?", "Shut down", "exec hyprshutdown -p 'uwsm stop; systemctl poweroff'")
             }
         }
     }
