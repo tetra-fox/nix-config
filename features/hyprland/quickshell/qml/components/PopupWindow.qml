@@ -17,8 +17,14 @@ PanelWindow { // qmllint disable uncreatable-type
     property bool alignRight: true
     property real horizontalMargin: theme.pillMargin
 
+    // contentHeight must be set by the caller (e.g. implicitHeight: col.implicitHeight + padding)
+    // The window itself is oversized so the compositor never needs to resize it, eliminating jitter.
+    property real contentWidth: 200
+    property real contentHeight: 200
+
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-popup"
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     screen: panelWindow?.screen
     anchors.top: true
@@ -28,6 +34,10 @@ PanelWindow { // qmllint disable uncreatable-type
     margins.right: alignRight ? horizontalMargin : 0    // qmllint disable missing-property unqualified
     margins.left: alignRight ? 0 : horizontalMargin    // qmllint disable missing-property unqualified
     exclusiveZone: 0
+
+    // Window is fixed at a generous max size — never resized by content changes.
+    implicitWidth: contentWidth
+    implicitHeight: (screen?.height ?? 1080) * 0.9
 
     visible: false
     color: "transparent"
@@ -76,7 +86,19 @@ PanelWindow { // qmllint disable uncreatable-type
 
     Rectangle {
         id: backdrop
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        opacity: Hyprland.focusedMonitor === Hyprland.monitorFor(root.screen) ? 1.0 : theme.barInactiveOpacity
+        Behavior on opacity {
+            NumberAnimation {
+                duration: theme.animSlow
+                easing.type: Easing.InOutQuad
+            }
+        }
+        // Height driven by content, not window size. Animated here so the
+        // compositor surface never resizes — only this rectangle grows/shrinks.
+        height: root.contentHeight
         radius: theme.radiusLg
         color: theme.panelBg
         border.width: 1

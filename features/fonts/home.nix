@@ -10,7 +10,6 @@ in
     cascadia-code
     nerd-fonts.caskaydia-cove
     apple.sf-pro
-    apple.sf-pro-nerd # for waybar
     apple.ny
     apple-color-emoji-linux
     inter

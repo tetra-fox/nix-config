@@ -31,7 +31,7 @@ Item {
                 return theme.openBg;
             if (area.containsMouse)
                 return theme.hoverBg;
-            return "transparent";
+            return theme.withAlpha(theme.hoverBg, 0);
         }
         Behavior on color {
             ColorAnimation {
@@ -46,7 +46,8 @@ Item {
             text: root.icon
             color: root.iconColor
             font.pixelSize: root.iconSize
-            font.family: theme.fontFamily
+            font.family: theme.fontIconFamily
+            font.variableAxes: theme.fontIconAxes
             Behavior on color {
                 ColorAnimation {
                     duration: theme.animFast

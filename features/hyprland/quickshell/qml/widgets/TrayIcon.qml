@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+import qs.components
+
 import Quickshell
 import Quickshell.Services.SystemTray
 import QtQuick
@@ -74,14 +76,14 @@ Item {
         menu: root.item.menu    // qmllint disable unresolved-type
     }
 
-    PopupPanel {
+    PopupWindow {
         id: popup
         panelWindow: root.panelWindow
         alignRight: false
         horizontalMargin: root.popupX
 
-        implicitWidth: 200
-        implicitHeight: menuCol.implicitHeight + 8
+        contentWidth: 200
+        contentHeight: menuCol.implicitHeight + 8
 
         Column {
             id: menuCol
@@ -96,7 +98,7 @@ Item {
             Repeater {
                 model: menuOpener.children
 
-                delegate: PopupItem {
+                delegate: MenuItem {
                     id: menuItem
                     required property var modelData
                     width: menuCol.width

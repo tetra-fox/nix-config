@@ -1,3 +1,4 @@
+import qs.components
 import QtQuick
 
 // bluetooth stub - TODO: wire up bluez/dbus and add a popup
@@ -7,6 +8,9 @@ Item {
     Theme {
         id: theme
     }
+    Icons {
+        id: icons
+    }
 
     readonly property bool enabled: true
     readonly property bool connected: false
@@ -14,8 +18,8 @@ Item {
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
-    BarButton {
+    IconButton {
         id: btn
-        icon: !root.enabled ? "󰂲" : root.connected ? "󰂱" : "󰂯"
+        icon: !root.enabled ? icons.bluetoothDisabled : icons.bluetooth
     }
 }

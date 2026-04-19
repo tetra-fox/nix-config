@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+import qs.components
+
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Controls
@@ -11,6 +13,9 @@ ColumnLayout {
 
     Theme {
         id: theme
+    }
+    Icons {
+        id: icons
     }
 
     property string label
@@ -31,7 +36,7 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 12
 
-        BarButton {
+        IconButton {
             icon: root.icon
             iconColor: root.muted ? theme.danger : theme.textPrimary
             iconSize: theme.fontIconLg
@@ -106,7 +111,7 @@ ColumnLayout {
                         width: 2
                         height: 10
                         radius: 1
-                        color: Qt.rgba(1, 1, 1, 0.18)
+                        color: theme.withAlpha(theme.white, 0.18)
                     }
                 }
             }
@@ -130,7 +135,7 @@ ColumnLayout {
                     width: 28
                     height: 28
                     radius: 14
-                    color: Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, sl.pressed ? 0.22 : sl.hovered ? 0.15 : 0)
+                    color: theme.withAlpha(theme.accent, sl.pressed ? 0.22 : sl.hovered ? 0.15 : 0)
                     scale: sl.pressed ? 1.7 : sl.hovered ? 1.2 : 0.7
                     Behavior on color {
                         ColorAnimation {
@@ -188,175 +193,33 @@ ColumnLayout {
     }
 
     // collapsible device selector
-    ColumnLayout {
+    Accordion {
         id: deviceSelector
         Layout.fillWidth: true
-        spacing: 2
+        label: root.label
+        value: root.activeDevice ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name) : "-"
 
-        property bool expanded: false
-
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: headerRow.implicitHeight + 14
-            radius: theme.radiusMd
-            color: headerHover.containsMouse ? theme.hoverBg : "transparent"
-            Behavior on color {
-                ColorAnimation {
-                    duration: theme.animFast
-                }
-            }
-
-            RowLayout {
-                id: headerRow
-                anchors {
-                    fill: parent
-                    leftMargin: 8
-                    rightMargin: 8
-                    topMargin: 6
-                    bottomMargin: 6
-                }
-                spacing: 8
-
-                Text {
-                    text: root.label
-                    color: theme.textLabel
-                    font.pixelSize: theme.fontSm
-                    font.family: theme.fontFamily
-                }
-                Text {
-                    Layout.fillWidth: true
-                    text: root.activeDevice ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name) : "-"
-                    color: theme.textPrimary
-                    font.pixelSize: theme.fontMd
-                    font.family: theme.fontFamily
-                    elide: Text.ElideRight
-                }
-                Text {
-                    text: deviceSelector.expanded ? "▴" : "▾"
-                    color: headerHover.containsMouse ? theme.textActive : theme.textLabel
-                    font.pixelSize: theme.fontXs
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: theme.animFast
-                        }
-                    }
-                }
-            }
-
-            MouseArea {
-                id: headerHover
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: deviceSelector.expanded = !deviceSelector.expanded
-            }
-        }
-
-        // clip container - animates height so layout reflows properly
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: _height
-            clip: true
-
-            property real _height: deviceSelector.expanded ? deviceList.implicitHeight : 0
-            Behavior on _height {
-                NumberAnimation {
-                    duration: theme.animSlow
-                    easing.type: Easing.InOutQuad
-                }
-            }
-
-            Column {
-                id: deviceList
+            ScrollableList {
                 width: parent.width
+                maxItems: 5
 
                 Repeater {
                     model: root.devices
 
-                    delegate: Item {
-                        id: deviceItem
-
+                    delegate: SelectableItem {
                         required property PwNode modelData
                         required property int index
 
                         width: parent.width
-                        implicitHeight: deviceRow.implicitHeight + 16
-
-                        Rectangle {
-                            anchors {
-                                top: parent.top
-                                left: parent.left
-                                right: parent.right
-                                leftMargin: 8
-                                rightMargin: 8
-                            }
-                            height: 1
-                            color: theme.separatorBg
-                            visible: deviceItem.index > 0
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: theme.radiusMd
-                            color: deviceItemHover.containsMouse ? theme.hoverBg : "transparent"
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: theme.animFast
-                                }
-                            }
-                        }
-
-                        RowLayout {
-                            id: deviceRow
-                            anchors {
-                                fill: parent
-                                leftMargin: 12
-                                rightMargin: 8
-                                topMargin: 6
-                                bottomMargin: 6
-                            }
-                            spacing: 10
-
-                            Text {
-                                text: "󰓃"
-                                font.pixelSize: theme.fontMd
-                                font.family: theme.fontFamily
-                                color: deviceItem.modelData === root.activeDevice ? theme.accent : "transparent"
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: theme.animNormal
-                                    }
-                                }
-                            }
-
-                            MarqueeText {
-                                Layout.fillWidth: true
-                                text: deviceItem.modelData.description || deviceItem.modelData.nickname || deviceItem.modelData.name
-                                color: deviceItem.modelData === root.activeDevice ? theme.textActive : theme.textInactive
-                                hovered: deviceItemHover.containsMouse
-                                font.pixelSize: theme.fontMd
-                                font.family: theme.fontFamily
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: theme.animNormal
-                                    }
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            id: deviceItemHover
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectDevice(deviceItem.modelData);
-                                deviceSelector.expanded = false;
-                            }
+                        text: modelData.description || modelData.nickname || modelData.name
+                        active: modelData === root.activeDevice
+                        showSeparator: index > 0
+                        onSelected: {
+                            root.selectDevice(modelData);
+                            deviceSelector.expanded = false;
                         }
                     }
                 }
             }
-        }
     }
 }

@@ -1,3 +1,4 @@
+import qs.components
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
@@ -7,6 +8,9 @@ Item {
 
     Theme {
         id: theme
+    }
+    Icons {
+        id: icons
     }
 
     property var panelWindow
@@ -32,9 +36,9 @@ Item {
     readonly property list<PwNode> sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio !== null)
     readonly property list<PwNode> sources: Pipewire.nodes.values.filter(n => !n.isSink && !n.isStream && n.audio !== null)
 
-    BarButton {
+    IconButton {
         id: btn
-        icon: root.muted ? "󰝟" : root.volume >= 0.5 ? "󰕾" : root.volume >= 0.01 ? "󰖀" : "󰕿"
+        icon: root.muted ? icons.volumeOff : root.volume >= 0.5 ? icons.volumeUp : root.volume >= 0.01 ? icons.volumeDown : icons.volumeMute
         iconColor: root.muted ? theme.danger : theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {
@@ -45,12 +49,12 @@ Item {
         }
     }
 
-    PopupPanel {
+    PopupWindow {
         id: popup
         panelWindow: root.panelWindow
 
-        implicitWidth: 320
-        implicitHeight: col.implicitHeight + theme.pillHPad * 2
+        contentWidth: 320
+        contentHeight: col.implicitHeight + theme.pillHPad * 2
 
         ColumnLayout {
             id: col
@@ -58,11 +62,11 @@ Item {
                 fill: parent
                 margins: theme.pillHPad
             }
-            spacing: 20
+            spacing: 10
 
             AudioSection {
                 label: "Output"
-                icon: root.muted ? "󰝟" : "󰕾"
+                icon: root.muted ? icons.volumeOff : icons.volumeUp
                 muted: root.muted
                 volume: root.volume
                 devices: root.sinks
@@ -73,13 +77,11 @@ Item {
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
             }
 
-            Separator {
-                color: theme.inactiveBg
-            }
+            Separator {}
 
             AudioSection {
                 label: "Input"
-                icon: root.micMuted ? "󰍭" : "󰍬"
+                icon: root.micMuted ? icons.micOff : icons.mic
                 muted: root.micMuted
                 volume: root.micVolume
                 devices: root.sources

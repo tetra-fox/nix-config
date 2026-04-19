@@ -11,6 +11,7 @@ Item {
 
     property alias text: innerText.text
     property alias elide: innerText.elide
+    property bool disabled: false
 
     implicitWidth: innerText.implicitWidth
     implicitHeight: innerText.implicitHeight
@@ -23,7 +24,7 @@ Item {
 
         font.pixelSize: theme.fontSm
         font.family: theme.fontFamily
-        color: area.containsMouse ? theme.accent : theme.textPrimary
+        color: root.disabled ? theme.textInactive : area.containsMouse ? theme.accent : theme.textPrimary
         Behavior on color {
             ColorAnimation {
                 duration: theme.animFast
@@ -42,10 +43,10 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: innerText.width
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: !root.disabled
+        cursorShape: root.disabled ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: {
-            if (innerText.text && innerText.text !== "-") {
+            if (!root.disabled && innerText.text) {
                 clip.running = true;
                 floatAnim.restart();
             }

@@ -1,16 +1,23 @@
 import QtQuick
 
-// design tokens. do Theme { id: theme } wherever you need them
+// design tokens — instantiate as Theme { id: theme } wherever needed
 QtObject {
 
     // ── typography ───────────────────────────────────────────────────────────
     readonly property string fontFamily: "monospace"
+    readonly property string fontIconFamily: "Material Symbols Rounded"
+    readonly property var fontIconAxes: ({
+            "wght": 500,
+            "FILL": 1,
+            "GRAD": 100,
+            "opsz": 20
+        })
     readonly property int fontXs: 10  // chevrons, tiny indicators
     readonly property int fontSm: 11  // section labels
     readonly property int fontMd: 12  // body text, workspace numbers
     readonly property int fontBase: 13  // clock
-    readonly property int fontIcon: 15  // bar-level icons
-    readonly property int fontIconLg: 16  // popup-level icons
+    readonly property int fontIcon: 16  // bar-level icons
+    readonly property int fontIconLg: 18  // popup-level icons
 
     // ── colors ───────────────────────────────────────────────────────────────
     // Text
@@ -25,9 +32,13 @@ QtObject {
     readonly property color panelBorder: "#26ffffff"   // pill border — white overlay, adapts to surface color
     readonly property color hoverBg: "#26ffffff"  // hover state — white overlay, preserves transparency
     readonly property color pressedBg: "#40ffffff"  // pressed state — stronger white overlay
-    readonly property color openBg: Qt.alpha(accent, 0.15)  // popup-open state — accent tint overlay
+    readonly property color openBg: withAlpha(accent, 0.15)  // popup-open state — accent tint overlay
     readonly property color inactiveBg: "#e02e2e2e"  // inactive workspace pill, dividers
-    readonly property color separatorBg: "#252525"    // device-list separators
+    readonly property color separatorBg: "#3a3a3a"    // device-list separators
+    // ── color helpers ───────────────────────────────────────────────────────
+    function withAlpha(color, alpha) { return Qt.rgba(color.r, color.g, color.b, alpha); }
+    readonly property color black: "#000000"
+    readonly property color white: "#ffffff"
 
     // Palette
     readonly property color colorPink: "#ff34a8"   // primary accent
@@ -47,6 +58,7 @@ QtObject {
     readonly property int radiusLg: 6  // panels and popups
 
     // ── layout ───────────────────────────────────────────────────────────────
+    readonly property real barInactiveOpacity: 0.3  // unfocused monitor bar opacity
     readonly property int barHeight: 30  // pill height
     readonly property int barVPad: 4   // vertical gap between pill and screen edge (bar = barHeight + barVPad*2)
     readonly property int centerMaxWidth: 400  // center pill width cap
@@ -60,7 +72,7 @@ QtObject {
     readonly property int workspacePillSpacing: 4   // gap between workspace pills
     readonly property int traySpacing: 6   // gap between tray icons
     readonly property int barSectionSpacing: 12  // gap between sections in the right bar pill
-    readonly property int popupItemHeight: 26  // menu row height in popups
+    readonly property int popupItemHeight: 32  // menu row height in popups
     readonly property int popupSeparatorHeight: 9   // separator row height in popups
 
     // ── animation ────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   programs.quickshell = {
     enable = true;
@@ -9,4 +9,12 @@
       target = "wayland-session@hyprland.desktop.target";
     };
   };
+
+  home.packages = with pkgs; [
+    iproute2
+    iw
+    material-symbols
+    networkmanager
+    wl-clipboard
+  ];
 }

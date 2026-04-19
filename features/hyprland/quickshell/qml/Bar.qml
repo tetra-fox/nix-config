@@ -1,3 +1,6 @@
+import qs.components
+import qs.widgets
+import qs.dialogs
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -26,7 +29,7 @@ PanelWindow { // qmllint disable uncreatable-type
     Item {
         anchors.fill: parent
 
-        opacity: Hyprland.focusedWorkspace?.monitor === root.monitor ? 1.0 : 0.3
+        opacity: Hyprland.focusedMonitor === root.monitor ? 1.0 : theme.barInactiveOpacity
         Behavior on opacity {
             NumberAnimation {
                 duration: theme.animSlow
@@ -107,7 +110,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 Volume {
                     panelWindow: root
                 }
-                Clock {}
+                Clock {
+                    panelWindow: root
+                }
             }
         }
     }

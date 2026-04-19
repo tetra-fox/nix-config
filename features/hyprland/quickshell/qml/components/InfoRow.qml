@@ -12,6 +12,7 @@ RowLayout {
     property string label
     property alias value: val.text
     property alias elide: val.elide
+    property bool disabled: val.text === "-"
 
     Layout.fillWidth: true
 
@@ -23,8 +24,9 @@ RowLayout {
         Layout.minimumWidth: 64
     }
 
-    CopyText {
+    CopyableText {
         id: val
         Layout.fillWidth: true
+        disabled: root.disabled
     }
 }
