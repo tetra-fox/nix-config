@@ -10,6 +10,10 @@
     };
   };
 
+  home.activation.restartQuickshell = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+    ${pkgs.systemd}/bin/systemctl --user restart quickshell.service 2>/dev/null || true
+  '';
+
   home.packages = with pkgs; [
     blueman
     iproute2
