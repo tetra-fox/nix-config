@@ -175,6 +175,7 @@ in
       layerrule = [
         "match:namespace quickshell-bar,blur on,ignore_alpha 0.1"
         "match:namespace quickshell-popup,blur on,ignore_alpha 0.1"
+        "match:namespace quickshell-notifications,blur on,ignore_alpha 0.1"
       ];
 
       exec-once = [

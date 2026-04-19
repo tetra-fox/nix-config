@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 
 // design tokens — instantiate as Theme { id: theme } wherever needed
 QtObject {
@@ -58,6 +59,9 @@ QtObject {
     readonly property int radiusSm: 3  // workspace pill
     readonly property int radiusMd: 4  // button hit targets
     readonly property int radiusLg: 6  // panels and popups
+
+    // ── screen ───────────────────────────────────────────────────────────────
+    readonly property var primaryScreen: Quickshell.screens[0]
 
     // ── layout ───────────────────────────────────────────────────────────────
     readonly property real barInactiveOpacity: 0.3  // unfocused monitor bar opacity

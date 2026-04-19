@@ -31,6 +31,13 @@ QtObject {
     readonly property string mic: "\uE31D"
     readonly property string micOff: "\uE02B"
 
+    // ── notifications ────────────────────────────────────────────────────────
+    readonly property string notifications: "\uE7F4"
+    readonly property string notificationsOff: "\uE7F6"
+    readonly property string info: "\uE88E"
+    readonly property string warning: "\uE002"
+    readonly property string error: "\uE160"
+
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
