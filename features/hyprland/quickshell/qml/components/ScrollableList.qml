@@ -14,6 +14,16 @@ Item {
 
     implicitHeight: Math.min(contentCol.implicitHeight, maxItems * theme.popupItemHeight)
 
+    function ensureVisible(item) {
+        const mapped = item.mapToItem(contentCol, 0, 0);
+        const itemBottom = mapped.y + item.height;
+        const viewBottom = flick.scrollTarget + flick.height;
+        if (itemBottom > viewBottom) {
+            flick.scrollTarget = Math.min(itemBottom - flick.height, flick.contentHeight - flick.height);
+            scrollAnim.restart();
+        }
+    }
+
     Flickable {
         id: flick
         anchors.fill: parent

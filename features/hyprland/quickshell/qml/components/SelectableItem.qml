@@ -13,7 +13,13 @@ Item {
         id: icons
     }
 
+    default property alias actions: actionRow.data
+
+    property string icon: icons.check
+    property color iconColor: root.active ? theme.accent : "transparent"
+    property int iconSize: theme.fontMd
     property string text: ""
+    property color textColor: root.active ? theme.textActive : theme.textInactive
     property bool active: false
     property bool showSeparator: false
 
@@ -45,6 +51,14 @@ Item {
         }
     }
 
+    MouseArea {
+        id: area
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.selected()
+    }
+
     RowLayout {
         id: row
         anchors {
@@ -57,11 +71,11 @@ Item {
         spacing: 10
 
         Text {
-            text: icons.check
-            font.pixelSize: theme.fontMd
+            text: root.icon
+            font.pixelSize: root.iconSize
             font.family: theme.fontIconFamily
             font.variableAxes: theme.fontIconAxes
-            color: root.active ? theme.accent : "transparent"
+            color: root.iconColor
             Behavior on color {
                 ColorAnimation {
                     duration: theme.animNormal
@@ -72,7 +86,7 @@ Item {
         MarqueeText {
             Layout.fillWidth: true
             text: root.text
-            color: root.active ? theme.textActive : theme.textInactive
+            color: root.textColor
             hovered: area.containsMouse
             font.pixelSize: theme.fontMd
             font.family: theme.fontFamily
@@ -82,13 +96,10 @@ Item {
                 }
             }
         }
-    }
 
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.selected()
+        Row {
+            id: actionRow
+            spacing: 6
+        }
     }
 }

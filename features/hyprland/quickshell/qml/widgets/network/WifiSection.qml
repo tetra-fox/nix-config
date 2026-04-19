@@ -164,7 +164,7 @@ Item {
 
     Timer {
         interval: 3000
-        running: root.available && root.expandedNetwork === null
+        running: root.scannerEnabled && root.expandedNetwork === null
         repeat: true
         onTriggered: root.refreshNetworks()
     }
@@ -246,6 +246,7 @@ Item {
                 running: Networking.wifiEnabled && !root.activeNetwork
                 interval: 400
                 repeat: true
+                onRunningChanged: if (!running) parent.scanIndex = 0
                 onTriggered: parent.scanIndex = (parent.scanIndex + 1) % parent.scanFrames.length
             }
         }
@@ -265,8 +266,10 @@ Item {
                 text: "Forget"
                 accentColor: theme.colorRed
                 onClicked: {
-                    root.activeNetwork.disconnect();
-                    root.activeNetwork.forget();
+                    const net = root.activeNetwork;
+                    if (!net) return;
+                    net.disconnect();
+                    net.forget();
                 }
             }
 

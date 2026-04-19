@@ -45,12 +45,11 @@ RowLayout {
             elide: Text.ElideRight
         }
 
-        Text {
+        CopyableText {
             visible: root.subtitle !== ""
             text: root.subtitle
-            color: theme.textInactive
-            font.pixelSize: theme.fontXs
-            font.family: theme.fontFamily
+            disabled: root.subtitle === ""
+            baseColor: theme.textInactive
         }
     }
 

@@ -6,7 +6,7 @@ import QtQuick
 import QtQuick.Layouts
 
 // Single row in the wifi network list — signal icon, name, action buttons, password field.
-Rectangle {
+Item {
     id: root
 
     Theme {
@@ -26,28 +26,7 @@ Rectangle {
     signal connectWithPsk(string psk)
     signal expandToggled
 
-    implicitHeight: (root.showSeparator ? sep.height : 0) + rowContent.height + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
-    radius: theme.radiusMd
-    color: rowArea.pressed ? theme.pressedBg : rowArea.containsMouse ? theme.hoverBg : "transparent"
-
-    Rectangle {
-        id: sep
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            leftMargin: 8
-            rightMargin: 8
-        }
-        height: 1
-        color: theme.separatorBg
-        visible: root.showSeparator
-    }
-    Behavior on color {
-        ColorAnimation {
-            duration: theme.animFast
-        }
-    }
+    implicitHeight: item.implicitHeight + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
     clip: true
 
     Connections {
@@ -59,53 +38,26 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        id: rowArea
+    SelectableItem {
+        id: item
         anchors {
             left: parent.left
             right: parent.right
             top: parent.top
         }
-        height: rowContent.height
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
-    }
-
-    RowLayout {
-        id: rowContent
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: root.showSeparator ? sep.bottom : parent.top
-            leftMargin: 6
-            rightMargin: 6
+        icon: {
+            const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown;
+            const sig = root.network.signalStrength;
+            if (secured)
+                return sig >= 0.75 ? icons.wifiLocked : sig >= 0.5 ? icons.wifiSignal3Locked : sig >= 0.3 ? icons.wifiSignal2Locked : sig >= 0.1 ? icons.wifiSignal1Locked : icons.wifiSignal0Locked;
+            return sig >= 0.75 ? icons.wifi : sig >= 0.5 ? icons.wifiSignal3 : sig >= 0.3 ? icons.wifiSignal2 : sig >= 0.1 ? icons.wifiSignal1 : icons.wifiSignal0;
         }
-        height: theme.popupItemHeight
-        spacing: 8
-
-        Text {
-            readonly property bool secured: root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown
-            readonly property real sig: root.network.signalStrength
-            text: {
-                if (secured)
-                    return sig >= 0.75 ? icons.wifiLocked : sig >= 0.5 ? icons.wifiSignal3Locked : sig >= 0.3 ? icons.wifiSignal2Locked : sig >= 0.1 ? icons.wifiSignal1Locked : icons.wifiSignal0Locked;
-                return sig >= 0.75 ? icons.wifi : sig >= 0.5 ? icons.wifiSignal3 : sig >= 0.3 ? icons.wifiSignal2 : sig >= 0.1 ? icons.wifiSignal1 : icons.wifiSignal0;
-            }
-            color: root.network.connected ? theme.colorGreen : theme.textPrimary
-            font.pixelSize: theme.fontIconLg
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
-        }
-
-        Text {
-            text: root.network.name
-            color: root.network.connected ? theme.colorGreen : theme.textPrimary
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
-            Layout.fillWidth: true
-            elide: Text.ElideRight
-        }
+        iconSize: theme.fontIconLg
+        iconColor: root.network.connected ? theme.colorGreen : theme.textPrimary
+        text: root.network.name
+        textColor: root.network.connected ? theme.colorGreen : theme.textPrimary
+        showSeparator: root.showSeparator
+        onSelected: root.clicked()
 
         InlineButton {
             text: "Forget"
@@ -120,7 +72,7 @@ Rectangle {
         anchors {
             left: parent.left
             right: parent.right
-            top: rowContent.bottom
+            top: item.bottom
             topMargin: 6
             leftMargin: 6
             rightMargin: 6
@@ -191,5 +143,4 @@ Rectangle {
             onClicked: root.connectWithPsk(root.psk)
         }
     }
-
 }

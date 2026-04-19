@@ -18,6 +18,7 @@ Item {
     // ── public (read by parent) ──────────────────────────────────────────────
     readonly property bool connected: ifname !== "" && operstate === "UP" && ip !== ""
     readonly property string ifname: _ifname
+    property bool polling: false
 
     // ── internal state (set by processes, do not write externally) ─────────
     property string _ifname: ""
@@ -122,7 +123,7 @@ Item {
     // Re-discover wired interface periodically (handles hotplug, etc.)
     Timer {
         interval: 5000
-        running: true
+        running: root.polling
         repeat: true
         onTriggered: if (!ifaceProc.running)
             ifaceProc.running = true
@@ -131,7 +132,7 @@ Item {
     // Poll for state changes (catches cable unplug, external nmcli, etc.)
     Timer {
         interval: 2000
-        running: root.ifname !== ""
+        running: root.polling && root.ifname !== ""
         repeat: true
         onTriggered: {
             if (!linkProc.running)

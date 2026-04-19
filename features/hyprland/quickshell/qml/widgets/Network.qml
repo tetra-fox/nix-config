@@ -62,6 +62,7 @@ Item {
             WiredSection {
                 id: wired
                 Layout.fillWidth: true
+                polling: popup.visible
             }
 
             Separator {}

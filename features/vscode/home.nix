@@ -91,13 +91,14 @@ in
           "editor.defaultFormatter" = "esbenp.prettier-vscode";
         };
 
-        "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
-        "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
-        "qmlFormat.command" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlformat";
-
+        # qml
         "[qml]" = {
           "editor.defaultFormatter" = "delgan.qml-format";
         };
+        "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
+        "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
+        "qmlFormat.command" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlformat";
+        "qt-qml.doNotAskForQmllsDownload" = true;
 
         "[markdown]" = {
           "editor.wordWrap" = "on";

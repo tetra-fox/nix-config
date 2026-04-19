@@ -16,7 +16,27 @@ ScrollableList {
     signal networkConnectWithPsk(WifiNetwork network, string psk)
     signal expandRequested(var network)
 
+    onExpandedNetworkChanged: {
+        if (expandedNetwork)
+            scrollTimer.restart();
+    }
+
+    Timer {
+        id: scrollTimer
+        interval: 50
+        onTriggered: {
+            for (let i = 0; i < repeater.count; i++) {
+                const item = repeater.itemAt(i);
+                if (item && item.network === root.expandedNetwork) {
+                    root.ensureVisible(item);
+                    break;
+                }
+            }
+        }
+    }
+
     Repeater {
+        id: repeater
         model: root.networks
 
         delegate: WifiNetworkDelegate {

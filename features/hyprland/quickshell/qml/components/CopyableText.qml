@@ -12,6 +12,7 @@ Item {
     property alias text: innerText.text
     property alias elide: innerText.elide
     property bool disabled: false
+    property color baseColor: theme.textPrimary
 
     implicitWidth: innerText.implicitWidth
     implicitHeight: innerText.implicitHeight
@@ -24,7 +25,7 @@ Item {
 
         font.pixelSize: theme.fontSm
         font.family: theme.fontFamily
-        color: root.disabled ? theme.textInactive : area.containsMouse ? theme.accent : theme.textPrimary
+        color: root.disabled ? theme.textInactive : area.containsMouse ? theme.accent : root.baseColor
         Behavior on color {
             ColorAnimation {
                 duration: theme.animFast

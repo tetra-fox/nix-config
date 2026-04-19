@@ -59,16 +59,12 @@ Item {
 
     Timer {
         interval: 2000
-        running: popup.visible
+        running: root.scanning
         repeat: true
         onTriggered: root.refreshDevices()
     }
 
-    onPoweredChanged: {
-        refreshDevices();
-        if (powered && popup.visible && adapter)
-            adapter.discovering = true;
-    }
+    onPoweredChanged: refreshDevices()
 
     Component.onCompleted: refreshDevices()
 
@@ -100,8 +96,6 @@ Item {
         onVisibleChanged: {
             if (visible) {
                 root.refreshDevices();
-                if (root.powered && root.adapter)
-                    root.adapter.discovering = true;
             } else if (root.adapter) {
                 root.adapter.discovering = false;
             }
@@ -174,6 +168,7 @@ Item {
                     running: root.scanning && !root.connectedDevice
                     interval: 600
                     repeat: true
+                    onRunningChanged: if (!running) parent.scanIndex = 0
                     onTriggered: parent.scanIndex = (parent.scanIndex + 1) % parent.scanFrames.length
                 }
             }
@@ -193,31 +188,15 @@ Item {
                     text: "Forget"
                     accentColor: theme.colorRed
                     onClicked: {
-                        root.connectedDevice?.disconnect();
-                        root.connectedDevice?.forget();
+                        const dev = root.connectedDevice;
+                        if (!dev) return;
+                        dev.disconnect();
+                        dev.forget();
                     }
                 }
 
                 Item {
                     Layout.fillWidth: true
-                }
-            }
-
-            // ── connected device details ─────────────────────────────────
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 5
-                visible: root.connectedDevice !== null
-
-                InfoRow {
-                    label: "Address"
-                    value: root.connectedDevice?.address ?? "-"
-                }
-
-                InfoRow {
-                    visible: root.connectedDevice?.batteryAvailable ?? false
-                    label: "Battery"
-                    value: root.connectedDevice?.batteryAvailable ? Math.round(root.connectedDevice.battery * 100) + "%" : "-"
                 }
             }
 
@@ -240,6 +219,7 @@ Item {
                         model: root.pairedDevices
 
                         SelectableItem {
+                            id: pairedItem
                             required property var modelData
                             required property int index
                             width: parent?.width ?? 0
@@ -247,6 +227,12 @@ Item {
                             active: modelData.state === BluetoothDeviceState.Connecting
                             showSeparator: index > 0
                             onSelected: modelData.connected = true
+
+                            InlineButton {
+                                text: "Forget"
+                                accentColor: theme.colorRed
+                                onClicked: pairedItem.modelData.forget()
+                            }
                         }
                     }
                 }
@@ -254,10 +240,17 @@ Item {
 
             // ── available devices ────────────────────────────────────────
             Accordion {
-                visible: root.powered && (root.availableDevices.length > 0 || root.scanning)
+                id: availableAccordion
+                visible: root.powered
                 label: "Available devices"
                 loading: root.scanning
                 expanded: root.connectedDevice === null && root.pairedDevices.length === 0
+
+                onExpandedChanged: {
+                    if (!root.adapter)
+                        return;
+                    root.adapter.discovering = expanded && popup.visible && root.powered;
+                }
 
                 ScrollableList {
                     width: parent.width
