@@ -15,7 +15,6 @@ in
   imports = [
     ./hyprpaper
     ./hyprcursor.nix
-    ./swaync.nix
     ./quickshell
     ./snappy-switcher
     ./clipse.nix
