@@ -1,4 +1,7 @@
 { pkgs, lib, ... }:
+let
+  material-symbols-filled = import ./material-symbols-filled.nix { inherit pkgs; };
+in
 {
   programs.quickshell = {
     enable = true;
@@ -18,7 +21,7 @@
     blueman
     iproute2
     iw
-    material-symbols
+    material-symbols-filled
     networkmanager
     wl-clipboard
   ];

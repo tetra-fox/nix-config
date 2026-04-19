@@ -41,11 +41,32 @@ QtObject {
     readonly property string warning: "\uE002"
     readonly property string error: "\uE160"
 
+    // ── system ──────────────────────────────────────────────────────────────
+    readonly property string computer: "\uE31E"
+    readonly property string desktopWindows: "\uE30C"
+    readonly property string systemMenu: "\uF31D"
+    readonly property string terminal: "\uEB8E"
+    readonly property string timer: "\uE425"
+    readonly property string monitoring: "\uF190"
+    readonly property string speed: "\uE9E4"
+    readonly property string memory: "\uE322"
+    readonly property string hardDrive: "\uF80E"
+    readonly property string sportsEsports: "\uEA28"
+    readonly property string swapHoriz: "\uE8D4"
+    readonly property string thermostat: "\uE1FF"
+    readonly property string deployedCode: "\uF720"
+    readonly property string code: "\uE86F"
+
+    // ── power ────────────────────────────────────────────────────────────────
+    readonly property string logout: "\uE9BA"
+    readonly property string restart: "\uF053"
+    readonly property string power: "\uF8C7"
+
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
     readonly property string delete_: "\uE92E"
-    readonly property string lock: "\uE9E0"
+    readonly property string lock: "\uE899"
     readonly property string expandMore: "\uE5CF"
     readonly property string progressActivity: "\uE9D0"
 }

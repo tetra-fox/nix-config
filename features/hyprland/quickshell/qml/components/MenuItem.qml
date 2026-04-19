@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 // menu row for popups. set isSeparator: true for a divider line
 Item {
@@ -9,6 +10,8 @@ Item {
     }
 
     property string text: ""
+    property string icon: ""
+    property color textColor: root.enabled ? theme.textPrimary : theme.textInactive
     property bool enabled: true
     property bool isSeparator: false
 
@@ -40,7 +43,7 @@ Item {
             }
         }
 
-        Text {
+        RowLayout {
             anchors {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
@@ -48,11 +51,25 @@ Item {
                 leftMargin: 10
                 rightMargin: 10
             }
-            text: root.text
-            color: root.enabled ? theme.textPrimary : theme.textInactive
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
-            elide: Text.ElideRight
+            spacing: 8
+
+            Text {
+                visible: root.icon !== ""
+                text: root.icon
+                color: root.textColor
+                font.pixelSize: theme.fontIconLg
+                font.family: theme.fontIconFamily
+                font.variableAxes: theme.fontIconAxes
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: root.text
+                color: root.textColor
+                font.pixelSize: theme.fontMd
+                font.family: theme.fontFamily
+                elide: Text.ElideRight
+            }
         }
 
         MouseArea {

@@ -25,6 +25,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     property string title: ""
     property string body: ""
+    property string icon: ""
     property string actionLabel: "Confirm"
     property int countdown: 30
     property int remaining: countdown
@@ -138,13 +139,27 @@ PanelWindow { // qmllint disable uncreatable-type
             spacing: 0
 
             // title
-            Text {
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.title
-                color: theme.textActive
-                font.pixelSize: theme.fontBase
-                font.family: theme.fontFamily
-                font.weight: Font.Medium
+                spacing: 8
+
+                Text {
+                    visible: root.icon !== ""
+                    text: root.icon
+                    color: theme.textActive
+                    font.pixelSize: theme.fontIconLg
+                    font.family: theme.fontIconFamily
+                    font.variableAxes: theme.fontIconAxes
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.title
+                    color: theme.textActive
+                    font.pixelSize: theme.fontBase
+                    font.family: theme.fontFamily
+                    font.weight: Font.Medium
+                }
             }
 
             Item {

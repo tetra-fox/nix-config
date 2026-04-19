@@ -6,11 +6,11 @@ QtObject {
 
     // ── typography ───────────────────────────────────────────────────────────
     readonly property string fontFamily: "monospace"
-    readonly property string fontIconFamily: "Material Symbols Rounded"
+    readonly property string fontIconFamily: "Material Symbols Rounded Filled"
+    // FILL=1 is baked into the font (see quickshell/default.nix)
     readonly property var fontIconAxes: ({
-            "wght": 500,
-            "FILL": 1,
-            "GRAD": 100,
+            "wght": 600,
+            "GRAD": 0,
             "opsz": 20
         })
     readonly property int fontXs: 10  // chevrons, tiny indicators

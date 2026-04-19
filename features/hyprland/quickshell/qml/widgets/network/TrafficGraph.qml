@@ -1,4 +1,5 @@
 import qs.components
+import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 
@@ -83,55 +84,69 @@ Item {
 
     onIfnameChanged: reset()
 
-    // ── process ───────────────────────────────────────────────────────────────
-    BufferedProcess {
-        id: trafficProc
-        command: ["ip", "-s", "-j", "link", "show", root.ifname]
-        onFinished: output => {
-            try {
-                const r = JSON.parse(output)?.[0];
-                const now = Date.now();
-                const rx = r?.stats64?.rx?.bytes ?? 0;
-                const tx = r?.stats64?.tx?.bytes ?? 0;
+    // ── sysfs reads ─────────────────────────────────────────────────────────
+    property int _pendingReloads: 0
 
-                if (root._prevTs > 0) {
-                    const dt = (now - root._prevTs) / 1000;
-                    root.rxRate = (rx - root._prevRx) / dt;
-                    root.txRate = (tx - root._prevTx) / dt;
+    FileView {
+        id: rxFile
+        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/statistics/rx_bytes" : ""
+        onLoaded: root._onStatsLoaded()
+    }
 
-                    const s = root.samples.slice();
-                    s.push({
-                        rx: Math.max(0, root.rxRate),
-                        tx: Math.max(0, root.txRate)
-                    });
-                    while (s.length > 21)
-                        s.shift();
-                    root.samples = s;
+    FileView {
+        id: txFile
+        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/statistics/tx_bytes" : ""
+        onLoaded: root._onStatsLoaded()
+    }
 
-                    let mx = 1;
-                    for (const p of s)
-                        mx = Math.max(mx, p.rx, p.tx);
-                    root.displayMax = mx;
-                    if (!root._scaleInited)
-                        root._scaleInited = true;
-                    scrollAnim.restart();
-                }
+    function _onStatsLoaded() {
+        _pendingReloads--;
+        if (_pendingReloads > 0)
+            return;
 
-                root._prevTs = now;
-                root._prevRx = rx;
-                root._prevTx = tx;
-                root.rxBytes = rx;
-                root.txBytes = tx;
-            } catch (_) {}
+        const now = Date.now();
+        const rx = parseInt(rxFile.text()) || 0;
+        const tx = parseInt(txFile.text()) || 0;
+
+        if (root._prevTs > 0) {
+            const dt = (now - root._prevTs) / 1000;
+            root.rxRate = (rx - root._prevRx) / dt;
+            root.txRate = (tx - root._prevTx) / dt;
+
+            const s = root.samples.slice();
+            s.push({
+                rx: Math.max(0, root.rxRate),
+                tx: Math.max(0, root.txRate)
+            });
+            while (s.length > 21)
+                s.shift();
+            root.samples = s;
+
+            let mx = 1;
+            for (const p of s)
+                mx = Math.max(mx, p.rx, p.tx);
+            root.displayMax = mx;
+            if (!root._scaleInited)
+                root._scaleInited = true;
+            scrollAnim.restart();
         }
+
+        root._prevTs = now;
+        root._prevRx = rx;
+        root._prevTx = tx;
+        root.rxBytes = rx;
+        root.txBytes = tx;
     }
 
     Timer {
         interval: 250
         running: root.polling && root.ifname !== ""
         repeat: true
-        onTriggered: if (!trafficProc.running)
-            trafficProc.running = true
+        onTriggered: {
+            root._pendingReloads = 2;
+            rxFile.reload();
+            txFile.reload();
+        }
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import qs.components
+import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 
@@ -58,8 +59,8 @@ Item {
     function _fetchDetails() {
         addrProc.running = true;
         linkProc.running = true;
-        speedProc.running = true;
-        duplexProc.running = true;
+        speedFile.reload();
+        duplexFile.reload();
     }
 
     BufferedProcess {
@@ -91,19 +92,19 @@ Item {
         }
     }
 
-    BufferedProcess {
-        id: speedProc
-        command: ["cat", "/sys/class/net/" + root.ifname + "/speed"]
-        onFinished: output => {
-            const n = parseInt(output.trim());
+    FileView {
+        id: speedFile
+        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/speed" : ""
+        onLoaded: {
+            const n = parseInt(text().trim());
             root.speed = isNaN(n) ? -1 : n;
         }
     }
 
-    BufferedProcess {
-        id: duplexProc
-        command: ["cat", "/sys/class/net/" + root.ifname + "/duplex"]
-        onFinished: output => root.duplex = output.trim()
+    FileView {
+        id: duplexFile
+        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/duplex" : ""
+        onLoaded: root.duplex = text().trim()
     }
 
     BufferedProcess {

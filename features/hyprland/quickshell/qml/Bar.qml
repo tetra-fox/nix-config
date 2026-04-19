@@ -111,7 +111,8 @@ PanelWindow { // qmllint disable uncreatable-type
                 Volume {
                     panelWindow: root
                 }
-                Clock {
+                Clock {}
+                SystemMenu {
                     panelWindow: root
                 }
             }
