@@ -126,17 +126,17 @@ Item {
             MenuItem {
                 text: "  Log out"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Log out?", "Are you sure you want to log out?", "Log out", "hyprshutdown && uwsm stop")
+                onClicked: root.confirm("Log out?", "Are you sure you want to log out?", "Log out", "hyprshutdown -p 'uwsm stop'")
             }
             MenuItem {
                 text: "  Reboot"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Reboot?", "Are you sure you want to reboot?", "Reboot", "hyprshutdown && uwsm stop; systemctl reboot")
+                onClicked: root.confirm("Reboot?", "Are you sure you want to reboot?", "Reboot", "hyprshutdown -p 'uwsm stop; systemctl reboot'")
             }
             MenuItem {
                 text: "  Shut down"
                 Layout.fillWidth: true
-                onClicked: root.confirm("Shut down?", "Are you sure you want to shut down?", "Shut down", "hyprshutdown && uwsm stop; systemctl poweroff")
+                onClicked: root.confirm("Shut down?", "Are you sure you want to shut down?", "Shut down", "hyprshutdown -p 'uwsm stop; systemctl poweroff'")
             }
         }
     }
