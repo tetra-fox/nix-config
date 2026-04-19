@@ -42,7 +42,7 @@ Item {
         iconColor: root.muted ? theme.danger : theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
+            if (mouse.button === Qt.RightButton && root.sink?.audio)
                 root.sink.audio.muted = !root.muted;
             else
                 popup.visible = !popup.visible;
@@ -72,8 +72,12 @@ Item {
                 devices: root.sinks
                 activeDevice: Pipewire.defaultAudioSink
                 Layout.fillWidth: true
-                onToggleMute: root.sink.audio.muted = !root.muted
-                onSetVolume: v => root.sink.audio.volume = v
+                onToggleMute: if (root.sink?.audio)
+                    root.sink.audio.muted = !root.muted
+                onSetVolume: v => {
+                    if (root.sink?.audio)
+                        root.sink.audio.volume = v;
+                }
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
             }
 
@@ -87,8 +91,12 @@ Item {
                 devices: root.sources
                 activeDevice: Pipewire.defaultAudioSource
                 Layout.fillWidth: true
-                onToggleMute: root.source.audio.muted = !root.micMuted
-                onSetVolume: v => root.source.audio.volume = v
+                onToggleMute: if (root.source?.audio)
+                    root.source.audio.muted = !root.micMuted
+                onSetVolume: v => {
+                    if (root.source?.audio)
+                        root.source.audio.volume = v;
+                }
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSource = d
             }
         }

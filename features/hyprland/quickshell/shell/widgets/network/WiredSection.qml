@@ -57,8 +57,10 @@ Item {
     }
 
     function _fetchDetails() {
-        addrProc.running = true;
-        linkProc.running = true;
+        if (!addrProc.running)
+            addrProc.running = true;
+        if (!linkProc.running)
+            linkProc.running = true;
         speedFile.reload();
         duplexFile.reload();
     }

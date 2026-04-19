@@ -100,9 +100,9 @@ Item {
     }
 
     function _onStatsLoaded() {
-        _pendingReloads--;
-        if (_pendingReloads > 0)
+        if (--_pendingReloads > 0)
             return;
+        _pendingReloads = 0; // clamp in case of spurious loads
 
         const now = Date.now();
         const rx = parseInt(rxFile.text()) || 0;

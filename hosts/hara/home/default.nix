@@ -90,7 +90,6 @@
 
     # system
     kdePackages.dolphin
-    overskride
     vulkan-tools # vulkaninfo, vkcube
 
     #dev

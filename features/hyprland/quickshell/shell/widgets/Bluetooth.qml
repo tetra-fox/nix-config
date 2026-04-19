@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import qs.components
 import Quickshell.Bluetooth
+import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -288,15 +289,10 @@ Item {
                 visible: root.powered
                 text: "More settings..."
                 onClicked: {
-                    launcher.running = true;
+                    Hyprland.dispatch("exec app2unit -- overskride");
                     popup.visible = false;
                 }
             }
         }
-    }
-
-    BufferedProcess {
-        id: launcher
-        command: ["blueman-manager"]
     }
 }

@@ -1,5 +1,6 @@
 import qs.components
 import qs.widgets.network
+import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -100,15 +101,10 @@ Item {
                 Layout.fillWidth: true
                 text: "More settings..."
                 onClicked: {
-                    launcher.running = true;
+                    Hyprland.dispatch("exec app2unit -- nm-connection-editor");
                     popup.visible = false;
                 }
             }
         }
-    }
-
-    BufferedProcess {
-        id: launcher
-        command: ["nm-connection-editor"]
     }
 }

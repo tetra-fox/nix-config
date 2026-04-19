@@ -1,7 +1,8 @@
 import QtQuick
 
 // Material Symbols Rounded codepoint aliases.
-// https://github.com/google/material-design-icons/blob/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints
+// https://fonts.google.com/icons?icon.style=Rounded
+// https://raw.githubusercontent.com/google/material-design-icons/refs/heads/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints
 // Usage: Icons { id: icons } then icons.wifi, icons.volumeUp, etc.
 QtObject {
 
@@ -43,15 +44,15 @@ QtObject {
 
     // ── system ──────────────────────────────────────────────────────────────
     readonly property string computer: "\uE31E"
+    readonly property string dns: "\uE875"
     readonly property string desktopWindows: "\uE30C"
     readonly property string systemMenu: "\uF31D"
     readonly property string terminal: "\uEB8E"
     readonly property string timer: "\uE425"
     readonly property string monitoring: "\uF190"
-    readonly property string speed: "\uE9E4"
+    readonly property string developerBoard: "\uE30D"
     readonly property string memory: "\uE322"
     readonly property string hardDrive: "\uF80E"
-    readonly property string sportsEsports: "\uEA28"
     readonly property string swapHoriz: "\uE8D4"
     readonly property string thermostat: "\uE1FF"
     readonly property string deployedCode: "\uF720"

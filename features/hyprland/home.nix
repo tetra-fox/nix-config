@@ -183,4 +183,10 @@ in
       ];
     };
   };
+
+  # Hide tray applets that duplicate quickshell functionality
+  xdg.configFile."autostart/nm-applet.desktop".text = ''
+    [Desktop Entry]
+    Hidden=true
+  '';
 }

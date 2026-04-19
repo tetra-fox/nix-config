@@ -6,7 +6,7 @@ in
   programs.quickshell = {
     enable = true;
     package = pkgs.quickshell;
-    configs.default = ./qml;
+    configs.default = ./shell;
     systemd = {
       enable = true;
       target = "wayland-session@hyprland.desktop.target";
@@ -18,7 +18,7 @@ in
   '';
 
   home.packages = with pkgs; [
-    blueman
+    overskride
     iproute2
     iw
     material-symbols-filled
