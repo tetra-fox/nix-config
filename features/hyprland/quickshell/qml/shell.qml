@@ -1,9 +1,11 @@
+import qs.dialogs
 import qs.notifications
 
 import Quickshell
 import Quickshell.Services.Notifications
+import Quickshell.Services.Polkit
 
-// one bar per screen + single notification overlay
+// one bar per screen + single notification overlay + polkit agent
 ShellRoot {
 
     NotificationServer {
@@ -20,6 +22,10 @@ ShellRoot {
         }
     }
 
+    PolkitAgent {
+        id: polkitAgent
+    }
+
     Variants {
         model: Quickshell.screens
 
@@ -31,5 +37,9 @@ ShellRoot {
 
     NotificationOverlay {
         notificationModel: notifServer.trackedNotifications
+    }
+
+    PolkitDialog {
+        agent: polkitAgent
     }
 }
