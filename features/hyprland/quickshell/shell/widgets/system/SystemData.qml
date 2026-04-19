@@ -156,7 +156,10 @@ Item {
                 const di = idle - root._prevCpu.idle;
                 root.cpuPercent = dt > 0 ? (dt - di) / dt : 0;
             }
-            root._prevCpu = { idle, total };
+            root._prevCpu = {
+                idle,
+                total
+            };
         }
     }
 
