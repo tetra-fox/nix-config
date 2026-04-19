@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs.components
 import QtQuick
 import QtQuick.Layouts
@@ -27,8 +29,8 @@ ColumnLayout {
         UsageBar {
             icon: icons.developerBoard
             label: "CPU" + (root.sysData.cpuCores > 0 ? " • " + root.sysData.cpuCores + " cores" : "")
-            value: root.sysData.cpuCores > 0 ? root.sysData.load1 / root.sysData.cpuCores : 0
-            detail: root.sysData.load1.toFixed(2) + "  " + root.sysData.load5.toFixed(2) + "  " + root.sysData.load15.toFixed(2)
+            value: root.sysData.cpuPercent
+            detail: Math.round(root.sysData.cpuPercent * 100) + "%"
         }
 
         Text {
@@ -98,5 +100,28 @@ ColumnLayout {
         label: "Disk /"
         value: root.sysData.diskTotal > 0 ? root.sysData.diskUsed / root.sysData.diskTotal : 0
         detail: root.sysData.diskTotal > 0 ? root.sysData.formatBytesCompact(root.sysData.diskUsed, root.sysData.diskTotal) : "..."
+    }
+
+    Accordion {
+        visible: root.sysData.extraDisks.length > 0
+        label: "Other disks"
+
+        ScrollableList {
+            width: parent.width
+            maxItems: 4
+
+            Repeater {
+                model: root.sysData.extraDisks
+
+                UsageBar {
+                    required property var modelData
+                    width: parent.width
+                    icon: icons.hardDrive
+                    label: "Disk " + modelData.mount
+                    value: modelData.total > 0 ? modelData.used / modelData.total : 0
+                    detail: modelData.total > 0 ? root.sysData.formatBytesCompact(modelData.used, modelData.total) : "..."
+                }
+            }
+        }
     }
 }

@@ -54,3 +54,4 @@ fi
 # ── Disk ────────────────────────────────────────────────────────────────
 
 df -B1 / | awk 'NR==2 { print "disk=" $3 " " $2 }'
+df -B1 -x tmpfs -x devtmpfs -x efivarfs -x squashfs -x overlay | awk 'NR>1 && $6 != "/" { print "extdisk=" $6 " " $3 " " $2 }'

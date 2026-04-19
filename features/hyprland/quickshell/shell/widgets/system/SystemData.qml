@@ -30,11 +30,13 @@ Item {
     property real memTotal: 0
     property real swapUsed: 0
     property real swapTotal: 0
+    property real cpuPercent: 0
     property int gpuPercent: -1
     property real vramUsed: 0
     property real vramTotal: 0
     property real diskUsed: 0
     property real diskTotal: 0
+    property var extraDisks: []
     property int cpuTemp: -1
     property int cpuFreq: -1
     property int gpuTemp: -1
@@ -137,6 +139,27 @@ Item {
         }
     }
 
+    // ── CPU usage from /proc/stat delta ────────────────────────────────────
+    property var _prevCpu: null
+
+    FileView {
+        id: cpuStatFile
+        path: "/proc/stat"
+        onLoaded: {
+            const line = text().substring(0, text().indexOf("\n"));
+            const f = line.split(/\s+/);
+            // f[0]="cpu", f[1..]=user nice system idle iowait irq softirq steal
+            const idle = (parseInt(f[4]) || 0) + (parseInt(f[5]) || 0);
+            const total = f.slice(1, 9).reduce((s, v) => s + (parseInt(v) || 0), 0);
+            if (root._prevCpu) {
+                const dt = total - root._prevCpu.total;
+                const di = idle - root._prevCpu.idle;
+                root.cpuPercent = dt > 0 ? (dt - di) / dt : 0;
+            }
+            root._prevCpu = { idle, total };
+        }
+    }
+
     FileView {
         id: meminfoFile
         path: "/proc/meminfo"
@@ -170,6 +193,7 @@ Item {
         id: hwProc
         command: ["sh", root._scriptsDir + "/poll-hw.sh"]
         onFinished: output => {
+            let _extraDisks = [];
             for (const line of output.trim().split("\n")) {
                 const eq = line.indexOf("=");
                 if (eq < 0)
@@ -203,14 +227,28 @@ Item {
                         root.diskTotal = parseFloat(p[1]) || 0;
                         break;
                     }
+                case "extdisk":
+                    {
+                        const firstSpace = val.indexOf(" ");
+                        const mount = val.substring(0, firstSpace);
+                        const rest = val.substring(firstSpace + 1).split(" ");
+                        _extraDisks.push({
+                            mount: mount,
+                            used: parseFloat(rest[0]) || 0,
+                            total: parseFloat(rest[1]) || 0
+                        });
+                        break;
+                    }
                 }
             }
+            root.extraDisks = _extraDisks;
         }
     }
 
     // ── polling control ──────────────────────────────────────────────────────
 
     function pollAll() {
+        cpuStatFile.reload();
         loadavgFile.reload();
         meminfoFile.reload();
         if (!hwProc.running)
