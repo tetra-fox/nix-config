@@ -18,6 +18,7 @@ Item {
     }
 
     property var panelWindow
+    required property var lockSession
 
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
@@ -89,7 +90,7 @@ Item {
             SessionActions {
                 onLockRequested: {
                     popup.visible = false;
-                    Hyprland.dispatch("exec hyprlock");
+                    root.lockSession();
                 }
                 onConfirmRequested: (title, body, actionLabel, cmd, icon) => root.confirm(title, body, actionLabel, cmd, icon)
             }

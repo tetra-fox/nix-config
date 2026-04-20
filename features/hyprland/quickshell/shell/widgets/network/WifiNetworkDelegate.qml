@@ -67,7 +67,7 @@ Item {
         }
     }
 
-    Rectangle {
+    InputField {
         id: pskField
         anchors {
             left: parent.left
@@ -81,44 +81,16 @@ Item {
         visible: root.expanded
         radius: theme.radiusSm
         color: theme.withAlpha(theme.black, 0.3)
-        border.width: 1
-        border.color: passInput.activeFocus ? theme.accent : theme.panelBorder
+        placeholderText: "Password"
+        password: true
+        text: root.psk
 
-        Text {
-            anchors {
-                fill: parent
-                leftMargin: 8
-                rightMargin: 8
-                topMargin: 4
-                bottomMargin: 4
-            }
-            text: "Password"
-            color: theme.textInactive
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
-            visible: passInput.text.length === 0 && !passInput.activeFocus
-        }
+        onTextChanged: root.psk = text
+        onAccepted: root.connectWithPsk(root.psk)
+        onVisibleChanged: if (visible)
+            forceActiveFocus()
 
-        TextInput {
-            id: passInput
-            onVisibleChanged: if (visible)
-                forceActiveFocus()
-            anchors {
-                fill: parent
-                leftMargin: 8
-                rightMargin: 8
-                topMargin: 4
-                bottomMargin: 4
-            }
-            text: root.psk
-            onTextChanged: root.psk = text
-            echoMode: TextInput.Password
-            color: theme.textPrimary
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
-            Keys.onReturnPressed: root.connectWithPsk(root.psk)
-            Keys.onEscapePressed: root.expandToggled()
-        }
+        Keys.onEscapePressed: root.expandToggled()
     }
 
     RowLayout {

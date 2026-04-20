@@ -85,4 +85,6 @@ QtObject {
     readonly property string chevronRight: "\uE5CC"
     readonly property string expandMore: "\uE5CF"
     readonly property string progressActivity: "\uE9D0"
+    readonly property string visibility: "\uE8F4"
+    readonly property string visibilityOff: "\uE8F5"
 }

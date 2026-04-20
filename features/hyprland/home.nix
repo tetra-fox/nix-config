@@ -20,7 +20,6 @@ in
     ./clipse.nix
     ./hyprshot.nix
     ./1password.nix
-    ./hyprlock
   ];
 
   home.packages = with pkgs; [
@@ -65,6 +64,7 @@ in
         "${main_mod},C,exec,hyprpicker -a"
 
         "${main_mod},Q,killactive"
+        "${main_mod},ESCAPE,global,quickshell:lock"
         "${main_mod}&L_SHIFT,ESCAPE,global,quickshell:logout"
       ];
 

@@ -48,7 +48,7 @@ PanelWindow { // qmllint disable uncreatable-type
     onVisibleChanged: {
         if (visible) {
             openAnim.restart();
-            passwordInput.text = "";
+            passwordInput.clear();
             passwordInput.forceActiveFocus();
         }
     }
@@ -57,13 +57,13 @@ PanelWindow { // qmllint disable uncreatable-type
         target: root.agent.flow ?? null
 
         function onIsResponseRequiredChanged() {
-            passwordInput.text = "";
+            passwordInput.clear();
             if (root.agent.flow?.isResponseRequired)
                 passwordInput.forceActiveFocus();
         }
 
         function onAuthenticationFailed() {
-            passwordInput.text = "";
+            passwordInput.clear();
             passwordInput.forceActiveFocus();
         }
     }
@@ -178,51 +178,17 @@ PanelWindow { // qmllint disable uncreatable-type
             }
 
             // password input
-            Rectangle {
+            InputField {
+                id: passwordInput
                 Layout.fillWidth: true
                 implicitHeight: theme.popupItemHeight
-                radius: theme.radiusMd
-                color: "#10ffffff"
-                border.width: 1
-                border.color: passwordInput.activeFocus ? theme.accent : theme.panelBorder
+                placeholderText: "Password"
+                password: !(root.agent.flow?.responseVisible ?? false)
 
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: theme.animFast
-                    }
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: theme.iconPadH
-                    text: "Password"
-                    color: theme.textInactive
-                    font.pixelSize: theme.fontMd
-                    font.family: theme.fontFamily
-                    visible: !passwordInput.text
-                }
-
-                TextInput {
-                    id: passwordInput
-                    anchors.fill: parent
-                    anchors.leftMargin: theme.iconPadH
-                    anchors.rightMargin: theme.iconPadH
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: theme.textPrimary
-                    font.pixelSize: theme.fontMd
-                    font.family: theme.fontFamily
-                    echoMode: root.agent.flow?.responseVisible ? TextInput.Normal : TextInput.Password
-                    passwordCharacter: "\u2022"
-                    clip: true
-                    selectionColor: theme.accent
-                    selectedTextColor: theme.textActive
-
-                    onAccepted: {
-                        if (text.length > 0 && root.agent.flow) {
-                            root.agent.flow.submit(text);
-                            text = "";
-                        }
+                onAccepted: {
+                    if (text.length > 0 && root.agent.flow) {
+                        root.agent.flow.submit(text);
+                        clear();
                     }
                 }
             }
@@ -315,7 +281,7 @@ PanelWindow { // qmllint disable uncreatable-type
                         onClicked: {
                             if (passwordInput.text.length > 0 && root.agent.flow) {
                                 root.agent.flow.submit(passwordInput.text);
-                                passwordInput.text = "";
+                                passwordInput.clear();
                             }
                         }
                     }

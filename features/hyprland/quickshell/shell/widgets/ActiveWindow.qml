@@ -1,5 +1,5 @@
 import qs.components
-import Quickshell.Hyprland
+import Quickshell.Wayland
 import QtQuick
 
 Text {
@@ -11,36 +11,34 @@ Text {
 
     property var screen
 
-    readonly property var monitor: Hyprland.monitorFor(screen)
-
     property var lastToplevel: null
 
     Connections {
-        target: Hyprland
+        target: ToplevelManager
         function onActiveToplevelChanged() {
-            const t = Hyprland.activeToplevel;
-            if (t && t.monitor === root.monitor)
+            const t = ToplevelManager.activeToplevel;
+            if (t && t.screens.includes(root.screen))
                 root.lastToplevel = t;
         }
     }
 
     readonly property var toplevel: {
-        const t = Hyprland.activeToplevel;
-        if (t?.monitor === monitor)
+        const t = ToplevelManager.activeToplevel;
+        if (t?.screens.includes(screen))
             return t;
-        if (lastToplevel?.workspace === monitor?.activeWorkspace)
+        if (lastToplevel?.screens.includes(screen))
             return lastToplevel;
         return null;
     }
 
     readonly property var titleOverrides: ({
-            "discord": "Discord",
             "1password": "1Password",
-            "org.telegram.desktop": "Telegram"
+            "org.telegram.desktop": "Telegram",
+            "com.usebottles.bottles": "Bottles"
         })
 
-    readonly property string windowClass: toplevel?.lastIpcObject?.class ?? ""
-    readonly property string title: titleOverrides[windowClass] ?? toplevel?.lastIpcObject?.initialTitle ?? windowClass
+    readonly property string windowClass: toplevel?.appId ?? ""
+    readonly property string title: titleOverrides[windowClass] ?? windowClass.charAt(0).toUpperCase() + windowClass.slice(1)
 
     text: title
     visible: title.length > 0

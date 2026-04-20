@@ -76,6 +76,7 @@
     cider-2
     bitwig-studio
     tenacity
+    vrcx
 
     (prismlauncher.override {
       jdks = [

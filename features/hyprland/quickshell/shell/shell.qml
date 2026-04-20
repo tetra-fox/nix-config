@@ -1,26 +1,56 @@
+pragma ComponentBehavior: Bound
+
 import qs.components
 import qs.dialogs
+import qs.lockscreen
 import qs.notifications
 
+import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import Quickshell.Services.Polkit
 
-// one bar per screen + single notification overlay + polkit agent
+// one bar per screen + session lock + notification overlay + polkit agent
 ShellRoot {
+    id: root
 
     Icons {
         id: icons
     }
 
-    // ── global shortcuts ────────────────────────────────────────────────────
+    function lockSession() {
+        sessionLock.locked = true;
+    }
+
+    // -- session lock --------------------------------------------------------
+
+    WlSessionLock {
+        id: sessionLock
+
+        signal unlock
+
+        surface: Component {
+            LockSurface {
+                lock: sessionLock
+                pam: pam
+            }
+        }
+    }
+
+    Pam {
+        id: pam
+        lock: sessionLock
+    }
+
+    // -- global shortcuts ----------------------------------------------------
 
     GlobalShortcut {
         // qmllint disable unresolved-type
         name: "lock"
         description: "Lock session"
-        onPressed: Hyprland.dispatch("exec hyprlock")
+        onPressed: root.lockSession()
     }
 
     GlobalShortcut {
@@ -63,6 +93,7 @@ ShellRoot {
         Bar {
             property var modelData
             screen: modelData
+            lockSession: root.lockSession
         }
     }
 

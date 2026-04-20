@@ -13,6 +13,8 @@ PanelWindow { // qmllint disable uncreatable-type
         id: theme
     }
 
+    required property var lockSession
+
     anchors {
         top: true
         left: true
@@ -117,6 +119,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 Clock {}
                 SystemMenu {
                     panelWindow: root
+                    lockSession: root.lockSession
                 }
             }
         }

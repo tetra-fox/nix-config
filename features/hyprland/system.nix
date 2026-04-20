@@ -6,6 +6,8 @@
     withUWSM = true;
   };
 
+  security.pam.services.quickshell = {};
+
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
