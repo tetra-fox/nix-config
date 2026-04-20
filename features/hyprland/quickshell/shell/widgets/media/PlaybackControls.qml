@@ -73,11 +73,12 @@ RowLayout {
         // None → Playlist → Track → None
         if (s === MprisLoopState.None) // qmllint disable unresolved-type
             root.player.loopState = MprisLoopState.Playlist;
-            // qmllint disable unresolved-type
-        else if (s === MprisLoopState.Playlist) // qmllint disable unresolved-type
-            root.player.loopState = MprisLoopState.Track;
-            // qmllint disable unresolved-type
         else
+        // qmllint disable unresolved-type
+        if (s === MprisLoopState.Playlist) // qmllint disable unresolved-type
+            root.player.loopState = MprisLoopState.Track;
+        else
+            // qmllint disable unresolved-type
             root.player.loopState = MprisLoopState.None; // qmllint disable unresolved-type
     }
 }
