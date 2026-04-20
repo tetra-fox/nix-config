@@ -101,10 +101,10 @@ PanelWindow { // qmllint disable uncreatable-type
                 }
                 spacing: theme.buttonGap
 
-                MediaPlayer {
+                Tray {
                     panelWindow: root
                 }
-                Tray {
+                MediaPlayer {
                     panelWindow: root
                 }
                 Bluetooth {
