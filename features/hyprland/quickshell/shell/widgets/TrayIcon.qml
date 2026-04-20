@@ -22,8 +22,8 @@ Item {
 
     Rectangle {
         id: hitTarget
-        width: theme.trayIconSize + theme.iconPadH
-        height: theme.trayIconSize + theme.iconPadV
+        width: theme.iconHitWidth
+        height: theme.iconHitHeight
         radius: theme.radiusMd
 
         color: {

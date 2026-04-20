@@ -20,6 +20,7 @@ PanelWindow { // qmllint disable uncreatable-type
     // The window itself is oversized so the compositor never needs to resize it, eliminating jitter.
     property real contentWidth: 200
     property real contentHeight: 200
+    property bool animateSize: false
 
     property real _margin: theme.pillMargin
 
@@ -53,6 +54,7 @@ PanelWindow { // qmllint disable uncreatable-type
     }
 
     HyprlandFocusGrab {
+        // qmllint disable unresolved-type
         windows: root.panelWindow ? [root, root.panelWindow] : [root]
         active: root.visible
         onCleared: root.visible = false
@@ -106,6 +108,13 @@ PanelWindow { // qmllint disable uncreatable-type
         // Height driven by content, not window size. Animated here so the
         // compositor surface never resizes — only this rectangle grows/shrinks.
         height: root.contentHeight
+        Behavior on height {
+            enabled: root.animateSize
+            NumberAnimation {
+                duration: 200
+                easing.type: Easing.OutQuad
+            }
+        }
         radius: theme.radiusLg
         color: theme.panelBg
         border.width: 1

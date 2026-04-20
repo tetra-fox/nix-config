@@ -36,6 +36,7 @@ PanelWindow { // qmllint disable uncreatable-type
     color: "transparent"
 
     HyprlandFocusGrab {
+        // qmllint disable unresolved-type
         windows: [root]
         active: root.visible
         onCleared: {

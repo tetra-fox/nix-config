@@ -15,7 +15,7 @@ Row {
 
     property var panelWindow
 
-    spacing: theme.traySpacing
+    spacing: theme.buttonGap
 
     Repeater {
         model: SystemTray.items

@@ -97,7 +97,7 @@ PanelWindow { // qmllint disable uncreatable-type
                     leftMargin: theme.pillHPad
                     rightMargin: theme.pillHPad
                 }
-                spacing: theme.barSectionSpacing
+                spacing: theme.buttonGap
 
                 MediaPlayer {
                     panelWindow: root

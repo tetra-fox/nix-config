@@ -11,6 +11,7 @@ Item {
 
     property string text: ""
     property string icon: ""
+    property string shortcutHint: ""
     property color textColor: root.enabled ? theme.textPrimary : theme.textInactive
     property bool enabled: true
     property bool isSeparator: false
@@ -69,6 +70,14 @@ Item {
                 font.pixelSize: theme.fontMd
                 font.family: theme.fontFamily
                 elide: Text.ElideRight
+            }
+
+            Text {
+                visible: root.shortcutHint !== ""
+                text: root.shortcutHint
+                color: theme.textInactive
+                font.pixelSize: theme.fontSm
+                font.family: theme.fontFamily
             }
         }
 

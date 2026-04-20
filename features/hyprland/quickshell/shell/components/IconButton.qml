@@ -20,8 +20,8 @@ Item {
 
     Rectangle {
         id: bg
-        width: iconText.implicitWidth + theme.iconPadH
-        height: iconText.implicitHeight + theme.iconPadV
+        width: theme.iconHitWidth
+        height: theme.iconHitHeight
         radius: theme.radiusMd
 
         color: {

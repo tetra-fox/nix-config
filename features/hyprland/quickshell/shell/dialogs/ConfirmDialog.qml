@@ -35,6 +35,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     function open() {
         remaining = root.countdown;
+        grabGuard.restart();
         visible = true;
     }
 
@@ -54,10 +55,20 @@ PanelWindow { // qmllint disable uncreatable-type
     visible: false
     color: "transparent"
 
+    // Brief guard so the focus grab doesn't immediately clear when the dialog
+    // is opened via a keyboard shortcut (key release can dismiss the grab).
+    Timer {
+        id: grabGuard
+        interval: 150
+    }
+
     HyprlandFocusGrab {
+        // qmllint disable unresolved-type
         windows: [root]
         active: root.visible
         onCleared: {
+            if (grabGuard.running)
+                return;
             root.visible = false;
             root.cancelled();
         }

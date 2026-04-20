@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.widgets.media
 import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
@@ -17,20 +18,83 @@ Item {
 
     property var panelWindow
 
-    // pick the first player, preferring one that's actively playing
     readonly property var players: Mpris.players.values // qmllint disable unresolved-type
+    readonly property int playerCount: players ? players.length : 0
+    property int selectedIndex: 0
+    property int _targetIndex: 0
+    property int _switchDir: 0
+
+    function switchTo(idx: int) {
+        root._switchDir = idx > root.selectedIndex ? 1 : -1;
+        root._targetIndex = idx;
+        switchAnim.restart();
+    }
+
+    // clamp index when player list changes
+    onPlayerCountChanged: {
+        if (selectedIndex >= playerCount)
+            selectedIndex = Math.max(0, playerCount - 1);
+        if (_targetIndex >= playerCount)
+            _targetIndex = Math.max(0, playerCount - 1);
+    }
+
     readonly property MprisPlayer player: { // qmllint disable unresolved-type
         const ps = root.players;
         if (!ps || ps.length === 0)
             return null;
-        return ps.find(p => p.playbackState === MprisPlaybackState.Playing) ?? ps[0]; // qmllint disable unresolved-type
+        return ps[Math.max(0, Math.min(root.selectedIndex, ps.length - 1))];
     }
 
     readonly property bool hasPlayer: player !== null
     readonly property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing // qmllint disable unresolved-type
-    readonly property string title: player?.trackTitle ?? ""
-    readonly property string artist: player?.trackArtist ?? ""
-    readonly property string artUrl: player?.trackArtUrl ?? ""
+
+    // debounced display properties — update immediately on new data,
+    // delay clearing so track changes don't flash "No title"
+    readonly property string _rawTitle: player?.trackTitle ?? ""
+    readonly property string _rawArtist: player?.trackArtist ?? ""
+    readonly property string _rawAlbum: player?.trackAlbum ?? ""
+    readonly property string _rawArtUrl: player?.trackArtUrl ?? ""
+
+    property string title: _rawTitle
+    property string artist: _rawArtist
+    property string album: _rawAlbum
+    property string artUrl: _rawArtUrl
+
+    on_RawTitleChanged: {
+        if (_rawTitle !== "")
+            root.title = _rawTitle;
+        else
+            clearDelay.restart();
+    }
+    on_RawArtistChanged: {
+        if (_rawArtist !== "")
+            root.artist = _rawArtist;
+        else
+            clearDelay.restart();
+    }
+    on_RawAlbumChanged: {
+        if (_rawAlbum !== "")
+            root.album = _rawAlbum;
+        else
+            clearDelay.restart();
+    }
+    on_RawArtUrlChanged: {
+        if (_rawArtUrl !== "")
+            root.artUrl = _rawArtUrl;
+        else
+            clearDelay.restart();
+    }
+
+    Timer {
+        id: clearDelay
+        interval: 800
+        onTriggered: {
+            root.title = root._rawTitle;
+            root.artist = root._rawArtist;
+            root.album = root._rawAlbum;
+            root.artUrl = root._rawArtUrl;
+        }
+    }
 
     visible: hasPlayer
     implicitWidth: btn.implicitWidth
@@ -53,6 +117,14 @@ Item {
         onClicked: _ => popup.visible = !popup.visible
     }
 
+    // ── floating notes particle effect ──────────────────────────────────────
+    FloatingNotes {
+        anchors.centerIn: btn
+        width: 70
+        height: 50
+        active: root.isPlaying && !popup.visible
+    }
+
     // ── popup ───────────────────────────────────────────────────────────────
     PopupWindow {
         id: popup
@@ -61,6 +133,7 @@ Item {
 
         contentWidth: 300
         contentHeight: col.implicitHeight + theme.pillHPad * 2
+        animateSize: true
 
         ColumnLayout {
             id: col
@@ -72,253 +145,321 @@ Item {
             }
             spacing: 10
 
-            // ── album art ───────────────────────────────────────────────
-            Rectangle {
+            // ── player content (animated on switch) ─────────────────────
+            ColumnLayout {
+                id: playerContent
                 Layout.fillWidth: true
-                Layout.preferredHeight: width
-                radius: theme.radiusMd
-                color: theme.withAlpha(theme.white, 0.06)
+                spacing: 10
                 clip: true
-                visible: artImg.status === Image.Ready
 
-                Image {
-                    id: artImg
-                    anchors.fill: parent
-                    source: root.artUrl
-                    fillMode: Image.PreserveAspectCrop
-                    smooth: true
-                    asynchronous: true
-                }
-            }
-
-            // ── track info ──────────────────────────────────────────────
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-
-                MarqueeText {
-                    text: root.title || "No title"
-                    color: theme.textPrimary
-                    font.pixelSize: theme.fontBase
-                    font.family: theme.fontFamily
-                    font.bold: true
-                    hovered: popup.visible
-                    Layout.fillWidth: true
+                transform: Translate {
+                    id: contentSlide
                 }
 
-                Text {
-                    text: root.artist || "Unknown artist"
-                    color: theme.textInactive
-                    font.pixelSize: theme.fontSm
-                    font.family: theme.fontFamily
-                    elide: Text.ElideRight
+                // ── album art (crossfade on track change) ──────────────
+                Rectangle {
+                    id: artContainer
                     Layout.fillWidth: true
-                }
-            }
+                    Layout.preferredHeight: width
+                    radius: theme.radiusMd
+                    color: theme.withAlpha(theme.white, 0.06)
+                    clip: true
+                    visible: artA.status === Image.Ready || artB.status === Image.Ready
 
-            // ── seek bar ────────────────────────────────────────────────
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                visible: root.player?.lengthSupported === true
+                    property bool showingA: true
+                    property int slideDir: 1 // 1 = forward (slide left), -1 = backward (slide right)
 
-                Item {
-                    Layout.fillWidth: true
-                    height: seekArea.containsMouse || seekArea.pressed ? 6 : 3
-                    Behavior on height {
-                        NumberAnimation {
-                            duration: theme.animFast
-                        }
-                    }
-
-                    Rectangle {
-                        id: seekTrack
+                    Image {
+                        id: artA
                         anchors.fill: parent
-                        radius: height / 2
-                        color: theme.withAlpha(theme.white, 0.1)
-
-                        Rectangle {
-                            id: seekFill
-                            width: {
-                                if (seekArea.pressed)
-                                    return seekArea.mouseX / seekTrack.width * seekTrack.width;
-                                const len = root.player?.length ?? 0;
-                                const pos = root.player?.position ?? 0;
-                                if (len <= 0)
-                                    return 0;
-                                return Math.min(1, pos / len) * seekTrack.width;
-                            }
-                            height: parent.height
-                            radius: parent.radius
-                            color: theme.accent
-                        }
-
-                        // seek handle
-                        Rectangle {
-                            x: Math.max(0, Math.min(seekFill.width - width / 2, seekTrack.width - width))
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 10
-                            height: 10
-                            radius: 5
-                            color: theme.accent
-                            visible: seekArea.containsMouse || seekArea.pressed
-                            scale: seekArea.pressed ? 1.2 : 1.0
-                            Behavior on scale {
-                                NumberAnimation {
-                                    duration: theme.animFast
-                                }
-                            }
+                        fillMode: Image.PreserveAspectCrop
+                        smooth: true
+                        asynchronous: true
+                        opacity: 1
+                        transform: Translate {
+                            id: slideA
                         }
                     }
 
-                    MouseArea {
-                        id: seekArea
-                        anchors {
-                            fill: parent
-                            topMargin: -6
-                            bottomMargin: -6
+                    Image {
+                        id: artB
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectCrop
+                        smooth: true
+                        asynchronous: true
+                        opacity: 0
+                        transform: Translate {
+                            id: slideB
                         }
-                        hoverEnabled: true
-                        cursorShape: (root.player?.canSeek ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        enabled: root.player?.canSeek ?? false
-                        onClicked: mouse => {
-                            const fraction = Math.max(0, Math.min(1, mouse.x / seekTrack.width));
-                            const len = root.player?.length ?? 0;
-                            if (root.player && len > 0)
-                                root.player.position = fraction * len;
+                    }
+
+                    // A out + B in
+                    ParallelAnimation {
+                        id: transitionAtoB
+                        NumberAnimation {
+                            target: artA
+                            property: "opacity"
+                            to: 0
+                            duration: 400
+                            easing.type: Easing.OutExpo
                         }
-                        onPositionChanged: mouse => {
-                            if (pressed) {
-                                const fraction = Math.max(0, Math.min(1, mouse.x / seekTrack.width));
-                                const len = root.player?.length ?? 0;
-                                if (root.player && len > 0)
-                                    root.player.position = fraction * len;
-                            }
+                        NumberAnimation {
+                            target: slideA
+                            property: "x"
+                            from: 0
+                            to: -artContainer.slideDir * artContainer.width
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                        NumberAnimation {
+                            target: artB
+                            property: "opacity"
+                            to: 1
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                        NumberAnimation {
+                            target: slideB
+                            property: "x"
+                            from: artContainer.slideDir * artContainer.width
+                            to: 0
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                    }
+
+                    // B out + A in
+                    ParallelAnimation {
+                        id: transitionBtoA
+                        NumberAnimation {
+                            target: artB
+                            property: "opacity"
+                            to: 0
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                        NumberAnimation {
+                            target: slideB
+                            property: "x"
+                            from: 0
+                            to: -artContainer.slideDir * artContainer.width
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                        NumberAnimation {
+                            target: artA
+                            property: "opacity"
+                            to: 1
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                        NumberAnimation {
+                            target: slideA
+                            property: "x"
+                            from: artContainer.slideDir * artContainer.width
+                            to: 0
+                            duration: 400
+                            easing.type: Easing.OutExpo
+                        }
+                    }
+
+                    function transition() {
+                        if (artContainer.showingA) {
+                            transitionAtoB.restart();
+                        } else {
+                            transitionBtoA.restart();
+                        }
+                        artContainer.showingA = !artContainer.showingA;
+                    }
+
+                    Connections {
+                        target: artA
+                        function onStatusChanged() {
+                            if (!artContainer.showingA && artA.status === Image.Ready)
+                                artContainer.transition();
+                        }
+                    }
+
+                    Connections {
+                        target: artB
+                        function onStatusChanged() {
+                            if (artContainer.showingA && artB.status === Image.Ready)
+                                artContainer.transition();
                         }
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: root.formatTime(seekArea.pressed ? (Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width)) * (root.player?.length ?? 0)) : (root.player?.position ?? 0))
-                        color: theme.textInactive
-                        font.pixelSize: theme.fontXs
-                        font.family: theme.fontFamily
+                Connections {
+                    target: root
+                    function onArtUrlChanged() {
+                        if (root.artUrl === "")
+                            return;
+                        // first load — no animation
+                        if (String(artA.source) === "" && String(artB.source) === "") {
+                            artA.source = root.artUrl;
+                            return;
+                        }
+                        // load into whichever image is NOT currently showing
+                        if (artContainer.showingA)
+                            artB.source = root.artUrl;
+                        else
+                            artA.source = root.artUrl;
                     }
+                }
 
-                    Item {
+                // ── track info ──────────────────────────────────────────
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    MarqueeText {
+                        text: root.title || "No title"
+                        color: theme.textPrimary
+                        font.pixelSize: theme.fontBase
+                        font.family: theme.fontFamily
+                        font.bold: true
+                        hovered: popup.visible
                         Layout.fillWidth: true
                     }
 
                     Text {
-                        text: root.formatTime(root.player?.length ?? 0)
+                        text: root.artist || "Unknown artist"
+                        color: theme.textInactive
+                        font.pixelSize: theme.fontSm
+                        font.family: theme.fontFamily
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        visible: root.album !== ""
+                        text: root.album
                         color: theme.textInactive
                         font.pixelSize: theme.fontXs
                         font.family: theme.fontFamily
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        opacity: 0.7
+                    }
+                }
+
+                // ── seek bar ────────────────────────────────────────────
+                SeekBar {
+                    player: root.player
+                }
+
+                // ── playback controls ───────────────────────────────────
+                PlaybackControls {
+                    player: root.player
+                    onSkipped: direction => artContainer.slideDir = direction
+                }
+
+                // ── volume ──────────────────────────────────────────────
+                VolumeSlider {
+                    player: root.player
+                }
+            }
+
+            // ── switch animation ────────────────────────────────────────
+            SequentialAnimation {
+                id: switchAnim
+
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: playerContent
+                        property: "opacity"
+                        to: 0
+                        duration: 120
+                        easing.type: Easing.InQuad
+                    }
+                    NumberAnimation {
+                        target: contentSlide
+                        property: "x"
+                        to: root._switchDir * -30
+                        duration: 120
+                        easing.type: Easing.InQuad
+                    }
+                }
+
+                ScriptAction {
+                    script: {
+                        root.selectedIndex = root._targetIndex;
+                        contentSlide.x = root._switchDir * 30;
+                    }
+                }
+
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: playerContent
+                        property: "opacity"
+                        to: 1
+                        duration: 120
+                        easing.type: Easing.OutQuad
+                    }
+                    NumberAnimation {
+                        target: contentSlide
+                        property: "x"
+                        to: 0
+                        duration: 120
+                        easing.type: Easing.OutQuad
                     }
                 }
             }
 
-            // ── playback controls ───────────────────────────────────────
+            // ── player identity / switcher ──────────────────────────────
             RowLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
-                spacing: 8
+                spacing: 4
 
-                MediaButton {
-                    icon: icons.skipPrevious
-                    enabled: root.player?.canGoPrevious ?? false
-                    onClicked: root.player?.previous()
+                SpeedControl {
+                    player: root.player
                 }
 
                 MediaButton {
-                    icon: root.isPlaying ? icons.pause : icons.playArrow
-                    enabled: root.player?.canTogglePlaying ?? false
-                    onClicked: root.player?.togglePlaying()
-                    iconSize: theme.fontIconLg + 4
-                    size: 36
-                    highlight: true
+                    visible: root.playerCount > 1
+                    icon: icons.chevronLeft
+                    iconSize: theme.fontMd
+                    size: 24
+                    enabled: root.selectedIndex > 0 && !switchAnim.running
+                    onClicked: root.switchTo(root.selectedIndex - 1)
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.titleCase(root.player?.identity ?? "")
+                    color: (root.player?.canRaise ?? false) ? (identityArea.containsMouse ? theme.textPrimary : theme.textInactive) : theme.textInactive
+                    font.pixelSize: theme.fontXs
+                    font.family: theme.fontFamily
+                    font.underline: identityArea.containsMouse && (root.player?.canRaise ?? false)
+                    elide: Text.ElideRight
+
+                    MouseArea {
+                        id: identityArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: (root.player?.canRaise ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            if (root.player?.canRaise)
+                                root.player.raise();
+                        }
+                    }
                 }
 
                 MediaButton {
-                    icon: icons.skipNext
-                    enabled: root.player?.canGoNext ?? false
-                    onClicked: root.player?.next()
+                    visible: root.playerCount > 1
+                    icon: icons.chevronRight
+                    iconSize: theme.fontMd
+                    size: 24
+                    enabled: root.selectedIndex < root.playerCount - 1 && !switchAnim.running
+                    onClicked: root.switchTo(root.selectedIndex + 1)
                 }
-            }
-
-            // ── player identity ─────────────────────────────────────────
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: root.player?.identity ?? ""
-                color: theme.textInactive
-                font.pixelSize: theme.fontXs
-                font.family: theme.fontFamily
             }
         }
     }
 
-    function formatTime(seconds: real): string {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return mins + ":" + (secs < 10 ? "0" : "") + secs;
-    }
-
-    // ── popup control button ────────────────────────────────────────────────
-    component MediaButton: Item {
-        id: mbRoot
-
-        Theme {
-            id: mbTheme
-        }
-
-        property string icon
-        property int iconSize: mbTheme.fontIconLg
-        property int size: 32
-        property bool enabled: true
-        property bool highlight: false
-
-        signal clicked
-
-        implicitWidth: mbBg.width
-        implicitHeight: mbBg.height
-        opacity: enabled ? 1.0 : 0.3
-
-        Rectangle {
-            id: mbBg
-            width: mbRoot.size
-            height: mbRoot.size
-            radius: mbRoot.size / 2
-            color: {
-                if (mbRoot.highlight)
-                    return mbArea.pressed ? Qt.darker(mbTheme.accent, 1.3) : mbArea.containsMouse ? Qt.lighter(mbTheme.accent, 1.2) : mbTheme.accent;
-                return mbArea.pressed ? mbTheme.pressedBg : mbArea.containsMouse ? mbTheme.hoverBg : "transparent";
-            }
-            Behavior on color {
-                ColorAnimation {
-                    duration: mbTheme.animFast
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: mbRoot.icon
-                color: mbRoot.highlight ? mbTheme.black : mbTheme.textPrimary
-                font.pixelSize: mbRoot.iconSize
-                font.family: mbTheme.fontIconFamily
-                font.variableAxes: mbTheme.fontIconAxes
-            }
-
-            MouseArea {
-                id: mbArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: mbRoot.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: if (mbRoot.enabled)
-                    mbRoot.clicked()
-            }
-        }
+    function titleCase(s: string): string {
+        return s.replace(/\b\w/g, c => c.toUpperCase());
     }
 }

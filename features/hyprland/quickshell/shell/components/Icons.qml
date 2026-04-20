@@ -70,12 +70,19 @@ QtObject {
     readonly property string skipNext: "\uE044"
     readonly property string musicNote: "\uE405"
     readonly property string stopCircle: "\uE4DB"
+    readonly property string repeat: "\uE040"
+    readonly property string repeatOne: "\uE041"
+    readonly property string shuffle: "\uE043"
+    readonly property string speed: "\uEBE6"
+    readonly property string volumeSource: "\uE050"
 
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
     readonly property string delete_: "\uE92E"
     readonly property string lock: "\uE899"
+    readonly property string chevronLeft: "\uE5CB"
+    readonly property string chevronRight: "\uE5CC"
     readonly property string expandMore: "\uE5CF"
     readonly property string progressActivity: "\uE9D0"
 }

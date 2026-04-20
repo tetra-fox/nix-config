@@ -70,14 +70,15 @@ QtObject {
     readonly property int centerMaxWidth: 400  // center pill width cap
     readonly property int pillHPad: 12  // horizontal padding inside a pill
     readonly property int pillMargin: 8   // horizontal gap between pill and screen edge
+    readonly property int iconHitWidth: fontIcon + iconPadH   // icon button hit target width
+    readonly property int iconHitHeight: fontIcon + iconPadV  // icon button hit target height
     readonly property int iconPadH: 10  // horizontal padding around icon hit targets
     readonly property int iconPadV: 6   // vertical padding around icon hit targets
     readonly property int trayIconSize: 15  // system tray icon size
     readonly property int workspacePillHeight: 19  // individual workspace pill height
     readonly property int workspacePillHPad: 15  // total horizontal padding inside workspace pill
     readonly property int workspacePillSpacing: 4   // gap between workspace pills
-    readonly property int traySpacing: 6   // gap between tray icons
-    readonly property int barSectionSpacing: 12  // gap between sections in the right bar pill
+    readonly property int buttonGap: 8  // gap between icon buttons
     readonly property int popupItemHeight: 32  // menu row height in popups
     readonly property int popupSeparatorHeight: 9   // separator row height in popups
 

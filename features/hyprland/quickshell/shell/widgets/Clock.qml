@@ -9,8 +9,8 @@ Item {
         id: theme
     }
 
-    implicitWidth: timeTextProp.implicitWidth
-    implicitHeight: timeTextProp.implicitHeight
+    implicitWidth: timeTextProp.implicitWidth + theme.iconPadH
+    implicitHeight: timeTextProp.implicitHeight + theme.iconPadV
 
     // align to the next second boundary, then hand off to tickTimer
     Timer {

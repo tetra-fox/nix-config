@@ -113,6 +113,6 @@ in
   };
 
   wayland.windowManager.hyprland.settings.bind = [
-    "SUPER,ESCAPE,exec,hyprlock"
+    "SUPER,ESCAPE,global,quickshell:lock"
   ];
 }

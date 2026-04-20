@@ -65,7 +65,7 @@ in
         "${main_mod},C,exec,hyprpicker -a"
 
         "${main_mod},Q,killactive"
-        "${main_mod}&L_SHIFT,ESCAPE,exec,hyprshutdown -p 'uwsm stop'"
+        "${main_mod}&L_SHIFT,ESCAPE,global,quickshell:logout"
       ];
 
       bindm = [
@@ -88,8 +88,8 @@ in
       ];
 
       general = {
-        gaps_in = 2;
-        gaps_out = 4;
+        gaps_in = 4;
+        gaps_out = 8;
 
         border_size = 1;
 

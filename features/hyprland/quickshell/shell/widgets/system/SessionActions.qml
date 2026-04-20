@@ -29,6 +29,7 @@ ColumnLayout {
         MenuItem {
             text: "Lock"
             icon: icons.lock
+            shortcutHint: "Super+Esc"
             Layout.fillWidth: true
             onClicked: root.lockRequested()
         }
@@ -36,12 +37,16 @@ ColumnLayout {
         MenuItem {
             text: "Log out"
             icon: icons.logout
+            shortcutHint: "Super+Shift+Esc"
             Layout.fillWidth: true
             onClicked: root.confirmRequested("Log out?", "Are you sure you want to log out?", "Log out", "exec hyprshutdown -p 'uwsm stop'", icons.logout)
         }
     }
 
-    Separator {}
+    Separator {
+        Layout.topMargin: 10
+        Layout.bottomMargin: 10
+    }
 
     // ── power ────────────────────────────────────────────────────────────────
 
