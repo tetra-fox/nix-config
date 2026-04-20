@@ -65,6 +65,6 @@
       ExecStop = "${pkgs.lighthouse-steamvr}/bin/lighthouse -s standby -b LHB-460730FA -b LHB-E0CEB24B";
     };
 
-    wantedBy = [ "default.target" ];
+    wantedBy = [ "monado.service" ];
   };
 }
