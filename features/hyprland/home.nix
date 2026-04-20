@@ -180,7 +180,7 @@ in
         "app2unit -- Telegram -startintray"
         "app2unit -- discord --start-minimized"
         "app2unit -- firefox"
-        "app2unit -- vrcx --no-sandbox"
+        "app2unit -- vrcx --no-sandbox --startup"
       ];
     };
   };
