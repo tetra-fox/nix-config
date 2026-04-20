@@ -10,6 +10,7 @@ Item {
     }
 
     property int maxItems: 8
+    property int spacing: 0
     default property alias content: contentCol.data
 
     implicitHeight: Math.min(contentCol.implicitHeight, maxItems * theme.popupItemHeight)
@@ -55,7 +56,7 @@ Item {
         Column {
             id: contentCol
             width: flick.width
-            spacing: 0
+            spacing: root.spacing
         }
     }
 

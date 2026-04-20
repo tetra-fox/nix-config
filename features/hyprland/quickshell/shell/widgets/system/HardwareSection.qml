@@ -109,6 +109,7 @@ ColumnLayout {
         ScrollableList {
             width: parent.width
             maxItems: 4
+            spacing: 8
 
             Repeater {
                 model: root.sysData.extraDisks
