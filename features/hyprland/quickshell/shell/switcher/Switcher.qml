@@ -160,6 +160,9 @@ PanelWindow { // qmllint disable uncreatable-type
             } else if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) {
                 root.prev();
                 event.accepted = true;
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                root.commit();
+                event.accepted = true;
             } else if (event.key === Qt.Key_Escape) {
                 root.dismiss();
                 event.accepted = true;
