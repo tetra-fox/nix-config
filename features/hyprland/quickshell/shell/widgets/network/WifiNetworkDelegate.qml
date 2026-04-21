@@ -43,9 +43,16 @@ Item {
         icon: {
             const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown; // qmllint disable unresolved-type
             const sig = root.network.signalStrength;
-            if (secured)
-                return sig >= 0.75 ? Icons.wifiLocked : sig >= 0.5 ? Icons.wifiSignal3Locked : sig >= 0.3 ? Icons.wifiSignal2Locked : sig >= 0.1 ? Icons.wifiSignal1Locked : Icons.wifiSignal0Locked;
-            return sig >= 0.75 ? Icons.wifi : sig >= 0.5 ? Icons.wifiSignal3 : sig >= 0.3 ? Icons.wifiSignal2 : sig >= 0.1 ? Icons.wifiSignal1 : Icons.wifiSignal0;
+            const lock = secured ? "Locked" : "";
+            if (sig >= 0.75)
+                return Icons[`wifi${lock}`];
+            if (sig >= 0.5)
+                return Icons[`wifiSignal3${lock}`];
+            if (sig >= 0.3)
+                return Icons[`wifiSignal2${lock}`];
+            if (sig >= 0.1)
+                return Icons[`wifiSignal1${lock}`];
+            return Icons[`wifiSignal0${lock}`];
         }
         iconSize: Theme.fontIconLg
         iconColor: root.network.connected ? Theme.colorGreen : Theme.textPrimary
