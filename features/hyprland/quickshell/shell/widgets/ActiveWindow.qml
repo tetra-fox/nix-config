@@ -34,6 +34,7 @@ Text {
     readonly property var titleOverrides: ({
             "1password": "1Password",
             "org.telegram.desktop": "Telegram",
+            "org.prismlauncher.PrismLauncher": "Prism Launcher",
             "com.usebottles.bottles": "Bottles"
         })
 
