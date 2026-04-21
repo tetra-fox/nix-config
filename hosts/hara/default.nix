@@ -66,12 +66,12 @@
   programs.dconf.enable = true;
   services.dbus.implementation = "broker";
 
-  programs.nix-ld = {
-    enable = true;
-    libraries = with pkgs; [
-      glibc
-    ];
-  };
+  # programs.nix-ld = {
+  #   enable = true;
+  #   libraries = with pkgs; [
+  #     glibc
+  #   ];
+  # };
 
   services.printing.enable = true;
 

@@ -1,6 +1,6 @@
 import QtQuick
 
-// scrolls horizontally on hover when the content doesn't fit
+// scrolls horizontally on hover when text overflows
 Item {
     id: root
 
@@ -15,13 +15,12 @@ Item {
     clip: true
 
     readonly property bool overflows: label.implicitWidth > root.width
+    // +8 so text doesn't butt against the clip edge at max scroll
     readonly property real scrollDist: Math.max(0, label.implicitWidth - root.width + 8)
 
     Text {
         id: label
-        x: 0
 
-        // scroll forward then snap back, loops while hovered and overflowing
         SequentialAnimation on x {
             id: scrollAnim
             running: root.hovered && root.overflows
@@ -32,6 +31,7 @@ Item {
             }
             NumberAnimation {
                 to: -root.scrollDist
+                // 18ms per pixel — constant scroll speed regardless of text length
                 duration: root.scrollDist * 18
                 easing.type: Easing.Linear
             }
@@ -45,7 +45,6 @@ Item {
             }
         }
 
-        // snap back when hover ends mid-scroll
         NumberAnimation on x {
             id: resetAnim
             running: !root.hovered && label.x !== 0

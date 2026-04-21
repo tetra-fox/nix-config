@@ -1,8 +1,9 @@
-import qs.components
+pragma ComponentBehavior: Bound
+
+import qs.theme
 import QtQuick
 import QtQuick.Effects
 
-// Floating music note particle effect for the bar button.
 Item {
     id: root
 
@@ -25,25 +26,28 @@ Item {
         id: noteRepeater
         model: 5
 
-        FloatingNote {}
+        FloatingNote {
+            containerWidth: root.width
+            containerHeight: root.height
+        }
     }
 
     component FloatingNote: Item {
         id: fn
 
-        Theme {
-            id: fnTheme
-        }
+        readonly property var palette: [Theme.colorPink, Theme.colorPurple, Theme.colorBlue, Theme.colorGreen, Theme.colorYellow, Theme.colorRed]
 
+        required property real containerWidth
+        required property real containerHeight
         property real angle: 0
         property real drift: 0
 
-        x: root.width / 2 - width / 2 + Math.cos(fn.angle) * fn.drift
-        y: root.height / 2 - height / 2 + Math.sin(fn.angle) * fn.drift
+        x: fn.containerWidth / 2 - width / 2 + Math.cos(fn.angle) * fn.drift
+        y: fn.containerHeight / 2 - height / 2 + Math.sin(fn.angle) * fn.drift
         width: fnLabel.implicitWidth
         height: fnLabel.implicitHeight
 
-        // radial fade: quick fade-in near center, smooth fade-out toward edge
+        // radial fade: fast in near center, smooth out toward edge
         opacity: {
             const t = fn.drift / 24.0;
             if (t < 0.15)
@@ -54,16 +58,19 @@ Item {
         function launch() {
             fn.angle = Math.random() * 2 * Math.PI;
             fnLabel.font.pixelSize = 10 + Math.round(Math.random() * 3);
+            fnLabel.color = fn.palette[Math.floor(Math.random() * fn.palette.length)];
             fnDrift.restart();
         }
 
         Text {
             id: fnLabel
+            // material symbols music_note glyph
             text: "\uE405"
-            font.family: fnTheme.fontIconFamily
+            font.family: Theme.fontIconFamily
             font.pixelSize: 10
-            font.variableAxes: fnTheme.fontIconAxes
-            color: fnTheme.accent
+            font.variableAxes: Theme.fontIconAxes
+            color: Theme.colorPink
+            // hidden but layer-rendered so MultiEffect can use it as a source
             visible: false
             layer.enabled: true
         }
@@ -75,6 +82,7 @@ Item {
             height: fnLabel.height
             blurEnabled: true
             blurMax: 16
+            // exponential ramp so blur accelerates as notes drift outward
             blur: (Math.exp(fn.drift / 24.0) - 1) / (Math.E - 1)
         }
 

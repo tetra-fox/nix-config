@@ -1,17 +1,14 @@
+import qs.theme
 import QtQuick
 
-// icon button used in the bar. set isOpen: true when its popup is visible
+// bar icon button; isOpen highlights when popup is visible
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-
     property string icon
-    property color iconColor: theme.textPrimary
+    property color iconColor: Theme.textPrimary
     property bool isOpen: false
-    property int iconSize: theme.fontIcon
+    property int iconSize: Theme.fontIcon
 
     signal clicked(var mouse)
 
@@ -20,22 +17,22 @@ Item {
 
     Rectangle {
         id: bg
-        width: theme.iconHitWidth
-        height: theme.iconHitHeight
-        radius: theme.radiusMd
+        width: Theme.iconHitWidth
+        height: Theme.iconHitHeight
+        radius: Theme.radiusMd
 
         color: {
             if (area.pressed)
-                return theme.pressedBg;
+                return Theme.pressedBg;
             if (root.isOpen)
-                return theme.openBg;
+                return Theme.openBg;
             if (area.containsMouse)
-                return theme.hoverBg;
-            return theme.withAlpha(theme.hoverBg, 0);
+                return Theme.hoverBg;
+            return Theme.withAlpha(Theme.hoverBg, 0);
         }
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
                 easing.type: Easing.OutQuad
             }
         }
@@ -46,11 +43,11 @@ Item {
             text: root.icon
             color: root.iconColor
             font.pixelSize: root.iconSize
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
+            font.family: Theme.fontIconFamily
+            font.variableAxes: Theme.fontIconAxes
             Behavior on color {
                 ColorAnimation {
-                    duration: theme.animFast
+                    duration: Theme.animFast
                 }
             }
         }

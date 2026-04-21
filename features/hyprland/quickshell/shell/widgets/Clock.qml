@@ -1,37 +1,17 @@
-import qs.components
+import qs.theme
 import QtQuick
 
-// clock — syncs to the nearest second boundary on init, then ticks every 1000ms
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-
-    implicitWidth: timeTextProp.implicitWidth + theme.iconPadH
-    implicitHeight: timeTextProp.implicitHeight + theme.iconPadV
-
-    // align to the next second boundary, then hand off to tickTimer
-    Timer {
-        id: syncTimer
-        interval: {
-            const sub = Date.now() % 1000;
-            return sub === 0 ? 1000 : (1000 - sub);
-        }
-        running: true
-        repeat: false
-        onTriggered: {
-            root.tick();
-            tickTimer.running = true;
-        }
-    }
+    implicitWidth: timeTextProp.implicitWidth + Theme.iconPadH
+    implicitHeight: timeTextProp.implicitHeight + Theme.iconPadV
 
     Timer {
-        id: tickTimer
         interval: 1000
-        running: false
+        running: true
         repeat: true
+        triggeredOnStart: true
         onTriggered: root.tick()
     }
 
@@ -43,8 +23,8 @@ Item {
         id: timeTextProp
         anchors.centerIn: parent
         text: Qt.formatDateTime(new Date(), "ddd dd MMM • HH:mm:ss")
-        color: theme.textPrimary
-        font.pixelSize: theme.fontBase
-        font.family: theme.fontFamily
+        color: Theme.textPrimary
+        font.pixelSize: Theme.fontBase
+        font.family: Theme.fontFamily
     }
 }

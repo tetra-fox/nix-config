@@ -1,20 +1,13 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.theme
 import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
-// Single row in the wifi network list — signal icon, name, action buttons, password field.
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
 
     required property WifiNetwork network
     property bool expanded: false
@@ -26,6 +19,7 @@ Item {
     signal connectWithPsk(string psk)
     signal expandToggled
 
+    // 18 = topMargin*3 (6px gap above pskField + 6px gap above pskActions + 6px bottom pad)
     implicitHeight: item.implicitHeight + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
     clip: true
 
@@ -33,6 +27,7 @@ Item {
         target: root.network
         function onConnectionFailed(reason) {
             root.psk = "";
+            // collapse psk prompt for unknown networks so user can retry fresh
             if (!root.network.known)
                 root.expandToggled();
         }
@@ -49,19 +44,19 @@ Item {
             const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown; // qmllint disable unresolved-type
             const sig = root.network.signalStrength;
             if (secured)
-                return sig >= 0.75 ? icons.wifiLocked : sig >= 0.5 ? icons.wifiSignal3Locked : sig >= 0.3 ? icons.wifiSignal2Locked : sig >= 0.1 ? icons.wifiSignal1Locked : icons.wifiSignal0Locked;
-            return sig >= 0.75 ? icons.wifi : sig >= 0.5 ? icons.wifiSignal3 : sig >= 0.3 ? icons.wifiSignal2 : sig >= 0.1 ? icons.wifiSignal1 : icons.wifiSignal0;
+                return sig >= 0.75 ? Icons.wifiLocked : sig >= 0.5 ? Icons.wifiSignal3Locked : sig >= 0.3 ? Icons.wifiSignal2Locked : sig >= 0.1 ? Icons.wifiSignal1Locked : Icons.wifiSignal0Locked;
+            return sig >= 0.75 ? Icons.wifi : sig >= 0.5 ? Icons.wifiSignal3 : sig >= 0.3 ? Icons.wifiSignal2 : sig >= 0.1 ? Icons.wifiSignal1 : Icons.wifiSignal0;
         }
-        iconSize: theme.fontIconLg
-        iconColor: root.network.connected ? theme.colorGreen : theme.textPrimary
+        iconSize: Theme.fontIconLg
+        iconColor: root.network.connected ? Theme.colorGreen : Theme.textPrimary
         text: root.network.name
-        textColor: root.network.connected ? theme.colorGreen : theme.textPrimary
+        textColor: root.network.connected ? Theme.colorGreen : Theme.textPrimary
         showSeparator: root.showSeparator
         onSelected: root.clicked()
 
         InlineButton {
             text: "Forget"
-            accentColor: theme.colorRed
+            accentColor: Theme.colorRed
             visible: root.network.known && !root.network.connected
             onClicked: root.forgotNetwork()
         }
@@ -79,8 +74,8 @@ Item {
         }
         implicitHeight: 24
         visible: root.expanded
-        radius: theme.radiusSm
-        color: theme.withAlpha(theme.black, 0.3)
+        radius: Theme.radiusSm
+        color: Theme.withAlpha(Theme.black, 0.3)
         placeholderText: "Password"
         password: true
         text: root.psk
@@ -111,7 +106,7 @@ Item {
 
         InlineButton {
             text: "Connect"
-            accentColor: theme.colorGreen
+            accentColor: Theme.colorGreen
             onClicked: root.connectWithPsk(root.psk)
         }
     }

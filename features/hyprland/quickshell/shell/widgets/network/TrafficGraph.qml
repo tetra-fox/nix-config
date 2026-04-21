@@ -1,21 +1,14 @@
-import qs.components
+import qs.theme
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 
-// Live traffic graph with rx/tx rates for an interface.
-// Set ifname and polling to activate.
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string ifname: ""
     property bool polling: false
 
-    // ── state ─────────────────────────────────────────────────────────────────
     property real rxBytes: 0
     property real txBytes: 0
     property real rxRate: -1
@@ -35,6 +28,7 @@ Item {
     implicitHeight: col.implicitHeight
     visible: root.hasData
 
+    // disabled until first sample so the scale doesn't animate up from zero
     Behavior on displayMax {
         enabled: root._scaleInited
         NumberAnimation {
@@ -45,6 +39,8 @@ Item {
 
     onScrollPhaseChanged: root.graphRepaintNeeded()
 
+    // animates graph sliding left by one sample width between polls,
+    // so new data points appear to scroll in smoothly
     NumberAnimation {
         id: scrollAnim
         target: root
@@ -84,7 +80,6 @@ Item {
 
     onIfnameChanged: reset()
 
-    // ── sysfs reads ─────────────────────────────────────────────────────────
     property int _pendingReloads: 0
 
     FileView {
@@ -99,10 +94,11 @@ Item {
         onLoaded: root._onStatsLoaded()
     }
 
+    // waits for both rx and tx file reads to finish before computing rates
     function _onStatsLoaded() {
         if (--_pendingReloads > 0)
             return;
-        _pendingReloads = 0; // clamp in case of spurious loads
+        _pendingReloads = 0; // clamp
 
         const now = Date.now();
         const rx = parseInt(rxFile.text()) || 0;
@@ -118,6 +114,7 @@ Item {
                 rx: Math.max(0, root.rxRate),
                 tx: Math.max(0, root.txRate)
             });
+            // 21 = maxSamples(20) + 1 extra for scroll interpolation
             while (s.length > 21)
                 s.shift();
             root.samples = s;
@@ -149,7 +146,6 @@ Item {
         }
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────────
     ColumnLayout {
         id: col
         anchors {
@@ -161,16 +157,16 @@ Item {
 
         Text {
             text: "Traffic"
-            color: theme.textLabel
-            font.pixelSize: theme.fontSm
-            font.family: theme.fontFamily
+            color: Theme.textLabel
+            font.pixelSize: Theme.fontSm
+            font.family: Theme.fontFamily
         }
 
         Rectangle {
             Layout.fillWidth: true
             height: 52
-            radius: theme.radiusSm
-            color: theme.withAlpha(theme.black, 0.25)
+            radius: Theme.radiusSm
+            color: Theme.withAlpha(Theme.black, 0.25)
             clip: true
 
             Canvas {
@@ -195,7 +191,7 @@ Item {
                         ctx.beginPath();
                         ctx.moveTo(0, height - pad);
                         ctx.lineTo(width, height - pad);
-                        ctx.strokeStyle = theme.withAlpha(theme.white, 0.10);
+                        ctx.strokeStyle = Theme.withAlpha(Theme.white, 0.10);
                         ctx.lineWidth = 1;
                         ctx.stroke();
                         return;
@@ -238,10 +234,10 @@ Item {
                         ctx.stroke();
                     }
 
-                    fill("ty", theme.withAlpha(theme.colorBlue, 0.12));
-                    line("ty", theme.colorBlue);
-                    fill("ry", theme.withAlpha(theme.colorPink, 0.15));
-                    line("ry", theme.colorPink);
+                    fill("ty", Theme.withAlpha(Theme.colorBlue, 0.12));
+                    line("ty", Theme.colorBlue);
+                    fill("ry", Theme.withAlpha(Theme.colorPink, 0.15));
+                    line("ry", Theme.colorPink);
                 }
             }
         }
@@ -253,24 +249,24 @@ Item {
                 spacing: 6
                 Text {
                     text: "↓"
-                    color: theme.colorPink
-                    font.pixelSize: theme.fontSm
-                    font.family: theme.fontFamily
+                    color: Theme.colorPink
+                    font.pixelSize: Theme.fontSm
+                    font.family: Theme.fontFamily
                 }
                 ColumnLayout {
                     spacing: 1
                     Text {
                         text: root.formatBytes(root.rxBytes)
-                        color: theme.textPrimary
-                        font.pixelSize: theme.fontSm
-                        font.family: theme.fontFamily
+                        color: Theme.textPrimary
+                        font.pixelSize: Theme.fontSm
+                        font.family: Theme.fontFamily
                     }
                     Text {
                         visible: root.rxRate >= 0
-                        text: root.rxRate >= 0 ? root.formatRate(root.rxRate) : ""
-                        color: theme.textSecondary
-                        font.pixelSize: theme.fontXs
-                        font.family: theme.fontFamily
+                        text: root.formatRate(root.rxRate)
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontXs
+                        font.family: Theme.fontFamily
                     }
                 }
             }
@@ -283,24 +279,24 @@ Item {
                 spacing: 6
                 Text {
                     text: "↑"
-                    color: theme.colorBlue
-                    font.pixelSize: theme.fontSm
-                    font.family: theme.fontFamily
+                    color: Theme.colorBlue
+                    font.pixelSize: Theme.fontSm
+                    font.family: Theme.fontFamily
                 }
                 ColumnLayout {
                     spacing: 1
                     Text {
                         text: root.formatBytes(root.txBytes)
-                        color: theme.textPrimary
-                        font.pixelSize: theme.fontSm
-                        font.family: theme.fontFamily
+                        color: Theme.textPrimary
+                        font.pixelSize: Theme.fontSm
+                        font.family: Theme.fontFamily
                     }
                     Text {
                         visible: root.txRate >= 0
-                        text: root.txRate >= 0 ? root.formatRate(root.txRate) : ""
-                        color: theme.textSecondary
-                        font.pixelSize: theme.fontXs
-                        font.family: theme.fontFamily
+                        text: root.formatRate(root.txRate)
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontXs
+                        font.family: Theme.fontFamily
                     }
                 }
             }

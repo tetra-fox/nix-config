@@ -1,13 +1,8 @@
-import qs.components
+import qs.theme
 import QtQuick
 
-// Playback speed button — cycles through common rates.
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property var player: null
 
@@ -21,9 +16,9 @@ Item {
     function cycleRate() {
         if (!root.player)
             return;
-        // find the next rate above current, wrapping to first
         const cur = root.currentRate;
         for (let i = 0; i < root.rates.length; i++) {
+            // epsilon avoids float equality issues (e.g. 1.0 stored as 0.999...)
             if (root.rates[i] > cur + 0.01) {
                 root.player.rate = root.rates[i];
                 return;
@@ -36,21 +31,21 @@ Item {
         id: bg
         width: label.implicitWidth + 12
         height: label.implicitHeight + 6
-        radius: theme.radiusMd
-        color: area.pressed ? theme.pressedBg : area.containsMouse ? theme.hoverBg : "transparent"
+        radius: Theme.radiusMd
+        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : "transparent"
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
 
         Text {
             id: label
             anchors.centerIn: parent
-            text: root.currentRate.toFixed(root.currentRate % 1 === 0 ? 0 : 2) + "x"
-            color: root.currentRate !== 1.0 ? theme.accent : theme.textInactive
-            font.pixelSize: theme.fontXs
-            font.family: theme.fontFamily
+            text: parseFloat(root.currentRate.toFixed(2)) + "x"
+            color: root.currentRate !== 1.0 ? Theme.accent : Theme.textInactive
+            font.pixelSize: Theme.fontXs
+            font.family: Theme.fontFamily
             font.bold: root.currentRate !== 1.0
         }
 

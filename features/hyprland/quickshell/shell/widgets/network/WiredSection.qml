@@ -1,27 +1,16 @@
 import qs.components
+import qs.theme
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 
-// Wired network state + UI section for the network popup.
-// Exposes connected/ifname for the parent bar button.
-// IP/gateway/DNS details are shown in the shared connection details section.
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
-    // ── public (read by parent) ──────────────────────────────────────────────
     readonly property bool connected: ifname !== "" && operstate === "UP" && ip !== ""
     readonly property string ifname: _ifname
     property bool polling: false
 
-    // ── internal state (set by processes, do not write externally) ─────────
     property string _ifname: ""
     property string operstate: ""
     property string ip: ""
@@ -30,10 +19,7 @@ Item {
     property int speed: -1
     property string duplex: ""
 
-    // ── processes ─────────────────────────────────────────────────────────────
-
-    // Discover the wired interface: physical devices (have /sys/.../device)
-    // that aren't wireless (no /sys/.../wireless). Runs once + on slow poll.
+    // find first physical non-wireless interface
     BufferedProcess {
         id: ifaceProc
         command: ["sh", "-c", "for d in /sys/class/net/*/device; do i=$(basename $(dirname $d)); [ ! -d /sys/class/net/$i/wireless ] && echo $i; done"]
@@ -88,6 +74,7 @@ Item {
                 const newState = r?.operstate ?? "";
                 if (newState !== root.operstate) {
                     root.operstate = newState;
+                    // re-fetch addr/speed/duplex since they change with link state
                     root._fetchDetails();
                 }
             } catch (_) {}
@@ -123,7 +110,7 @@ Item {
 
     Component.onCompleted: ifaceProc.running = true
 
-    // Re-discover wired interface periodically (handles hotplug, etc.)
+    // hotplug re-scan
     Timer {
         interval: 5000
         running: root.polling
@@ -132,7 +119,6 @@ Item {
             ifaceProc.running = true
     }
 
-    // Poll for state changes (catches cable unplug, external nmcli, etc.)
     Timer {
         interval: 2000
         running: root.polling && root.ifname !== ""
@@ -145,7 +131,6 @@ Item {
         }
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────────
     implicitHeight: col.implicitHeight
 
     ColumnLayout {
@@ -157,16 +142,15 @@ Item {
         }
         spacing: 5
 
-        // toggle row
         RowLayout {
             Layout.fillWidth: true
             visible: root.ifname !== ""
 
             Text {
                 text: "Ethernet"
-                color: theme.textLabel
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textLabel
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 Layout.fillWidth: true
             }
 
@@ -182,8 +166,8 @@ Item {
         }
 
         Header {
-            icon: root.connected ? icons.settingsEthernet : icons.cable
-            iconColor: root.connected ? theme.textPrimary : theme.textInactive
+            icon: root.connected ? Icons.settingsEthernet : Icons.cable
+            iconColor: root.connected ? Theme.textPrimary : Theme.textInactive
             title: root.ifname || "No connection"
             badgeVisible: root.ifname !== ""
             badgeActive: root.connected

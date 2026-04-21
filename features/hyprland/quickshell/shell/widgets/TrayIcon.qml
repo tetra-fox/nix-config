@@ -1,18 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.theme
 
 import Quickshell
 import Quickshell.Services.SystemTray
 import QtQuick
 
-// single tray icon - left-click activates, right-click opens context menu
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     required property SystemTrayItem item
     property var panelWindow
@@ -22,30 +18,30 @@ Item {
 
     Rectangle {
         id: hitTarget
-        width: theme.iconHitWidth
-        height: theme.iconHitHeight
-        radius: theme.radiusMd
+        width: Theme.iconHitWidth
+        height: Theme.iconHitHeight
+        radius: Theme.radiusMd
 
         color: {
             if (trayMouse.pressed)
-                return theme.pressedBg;
+                return Theme.pressedBg;
             if (popup.visible)
-                return theme.openBg;
+                return Theme.openBg;
             if (trayMouse.containsMouse)
-                return theme.hoverBg;
+                return Theme.hoverBg;
             return "transparent";
         }
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
                 easing.type: Easing.OutQuad
             }
         }
 
         Image {
             anchors.centerIn: parent
-            width: theme.trayIconSize
-            height: theme.trayIconSize
+            width: Theme.trayIconSize
+            height: Theme.trayIconSize
             source: root.item.icon
             sourceSize.width: width
             sourceSize.height: height
@@ -72,6 +68,7 @@ Item {
         menu: root.item.menu    // qmllint disable unresolved-type
     }
 
+    // qmllint disable missing-property
     PopupWindow {
         id: popup
         panelWindow: root.panelWindow

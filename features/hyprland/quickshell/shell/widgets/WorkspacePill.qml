@@ -1,39 +1,33 @@
 pragma ComponentBehavior: Bound
-
-import qs.components
+import qs.theme
 
 import Quickshell.Hyprland
 import QtQuick
 
-// single workspace pill. accent when focused, red when urgent
 Rectangle {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     required property var workspace
 
     readonly property bool focused: Hyprland.focusedWorkspace?.id === workspace.id
     readonly property bool urgent: workspace.lastIpcObject?.urgent ?? false
 
-    implicitWidth: label.implicitWidth + theme.workspacePillHPad
-    implicitHeight: theme.workspacePillHeight
+    implicitWidth: label.implicitWidth + Theme.workspacePillHPad
+    implicitHeight: Theme.workspacePillHeight
 
-    radius: theme.radiusSm
+    radius: Theme.radiusSm
 
     color: {
         if (urgent)
-            return theme.danger;
+            return Theme.danger;
         if (focused)
-            return theme.accent;
-        return theme.inactiveBg;
+            return Theme.accent;
+        return Theme.inactiveBg;
     }
 
     Behavior on color {
         ColorAnimation {
-            duration: theme.animNormal
+            duration: Theme.animNormal
         }
     }
 
@@ -41,9 +35,9 @@ Rectangle {
         id: label
         anchors.centerIn: parent
         text: root.workspace.name
-        color: root.focused ? theme.textActive : theme.textInactive
-        font.pixelSize: theme.fontMd
-        font.family: theme.fontFamily
+        color: root.focused ? Theme.textActive : Theme.textInactive
+        font.pixelSize: Theme.fontMd
+        font.family: Theme.fontFamily
     }
 
     MouseArea {

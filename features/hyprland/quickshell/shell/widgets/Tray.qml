@@ -1,21 +1,15 @@
 pragma ComponentBehavior: Bound
-
-import qs.components
+import qs.theme
 
 import Quickshell.Services.SystemTray
 import QtQuick
 
-// row of system tray icons
 Row {
     id: root
 
-    Theme {
-        id: theme
-    }
-
     property var panelWindow
 
-    spacing: theme.buttonGap
+    spacing: Theme.buttonGap
 
     Repeater {
         model: SystemTray.items

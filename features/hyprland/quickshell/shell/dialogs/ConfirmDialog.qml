@@ -1,27 +1,13 @@
 import qs.components
+import qs.theme
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-// centered confirmation dialog with a countdown auto-confirm
-// Usage:
-//   ConfirmDialog {
-//       id: dialog
-//       title: "Shut down?"
-//       body: "Are you sure you want to shut down?"
-//       actionLabel: "Shut down"
-//       countdown: 30
-//       onConfirmed: { /* run your command */ }
-//   }
-//   dialog.open()
 PanelWindow { // qmllint disable uncreatable-type
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string title: ""
     property string body: ""
@@ -55,8 +41,7 @@ PanelWindow { // qmllint disable uncreatable-type
     visible: false
     color: "transparent"
 
-    // Brief guard so the focus grab doesn't immediately clear when the dialog
-    // is opened via a keyboard shortcut (key release can dismiss the grab).
+    // guard: key-release from shortcut can dismiss the grab immediately
     Timer {
         id: grabGuard
         interval: 150
@@ -79,6 +64,7 @@ PanelWindow { // qmllint disable uncreatable-type
         interval: 1000
         repeat: true
         running: root.visible
+        // auto-confirm when countdown reaches 0 (e.g. logout proceeds if user walks away)
         onTriggered: {
             root.remaining -= 1;
             if (root.remaining <= 0) {
@@ -91,8 +77,6 @@ PanelWindow { // qmllint disable uncreatable-type
     onVisibleChanged: {
         if (visible)
             openAnim.restart();
-        else
-            countdownTimer.stop();
     }
 
     SequentialAnimation {
@@ -131,11 +115,11 @@ PanelWindow { // qmllint disable uncreatable-type
         id: panel
         anchors.centerIn: parent
         width: 300
-        height: col.implicitHeight + theme.pillHPad * 4
-        radius: theme.radiusLg
-        color: theme.panelBg
+        height: col.implicitHeight + Theme.pillHPad * 4
+        radius: Theme.radiusLg
+        color: Theme.panelBg
         border.width: 1
-        border.color: theme.panelBorder
+        border.color: Theme.panelBorder
         transformOrigin: Item.Center
 
         ColumnLayout {
@@ -144,12 +128,11 @@ PanelWindow { // qmllint disable uncreatable-type
                 left: parent.left
                 right: parent.right
                 verticalCenter: parent.verticalCenter
-                leftMargin: theme.pillHPad * 2
-                rightMargin: theme.pillHPad * 2
+                leftMargin: Theme.pillHPad * 2
+                rightMargin: Theme.pillHPad * 2
             }
             spacing: 0
 
-            // title
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -157,110 +140,60 @@ PanelWindow { // qmllint disable uncreatable-type
                 Text {
                     visible: root.icon !== ""
                     text: root.icon
-                    color: theme.textActive
-                    font.pixelSize: theme.fontIconLg
-                    font.family: theme.fontIconFamily
-                    font.variableAxes: theme.fontIconAxes
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontIconLg
+                    font.family: Theme.fontIconFamily
+                    font.variableAxes: Theme.fontIconAxes
                 }
 
                 Text {
                     Layout.fillWidth: true
                     text: root.title
-                    color: theme.textActive
-                    font.pixelSize: theme.fontBase
-                    font.family: theme.fontFamily
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontBase
+                    font.family: Theme.fontFamily
                     font.weight: Font.Medium
                 }
             }
 
             Item {
-                implicitHeight: theme.iconPadV
+                implicitHeight: Theme.iconPadV
             }
 
-            // body
             Text {
                 Layout.fillWidth: true
                 text: root.body
-                color: theme.textSecondary
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 wrapMode: Text.WordWrap
             }
 
             Item {
-                implicitHeight: theme.pillHPad
+                implicitHeight: Theme.pillHPad
             }
 
-            // buttons
             RowLayout {
                 Layout.fillWidth: true
-                spacing: theme.iconPadV
+                spacing: Theme.iconPadV
 
-                // cancel
-                Rectangle {
+                DialogButton {
                     Layout.fillWidth: true
-                    implicitHeight: theme.popupItemHeight
-                    radius: theme.radiusMd
-                    color: cancelArea.pressed ? theme.pressedBg : cancelArea.containsMouse ? theme.hoverBg : theme.withAlpha(theme.hoverBg, 0)
-                    border.width: 1
-                    border.color: theme.panelBorder
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: theme.animFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Cancel"
-                        color: theme.textPrimary
-                        font.pixelSize: theme.fontMd
-                        font.family: theme.fontFamily
-                    }
-
-                    MouseArea {
-                        id: cancelArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.visible = false;
-                            root.cancelled();
-                        }
+                    text: "Cancel"
+                    bordered: true
+                    onClicked: {
+                        root.visible = false;
+                        root.cancelled();
                     }
                 }
 
-                // confirm
-                Rectangle {
+                DialogButton {
                     Layout.fillWidth: true
-                    implicitHeight: theme.popupItemHeight
-                    radius: theme.radiusMd
-                    color: confirmArea.pressed ? Qt.darker(theme.danger, 1.3) : confirmArea.containsMouse ? theme.danger : theme.withAlpha(theme.danger, 0.75)
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: theme.animFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.actionLabel + "  (" + root.remaining + ")"
-                        color: theme.textActive
-                        font.pixelSize: theme.fontMd
-                        font.family: theme.fontFamily
-                    }
-
-                    MouseArea {
-                        id: confirmArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.visible = false;
-                            root.confirmed();
-                        }
+                    text: root.actionLabel + "  (" + root.remaining + ")"
+                    accentColor: Theme.danger
+                    onClicked: {
+                        root.visible = false;
+                        root.confirmed();
                     }
                 }
             }

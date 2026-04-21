@@ -1,19 +1,15 @@
+import qs.theme
 import QtQuick
 
-// Scrollable container with fade edges. Clips content to maxHeight
-// and shows gradient fades when content overflows.
+// scrollable column with gradient fade edges on overflow
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property int maxItems: 8
     property int spacing: 0
     default property alias content: contentCol.data
 
-    implicitHeight: Math.min(contentCol.implicitHeight, maxItems * theme.popupItemHeight)
+    implicitHeight: Math.min(contentCol.implicitHeight, maxItems * Theme.popupItemHeight)
 
     function ensureVisible(item) {
         const mapped = item.mapToItem(contentCol, 0, 0);
@@ -47,6 +43,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => {
                 const maxY = flick.contentHeight - flick.height;
+                // 0.4 converts angle delta (120 per notch) to ~48px per scroll notch
                 const step = event.pixelDelta.y !== 0 ? -event.pixelDelta.y : -event.angleDelta.y * 0.4;
                 flick.scrollTarget = Math.max(0, Math.min(maxY, flick.scrollTarget + step));
                 scrollAnim.restart();
@@ -60,7 +57,6 @@ Item {
         }
     }
 
-    // fade edges
     Rectangle {
         anchors {
             left: parent.left
@@ -72,7 +68,7 @@ Item {
         gradient: Gradient {
             GradientStop {
                 position: 0.0
-                color: theme.panelBg
+                color: Theme.panelBg
             }
             GradientStop {
                 position: 1.0
@@ -96,7 +92,7 @@ Item {
             }
             GradientStop {
                 position: 1.0
-                color: theme.panelBg
+                color: Theme.panelBg
             }
         }
     }

@@ -1,19 +1,16 @@
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Usage bar with icon, label, detail text, and animated progress bar.
+// usage bar with icon, label, detail text, and animated progress bar
 ColumnLayout {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string label: ""
     property string icon: ""
     property real value: 0
     property string detail: ""
-    property color barColor: root.value > 0.9 ? theme.danger : root.value > 0.7 ? theme.colorYellow : theme.accent
+    property color barColor: root.value > 0.9 ? Theme.danger : root.value > 0.7 ? Theme.colorYellow : Theme.accent
 
     spacing: 3
     Layout.fillWidth: true
@@ -25,17 +22,17 @@ ColumnLayout {
         Text {
             visible: root.icon !== ""
             text: root.icon
-            color: theme.textLabel
-            font.pixelSize: theme.fontIcon
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
+            color: Theme.textLabel
+            font.pixelSize: Theme.fontIcon
+            font.family: Theme.fontIconFamily
+            font.variableAxes: Theme.fontIconAxes
         }
 
         Text {
             text: root.label
-            color: theme.textLabel
-            font.pixelSize: theme.fontSm
-            font.family: theme.fontFamily
+            color: Theme.textLabel
+            font.pixelSize: Theme.fontSm
+            font.family: Theme.fontFamily
         }
 
         Item {
@@ -44,9 +41,9 @@ ColumnLayout {
 
         Text {
             text: root.detail
-            color: theme.textSecondary
-            font.pixelSize: theme.fontSm
-            font.family: theme.fontFamily
+            color: Theme.textSecondary
+            font.pixelSize: Theme.fontSm
+            font.family: Theme.fontFamily
         }
     }
 
@@ -54,7 +51,7 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 4
         radius: 2
-        color: theme.inactiveBg
+        color: Theme.inactiveBg
 
         Rectangle {
             width: parent.width * Math.min(Math.max(root.value, 0), 1)
@@ -64,7 +61,7 @@ ColumnLayout {
 
             Behavior on width {
                 NumberAnimation {
-                    duration: theme.animSlow
+                    duration: Theme.animSlow
                     easing.type: Easing.OutQuad
                 }
             }

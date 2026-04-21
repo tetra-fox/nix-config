@@ -1,18 +1,15 @@
+import qs.theme
 import Quickshell.Io
 import QtQuick
 
-// right-aligned text that copies to clipboard on click, with a floating "copied" toast
+// right-aligned text that copies to clipboard on click
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property alias text: innerText.text
     property alias elide: innerText.elide
     property bool disabled: false
-    property color baseColor: theme.textPrimary
+    property color baseColor: Theme.textPrimary
 
     implicitWidth: innerText.implicitWidth
     implicitHeight: innerText.implicitHeight
@@ -23,12 +20,12 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, root.width)
 
-        font.pixelSize: theme.fontSm
-        font.family: theme.fontFamily
-        color: root.disabled ? theme.textInactive : area.containsMouse ? theme.accent : root.baseColor
+        font.pixelSize: Theme.fontSm
+        font.family: Theme.fontFamily
+        color: root.disabled ? Theme.textInactive : area.containsMouse ? Theme.accent : root.baseColor
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
     }
@@ -54,7 +51,6 @@ Item {
         }
     }
 
-    // "copied" toast
     Item {
         id: toast
         z: 999
@@ -66,19 +62,19 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: theme.radiusSm
-            color: theme.panelBg
+            radius: Theme.radiusSm
+            color: Theme.panelBg
             border.width: 1
-            border.color: theme.panelBorder
+            border.color: Theme.panelBorder
         }
 
         Text {
             id: label
             anchors.centerIn: parent
             text: "copied"
-            color: theme.textPrimary
-            font.pixelSize: theme.fontXs
-            font.family: theme.fontFamily
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontXs
+            font.family: Theme.fontFamily
         }
     }
 

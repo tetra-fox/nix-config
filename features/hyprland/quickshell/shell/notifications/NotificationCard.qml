@@ -1,30 +1,21 @@
 pragma ComponentBehavior: Bound
-
-import qs.components
+import qs.theme
 
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
 
-// single notification card with urgency accent strip, auto-expire, and dismiss
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
 
     required property Notification notif
 
     readonly property color accentColor: {
         if (notif.urgency === NotificationUrgency.Critical)
-            return theme.colorRed;
+            return Theme.colorRed;
         if (notif.urgency === NotificationUrgency.Low)
-            return theme.colorYellow;
-        return theme.accent;
+            return Theme.colorYellow;
+        return Theme.accent;
     }
 
     implicitWidth: 320
@@ -33,12 +24,11 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: theme.animSlow
+            duration: Theme.animSlow
             easing.type: Easing.InOutQuad
         }
     }
 
-    // -- enter animation --
     Component.onCompleted: enterAnim.restart()
 
     SequentialAnimation {
@@ -50,7 +40,7 @@ Item {
                 value: 0.82
             }
             PropertyAction {
-                target: slideY
+                target: slideX
                 property: "x"
                 value: 16
             }
@@ -64,7 +54,7 @@ Item {
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
-                target: slideY
+                target: slideX
                 property: "x"
                 to: 0
                 duration: 200
@@ -73,7 +63,7 @@ Item {
         }
     }
 
-    // -- exit --
+    // guard against double-dismiss (timer + click can race)
     property bool _closing: false
     function dismiss() {
         if (_closing)
@@ -96,12 +86,12 @@ Item {
         }
     }
 
-    // -- auto-expire timer --
     Timer {
         id: expireTimer
         interval: {
             if (root.notif.expireTimeout > 0)
                 return root.notif.expireTimeout * 1000;
+            // critical notifs stay until manually dismissed (interval 0 = never fires)
             if (root.notif.urgency === NotificationUrgency.Critical)
                 return 0;
             return 5000;
@@ -111,30 +101,28 @@ Item {
         onTriggered: root.dismiss()
     }
 
-    // -- card visual --
     Rectangle {
         id: card
         width: parent.width
-        height: content.implicitHeight + theme.pillHPad * 2
-        radius: theme.radiusLg
-        color: theme.panelBg
+        height: content.implicitHeight + Theme.pillHPad * 2
+        radius: Theme.radiusLg
+        color: Theme.panelBg
         border.width: 1
-        border.color: theme.panelBorder
+        border.color: Theme.panelBorder
         clip: true
 
         transform: Translate {
-            id: slideY
-            x: 0
+            id: slideX
         }
         transformOrigin: Item.Right
 
-        // urgency accent strip
+        // accent strip
         Rectangle {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 3
-            radius: theme.radiusLg
+            radius: Theme.radiusLg
             color: root.accentColor
         }
 
@@ -151,27 +139,25 @@ Item {
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                leftMargin: theme.pillHPad + 3  // after accent strip
-                rightMargin: theme.pillHPad
-                topMargin: theme.pillHPad
+                leftMargin: Theme.pillHPad + 3  // clear accent strip
+                rightMargin: Theme.pillHPad
+                topMargin: Theme.pillHPad
             }
             spacing: 4
 
-            // header row: icon + summary + close button
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
-                // fallback icon — shown when no image or image fails to load
+                // fallback icon
                 Text {
-                    text: icons.notifications
+                    text: Icons.notifications
                     color: root.accentColor
-                    font.family: theme.fontIconFamily
-                    font.pixelSize: theme.fontIconLg
+                    font.family: Theme.fontIconFamily
+                    font.pixelSize: Theme.fontIconLg
                     visible: notifImage.status !== Image.Ready
                 }
 
-                // app/notification image
                 Image {
                     id: notifImage
                     source: {
@@ -182,39 +168,38 @@ Item {
                         return "";
                     }
                     visible: status === Image.Ready
-                    sourceSize.width: theme.fontIconLg
-                    sourceSize.height: theme.fontIconLg
-                    Layout.preferredWidth: theme.fontIconLg
-                    Layout.preferredHeight: theme.fontIconLg
+                    sourceSize.width: Theme.fontIconLg
+                    sourceSize.height: Theme.fontIconLg
+                    Layout.preferredWidth: Theme.fontIconLg
+                    Layout.preferredHeight: Theme.fontIconLg
                 }
 
-                // summary
                 Text {
                     Layout.fillWidth: true
                     text: root.notif.summary
-                    color: theme.textActive
-                    font.pixelSize: theme.fontBase
-                    font.family: theme.fontFamily
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontBase
+                    font.family: Theme.fontFamily
                     font.weight: Font.Medium
                     elide: Text.ElideRight
                     maximumLineCount: 1
                 }
 
-                // close button
                 Text {
-                    text: icons.close
-                    color: closeArea.containsMouse ? theme.textActive : theme.textInactive
-                    font.family: theme.fontIconFamily
-                    font.pixelSize: theme.fontIcon
+                    text: Icons.close
+                    color: closeArea.containsMouse ? Theme.textActive : Theme.textInactive
+                    font.family: Theme.fontIconFamily
+                    font.pixelSize: Theme.fontIcon
                     Behavior on color {
                         ColorAnimation {
-                            duration: theme.animFast
+                            duration: Theme.animFast
                         }
                     }
 
                     MouseArea {
                         id: closeArea
                         anchors.fill: parent
+                        // extend hit area beyond the tiny icon glyph
                         anchors.margins: -4
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
@@ -223,30 +208,27 @@ Item {
                 }
             }
 
-            // app name
             Text {
                 Layout.fillWidth: true
                 text: root.notif.appName
-                color: theme.textInactive
-                font.pixelSize: theme.fontXs
-                font.family: theme.fontFamily
+                color: Theme.textInactive
+                font.pixelSize: Theme.fontXs
+                font.family: Theme.fontFamily
                 visible: root.notif.appName !== ""
             }
 
-            // body
             Text {
                 Layout.fillWidth: true
                 text: root.notif.body
-                color: theme.textSecondary
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 wrapMode: Text.WordWrap
                 maximumLineCount: 4
                 elide: Text.ElideRight
                 visible: root.notif.body !== ""
             }
 
-            // action buttons
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
@@ -260,14 +242,14 @@ Item {
                         required property NotificationAction modelData
 
                         Layout.fillWidth: true
-                        implicitHeight: theme.popupItemHeight - 4
-                        radius: theme.radiusMd
-                        color: actionArea.pressed ? theme.pressedBg : actionArea.containsMouse ? theme.hoverBg : theme.withAlpha(theme.hoverBg, 0)
+                        implicitHeight: Theme.popupItemHeight - 4
+                        radius: Theme.radiusMd
+                        color: actionArea.pressed ? Theme.pressedBg : actionArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.hoverBg, 0)
                         border.width: 1
-                        border.color: theme.panelBorder
+                        border.color: Theme.panelBorder
                         Behavior on color {
                             ColorAnimation {
-                                duration: theme.animFast
+                                duration: Theme.animFast
                                 easing.type: Easing.OutQuad
                             }
                         }
@@ -275,9 +257,9 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: actionBtn.modelData.text
-                            color: theme.textPrimary
-                            font.pixelSize: theme.fontSm
-                            font.family: theme.fontFamily
+                            color: Theme.textPrimary
+                            font.pixelSize: Theme.fontSm
+                            font.family: Theme.fontFamily
                         }
 
                         MouseArea {

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.theme
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
 import QtQuick
@@ -9,24 +10,15 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
     property var panelWindow
 
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
-    // ── adapter ──────────────────────────────────────────────────────────────
     readonly property BluetoothAdapter adapter: Bluetooth.defaultAdapter // qmllint disable unresolved-type
     readonly property bool powered: adapter?.enabled ?? false
     readonly property bool scanning: adapter?.discovering ?? false
 
-    // ── device lists (imperatively refreshed) ────────────────────────────────
     property var connectedDevices: []
     property var pairedDevices: []
     property var availableDevices: []
@@ -46,9 +38,10 @@ Item {
             return;
         }
         const all = root.adapter.devices.values.slice(); // qmllint disable unresolved-type
-        root.connectedDevices = all.filter(d => d.connected).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        root.pairedDevices = all.filter(d => d.paired && !d.connected).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        root.availableDevices = all.filter(d => !d.paired && !d.connected && (d.name || d.deviceName)).sort((a, b) => (a.name || a.deviceName || "").localeCompare(b.name || b.deviceName || ""));
+        const byName = (a, b) => (a.name || a.deviceName || "").localeCompare(b.name || b.deviceName || "");
+        root.connectedDevices = all.filter(d => d.connected).sort(byName);
+        root.pairedDevices = all.filter(d => d.paired && !d.connected).sort(byName);
+        root.availableDevices = all.filter(d => !d.paired && !d.connected && (d.name || d.deviceName)).sort(byName);
     }
 
     Connections {
@@ -58,6 +51,8 @@ Item {
         }
     }
 
+    // dbus doesn't signal individual device property changes during discovery,
+    // so poll while scanning to pick up new/changed devices
     Timer {
         interval: 2000
         running: root.scanning
@@ -69,36 +64,35 @@ Item {
 
     Component.onCompleted: refreshDevices()
 
-    // ── bar button ───────────────────────────────────────────────────────────
     IconButton {
         id: btn
         icon: {
             if (!root.powered)
-                return icons.bluetoothDisabled;
+                return Icons.bluetoothDisabled;
             if (root.connectedDevice)
-                return icons.bluetoothConnected;
+                return Icons.bluetoothConnected;
             if (root.scanning)
-                return icons.bluetoothSearching;
-            return icons.bluetooth;
+                return Icons.bluetoothSearching;
+            return Icons.bluetooth;
         }
-        iconColor: root.powered ? theme.textPrimary : theme.textInactive
+        iconColor: root.powered ? Theme.textPrimary : Theme.textInactive
         isOpen: popup.visible
         onClicked: _ => popup.visible = !popup.visible
     }
 
-    // ── popup ────────────────────────────────────────────────────────────────
     PopupWindow {
         id: popup
         panelWindow: root.panelWindow
         anchorItem: btn
 
         contentWidth: 320
-        contentHeight: col.implicitHeight + theme.pillHPad * 2
+        contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         onVisibleChanged: {
             if (visible) {
                 root.refreshDevices();
             } else if (root.adapter) {
+                // stop scanning when popup closes to save power
                 root.adapter.discovering = false;
             }
         }
@@ -109,19 +103,18 @@ Item {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: theme.pillHPad
+                margins: Theme.pillHPad
             }
             spacing: 10
 
-            // ── power toggle ─────────────────────────────────────────────
             RowLayout {
                 Layout.fillWidth: true
 
                 Text {
                     text: "Bluetooth"
-                    color: theme.textLabel
-                    font.pixelSize: theme.fontSm
-                    font.family: theme.fontFamily
+                    color: Theme.textLabel
+                    font.pixelSize: Theme.fontSm
+                    font.family: Theme.fontFamily
                     Layout.fillWidth: true
                 }
 
@@ -134,11 +127,10 @@ Item {
                 }
             }
 
-            // ── header ───────────────────────────────────────────────────
             Header {
                 visible: root.powered
-                icon: root.connectedDevice ? icons.bluetoothConnected : root.scanning ? scanFrames[scanIndex] : icons.bluetooth
-                iconColor: root.connectedDevice ? theme.textPrimary : theme.textInactive
+                icon: root.connectedDevice ? Icons.bluetoothConnected : root.scanning ? scanFrames[scanIndex] : Icons.bluetooth
+                iconColor: root.connectedDevice ? Theme.textPrimary : Theme.textInactive
                 title: root.connectedDevice ? root.connectedDevice.name : root.connectingDevice ? root.connectingDevice.name : (root.adapter?.name ?? "Bluetooth")
                 subtitle: root.connectedDevice ? root.connectedDevice.address : ""
                 badgeVisible: true
@@ -146,10 +138,10 @@ Item {
                 badgePulsing: root.connectingDevice !== null && !root.connectedDevice
                 badgeColor: {
                     if (root.connectedDevice)
-                        return theme.colorGreen;
+                        return Theme.colorGreen;
                     if (root.connectingDevice)
-                        return theme.colorYellow;
-                    return theme.colorRed;
+                        return Theme.colorYellow;
+                    return Theme.colorRed;
                 }
                 badgeText: {
                     if (root.connectedDevice) {
@@ -163,7 +155,7 @@ Item {
                     return "Disconnected";
                 }
 
-                property var scanFrames: [icons.bluetoothSearching, icons.bluetooth]
+                property var scanFrames: [Icons.bluetoothSearching, Icons.bluetooth]
                 property int scanIndex: 0
 
                 Timer {
@@ -176,7 +168,6 @@ Item {
                 }
             }
 
-            // ── action buttons (connected) ───────────────────────────────
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.connectedDevice !== null
@@ -189,7 +180,7 @@ Item {
 
                 InlineButton {
                     text: "Forget"
-                    accentColor: theme.colorRed
+                    accentColor: Theme.colorRed
                     onClicked: {
                         const dev = root.connectedDevice;
                         if (!dev)
@@ -208,7 +199,6 @@ Item {
                 visible: root.powered
             }
 
-            // ── paired devices ───────────────────────────────────────────
             Accordion {
                 visible: root.powered && root.pairedDevices.length > 0
                 label: "Paired devices"
@@ -234,7 +224,7 @@ Item {
 
                             InlineButton {
                                 text: "Forget"
-                                accentColor: theme.colorRed
+                                accentColor: Theme.colorRed
                                 onClicked: pairedItem.modelData.forget()
                             }
                         }
@@ -242,7 +232,6 @@ Item {
                 }
             }
 
-            // ── available devices ────────────────────────────────────────
             Accordion {
                 id: availableAccordion
                 visible: root.powered

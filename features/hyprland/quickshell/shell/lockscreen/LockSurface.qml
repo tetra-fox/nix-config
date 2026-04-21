@@ -1,40 +1,31 @@
 import qs.components
+import qs.theme
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Effects
 
-// Per-screen lock surface — clock, date, and password input.
 WlSessionLockSurface {
     id: root
-
-    Theme {
-        id: theme
-    }
-
-    Icons {
-        id: icons
-    }
 
     required property WlSessionLock lock
     required property Pam pam
 
     color: "transparent"
 
-    // -- animation state -----------------------------------------------------
+    // -- animation state --
 
-    // false → true on lock (entrance), true → false on unlock (exit)
     property bool active: false
 
     readonly property int lockDuration: 1000
     readonly property int unlockDuration: 200
     property int animDuration: lockDuration
 
-    // lock uses the slow-settle bezier, unlock uses a clean InQuad
-    property int animEasingType: Easing.BezierSpline
+    property int animEasingType: Easing.BezierSpline  // swapped on unlock for a faster exit feel
+    // custom ease-out curve: slow start, fast middle, gentle settle
     readonly property var animBezier: [0.15, 0.7, 0.25, 1.0, 1.0, 1.0]
 
-    // -- background ----------------------------------------------------------
+    // -- background --
 
     Item {
         id: backgroundLayer
@@ -47,7 +38,6 @@ WlSessionLockSurface {
             live: false
             paintCursor: false
 
-            // zoom out for depth/recess effect
             property real zoomScale: root.active ? 0.92 : 1.0
 
             transform: Scale {
@@ -67,6 +57,7 @@ WlSessionLockSurface {
         }
 
         layer.enabled: true
+        // qmllint disable unqualified
         layer.effect: MultiEffect {
             blurEnabled: true
             blur: root.active ? 1.0 : 0
@@ -82,7 +73,6 @@ WlSessionLockSurface {
         }
     }
 
-    // dim overlay
     Rectangle {
         anchors.fill: parent
         color: "black"
@@ -97,31 +87,14 @@ WlSessionLockSurface {
         }
     }
 
-    // -- clock ---------------------------------------------------------------
+    // -- clock --
 
     property string _time: Qt.formatDateTime(new Date(), "HH:mm")
     property string _date: Qt.formatDateTime(new Date(), "dddd, MMMM d")
 
     Timer {
-        id: syncTimer
-
-        interval: {
-            const sub = Date.now() % 1000;
-            return sub === 0 ? 1000 : (1000 - sub);
-        }
-        running: true
-        repeat: false
-
-        onTriggered: {
-            root._tick();
-            tickTimer.running = true;
-        }
-    }
-
-    Timer {
-        id: tickTimer
         interval: 1000
-        running: false
+        running: true
         repeat: true
         onTriggered: root._tick()
     }
@@ -132,7 +105,7 @@ WlSessionLockSurface {
         _date = Qt.formatDateTime(now, "dddd, MMMM d");
     }
 
-    // -- content -------------------------------------------------------------
+    // -- content --
 
     Item {
         id: content
@@ -157,27 +130,26 @@ WlSessionLockSurface {
         }
 
         Column {
+            id: mainColumn
             anchors.centerIn: parent
             spacing: 0
 
-            // time
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root._time
-                color: theme.textActive
+                color: Theme.textActive
                 font.pixelSize: 96
-                font.family: theme.fontFamily
+                font.family: Theme.fontFamily
                 font.weight: Font.Bold
             }
 
-            // date
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 topPadding: 8
                 text: root._date
-                color: theme.textInactive
+                color: Theme.textInactive
                 font.pixelSize: 18
-                font.family: theme.fontFamily
+                font.family: Theme.fontFamily
             }
 
             Item {
@@ -185,25 +157,24 @@ WlSessionLockSurface {
                 height: 48
             }
 
-            // user
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 6
 
                 Text {
-                    text: icons.lock
-                    color: theme.textInactive
+                    text: Icons.lock
+                    color: Theme.textInactive
                     font.pixelSize: 14
-                    font.family: theme.fontIconFamily
-                    font.variableAxes: theme.fontIconAxes
+                    font.family: Theme.fontIconFamily
+                    font.variableAxes: Theme.fontIconAxes
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
                     text: Quickshell.env("USER") ?? ""
-                    color: theme.textInactive
+                    color: Theme.textInactive
                     font.pixelSize: 14
-                    font.family: theme.fontFamily
+                    font.family: Theme.fontFamily
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -213,7 +184,6 @@ WlSessionLockSurface {
                 height: 16
             }
 
-            // password
             InputField {
                 id: passwordField
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -237,7 +207,6 @@ WlSessionLockSurface {
                 }
             }
 
-            // status
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 topPadding: 10
@@ -246,18 +215,18 @@ WlSessionLockSurface {
 
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: theme.animNormal
+                        duration: Theme.animNormal
                     }
                 }
 
                 Text {
                     id: spinnerIcon
-                    text: icons.progressActivity
-                    color: theme.textInactive
+                    text: Icons.progressActivity
+                    color: Theme.textInactive
                     font.pixelSize: 14
-                    font.family: theme.fontIconFamily
-                    font.variableAxes: theme.fontIconAxes
-                    visible: root.pam.authenticating
+                    font.family: Theme.fontIconFamily
+                    font.variableAxes: Theme.fontIconAxes
+                    opacity: root.pam.authenticating ? 1 : 0
                     anchors.verticalCenter: parent.verticalCenter
 
                     RotationAnimator {
@@ -272,22 +241,33 @@ WlSessionLockSurface {
 
                 Text {
                     text: root.pam.failed ? "Incorrect password" : "Authenticating..."
-                    color: root.pam.failed ? theme.danger : theme.textInactive
+                    color: root.pam.failed ? Theme.danger : Theme.textInactive
                     font.pixelSize: 13
-                    font.family: theme.fontFamily
+                    font.family: Theme.fontFamily
                     anchors.verticalCenter: parent.verticalCenter
 
                     Behavior on color {
                         ColorAnimation {
-                            duration: theme.animFast
+                            duration: Theme.animFast
                         }
                     }
                 }
             }
         }
+
+        NowPlaying {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: mainColumn.bottom
+            anchors.topMargin: 72
+        }
+
+        PowerOptions {
+            anchors.fill: parent
+            onCancelled: passwordField.forceActiveFocus()
+        }
     }
 
-    // -- shake animation -----------------------------------------------------
+    // -- shake --
 
     Connections {
         target: root.pam
@@ -332,12 +312,14 @@ WlSessionLockSurface {
         }
     }
 
-    // -- unlock animation ----------------------------------------------------
+    // -- unlock --
 
     Connections {
         target: root.lock
 
         function onUnlock() {
+            // swap to shorter/snappier curve before toggling active,
+            // so the exit animations use the unlock timing
             root.animDuration = root.unlockDuration;
             root.animEasingType = Easing.OutExpo;
             root.active = false;
@@ -345,16 +327,16 @@ WlSessionLockSurface {
         }
     }
 
-    // wait for exit animation, then actually unlock
+    // let exit animation finish before actual unlock
     Timer {
         id: unlockFinish
         interval: root.unlockDuration
         onTriggered: root.lock.locked = false
     }
 
-    // -- init ----------------------------------------------------------------
-
     Component.onCompleted: {
+        // grab a screenshot first, then animate in -- order matters because
+        // captureFrame is synchronous and active=true starts the blur/zoom
         background.captureFrame();
         root.active = true;
         passwordField.forceActiveFocus();

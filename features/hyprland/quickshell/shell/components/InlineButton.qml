@@ -1,33 +1,29 @@
+import qs.theme
 import QtQuick
 
-// Small inline action button with subtle resting state and animated hover/press.
-// Set accentColor to tint the hover state (e.g. theme.colorRed for destructive actions).
+// small inline action button. set accentColor to tint hover (e.g. colorRed for destructive)
 Rectangle {
     id: root
 
-    Theme {
-        id: theme
-    }
-
     property string text: ""
-    property color accentColor: theme.textPrimary
+    property color accentColor: Theme.textPrimary
 
     signal clicked
 
     implicitWidth: label.implicitWidth + 12
     implicitHeight: label.implicitHeight + 6
-    radius: theme.radiusSm
-    color: area.pressed ? theme.pressedBg : area.containsMouse ? theme.hoverBg : theme.withAlpha(theme.white, 0.06)
+    radius: Theme.radiusSm
+    color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.white, 0.06)
     border.width: 1
-    border.color: area.containsMouse ? theme.withAlpha(root.accentColor, 0.3) : theme.withAlpha(theme.white, 0.06)
+    border.color: area.containsMouse ? Theme.withAlpha(root.accentColor, 0.3) : Theme.withAlpha(Theme.white, 0.06)
     Behavior on color {
         ColorAnimation {
-            duration: theme.animFast
+            duration: Theme.animFast
         }
     }
     Behavior on border.color {
         ColorAnimation {
-            duration: theme.animFast
+            duration: Theme.animFast
         }
     }
 
@@ -35,12 +31,12 @@ Rectangle {
         id: label
         anchors.centerIn: parent
         text: root.text
-        color: area.containsMouse ? root.accentColor : theme.textInactive
-        font.pixelSize: theme.fontXs
-        font.family: theme.fontFamily
+        color: area.containsMouse ? root.accentColor : Theme.textInactive
+        font.pixelSize: Theme.fontXs
+        font.family: Theme.fontFamily
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
     }

@@ -1,28 +1,22 @@
+import qs.theme
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 
-// overlay popup anchored to the bar - wraps layer-shell boilerplate and focus-grab
-// set alignRight: false + horizontalMargin for left-anchored cases (e.g. tray menus)
+// bar popup — layer-shell overlay with focus-grab
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 
-    Theme {
-        id: theme
-    }
-
     default property alias content: backdrop.data
     property var panelWindow
-    property Item anchorItem: null  // widget/button to center the popup over
+    property Item anchorItem: null
 
-    // contentHeight must be set by the caller (e.g. implicitHeight: col.implicitHeight + padding)
-    // The window itself is oversized so the compositor never needs to resize it, eliminating jitter.
     property real contentWidth: 200
     property real contentHeight: 200
     property bool animateSize: false
 
-    property real _margin: theme.pillMargin
+    property real _margin: Theme.pillMargin
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-popup"
@@ -35,9 +29,17 @@ PanelWindow { // qmllint disable uncreatable-type
     margins.left: _margin    // qmllint disable missing-property unqualified
     exclusiveZone: 0
 
-    // Window is fixed at a generous max size — never resized by content changes.
     implicitWidth: contentWidth
+    // oversized so compositor never resizes — no jitter
     implicitHeight: (screen?.height ?? 1080) * 0.9
+
+    // restrict input to the visible backdrop so the transparent area doesn't steal clicks
+    // (can't use item: backdrop — mapToScene bakes in the open animation's scale/translate
+    // and Region doesn't re-evaluate when transforms change, so the mask stays undersized)
+    mask: Region {
+        width: root.contentWidth
+        height: root.contentHeight
+    }
 
     visible: false
     color: "transparent"
@@ -48,7 +50,7 @@ PanelWindow { // qmllint disable uncreatable-type
         if (root.anchorItem && root.panelWindow) {
             const mapped = root.anchorItem.mapToItem(root.panelWindow.contentItem, 0, 0);
             const screenW = root.screen?.width ?? 1920;
-            root._margin = Math.max(theme.pillMargin, Math.min(mapped.x, screenW - root.contentWidth - theme.pillMargin));
+            root._margin = Math.max(Theme.pillMargin, Math.min(mapped.x, screenW - root.contentWidth - Theme.pillMargin));
         }
         openAnim.restart();
     }
@@ -60,7 +62,6 @@ PanelWindow { // qmllint disable uncreatable-type
         onCleared: root.visible = false
     }
 
-    // spring scale + slide down from bar on open; compositor handles fade
     SequentialAnimation {
         id: openAnim
         ParallelAnimation {
@@ -98,15 +99,14 @@ PanelWindow { // qmllint disable uncreatable-type
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        opacity: Hyprland.focusedMonitor === Hyprland.monitorFor(root.screen) ? 1.0 : theme.barInactiveOpacity
+        opacity: Hyprland.focusedMonitor === Hyprland.monitorFor(root.screen) ? 1.0 : Theme.barInactiveOpacity
         Behavior on opacity {
             NumberAnimation {
-                duration: theme.animSlow
+                duration: Theme.animSlow
                 easing.type: Easing.InOutQuad
             }
         }
-        // Height driven by content, not window size. Animated here so the
-        // compositor surface never resizes — only this rectangle grows/shrinks.
+        // content-driven height; animated so compositor surface stays fixed
         height: root.contentHeight
         Behavior on height {
             enabled: root.animateSize
@@ -115,10 +115,10 @@ PanelWindow { // qmllint disable uncreatable-type
                 easing.type: Easing.OutQuad
             }
         }
-        radius: theme.radiusLg
-        color: theme.panelBg
+        radius: Theme.radiusLg
+        color: Theme.panelBg
         border.width: 1
-        border.color: theme.panelBorder
+        border.color: Theme.panelBorder
         clip: true
         transformOrigin: Item.Top
         transform: Translate {

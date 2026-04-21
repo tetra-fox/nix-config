@@ -1,22 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.theme
 import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
-// WiFi management UI section for the network popup.
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
-    // ── wifi device ───────────────────────────────────────────────────────────
     readonly property WifiDevice wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
     readonly property bool available: wifiDevice !== null
     readonly property string ifname: root.wifiDevice?.name ?? ""
@@ -32,6 +24,7 @@ Item {
             iwLinkProc.running = true;
     }
 
+    // only run hw scans when actually needed: browsing networks or not connected
     Binding {
         when: root.wifiDevice !== null
         target: root.wifiDevice
@@ -39,10 +32,8 @@ Item {
         value: root.scannerEnabled && (root.showAllNetworks || !root.activeNetwork)
     }
 
-    // keep showAllNetworks in sync with the accordion
     property alias showAllNetworks: moreNetworks.expanded
 
-    // ── iw link state ─────────────────────────────────────────────────────────
     property int iwSignal: 0
     property int iwFreq: 0
     property string iwTxBitrate: ""
@@ -113,12 +104,12 @@ Item {
             iwLinkProc.running = true
     }
 
-    // ── network list state ────────────────────────────────────────────────────
     property var sortedNetworks: []
     property var expandedNetwork: null
     readonly property var otherNetworks: root.sortedNetworks.filter(n => !n.connected)
 
     function refreshNetworks() {
+        // skip re-sort while psk prompt is open to avoid yanking it away mid-type
         if (root.expandedNetwork !== null)
             return;
         const nets = root.wifiDevice?.networks.values ?? [];
@@ -172,7 +163,6 @@ Item {
     onAvailableChanged: refreshNetworks()
     Component.onCompleted: refreshNetworks()
 
-    // ── UI ────────────────────────────────────────────────────────────────────
     implicitHeight: visible ? col.implicitHeight : 0
     visible: root.available
 
@@ -185,15 +175,14 @@ Item {
         }
         spacing: 5
 
-        // toggle row
         RowLayout {
             Layout.fillWidth: true
 
             Text {
                 text: "WiFi"
-                color: theme.textLabel
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textLabel
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 Layout.fillWidth: true
             }
 
@@ -203,16 +192,15 @@ Item {
             }
         }
 
-        // header row
         Header {
             icon: {
                 if (!Networking.wifiEnabled)
-                    return icons.wifiOff;
+                    return Icons.wifiOff;
                 if (root.activeNetwork)
-                    return icons.wifi;
+                    return Icons.wifi;
                 return scanFrames[scanIndex];
             }
-            iconColor: root.activeNetwork ? theme.textPrimary : theme.textInactive
+            iconColor: root.activeNetwork ? Theme.textPrimary : Theme.textInactive
             title: root.activeNetwork ? root.activeNetwork.name : root.connectingNetwork ? root.connectingNetwork.name : root.ifname
             subtitle: (root.activeNetwork || root.connectingNetwork) ? root.ifname : ""
             badgeVisible: root.activeNetwork !== null || root.connectingNetwork !== null || root.disconnectingNetwork !== null || (Networking.wifiEnabled && root.available)
@@ -220,12 +208,12 @@ Item {
             badgePulsing: (root.connectingNetwork !== null || root.disconnectingNetwork !== null) && root.activeNetwork === null
             badgeColor: {
                 if (root.activeNetwork)
-                    return theme.colorGreen;
+                    return Theme.colorGreen;
                 if (root.disconnectingNetwork)
-                    return theme.colorRed;
+                    return Theme.colorRed;
                 if (root.connectingNetwork)
-                    return theme.colorYellow;
-                return theme.colorRed;
+                    return Theme.colorYellow;
+                return Theme.colorRed;
             }
             badgeText: {
                 if (root.activeNetwork)
@@ -239,7 +227,7 @@ Item {
                 return "";
             }
 
-            property var scanFrames: [icons.wifiSignal0, icons.wifiSignal1, icons.wifiSignal2, icons.wifiSignal3, icons.wifi, icons.wifiSignal3, icons.wifiSignal2, icons.wifiSignal1]
+            property var scanFrames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
             property int scanIndex: 0
 
             Timer {
@@ -252,7 +240,6 @@ Item {
             }
         }
 
-        // action buttons — visible when connected
         RowLayout {
             Layout.fillWidth: true
             visible: root.activeNetwork !== null
@@ -265,7 +252,7 @@ Item {
 
             InlineButton {
                 text: "Forget"
-                accentColor: theme.colorRed
+                accentColor: Theme.colorRed
                 onClicked: {
                     const net = root.activeNetwork;
                     if (!net)
@@ -280,7 +267,6 @@ Item {
             }
         }
 
-        // details — visible when connected
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 5
@@ -309,34 +295,30 @@ Item {
             }
         }
 
-        // other networks — inside accordion when connected, flat list when not
-        WifiNetworkList {
+        // flat list when disconnected, accordion when connected
+        ConfiguredNetworkList {
             Layout.fillWidth: true
             visible: !root.activeNetwork
-            networks: root.otherNetworks
-            expandedNetwork: root.expandedNetwork
-            onNetworkClicked: network => root.handleNetworkClicked(network)
-            onNetworkForgot: network => network.forget()
-            onNetworkConnectWithPsk: (network, psk) => root.handleConnectWithPsk(network, psk)
-            onExpandRequested: network => root.handleExpandToggled(network)
         }
 
-        // other networks accordion (when connected)
         Accordion {
             id: moreNetworks
             visible: root.activeNetwork !== null
             label: "More networks"
             loading: root.wifiDevice?.scannerEnabled ?? false
 
-            WifiNetworkList {
+            ConfiguredNetworkList {
                 width: parent.width
-                networks: root.otherNetworks
-                expandedNetwork: root.expandedNetwork
-                onNetworkClicked: network => root.handleNetworkClicked(network)
-                onNetworkForgot: network => network.forget()
-                onNetworkConnectWithPsk: (network, psk) => root.handleConnectWithPsk(network, psk)
-                onExpandRequested: network => root.handleExpandToggled(network)
             }
         }
+    }
+
+    component ConfiguredNetworkList: WifiNetworkList {
+        networks: root.otherNetworks
+        expandedNetwork: root.expandedNetwork
+        onNetworkClicked: network => root.handleNetworkClicked(network)
+        onNetworkForgot: network => network.forget()
+        onNetworkConnectWithPsk: (network, psk) => root.handleConnectWithPsk(network, psk)
+        onExpandRequested: network => root.handleExpandToggled(network)
     }
 }

@@ -1,13 +1,11 @@
+import qs.theme
 import QtQuick
 
-// bar pill - shared visual properties; size and anchors set at usage site
+// bar pill base — size/anchors set at usage site
 Rectangle {
-    Theme {
-        id: theme
-    }
-    height: theme.barHeight
-    radius: theme.radiusLg
-    color: theme.panelBg
+    height: Theme.barHeight
+    radius: Theme.radiusLg
+    color: Theme.panelBg
     border.width: 1
-    border.color: theme.panelBorder
+    border.color: Theme.panelBorder
 }

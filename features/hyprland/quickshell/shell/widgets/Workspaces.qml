@@ -1,15 +1,10 @@
-import qs.components
+import qs.theme
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-// workspace pills for one screen
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     required property var screen
 
@@ -19,13 +14,10 @@ Item {
     RowLayout {
         id: row
         anchors.fill: parent
-        spacing: theme.workspacePillSpacing
+        spacing: Theme.workspacePillSpacing
 
         Repeater {
-            model: {
-                const monitor = Hyprland.monitors.values.find(m => m.name === root.screen.name);
-                return Hyprland.workspaces.values.filter(ws => monitor ? ws.monitor === monitor : true);
-            }
+            model: Hyprland.workspaces.values.filter(ws => ws.monitor?.name === root.screen.name).sort((a, b) => a.id - b.id)
 
             delegate: WorkspacePill {
                 required property var modelData

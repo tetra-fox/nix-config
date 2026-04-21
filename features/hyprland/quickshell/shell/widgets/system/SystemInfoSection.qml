@@ -1,27 +1,19 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Identity header + system info rows (OS, kernel, shell, processes).
 ColumnLayout {
     id: root
-
-    Theme {
-        id: theme
-    }
-
-    Icons {
-        id: icons
-    }
 
     required property var sysData
 
     Layout.fillWidth: true
     spacing: 10
 
-    // inline — distinct from components/InfoRow (this one has an icon)
+    // not the same as components/InfoRow — this one has an icon
     component SysInfoRow: RowLayout {
         id: _ir
 
@@ -35,17 +27,17 @@ ColumnLayout {
         Text {
             visible: _ir.icon !== ""
             text: _ir.icon
-            color: theme.textLabel
-            font.pixelSize: theme.fontIcon
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
+            color: Theme.textLabel
+            font.pixelSize: Theme.fontIcon
+            font.family: Theme.fontIconFamily
+            font.variableAxes: Theme.fontIconAxes
         }
 
         Text {
             text: _ir.label
-            color: theme.textLabel
-            font.pixelSize: theme.fontSm
-            font.family: theme.fontFamily
+            color: Theme.textLabel
+            font.pixelSize: Theme.fontSm
+            font.family: Theme.fontFamily
         }
 
         Item {
@@ -54,19 +46,19 @@ ColumnLayout {
 
         Text {
             text: _ir.value
-            color: theme.textPrimary
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontMd
+            font.family: Theme.fontFamily
         }
     }
 
     Header {
-        icon: icons.dns
+        icon: Icons.dns
         title: root.sysData.hostname || "..."
         subtitle: root.sysData.user + " • uid " + root.sysData.uid
         badgeVisible: true
         badgeActive: true
-        badgeColor: theme.colorGreen
+        badgeColor: Theme.colorGreen
         badgeText: root.sysData.formatUptime(root.sysData.uptime)
     }
 
@@ -77,25 +69,25 @@ ColumnLayout {
         spacing: 4
 
         SysInfoRow {
-            icon: icons.deployedCode
+            icon: Icons.deployedCode
             label: "OS"
             value: root.sysData.os || "..."
         }
 
         SysInfoRow {
-            icon: icons.code
+            icon: Icons.code
             label: "Kernel"
             value: root.sysData.kernel || "..."
         }
 
         SysInfoRow {
-            icon: icons.terminal
+            icon: Icons.terminal
             label: "Shell"
             value: root.sysData.shell
         }
 
         SysInfoRow {
-            icon: icons.monitoring
+            icon: Icons.monitoring
             label: "Processes"
             value: root.sysData.procs
         }

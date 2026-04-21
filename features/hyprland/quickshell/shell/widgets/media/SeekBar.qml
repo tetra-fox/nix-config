@@ -1,14 +1,9 @@
-import qs.components
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Seek bar with position/length display and draggable handle.
 ColumnLayout {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property var player: null
 
@@ -22,7 +17,7 @@ ColumnLayout {
         height: seekArea.containsMouse || seekArea.pressed ? 6 : 3
         Behavior on height {
             NumberAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
 
@@ -30,13 +25,13 @@ ColumnLayout {
             id: seekTrack
             anchors.fill: parent
             radius: height / 2
-            color: theme.withAlpha(theme.white, 0.1)
+            color: Theme.withAlpha(Theme.white, 0.1)
 
             Rectangle {
                 id: seekFill
                 width: {
                     if (seekArea.pressed)
-                        return seekArea.mouseX / seekTrack.width * seekTrack.width;
+                        return seekArea.mouseX;
                     const len = root.player?.length ?? 0;
                     const pos = root.player?.position ?? 0;
                     if (len <= 0)
@@ -45,22 +40,21 @@ ColumnLayout {
                 }
                 height: parent.height
                 radius: parent.radius
-                color: theme.accent
+                color: Theme.accent
             }
 
-            // seek handle
             Rectangle {
                 x: Math.max(0, Math.min(seekFill.width - width / 2, seekTrack.width - width))
                 anchors.verticalCenter: parent.verticalCenter
                 width: 10
                 height: 10
                 radius: 5
-                color: theme.accent
+                color: Theme.accent
                 visible: seekArea.containsMouse || seekArea.pressed
                 scale: seekArea.pressed ? 1.2 : 1.0
                 Behavior on scale {
                     NumberAnimation {
-                        duration: theme.animFast
+                        duration: Theme.animFast
                     }
                 }
             }
@@ -70,25 +64,23 @@ ColumnLayout {
             id: seekArea
             anchors {
                 fill: parent
+                // extend hit area beyond the thin visual track
                 topMargin: -6
                 bottomMargin: -6
             }
             hoverEnabled: true
             cursorShape: (root.player?.canSeek ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
             enabled: root.player?.canSeek ?? false
-            onClicked: mouse => {
-                const fraction = Math.max(0, Math.min(1, mouse.x / seekTrack.width));
+            function seekTo(mouseX: real) {
+                const fraction = Math.max(0, Math.min(1, mouseX / seekTrack.width));
                 const len = root.player?.length ?? 0;
                 if (root.player && len > 0)
                     root.player.position = fraction * len;
             }
+            onClicked: mouse => seekTo(mouse.x)
             onPositionChanged: mouse => {
-                if (pressed) {
-                    const fraction = Math.max(0, Math.min(1, mouse.x / seekTrack.width));
-                    const len = root.player?.length ?? 0;
-                    if (root.player && len > 0)
-                        root.player.position = fraction * len;
-                }
+                if (pressed)
+                    seekTo(mouse.x);
             }
         }
     }
@@ -98,9 +90,9 @@ ColumnLayout {
 
         Text {
             text: root.formatTime(seekArea.pressed ? (Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width)) * (root.player?.length ?? 0)) : (root.player?.position ?? 0))
-            color: theme.textInactive
-            font.pixelSize: theme.fontXs
-            font.family: theme.fontFamily
+            color: Theme.textInactive
+            font.pixelSize: Theme.fontXs
+            font.family: Theme.fontFamily
         }
 
         Item {
@@ -109,9 +101,9 @@ ColumnLayout {
 
         Text {
             text: root.formatTime(root.player?.length ?? 0)
-            color: theme.textInactive
-            font.pixelSize: theme.fontXs
-            font.family: theme.fontFamily
+            color: Theme.textInactive
+            font.pixelSize: Theme.fontXs
+            font.family: Theme.fontFamily
         }
     }
 

@@ -4,7 +4,6 @@ import qs.components
 import Quickshell.Networking
 import QtQuick
 
-// Wifi network list — delegates to ScrollableList for overflow/fade handling.
 ScrollableList {
     id: root
 
@@ -21,6 +20,7 @@ ScrollableList {
             scrollTimer.restart();
     }
 
+    // defer scroll until delegate geometry has settled after expand
     Timer {
         id: scrollTimer
         interval: 50

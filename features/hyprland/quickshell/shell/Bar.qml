@@ -1,5 +1,6 @@
 import qs.components
 import qs.widgets
+import qs.theme
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
@@ -9,10 +10,6 @@ import QtQuick.Layouts
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 
-    Theme {
-        id: theme
-    }
-
     required property var lockSession
 
     anchors {
@@ -20,7 +17,7 @@ PanelWindow { // qmllint disable uncreatable-type
         left: true
         right: true
     }
-    implicitHeight: theme.barHeight + theme.barVPad * 2
+    implicitHeight: Theme.barHeight + Theme.barVPad * 2
     color: "transparent"
 
     WlrLayershell.namespace: "quickshell-bar"
@@ -30,10 +27,10 @@ PanelWindow { // qmllint disable uncreatable-type
     Item {
         anchors.fill: parent
 
-        opacity: Hyprland.focusedMonitor === root.monitor ? 1.0 : theme.barInactiveOpacity
+        opacity: Hyprland.focusedMonitor === root.monitor ? 1.0 : Theme.barInactiveOpacity
         Behavior on opacity {
             NumberAnimation {
-                duration: theme.animSlow
+                duration: Theme.animSlow
                 easing.type: Easing.InOutQuad
             }
         }
@@ -43,16 +40,16 @@ PanelWindow { // qmllint disable uncreatable-type
             anchors {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
-                leftMargin: theme.pillMargin
+                leftMargin: Theme.pillMargin
             }
-            implicitWidth: leftRow.implicitWidth + theme.pillHPad * 2
+            implicitWidth: leftRow.implicitWidth + Theme.pillHPad * 2
 
             RowLayout {
                 id: leftRow
                 anchors {
                     fill: parent
-                    leftMargin: theme.pillHPad
-                    rightMargin: theme.pillHPad
+                    leftMargin: Theme.pillHPad
+                    rightMargin: Theme.pillHPad
                 }
                 spacing: 6
                 Workspaces {
@@ -67,7 +64,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 horizontalCenter: parent.horizontalCenter
                 verticalCenter: parent.verticalCenter
             }
-            width: Math.min(activeWin.implicitWidth + theme.pillHPad * 2, theme.centerMaxWidth)
+            width: Math.min(activeWin.implicitWidth + Theme.pillHPad * 2, Theme.centerMaxWidth)
             visible: activeWin.title.length > 0
 
             ActiveWindow {
@@ -76,8 +73,8 @@ PanelWindow { // qmllint disable uncreatable-type
                     verticalCenter: parent.verticalCenter
                     left: parent.left
                     right: parent.right
-                    leftMargin: theme.pillHPad
-                    rightMargin: theme.pillHPad
+                    leftMargin: Theme.pillHPad
+                    rightMargin: Theme.pillHPad
                 }
                 screen: root.screen
             }
@@ -88,18 +85,18 @@ PanelWindow { // qmllint disable uncreatable-type
             anchors {
                 right: parent.right
                 verticalCenter: parent.verticalCenter
-                rightMargin: theme.pillMargin
+                rightMargin: Theme.pillMargin
             }
-            implicitWidth: rightRow.implicitWidth + theme.pillHPad * 2
+            implicitWidth: rightRow.implicitWidth + Theme.pillHPad * 2
 
             RowLayout {
                 id: rightRow
                 anchors {
                     fill: parent
-                    leftMargin: theme.pillHPad
-                    rightMargin: theme.pillHPad
+                    leftMargin: Theme.pillHPad
+                    rightMargin: Theme.pillHPad
                 }
-                spacing: theme.buttonGap
+                spacing: Theme.buttonGap
 
                 Tray {
                     panelWindow: root

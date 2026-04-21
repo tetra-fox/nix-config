@@ -6,7 +6,7 @@
     withUWSM = true;
   };
 
-  security.pam.services.quickshell = {};
+  security.pam.services.quickshell = { };
 
   xdg.portal = {
     enable = true;

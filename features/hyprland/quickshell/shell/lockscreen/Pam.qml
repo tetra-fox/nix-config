@@ -1,9 +1,8 @@
-import Quickshell
 import Quickshell.Services.Pam
 import Quickshell.Wayland
 import QtQuick
 
-// Auth logic for the lockscreen — separated from the UI.
+// auth logic, separated from UI
 Item {
     id: root
     visible: false
@@ -30,6 +29,7 @@ Item {
     PamContext {
         id: _pam
 
+        // Qt.resolvedUrl returns a file:// URI, but PamContext needs a filesystem path
         configDirectory: Qt.resolvedUrl("pam.d").toString().replace("file://", "")
         config: "quickshell"
 

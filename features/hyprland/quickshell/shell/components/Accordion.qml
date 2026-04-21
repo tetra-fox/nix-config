@@ -1,18 +1,10 @@
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Animated expand/collapse container with optional toggle header.
-// Set label to show a clickable header with a rotating chevron.
-// Put any content inside — it clips to the expanded height.
+// animated expand/collapse container. set label for a clickable toggle header
 ColumnLayout {
     id: root
-
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
 
     property bool expanded: false
     property bool loading: false
@@ -23,16 +15,15 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 2
 
-    // ── toggle header (visible when label is set) ─────────────────────────────
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: headerRow.implicitHeight + 14
-        radius: theme.radiusMd
+        radius: Theme.radiusMd
         visible: root.label !== ""
-        color: headerHover.containsMouse ? theme.hoverBg : "transparent"
+        color: headerHover.containsMouse ? Theme.hoverBg : "transparent"
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
 
@@ -49,22 +40,21 @@ ColumnLayout {
 
             Text {
                 text: root.label
-                color: theme.textLabel
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textLabel
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
             }
 
             Text {
                 Layout.fillWidth: true
                 text: root.value
-                color: theme.textPrimary
-                font.pixelSize: theme.fontMd
-                font.family: theme.fontFamily
+                color: Theme.textPrimary
+                font.pixelSize: Theme.fontMd
+                font.family: Theme.fontFamily
                 elide: Text.ElideRight
                 visible: root.value !== ""
             }
 
-            // spacer when no value text
             Item {
                 Layout.fillWidth: true
                 visible: root.value === ""
@@ -72,8 +62,8 @@ ColumnLayout {
 
             Canvas {
                 id: spinner
-                width: theme.fontSm
-                height: theme.fontSm
+                width: Theme.fontSm
+                height: Theme.fontSm
                 visible: root.loading
                 property real angle: 0
 
@@ -88,6 +78,7 @@ ColumnLayout {
                 onAngleChanged: requestPaint()
                 onPaint: {
                     const ctx = getContext("2d");
+                    // 24 = material icon viewport; scale canvas to match actual size
                     const s = width / 24;
                     ctx.clearRect(0, 0, width, height);
                     ctx.save();
@@ -97,7 +88,7 @@ ColumnLayout {
                     ctx.translate(-12, -12);
                     ctx.beginPath();
                     ctx.arc(12, 12, 8, 0.75 * Math.PI, 0.5 * Math.PI, false);
-                    ctx.strokeStyle = theme.textInactive;
+                    ctx.strokeStyle = Theme.textInactive;
                     ctx.lineWidth = 2;
                     ctx.lineCap = "round";
                     ctx.stroke();
@@ -106,21 +97,21 @@ ColumnLayout {
             }
 
             Text {
-                text: icons.expandMore
-                color: headerHover.containsMouse ? theme.textActive : theme.textLabel
-                font.pixelSize: theme.fontIcon
-                font.family: theme.fontIconFamily
-                font.variableAxes: theme.fontIconAxes
+                text: Icons.expandMore
+                color: headerHover.containsMouse ? Theme.textActive : Theme.textLabel
+                font.pixelSize: Theme.fontIcon
+                font.family: Theme.fontIconFamily
+                font.variableAxes: Theme.fontIconAxes
                 rotation: root.expanded ? 180 : 0
                 Behavior on rotation {
                     NumberAnimation {
-                        duration: theme.animSlow
+                        duration: Theme.animSlow
                         easing.type: Easing.InOutQuad
                     }
                 }
                 Behavior on color {
                     ColorAnimation {
-                        duration: theme.animFast
+                        duration: Theme.animFast
                     }
                 }
             }
@@ -135,7 +126,6 @@ ColumnLayout {
         }
     }
 
-    // ── collapsible content ───────────────────────────────────────────────────
     Item {
         Layout.fillWidth: true
         Layout.preferredHeight: _height
@@ -144,7 +134,7 @@ ColumnLayout {
         property real _height: root.expanded ? inner.implicitHeight : 0
         Behavior on _height {
             NumberAnimation {
-                duration: theme.animSlow
+                duration: Theme.animSlow
                 easing.type: Easing.InOutQuad
             }
         }

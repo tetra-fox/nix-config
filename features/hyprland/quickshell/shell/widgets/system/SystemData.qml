@@ -3,15 +3,13 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Data layer for the system menu — fetches static info once and polls dynamic
-// metrics while active.
 Item {
     id: root
     visible: false
 
     required property bool active
 
-    // ── static (fetched once per activation) ─────────────────────────────────
+    // static — fetched once per activation
     property string hostname: ""
     property string kernel: ""
     property string os: ""
@@ -20,7 +18,7 @@ Item {
     property string gpuModel: ""
     property int uid: 0
 
-    // ── dynamic (polled every 3 s while active) ──────────────────────────────
+    // dynamic — polled every 3s while active
     property real uptime: 0
     property real load1: 0
     property real load5: 0
@@ -41,14 +39,11 @@ Item {
     property int cpuFreq: -1
     property int gpuTemp: -1
 
-    // ── derived ──────────────────────────────────────────────────────────────
     readonly property string user: Quickshell.env("USER") ?? ""
     readonly property string shell: {
         const s = Quickshell.env("SHELL") ?? "";
         return s.substring(s.lastIndexOf("/") + 1);
     }
-
-    // ── formatting helpers ───────────────────────────────────────────────────
 
     function formatUptime(seconds) {
         const d = Math.floor(seconds / 86400);
@@ -72,8 +67,6 @@ Item {
             return (used / 1048576).toFixed(0) + " / " + (total / 1048576).toFixed(0) + " MiB";
         return (used / 1024).toFixed(0) + " / " + (total / 1024).toFixed(0) + " KiB";
     }
-
-    // ── data fetching ────────────────────────────────────────────────────────
 
     readonly property string _scriptsDir: Qt.resolvedUrl("../../scripts").toString().replace("file://", "")
 
@@ -120,6 +113,8 @@ Item {
         onLoaded: root.uptime = parseInt(text().trim().split(" ")[0]) || 0
     }
 
+    // interpolate uptime locally so the display updates every second
+    // without re-reading /proc/uptime
     Timer {
         interval: 1000
         repeat: true
@@ -139,7 +134,6 @@ Item {
         }
     }
 
-    // ── CPU usage from /proc/stat delta ────────────────────────────────────
     property var _prevCpu: null
 
     FileView {
@@ -148,7 +142,7 @@ Item {
         onLoaded: {
             const line = text().substring(0, text().indexOf("\n"));
             const f = line.split(/\s+/);
-            // f[0]="cpu", f[1..]=user nice system idle iowait irq softirq steal
+            // f: cpu user nice system idle iowait irq softirq steal
             const idle = (parseInt(f[4]) || 0) + (parseInt(f[5]) || 0);
             const total = f.slice(1, 9).reduce((s, v) => s + (parseInt(v) || 0), 0);
             if (root._prevCpu) {
@@ -185,6 +179,7 @@ Item {
                     break;
                 }
             }
+            // /proc/meminfo reports KiB, convert to bytes
             root.memTotal = mt * 1024;
             root.memUsed = (mt - ma) * 1024;
             root.swapTotal = st * 1024;
@@ -248,12 +243,11 @@ Item {
         }
     }
 
-    // ── polling control ──────────────────────────────────────────────────────
-
     function pollAll() {
         cpuStatFile.reload();
         loadavgFile.reload();
         meminfoFile.reload();
+        // guard against overlapping invocations if poll-hw.sh is slow
         if (!hwProc.running)
             hwProc.running = true;
     }

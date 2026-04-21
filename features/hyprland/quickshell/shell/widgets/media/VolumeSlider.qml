@@ -1,86 +1,57 @@
 import qs.components
+import qs.theme
+import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
-// Per-player volume slider, visible only when the player supports volume.
 RowLayout {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
-    property var player: null
-
     Layout.fillWidth: true
     spacing: 8
-    visible: root.player?.volumeSupported === true
 
-    Text {
-        text: icons.volumeSource
-        color: theme.textInactive
-        font.pixelSize: theme.fontIconLg
-        font.family: theme.fontIconFamily
-        font.variableAxes: theme.fontIconAxes
+    PwObjectTracker {
+        objects: [Pipewire.defaultAudioSink]
     }
 
-    Item {
-        Layout.fillWidth: true
-        height: volArea.containsMouse || volArea.pressed ? 6 : 3
-        Behavior on height {
-            NumberAnimation {
-                duration: theme.animFast
-            }
-        }
+    readonly property PwNode _sink: Pipewire.defaultAudioSink // qmllint disable unresolved-type
+    readonly property real _volume: _sink?.audio?.volume ?? 0
+    readonly property bool _muted: _sink?.audio?.muted ?? false
 
-        Rectangle {
-            id: volTrack
-            anchors.fill: parent
-            radius: height / 2
-            color: theme.withAlpha(theme.white, 0.1)
-
-            Rectangle {
-                width: {
-                    if (volArea.pressed)
-                        return Math.max(0, Math.min(1, volArea.mouseX / volTrack.width)) * volTrack.width;
-                    return (root.player?.volume ?? 1.0) * volTrack.width;
-                }
-                height: parent.height
-                radius: parent.radius
-                color: theme.accent
-            }
-        }
+    Text {
+        text: root._muted ? Icons.volumeOff : root._volume >= 0.5 ? Icons.volumeUp : root._volume >= 0.01 ? Icons.volumeDown : Icons.volumeMute
+        color: root._muted ? Theme.danger : Theme.textInactive
+        font.pixelSize: Theme.fontIconLg
+        font.family: Theme.fontIconFamily
+        font.variableAxes: Theme.fontIconAxes
 
         MouseArea {
-            id: volArea
-            anchors {
-                fill: parent
-                topMargin: -6
-                bottomMargin: -6
-            }
-            hoverEnabled: true
+            anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            enabled: root.player?.canControl ?? false
-            onClicked: mouse => {
-                if (root.player)
-                    root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
-            }
-            onPositionChanged: mouse => {
-                if (pressed && root.player)
-                    root.player.volume = Math.max(0, Math.min(1, mouse.x / volTrack.width));
+            onClicked: {
+                if (root._sink?.audio)
+                    root._sink.audio.muted = !root._muted;
             }
         }
     }
 
+    AudioSlider {
+        Layout.fillWidth: true
+        compact: true
+        muted: root._muted
+        value: root._volume
+        onAdjusted: v => {
+            if (root._sink?.audio)
+                root._sink.audio.volume = v;
+        }
+    }
+
     Text {
-        text: Math.round((root.player?.volume ?? 1.0) * 100) + "%"
-        color: theme.textInactive
-        font.pixelSize: theme.fontXs
-        font.family: theme.fontFamily
-        Layout.preferredWidth: 28
+        text: Math.round(root._volume * 100) + "%"
+        color: Theme.textInactive
+        font.pixelSize: Theme.fontXs
+        font.family: Theme.fontFamily
+        Layout.preferredWidth: 32
         horizontalAlignment: Text.AlignRight
     }
 }

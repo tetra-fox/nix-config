@@ -22,15 +22,10 @@ let
       ;
   };
 
-  # auto-overlay: every .nix file in pkgs/ becomes a package, plus flake-sourced packages
   pkgsOverlay =
     _: prev:
     let
-      nixFiles = lib.pipe (builtins.readDir dirs.pkgs) [
-        (lib.filterAttrs (_: type: type == "regular"))
-        builtins.attrNames
-        (builtins.filter (lib.hasSuffix ".nix"))
-      ];
+      nixFiles = builtins.filter (lib.hasSuffix ".nix") (builtins.attrNames (builtins.readDir dirs.pkgs));
     in
     lib.listToAttrs (
       map (file: {
@@ -43,36 +38,23 @@ let
       quickshell = inputs.quickshell.packages.${prev.stdenv.hostPlatform.system}.default;
     };
 
-  # feature discovery: each directory in features/ may contain system.nix and/or home.nix
   features =
     let
-      featureNames = lib.pipe (builtins.readDir dirs.features) [
-        (lib.filterAttrs (_: type: type == "directory"))
-        builtins.attrNames
-      ];
       mkFeature =
         name:
         let
           dir = dirs.features + "/${name}";
-          addModule =
+          module =
             file:
             lib.optionalAttrs (builtins.pathExists (dir + "/${file}")) {
               ${lib.removeSuffix ".nix" file} = dir + "/${file}";
             };
         in
-        addModule "system.nix" // addModule "home.nix";
+        module "system.nix" // module "home.nix";
     in
-    lib.genAttrs featureNames mkFeature;
-
-  mkHomeManager = homeModules: {
-    home-manager = {
-      users.${username}.imports = homeModules;
-      extraSpecialArgs = commonArgs;
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      backupFileExtension = "bak";
-    };
-  };
+    lib.genAttrs (builtins.attrNames (
+      lib.filterAttrs (_: type: type == "directory") (builtins.readDir dirs.features)
+    )) mkFeature;
 
   mkHost =
     {
@@ -100,12 +82,18 @@ let
         { nixpkgs.overlays = [ pkgsOverlay ]; }
         hostDir
         hmModule
-        (mkHomeManager ([ (hostDir + "/home") ] ++ extraHomeModules))
+        {
+          home-manager = {
+            users.${username}.imports = [ (hostDir + "/home") ] ++ extraHomeModules;
+            extraSpecialArgs = commonArgs;
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "bak";
+          };
+        }
       ]
       ++ extraModules;
     };
 
 in
-{
-  inherit mkHost;
-}
+mkHost

@@ -1,30 +1,23 @@
-import qs.components
+import qs.theme
 import QtQuick
 import QtQuick.Effects
 
-// A small pill-shaped status badge with an optional animated ping ring.
-// active=true  → accent tint, pulsing text, expanding ring
-// active=false → accent tint, no animation
-// Override accentColor to change the color (default: green when active, red when not)
+// pill-shaped status badge with optional ping ring animation
 Rectangle {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string text: ""
     property bool active: false
     property bool pulsing: false
-    // Override to use a custom accent (e.g. theme.colorYellow for a connecting state)
-    property color accentColor: root.active ? theme.colorGreen : theme.colorRed
+    property color accentColor: root.active ? Theme.colorGreen : Theme.colorRed
 
-    radius: theme.radiusSm
-    color: theme.withAlpha(root.accentColor, 0.18)
+    radius: Theme.radiusSm
+    color: Theme.withAlpha(root.accentColor, 0.18)
     implicitWidth: label.implicitWidth + 8
     implicitHeight: label.implicitHeight + 4
 
-    // ── ping ring ─────────────────────────────────────────────────────────────
+    // invisible but rendered to a texture layer so MultiEffect can
+    // blur/scale it as the ping ring source
     Rectangle {
         id: ringSource
         anchors.centerIn: parent
@@ -114,14 +107,13 @@ Rectangle {
         }
     }
 
-    // ── label ─────────────────────────────────────────────────────────────────
     Text {
         id: label
         anchors.centerIn: parent
         text: root.text
         color: root.accentColor
-        font.pixelSize: theme.fontXs
-        font.family: theme.fontFamily
+        font.pixelSize: Theme.fontXs
+        font.family: Theme.fontFamily
 
         SequentialAnimation on color {
             loops: Animation.Infinite
@@ -139,7 +131,6 @@ Rectangle {
         }
     }
 
-    // ── connecting pulse ──────────────────────────────────────────────────────
     SequentialAnimation {
         id: pulseAnim
         loops: Animation.Infinite

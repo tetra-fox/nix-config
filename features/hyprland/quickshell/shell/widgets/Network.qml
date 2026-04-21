@@ -1,5 +1,6 @@
 import qs.components
 import qs.widgets.network
+import qs.theme
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
@@ -7,39 +8,29 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
     property var panelWindow
 
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
-    // ── active interface ──────────────────────────────────────────────────────
     readonly property string activeIfname: wired.connected ? wired.ifname : (wifi.activeNetwork ? wifi.ifname : "")
     readonly property bool anyConnected: activeIfname !== ""
 
-    // ── bar button ────────────────────────────────────────────────────────────
     IconButton {
         id: btn
-        icon: wired.connected ? icons.settingsEthernet : wifi.activeNetwork ? icons.wifi : icons.wifiOff
-        iconColor: (wired.connected || wifi.activeNetwork) ? theme.textPrimary : theme.textInactive
+        icon: wired.connected ? Icons.settingsEthernet : wifi.activeNetwork ? Icons.wifi : Icons.wifiOff
+        iconColor: (wired.connected || wifi.activeNetwork) ? Theme.textPrimary : Theme.textInactive
         isOpen: popup.visible
         onClicked: _ => popup.visible = !popup.visible
     }
 
-    // ── popup ─────────────────────────────────────────────────────────────────
     PopupWindow {
         id: popup
         panelWindow: root.panelWindow
         anchorItem: btn
 
         contentWidth: 320
-        contentHeight: col.implicitHeight + theme.pillHPad * 2
+        contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         onVisibleChanged: {
             if (visible) {
@@ -57,7 +48,7 @@ Item {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: theme.pillHPad
+                margins: Theme.pillHPad
             }
             spacing: 10
 

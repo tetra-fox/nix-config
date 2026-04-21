@@ -1,21 +1,13 @@
 import qs.components
 import qs.dialogs
 import qs.widgets.system
+import qs.theme
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-// System menu — power button with system info dropdown.
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
-
-    Icons {
-        id: icons
-    }
 
     property var panelWindow
     required property var lockSession
@@ -28,16 +20,12 @@ Item {
         active: popup.visible
     }
 
-    // ── bar button ──────────────────────────────────────────────────────────
-
     IconButton {
         id: btn
-        icon: icons.systemMenu
+        icon: Icons.systemMenu
         isOpen: popup.visible
         onClicked: popup.visible = !popup.visible
     }
-
-    // ── confirm dialog ──────────────────────────────────────────────────────
 
     ConfirmDialog {
         id: dialog
@@ -55,15 +43,13 @@ Item {
         dialog.open();
     }
 
-    // ── popup ───────────────────────────────────────────────────────────────
-
     PopupWindow {
         id: popup
         anchorItem: btn
         panelWindow: root.panelWindow
 
         contentWidth: 320
-        contentHeight: col.implicitHeight + theme.pillHPad * 2
+        contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         ColumnLayout {
             id: col
@@ -71,7 +57,7 @@ Item {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: theme.pillHPad
+                margins: Theme.pillHPad
             }
             spacing: 10
 
@@ -90,7 +76,7 @@ Item {
             SessionActions {
                 onLockRequested: {
                     popup.visible = false;
-                    root.lockSession();
+                    root.lockSession(); // qmllint disable use-proper-function
                 }
                 onConfirmRequested: (title, body, actionLabel, cmd, icon) => root.confirm(title, body, actionLabel, cmd, icon)
             }

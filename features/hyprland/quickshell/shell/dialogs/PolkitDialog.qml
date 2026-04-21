@@ -1,4 +1,5 @@
 import qs.components
+import qs.theme
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -7,14 +8,6 @@ import QtQuick.Layouts
 
 PanelWindow { // qmllint disable uncreatable-type
     id: root
-
-    Theme {
-        id: theme
-    }
-
-    Icons {
-        id: icons
-    }
 
     required property var agent
 
@@ -104,11 +97,11 @@ PanelWindow { // qmllint disable uncreatable-type
         id: panel
         anchors.centerIn: parent
         width: 340
-        height: col.implicitHeight + theme.pillHPad * 4
-        radius: theme.radiusLg
-        color: theme.panelBg
+        height: col.implicitHeight + Theme.pillHPad * 4
+        radius: Theme.radiusLg
+        color: Theme.panelBg
         border.width: 1
-        border.color: theme.panelBorder
+        border.color: Theme.panelBorder
         transformOrigin: Item.Center
 
         ColumnLayout {
@@ -117,71 +110,57 @@ PanelWindow { // qmllint disable uncreatable-type
                 left: parent.left
                 right: parent.right
                 verticalCenter: parent.verticalCenter
-                leftMargin: theme.pillHPad * 2
-                rightMargin: theme.pillHPad * 2
+                leftMargin: Theme.pillHPad * 2
+                rightMargin: Theme.pillHPad * 2
             }
             spacing: 0
 
-            // header: lock icon + title
             RowLayout {
-                spacing: theme.iconPadV
+                spacing: Theme.iconPadV
 
                 Text {
-                    text: icons.lock
-                    color: theme.accent
-                    font.family: theme.fontIconFamily
-                    font.pixelSize: theme.fontIconLg
-                    font.variableAxes: theme.fontIconAxes
+                    text: Icons.lock
+                    color: Theme.accent
+                    font.family: Theme.fontIconFamily
+                    font.pixelSize: Theme.fontIconLg
+                    font.variableAxes: Theme.fontIconAxes
                 }
 
                 Text {
                     text: "Authentication Required"
-                    color: theme.textActive
-                    font.pixelSize: theme.fontBase
-                    font.family: theme.fontFamily
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontBase
+                    font.family: Theme.fontFamily
                     font.weight: Font.Medium
                 }
             }
 
-            Item {
-                implicitHeight: theme.iconPadV
-            }
-
-            // message
             Text {
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.iconPadV
                 text: root.agent.flow?.message ?? ""
-                color: theme.textSecondary
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 wrapMode: Text.WordWrap
             }
 
-            Item {
-                implicitHeight: theme.iconPadV
-                visible: identityLabel.visible
-            }
-
-            // identity
             Text {
                 id: identityLabel
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.iconPadV
                 text: "Authenticating as " + (root.agent.flow?.selectedIdentity?.displayName ?? "")
-                color: theme.textInactive
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textInactive
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 visible: root.agent.flow?.selectedIdentity != null
             }
 
-            Item {
-                implicitHeight: theme.pillHPad
-            }
-
-            // password input
             InputField {
                 id: passwordInput
                 Layout.fillWidth: true
-                implicitHeight: theme.popupItemHeight
+                Layout.topMargin: Theme.pillHPad
+                implicitHeight: Theme.popupItemHeight
                 placeholderText: "Password"
                 password: !(root.agent.flow?.responseVisible ?? false)
 
@@ -193,96 +172,38 @@ PanelWindow { // qmllint disable uncreatable-type
                 }
             }
 
-            // error spacer
-            Item {
-                implicitHeight: theme.iconPadV
-                visible: errorText.visible
-            }
-
-            // error text
             Text {
                 id: errorText
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.iconPadV
                 text: (root.agent.flow?.supplementaryIsError && root.agent.flow?.supplementaryMessage) ? root.agent.flow.supplementaryMessage : "Incorrect password, try again"
-                color: theme.danger
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.danger
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
                 visible: root.agent.flow?.failed ?? false
                 wrapMode: Text.WordWrap
             }
 
-            Item {
-                implicitHeight: theme.pillHPad
-            }
-
-            // buttons
             RowLayout {
                 Layout.fillWidth: true
-                spacing: theme.iconPadV
+                Layout.topMargin: Theme.pillHPad
+                spacing: Theme.iconPadV
 
-                // cancel
-                Rectangle {
+                DialogButton {
                     Layout.fillWidth: true
-                    implicitHeight: theme.popupItemHeight
-                    radius: theme.radiusMd
-                    color: cancelArea.pressed ? theme.pressedBg : cancelArea.containsMouse ? theme.hoverBg : theme.withAlpha(theme.hoverBg, 0)
-                    border.width: 1
-                    border.color: theme.panelBorder
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: theme.animFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Cancel"
-                        color: theme.textPrimary
-                        font.pixelSize: theme.fontMd
-                        font.family: theme.fontFamily
-                    }
-
-                    MouseArea {
-                        id: cancelArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.agent.flow?.cancelAuthenticationRequest()
-                    }
+                    text: "Cancel"
+                    bordered: true
+                    onClicked: root.agent.flow?.cancelAuthenticationRequest()
                 }
 
-                // authenticate
-                Rectangle {
+                DialogButton {
                     Layout.fillWidth: true
-                    implicitHeight: theme.popupItemHeight
-                    radius: theme.radiusMd
-                    color: authArea.pressed ? Qt.darker(theme.accent, 1.3) : authArea.containsMouse ? theme.accent : theme.withAlpha(theme.accent, 0.75)
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: theme.animFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Authenticate"
-                        color: theme.textActive
-                        font.pixelSize: theme.fontMd
-                        font.family: theme.fontFamily
-                    }
-
-                    MouseArea {
-                        id: authArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (passwordInput.text.length > 0 && root.agent.flow) {
-                                root.agent.flow.submit(passwordInput.text);
-                                passwordInput.clear();
-                            }
+                    text: "Authenticate"
+                    accentColor: Theme.accent
+                    onClicked: {
+                        if (passwordInput.text.length > 0 && root.agent.flow) {
+                            root.agent.flow.submit(passwordInput.text);
+                            passwordInput.clear();
                         }
                     }
                 }

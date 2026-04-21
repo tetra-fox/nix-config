@@ -1,23 +1,17 @@
 pragma ComponentBehavior: Bound
-
-import qs.components
+import qs.theme
 
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import QtQuick
 
-// notification overlay — anchored top-right on primary screen, below the bar
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 
-    Theme {
-        id: theme
-    }
-
     required property var notificationModel
 
-    screen: theme.primaryScreen
+    screen: Quickshell.screens[0]
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "quickshell-notifications"
@@ -26,22 +20,24 @@ PanelWindow { // qmllint disable uncreatable-type
     anchors.top: true
     anchors.right: true
     margins.top: 0    // qmllint disable missing-property unqualified unresolved-type
-    margins.right: theme.pillMargin    // qmllint disable missing-property unqualified
+    margins.right: Theme.pillMargin    // qmllint disable missing-property unqualified
+    // don't push other surfaces aside, just overlay on top
     exclusiveZone: 0
 
-    implicitWidth: 320 + theme.pillMargin * 2
-    implicitHeight: (root.screen?.height ?? 1080) * 0.9
+    implicitWidth: 320 + Theme.pillMargin * 2
+    implicitHeight: notificationColumn.height + Theme.pillMargin * 2
 
     color: "transparent"
 
     visible: notificationModel.values.length > 0
 
     Column {
+        id: notificationColumn
         anchors {
             top: parent.top
             right: parent.right
-            topMargin: theme.pillMargin
-            rightMargin: theme.pillMargin
+            topMargin: Theme.pillMargin
+            rightMargin: Theme.pillMargin
         }
         spacing: 8
 

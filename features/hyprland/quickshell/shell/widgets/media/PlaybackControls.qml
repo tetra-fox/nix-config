@@ -1,18 +1,10 @@
-import qs.components
+import qs.theme
 import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
 
-// Playback transport controls: shuffle, prev, play/pause, next, loop.
 RowLayout {
     id: root
-
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
 
     property var player: null
     readonly property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing // qmllint disable unresolved-type
@@ -25,14 +17,14 @@ RowLayout {
 
     MediaButton {
         visible: root.player?.shuffleSupported ?? false
-        icon: icons.shuffle
-        iconColor: (root.player?.shuffle ?? false) ? theme.accent : theme.textPrimary
+        icon: Icons.shuffle
+        iconColor: (root.player?.shuffle ?? false) ? Theme.accent : Theme.textPrimary
         enabled: root.player?.canControl ?? false
         onClicked: root.player.shuffle = !root.player.shuffle
     }
 
     MediaButton {
-        icon: icons.skipPrevious
+        icon: Icons.skipPrevious
         enabled: root.player?.canGoPrevious ?? false
         onClicked: {
             root.skipped(-1);
@@ -41,16 +33,16 @@ RowLayout {
     }
 
     MediaButton {
-        icon: root.isPlaying ? icons.pause : icons.playArrow
+        icon: root.isPlaying ? Icons.pause : Icons.playArrow
         enabled: root.player?.canTogglePlaying ?? false
         onClicked: root.player?.togglePlaying()
-        iconSize: theme.fontIconLg + 4
+        iconSize: Theme.fontIconLg + 4
         size: 36
         highlight: true
     }
 
     MediaButton {
-        icon: icons.skipNext
+        icon: Icons.skipNext
         enabled: root.player?.canGoNext ?? false
         onClicked: {
             root.skipped(1);
@@ -60,25 +52,23 @@ RowLayout {
 
     MediaButton {
         visible: root.player?.loopSupported ?? false
-        icon: (root.player?.loopState === MprisLoopState.Track) ? icons.repeatOne : icons.repeat // qmllint disable unresolved-type
-        iconColor: (root.player?.loopState !== MprisLoopState.None) ? theme.accent : theme.textPrimary // qmllint disable unresolved-type
+        icon: (root.player?.loopState === MprisLoopState.Track) ? Icons.repeatOne : Icons.repeat // qmllint disable unresolved-type
+        iconColor: (root.player?.loopState !== MprisLoopState.None) ? Theme.accent : Theme.textPrimary // qmllint disable unresolved-type
         enabled: root.player?.canControl ?? false
         onClicked: root.cycleLoop()
     }
 
+    // qmllint disable unresolved-type
     function cycleLoop() {
         if (!root.player)
             return;
         const s = root.player.loopState;
-        // None → Playlist → Track → None
-        if (s === MprisLoopState.None) // qmllint disable unresolved-type
+        // None -> Playlist -> Track -> None
+        if (s === MprisLoopState.None)
             root.player.loopState = MprisLoopState.Playlist;
-        else
-        // qmllint disable unresolved-type
-        if (s === MprisLoopState.Playlist) // qmllint disable unresolved-type
+        else if (s === MprisLoopState.Playlist)
             root.player.loopState = MprisLoopState.Track;
         else
-            // qmllint disable unresolved-type
-            root.player.loopState = MprisLoopState.None; // qmllint disable unresolved-type
+            root.player.loopState = MprisLoopState.None;
     }
 }

@@ -1,24 +1,20 @@
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Shared header for popup sections — icon + title + optional subtitle + status badge.
+// section header: icon + title + optional subtitle + status badge
 RowLayout {
     id: root
 
-    Theme {
-        id: theme
-    }
-
     property string icon
-    property color iconColor: theme.textPrimary
+    property color iconColor: Theme.textPrimary
     property string title
     property string subtitle: ""
 
-    // StatusBadge props — pass through to the embedded badge
     property bool badgeVisible: false
     property bool badgeActive: false
     property bool badgePulsing: false
-    property color badgeColor: badgeActive ? theme.colorGreen : theme.colorRed
+    property color badgeColor: badgeActive ? Theme.colorGreen : Theme.colorRed
     property string badgeText: ""
 
     Layout.fillWidth: true
@@ -27,9 +23,9 @@ RowLayout {
     Text {
         text: root.icon
         color: root.iconColor
-        font.pixelSize: theme.fontIconLg
-        font.family: theme.fontIconFamily
-        font.variableAxes: theme.fontIconAxes
+        font.pixelSize: Theme.fontIconLg
+        font.family: Theme.fontIconFamily
+        font.variableAxes: Theme.fontIconAxes
     }
 
     ColumnLayout {
@@ -38,9 +34,9 @@ RowLayout {
 
         Text {
             text: root.title
-            color: theme.textPrimary
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontMd
+            font.family: Theme.fontFamily
             Layout.fillWidth: true
             elide: Text.ElideRight
         }
@@ -48,8 +44,7 @@ RowLayout {
         CopyableText {
             visible: root.subtitle !== ""
             text: root.subtitle
-            disabled: root.subtitle === ""
-            baseColor: theme.textInactive
+            baseColor: Theme.textInactive
         }
     }
 

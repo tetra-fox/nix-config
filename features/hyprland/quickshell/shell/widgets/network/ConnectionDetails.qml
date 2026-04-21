@@ -1,20 +1,14 @@
 import qs.components
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Shared connection details — IPv4/IPv6 address, subnet, gateway, DNS.
-// Polls the active interface for details while visible.
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string ifname: ""
     property bool polling: false
 
-    // ── state ─────────────────────────────────────────────────────────────────
     property string ip: ""
     property int prefix: 0
     property string gateway: ""
@@ -56,11 +50,11 @@ Item {
     function prefixToMask(p) {
         if (p <= 0 || p > 32)
             return "-";
+        // >>> 0 coerces to unsigned 32-bit so high bits don't produce negative
         const m = (-1 << (32 - p)) >>> 0;
         return `${(m >>> 24) & 0xFF}.${(m >>> 16) & 0xFF}.${(m >>> 8) & 0xFF}.${m & 0xFF}`;
     }
 
-    // ── processes ─────────────────────────────────────────────────────────────
     BufferedProcess {
         id: routeProc
         command: ["ip", "-j", "-4", "route", "show", "default", "dev", root.ifname]
@@ -118,7 +112,6 @@ Item {
         onTriggered: root.fetch()
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────────
     ColumnLayout {
         id: col
         anchors {
@@ -135,9 +128,9 @@ Item {
 
             Text {
                 text: "IPv4"
-                color: theme.textLabel
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textLabel
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
             }
             InfoRow {
                 label: "Address"
@@ -171,9 +164,9 @@ Item {
 
             Text {
                 text: "IPv6"
-                color: theme.textLabel
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textLabel
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
             }
             InfoRow {
                 label: "Address"

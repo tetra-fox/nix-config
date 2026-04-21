@@ -54,7 +54,7 @@
   outputs =
     { self, ... }@inputs:
     let
-      inherit (import ./lib inputs) mkHost;
+      mkHost = import ./lib inputs;
     in
     {
       formatter = inputs.nixpkgs.lib.genAttrs [

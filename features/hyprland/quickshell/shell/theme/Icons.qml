@@ -1,9 +1,9 @@
+pragma Singleton
+
 import QtQuick
 
-// Material Symbols Rounded codepoint aliases.
-// https://fonts.google.com/icons?icon.style=Rounded
-// https://raw.githubusercontent.com/google/material-design-icons/refs/heads/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints
-// Usage: Icons { id: icons } then icons.wifi, icons.volumeUp, etc.
+// material symbols rounded codepoint aliases
+// ref: https://fonts.google.com/icons?icon.style=Rounded
 QtObject {
 
     // ── network ─────────────────────────────────────────────────────────────
@@ -62,6 +62,7 @@ QtObject {
     readonly property string logout: "\uE9BA"
     readonly property string restart: "\uF053"
     readonly property string power: "\uF8C7"
+    readonly property string sleep: "\uEF44"
 
     // ── media ────────────────────────────────────────────────────────────────
     readonly property string playArrow: "\uE037"
@@ -74,7 +75,6 @@ QtObject {
     readonly property string repeatOne: "\uE041"
     readonly property string shuffle: "\uE043"
     readonly property string speed: "\uEBE6"
-    readonly property string volumeSource: "\uE050"
 
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"

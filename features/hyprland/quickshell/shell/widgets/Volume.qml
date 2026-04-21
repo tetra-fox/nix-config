@@ -1,4 +1,5 @@
 import qs.components
+import qs.theme
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
@@ -6,18 +7,13 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
     property var panelWindow
 
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
+    // pipewire nodes are lazy-loaded; trackers force property
+    // subscriptions so bindings below stay up to date
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
     }
@@ -38,8 +34,8 @@ Item {
 
     IconButton {
         id: btn
-        icon: root.muted ? icons.volumeOff : root.volume >= 0.5 ? icons.volumeUp : root.volume >= 0.01 ? icons.volumeDown : icons.volumeMute
-        iconColor: root.muted ? theme.danger : theme.textPrimary
+        icon: root.muted ? Icons.volumeOff : root.volume >= 0.5 ? Icons.volumeUp : root.volume >= 0.01 ? Icons.volumeDown : Icons.volumeMute
+        iconColor: root.muted ? Theme.danger : Theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton && root.sink?.audio)
@@ -55,19 +51,19 @@ Item {
         anchorItem: btn
 
         contentWidth: 320
-        contentHeight: col.implicitHeight + theme.pillHPad * 2
+        contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         ColumnLayout {
             id: col
             anchors {
                 fill: parent
-                margins: theme.pillHPad
+                margins: Theme.pillHPad
             }
             spacing: 10
 
             AudioSection {
                 label: "Output"
-                icon: root.muted ? icons.volumeOff : icons.volumeUp
+                icon: root.muted ? Icons.volumeOff : Icons.volumeUp
                 muted: root.muted
                 volume: root.volume
                 devices: root.sinks
@@ -86,7 +82,7 @@ Item {
 
             AudioSection {
                 label: "Input"
-                icon: root.micMuted ? icons.micOff : icons.mic
+                icon: root.micMuted ? Icons.micOff : Icons.mic
                 muted: root.micMuted
                 volume: root.micVolume
                 devices: root.sources

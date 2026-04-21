@@ -1,31 +1,28 @@
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// menu row for popups. set isSeparator: true for a divider line
+// menu row for popups; isSeparator: true for a divider line
 Item {
     id: root
-
-    Theme {
-        id: theme
-    }
 
     property string text: ""
     property string icon: ""
     property string shortcutHint: ""
-    property color textColor: root.enabled ? theme.textPrimary : theme.textInactive
+    property color textColor: root.enabled ? Theme.textPrimary : Theme.textInactive
     property bool enabled: true
     property bool isSeparator: false
 
     signal clicked
 
-    implicitHeight: isSeparator ? theme.popupSeparatorHeight : theme.popupItemHeight
+    implicitHeight: isSeparator ? Theme.popupSeparatorHeight : Theme.popupItemHeight
 
     Rectangle {
         visible: root.isSeparator
         anchors.centerIn: parent
         width: parent.width - 16
         height: 1
-        color: theme.inactiveBg
+        color: Theme.inactiveBg
     }
 
     Rectangle {
@@ -35,11 +32,11 @@ Item {
             leftMargin: 4
             rightMargin: 4
         }
-        radius: theme.radiusMd
-        color: area.pressed ? theme.pressedBg : area.containsMouse ? theme.hoverBg : "transparent"
+        radius: Theme.radiusMd
+        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : "transparent"
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
                 easing.type: Easing.OutQuad
             }
         }
@@ -58,26 +55,26 @@ Item {
                 visible: root.icon !== ""
                 text: root.icon
                 color: root.textColor
-                font.pixelSize: theme.fontIconLg
-                font.family: theme.fontIconFamily
-                font.variableAxes: theme.fontIconAxes
+                font.pixelSize: Theme.fontIconLg
+                font.family: Theme.fontIconFamily
+                font.variableAxes: Theme.fontIconAxes
             }
 
             Text {
                 Layout.fillWidth: true
                 text: root.text
                 color: root.textColor
-                font.pixelSize: theme.fontMd
-                font.family: theme.fontFamily
+                font.pixelSize: Theme.fontMd
+                font.family: Theme.fontFamily
                 elide: Text.ElideRight
             }
 
             Text {
                 visible: root.shortcutHint !== ""
                 text: root.shortcutHint
-                color: theme.textInactive
-                font.pixelSize: theme.fontSm
-                font.family: theme.fontFamily
+                color: Theme.textInactive
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
             }
         }
 

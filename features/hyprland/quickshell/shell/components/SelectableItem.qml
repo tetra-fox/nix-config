@@ -1,25 +1,18 @@
+import qs.theme
 import QtQuick
 import QtQuick.Layouts
 
-// Selectable list row — checkmark + label with marquee, separator, hover/press states.
-// Used for device selectors (audio, bluetooth, etc.)
+// selectable list row with checkmark, marquee label, and hover states
 Item {
     id: root
 
-    Theme {
-        id: theme
-    }
-    Icons {
-        id: icons
-    }
-
     default property alias actions: actionRow.data
 
-    property string icon: icons.check
-    property color iconColor: root.active ? theme.accent : "transparent"
-    property int iconSize: theme.fontMd
+    property string icon: Icons.check
+    property color iconColor: root.active ? Theme.accent : "transparent"
+    property int iconSize: Theme.fontMd
     property string text: ""
-    property color textColor: root.active ? theme.textActive : theme.textInactive
+    property color textColor: root.active ? Theme.textActive : Theme.textInactive
     property bool active: false
     property bool showSeparator: false
 
@@ -36,17 +29,17 @@ Item {
             rightMargin: 8
         }
         height: 1
-        color: theme.separatorBg
+        color: Theme.separatorBg
         visible: root.showSeparator
     }
 
     Rectangle {
         anchors.fill: parent
-        radius: theme.radiusMd
-        color: area.containsMouse ? theme.hoverBg : "transparent"
+        radius: Theme.radiusMd
+        color: area.containsMouse ? Theme.hoverBg : "transparent"
         Behavior on color {
             ColorAnimation {
-                duration: theme.animFast
+                duration: Theme.animFast
             }
         }
     }
@@ -73,12 +66,12 @@ Item {
         Text {
             text: root.icon
             font.pixelSize: root.iconSize
-            font.family: theme.fontIconFamily
-            font.variableAxes: theme.fontIconAxes
+            font.family: Theme.fontIconFamily
+            font.variableAxes: Theme.fontIconAxes
             color: root.iconColor
             Behavior on color {
                 ColorAnimation {
-                    duration: theme.animNormal
+                    duration: Theme.animNormal
                 }
             }
         }
@@ -88,11 +81,11 @@ Item {
             text: root.text
             color: root.textColor
             hovered: area.containsMouse
-            font.pixelSize: theme.fontMd
-            font.family: theme.fontFamily
+            font.pixelSize: Theme.fontMd
+            font.family: Theme.fontFamily
             Behavior on color {
                 ColorAnimation {
-                    duration: theme.animNormal
+                    duration: Theme.animNormal
                 }
             }
         }
