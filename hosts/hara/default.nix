@@ -66,10 +66,11 @@
   programs.dconf.enable = true;
   services.dbus.implementation = "broker";
 
-  # needed for node runtimes
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
+      # needed for precompiled binaries that expect FHS glibc paths
+      # vscode extensions, some steam games, electron apps not in nixpkgs
       glibc
     ];
   };
