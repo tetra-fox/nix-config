@@ -176,7 +176,10 @@ Item {
                     return "Disconnected";
                 if (root.speed <= 0)
                     return "Connected";
-                const duplex = root.duplex === "full" ? " FDX" : root.duplex === "half" ? " HDX" : "";
+                let duplex;
+                if (root.duplex === "full") duplex = " FDX";
+                else if (root.duplex === "half") duplex = " HDX";
+                else duplex = "";
                 return root.speed + " Mbps" + duplex;
             }
         }

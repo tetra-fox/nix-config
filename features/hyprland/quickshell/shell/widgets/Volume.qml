@@ -34,7 +34,12 @@ Item {
 
     IconButton {
         id: btn
-        icon: root.muted ? Icons.volumeOff : root.volume >= 0.5 ? Icons.volumeUp : root.volume >= 0.01 ? Icons.volumeDown : Icons.volumeMute
+        icon: {
+            if (root.muted) return Icons.volumeOff;
+            if (root.volume >= 0.5) return Icons.volumeUp;
+            if (root.volume >= 0.01) return Icons.volumeDown;
+            return Icons.volumeMute;
+        }
         iconColor: root.muted ? Theme.danger : Theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {

@@ -26,7 +26,14 @@ ColumnLayout {
 
         Text {
             visible: root.sysData.cpuModel !== ""
-            text: root.sysData.cpuModel + (root.sysData.cpuFreq > 0 ? " • " + (root.sysData.cpuFreq / 1000000).toFixed(1) + " GHz" : "") + (root.sysData.cpuTemp > 0 ? " • " + Math.round(root.sysData.cpuTemp / 1000) + "°C" : "")
+            text: {
+                let t = root.sysData.cpuModel;
+                if (root.sysData.cpuFreq > 0)
+                    t += " • " + (root.sysData.cpuFreq / 1000000).toFixed(1) + " GHz";
+                if (root.sysData.cpuTemp > 0)
+                    t += " • " + Math.round(root.sysData.cpuTemp / 1000) + "°C";
+                return t;
+            }
             color: Theme.textInactive
             font.pixelSize: Theme.fontXs
             font.family: Theme.fontFamily
@@ -64,7 +71,14 @@ ColumnLayout {
 
         Text {
             visible: root.sysData.gpuModel !== "" || root.sysData.gpuTemp > 0
-            text: (root.sysData.gpuModel || "") + (root.sysData.gpuTemp > 0 ? (root.sysData.gpuModel !== "" ? " • " : "") + root.sysData.gpuTemp + "°C" : "")
+            text: {
+                let t = root.sysData.gpuModel || "";
+                if (root.sysData.gpuTemp > 0) {
+                    if (t !== "") t += " • ";
+                    t += root.sysData.gpuTemp + "°C";
+                }
+                return t;
+            }
             color: Theme.textInactive
             font.pixelSize: Theme.fontXs
             font.family: Theme.fontFamily

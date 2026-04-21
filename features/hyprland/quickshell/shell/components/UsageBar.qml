@@ -10,7 +10,11 @@ ColumnLayout {
     property string icon: ""
     property real value: 0
     property string detail: ""
-    property color barColor: root.value > 0.9 ? Theme.danger : root.value > 0.7 ? Theme.colorYellow : Theme.accent
+    property color barColor: {
+        if (root.value > 0.9) return Theme.danger;
+        if (root.value > 0.7) return Theme.colorYellow;
+        return Theme.accent;
+    }
 
     spacing: 3
     Layout.fillWidth: true

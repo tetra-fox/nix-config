@@ -51,7 +51,11 @@ Item {
     function formatFreq(mhz) {
         if (mhz <= 0)
             return "-";
-        const band = mhz >= 5925 ? "6 GHz" : mhz >= 5000 ? "5 GHz" : mhz >= 2400 ? "2.4 GHz" : "";
+        let band;
+        if (mhz >= 5925) band = "6 GHz";
+        else if (mhz >= 5000) band = "5 GHz";
+        else if (mhz >= 2400) band = "2.4 GHz";
+        else band = "";
         return band ? mhz + " MHz (" + band + ")" : mhz + " MHz";
     }
 
@@ -201,7 +205,11 @@ Item {
                 return scanFrames[scanIndex];
             }
             iconColor: root.activeNetwork ? Theme.textPrimary : Theme.textInactive
-            title: root.activeNetwork ? root.activeNetwork.name : root.connectingNetwork ? root.connectingNetwork.name : root.ifname
+            title: {
+                if (root.activeNetwork) return root.activeNetwork.name;
+                if (root.connectingNetwork) return root.connectingNetwork.name;
+                return root.ifname;
+            }
             subtitle: (root.activeNetwork || root.connectingNetwork) ? root.ifname : ""
             badgeVisible: root.activeNetwork !== null || root.connectingNetwork !== null || root.disconnectingNetwork !== null || (Networking.wifiEnabled && root.available)
             badgeActive: root.activeNetwork !== null

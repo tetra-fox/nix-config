@@ -19,7 +19,12 @@ RowLayout {
     readonly property bool _muted: _sink?.audio?.muted ?? false
 
     Text {
-        text: root._muted ? Icons.volumeOff : root._volume >= 0.5 ? Icons.volumeUp : root._volume >= 0.01 ? Icons.volumeDown : Icons.volumeMute
+        text: {
+            if (root._muted) return Icons.volumeOff;
+            if (root._volume >= 0.5) return Icons.volumeUp;
+            if (root._volume >= 0.01) return Icons.volumeDown;
+            return Icons.volumeMute;
+        }
         color: root._muted ? Theme.danger : Theme.textInactive
         font.pixelSize: Theme.fontIconLg
         font.family: Theme.fontIconFamily

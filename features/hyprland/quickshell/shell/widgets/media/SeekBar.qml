@@ -89,7 +89,13 @@ ColumnLayout {
         Layout.fillWidth: true
 
         Text {
-            text: root.formatTime(seekArea.pressed ? (Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width)) * (root.player?.length ?? 0)) : (root.player?.position ?? 0))
+            text: {
+                if (seekArea.pressed) {
+                    const fraction = Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width));
+                    return root.formatTime(fraction * (root.player?.length ?? 0));
+                }
+                return root.formatTime(root.player?.position ?? 0);
+            }
             color: Theme.textInactive
             font.pixelSize: Theme.fontXs
             font.family: Theme.fontFamily

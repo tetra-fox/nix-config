@@ -131,7 +131,11 @@ Item {
                 visible: root.powered
                 icon: root.connectedDevice ? Icons.bluetoothConnected : root.scanning ? scanFrames[scanIndex] : Icons.bluetooth
                 iconColor: root.connectedDevice ? Theme.textPrimary : Theme.textInactive
-                title: root.connectedDevice ? root.connectedDevice.name : root.connectingDevice ? root.connectingDevice.name : (root.adapter?.name ?? "Bluetooth")
+                title: {
+                    if (root.connectedDevice) return root.connectedDevice.name;
+                    if (root.connectingDevice) return root.connectingDevice.name;
+                    return root.adapter?.name ?? "Bluetooth";
+                }
                 subtitle: root.connectedDevice ? root.connectedDevice.address : ""
                 badgeVisible: true
                 badgeActive: root.connectedDevice !== null
