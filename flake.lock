@@ -390,11 +390,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776755762,
-        "narHash": "sha256-Jgs5hPss8kky9GJVVZeNASGxgnFaeuXXiW1v/6cNG4w=",
+        "lastModified": 1776763987,
+        "narHash": "sha256-Bdy5pn/20zwwZ0QF4pjlzYY+aIXGKW7PuVzM+bJRRgU=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "155beb8efa22ce3936224537f5eb2dc74df5037f",
+        "rev": "43c4616f6743a353a8789eea0e834a48eca53837",
         "type": "github"
       },
       "original": {
@@ -452,11 +452,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776589301,
-        "narHash": "sha256-3g+BPNYwKrjOtBaQi1cLBEtLKtDLZAS01gFd6/ybtlE=",
+        "lastModified": 1776761300,
+        "narHash": "sha256-0CTVYyznIl8QC6PpMoOSM2Qo4sIdHp3j3wV8lU7wON8=",
         "ref": "refs/heads/master",
-        "rev": "9a54119893bdd30fec628063322bc726f96afc1f",
-        "revCount": 803,
+        "rev": "d60498adc038526b3d155e8ad61e51e78e6e32eb",
+        "revCount": 804,
         "type": "git",
         "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
       },
@@ -676,11 +676,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776579667,
-        "narHash": "sha256-8Yu7HoLgD9yBxGHhX3uG+b+LARejzQIlVYBVc8ckly8=",
+        "lastModified": 1776757946,
+        "narHash": "sha256-p5DDkJ5KObgtvPJiW+7b/KlOxMEldEmkjD5KRv0+PMA=",
         "owner": "michel-kraemer",
         "repo": "zsh-patina",
-        "rev": "3073b8f24d9102dcfd5a9fc602bcf10379e21c12",
+        "rev": "804b044e869ecf730e4fe0cd6739c64878c2b420",
         "type": "github"
       },
       "original": {
