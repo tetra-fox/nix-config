@@ -30,16 +30,7 @@ Text {
         return null;
     }
 
-    // apps whose appId doesn't capitalize nicely with charAt(0).toUpperCase()
-    readonly property var titleOverrides: ({
-            "1password": "1Password",
-            "org.telegram.desktop": "Telegram",
-            "org.prismlauncher.PrismLauncher": "Prism Launcher",
-            "com.usebottles.bottles": "Bottles"
-        })
-
-    readonly property string windowClass: toplevel?.appId ?? ""
-    readonly property string title: titleOverrides[windowClass] ?? windowClass.charAt(0).toUpperCase() + windowClass.slice(1)
+    readonly property string title: Apps.name(toplevel?.appId ?? "")
 
     text: title
     visible: title.length > 0

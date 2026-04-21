@@ -1,4 +1,5 @@
 import qs.theme
+import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
@@ -10,6 +11,8 @@ Item {
     property bool selected: false
 
     signal clicked
+
+    readonly property var desktopEntry: DesktopEntries.heuristicLookup(toplevel?.appId ?? "")
 
     implicitHeight: 32
     implicitWidth: row.implicitWidth + Theme.pillHPad * 2
@@ -50,17 +53,22 @@ Item {
             color: root.selected ? Theme.accent : "transparent"
         }
 
+        Image {
+            Layout.preferredWidth: 18
+            Layout.preferredHeight: 18
+            sourceSize.width: 18
+            sourceSize.height: 18
+            asynchronous: true
+            visible: source.toString().length > 0
+            source: {
+                const icon = root.desktopEntry?.icon ?? "";
+                return icon ? Quickshell.iconPath(icon, true) : "";
+            }
+        }
+
         Text {
             Layout.fillWidth: true
-            text: {
-                const appId = root.toplevel?.appId ?? "";
-                const title = root.toplevel?.title ?? "";
-                // show "AppName — Title" when they differ
-                const name = appId.charAt(0).toUpperCase() + appId.slice(1);
-                if (title && title !== name)
-                    return name + "  —  " + title;
-                return name;
-            }
+            text: root.toplevel?.title || Apps.name(root.toplevel?.appId ?? "")
             color: root.selected ? Theme.textActive : Theme.textPrimary
             font.pixelSize: Theme.fontMd
             font.family: Theme.fontFamily
