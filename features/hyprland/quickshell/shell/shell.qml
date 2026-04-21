@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import qs.dialogs
 import qs.lockscreen
 import qs.notifications
+import qs.switcher
 import qs.theme
 
 import QtQuick
@@ -54,6 +55,18 @@ ShellRoot {
         onPressed: logoutDialog.open()
     }
 
+    GlobalShortcut {
+        name: "switcher-next"
+        description: "Window switcher: next"
+        onPressed: switcher.next()
+    }
+
+    GlobalShortcut {
+        name: "switcher-prev"
+        description: "Window switcher: previous"
+        onPressed: switcher.prev()
+    }
+
     ConfirmDialog {
         id: logoutDialog
         title: "Log out?"
@@ -97,5 +110,9 @@ ShellRoot {
 
     PolkitDialog {
         agent: polkitAgent
+    }
+
+    Switcher {
+        id: switcher
     }
 }

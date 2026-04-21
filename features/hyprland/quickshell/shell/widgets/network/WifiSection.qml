@@ -52,10 +52,14 @@ Item {
         if (mhz <= 0)
             return "-";
         let band;
-        if (mhz >= 5925) band = "6 GHz";
-        else if (mhz >= 5000) band = "5 GHz";
-        else if (mhz >= 2400) band = "2.4 GHz";
-        else band = "";
+        if (mhz >= 5925)
+            band = "6 GHz";
+        else if (mhz >= 5000)
+            band = "5 GHz";
+        else if (mhz >= 2400)
+            band = "2.4 GHz";
+        else
+            band = "";
         return band ? mhz + " MHz (" + band + ")" : mhz + " MHz";
     }
 
@@ -206,8 +210,10 @@ Item {
             }
             iconColor: root.activeNetwork ? Theme.textPrimary : Theme.textInactive
             title: {
-                if (root.activeNetwork) return root.activeNetwork.name;
-                if (root.connectingNetwork) return root.connectingNetwork.name;
+                if (root.activeNetwork)
+                    return root.activeNetwork.name;
+                if (root.connectingNetwork)
+                    return root.connectingNetwork.name;
                 return root.ifname;
             }
             subtitle: (root.activeNetwork || root.connectingNetwork) ? root.ifname : ""

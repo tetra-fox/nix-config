@@ -34,7 +34,6 @@ let
       }) nixFiles
     )
     // {
-      snappy-switcher = inputs.snappy-switcher.packages.${prev.stdenv.hostPlatform.system}.default;
       quickshell = inputs.quickshell.packages.${prev.stdenv.hostPlatform.system}.default;
     };
 

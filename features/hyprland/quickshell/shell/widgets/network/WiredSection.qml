@@ -177,9 +177,12 @@ Item {
                 if (root.speed <= 0)
                     return "Connected";
                 let duplex;
-                if (root.duplex === "full") duplex = " FDX";
-                else if (root.duplex === "half") duplex = " HDX";
-                else duplex = "";
+                if (root.duplex === "full")
+                    duplex = " FDX";
+                else if (root.duplex === "half")
+                    duplex = " HDX";
+                else
+                    duplex = "";
                 return root.speed + " Mbps" + duplex;
             }
         }

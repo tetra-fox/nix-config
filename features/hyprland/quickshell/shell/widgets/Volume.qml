@@ -35,9 +35,12 @@ Item {
     IconButton {
         id: btn
         icon: {
-            if (root.muted) return Icons.volumeOff;
-            if (root.volume >= 0.5) return Icons.volumeUp;
-            if (root.volume >= 0.01) return Icons.volumeDown;
+            if (root.muted)
+                return Icons.volumeOff;
+            if (root.volume >= 0.5)
+                return Icons.volumeUp;
+            if (root.volume >= 0.01)
+                return Icons.volumeDown;
             return Icons.volumeMute;
         }
         iconColor: root.muted ? Theme.danger : Theme.textPrimary

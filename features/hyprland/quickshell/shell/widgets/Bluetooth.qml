@@ -132,8 +132,10 @@ Item {
                 icon: root.connectedDevice ? Icons.bluetoothConnected : root.scanning ? scanFrames[scanIndex] : Icons.bluetooth
                 iconColor: root.connectedDevice ? Theme.textPrimary : Theme.textInactive
                 title: {
-                    if (root.connectedDevice) return root.connectedDevice.name;
-                    if (root.connectingDevice) return root.connectingDevice.name;
+                    if (root.connectedDevice)
+                        return root.connectedDevice.name;
+                    if (root.connectingDevice)
+                        return root.connectingDevice.name;
                     return root.adapter?.name ?? "Bluetooth";
                 }
                 subtitle: root.connectedDevice ? root.connectedDevice.address : ""

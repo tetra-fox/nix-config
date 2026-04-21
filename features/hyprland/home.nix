@@ -16,7 +16,6 @@ in
     ./hyprpaper
     ./hyprcursor.nix
     ./quickshell
-    ./snappy-switcher
     ./clipse.nix
     ./hyprshot.nix
     ./1password.nix
@@ -66,6 +65,9 @@ in
         "${main_mod},Q,killactive"
         "${main_mod},ESCAPE,global,quickshell:lock"
         "${main_mod}&L_SHIFT,ESCAPE,global,quickshell:logout"
+
+        "L_ALT,TAB,global,quickshell:switcher-next"
+        "L_ALT&L_SHIFT,TAB,global,quickshell:switcher-prev"
       ];
 
       bindm = [
@@ -174,6 +176,7 @@ in
         "match:namespace quickshell-bar,blur on,ignore_alpha 0.1"
         "match:namespace quickshell-popup,blur on,ignore_alpha 0.1"
         "match:namespace quickshell-notifications,blur on,ignore_alpha 0.1"
+        "match:namespace quickshell-switcher,blur on,ignore_alpha 0.1"
       ];
 
       exec-once = [

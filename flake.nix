@@ -26,7 +26,6 @@
         home-manager.follows = "home-manager";
       };
     };
-    snappy-switcher.url = "github:OpalAayan/snappy-switcher";
     quickshell = {
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";

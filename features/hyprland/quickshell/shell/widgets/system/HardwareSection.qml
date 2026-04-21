@@ -74,7 +74,8 @@ ColumnLayout {
             text: {
                 let t = root.sysData.gpuModel || "";
                 if (root.sysData.gpuTemp > 0) {
-                    if (t !== "") t += " • ";
+                    if (t !== "")
+                        t += " • ";
                     t += root.sysData.gpuTemp + "°C";
                 }
                 return t;

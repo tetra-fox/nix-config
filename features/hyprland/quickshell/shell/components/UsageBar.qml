@@ -11,8 +11,10 @@ ColumnLayout {
     property real value: 0
     property string detail: ""
     property color barColor: {
-        if (root.value > 0.9) return Theme.danger;
-        if (root.value > 0.7) return Theme.colorYellow;
+        if (root.value > 0.9)
+            return Theme.danger;
+        if (root.value > 0.7)
+            return Theme.colorYellow;
         return Theme.accent;
     }
 

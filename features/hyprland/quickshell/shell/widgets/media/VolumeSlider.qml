@@ -20,9 +20,12 @@ RowLayout {
 
     Text {
         text: {
-            if (root._muted) return Icons.volumeOff;
-            if (root._volume >= 0.5) return Icons.volumeUp;
-            if (root._volume >= 0.01) return Icons.volumeDown;
+            if (root._muted)
+                return Icons.volumeOff;
+            if (root._volume >= 0.5)
+                return Icons.volumeUp;
+            if (root._volume >= 0.01)
+                return Icons.volumeDown;
             return Icons.volumeMute;
         }
         color: root._muted ? Theme.danger : Theme.textInactive

@@ -11,6 +11,6 @@ pkgs.runCommand "material-symbols-filled"
   ''
     mkdir -p $out/share/fonts/TTF
     python3 ${./fill-font.py} \
-      ${pkgs.material-symbols}/share/fonts/TTF/MaterialSymbolsRounded.ttf \
+      "${pkgs.material-symbols}/share/fonts/TTF/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf" \
       $out/share/fonts/TTF/MaterialSymbolsRoundedFilled.ttf
   ''

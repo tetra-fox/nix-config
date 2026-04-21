@@ -29,7 +29,7 @@ in
   programs.vscode = {
     enable = true;
     package = pkgs.code-cursor;
-    mutableExtensionsDir = false;
+    mutableExtensionsDir = true;
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
         # looks
@@ -59,7 +59,7 @@ in
         svelte.svelte-vscode
 
         # tooling
-        anthropic.claude-code
+        # anthropic.claude-code
         esbenp.prettier-vscode
       ];
       userSettings = {

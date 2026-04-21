@@ -66,12 +66,13 @@
   programs.dconf.enable = true;
   services.dbus.implementation = "broker";
 
-  # programs.nix-ld = {
-  #   enable = true;
-  #   libraries = with pkgs; [
-  #     glibc
-  #   ];
-  # };
+  # needed for node runtimes
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      glibc
+    ];
+  };
 
   services.printing.enable = true;
 
