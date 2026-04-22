@@ -215,11 +215,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776721614,
-        "narHash": "sha256-zGuW7C4tsScib2560yE5VV6lY/MdRs30aU9cbg3RP+U=",
+        "lastModified": 1776777932,
+        "narHash": "sha256-0R3Yow/NzSeVGUke5tL7CCkqmss4Vmi6BbV6idHzq/8=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "c555a4a34a260493be5adb795c54e013c58f2d34",
+        "rev": "5d5640599a0050b994330328b9fd45709c909720",
         "type": "github"
       },
       "original": {
@@ -289,11 +289,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1776739452,
-        "narHash": "sha256-XSdN+kHVR1EqCWHGpwpmW6bEyj9dOgf6tSLKN/071Pw=",
+        "lastModified": 1776825238,
+        "narHash": "sha256-7EO5iYvxJEi3qDQjJmmUIg/2Jtmn67bqtE3xsuP0v/U=",
         "owner": "nix-community",
         "repo": "nixpkgs-xr",
-        "rev": "d1c47810ecd777245c0f4d719b083b381e9cfe67",
+        "rev": "fbb9c2997bea242c5e3ea3d85bfe5ae2acd0cee0",
         "type": "github"
       },
       "original": {
@@ -390,11 +390,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776763987,
-        "narHash": "sha256-Bdy5pn/20zwwZ0QF4pjlzYY+aIXGKW7PuVzM+bJRRgU=",
+        "lastModified": 1776850496,
+        "narHash": "sha256-p0KRhWQoOp9h3BMzEo1Qem6r/jYM75HjgP/srn4zPiY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "43c4616f6743a353a8789eea0e834a48eca53837",
+        "rev": "a501d7e1537575c08b34d48d995fb09c8d756a23",
         "type": "github"
       },
       "original": {
@@ -452,11 +452,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776761300,
-        "narHash": "sha256-0CTVYyznIl8QC6PpMoOSM2Qo4sIdHp3j3wV8lU7wON8=",
+        "lastModified": 1776854048,
+        "narHash": "sha256-lLbV66V3RMNp1l8/UelmR4YzoJ5ONtgvEtiUMJATH/o=",
         "ref": "refs/heads/master",
-        "rev": "d60498adc038526b3d155e8ad61e51e78e6e32eb",
-        "revCount": 804,
+        "rev": "783c953987dc56ff0601abe6845ed96f1d00495a",
+        "revCount": 806,
         "type": "git",
         "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
       },
@@ -676,11 +676,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776757946,
-        "narHash": "sha256-p5DDkJ5KObgtvPJiW+7b/KlOxMEldEmkjD5KRv0+PMA=",
+        "lastModified": 1776771421,
+        "narHash": "sha256-C3j1l/QWXXOuPXhIgB5tToFO1cbfnaFGaXDlb4x7pFE=",
         "owner": "michel-kraemer",
         "repo": "zsh-patina",
-        "rev": "804b044e869ecf730e4fe0cd6739c64878c2b420",
+        "rev": "63a91f9f7740fe9b430d2edf166918992b45cb50",
         "type": "github"
       },
       "original": {
