@@ -14,6 +14,7 @@ in
 {
   programs.firefox = {
     enable = true;
+    package = pkgs.firefox;
 
     betterfox = {
       enable = true;
@@ -55,6 +56,7 @@ in
               "firefox-extension_steamdb_info-browser-action"
               "_7a7a4a92-a2a0-41d1-9fd7-1e92480d612d_-browser-action"
               "surge_surge-downloader_com-browser-action"
+              "enhancerforyoutube_maximerf_addons_mozilla_org-browser-action"
             ];
             "nav-bar" = [
               "back-button"
@@ -121,6 +123,7 @@ in
             steam-database
             facebook-container
             sponsorblock
+            enhancer-for-youtube
           ])
           ++ (with customExtensions; [
             scam
