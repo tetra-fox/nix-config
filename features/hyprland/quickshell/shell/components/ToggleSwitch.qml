@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import QtQuick
 
 // pill-shaped toggle switch with click and drag support

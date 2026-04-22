@@ -1,5 +1,5 @@
 pragma ComponentBehavior: Bound
-import qs.theme
+import qs.lib
 
 import Quickshell.Hyprland
 import QtQuick

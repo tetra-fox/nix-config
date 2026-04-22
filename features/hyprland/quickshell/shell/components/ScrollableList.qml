@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import QtQuick
 
 // scrollable column with gradient fade edges on overflow

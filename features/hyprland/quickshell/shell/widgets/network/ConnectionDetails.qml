@@ -1,5 +1,5 @@
 import qs.components
-import qs.theme
+import qs.lib
 import QtQuick
 import QtQuick.Layouts
 

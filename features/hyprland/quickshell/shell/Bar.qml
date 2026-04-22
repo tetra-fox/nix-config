@@ -1,6 +1,6 @@
 import qs.components
 import qs.widgets
-import qs.theme
+import qs.lib
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland

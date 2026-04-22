@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
-import qs.theme
+import qs.lib
 import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts

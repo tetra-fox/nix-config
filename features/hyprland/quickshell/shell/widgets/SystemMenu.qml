@@ -1,7 +1,7 @@
 import qs.components
 import qs.dialogs
 import qs.widgets.system
-import qs.theme
+import qs.lib
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts

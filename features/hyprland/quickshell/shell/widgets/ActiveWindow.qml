@@ -1,5 +1,4 @@
-import qs.theme
-import Quickshell
+import qs.lib
 import Quickshell.Wayland
 import QtQuick
 
@@ -32,11 +31,8 @@ Text {
     }
 
     readonly property string title: {
-        const appId = toplevel?.appId ?? "";
-        // heuristicLookup("") matches the first entry with no StartupWMClass
-        if (!appId)
-            return "";
-        return DesktopEntries.heuristicLookup(appId)?.name ?? appId;
+        Apps.rev;
+        return Apps.name(toplevel?.appId);
     }
 
     text: title

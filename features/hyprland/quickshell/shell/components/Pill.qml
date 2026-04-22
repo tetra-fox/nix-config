@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import QtQuick
 
 // bar pill base — size/anchors set at usage site

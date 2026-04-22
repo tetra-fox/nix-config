@@ -1,5 +1,5 @@
 import qs.components
-import qs.theme
+import qs.lib
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts

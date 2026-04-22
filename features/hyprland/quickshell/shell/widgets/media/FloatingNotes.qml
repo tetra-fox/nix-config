@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 
-import qs.theme
+import qs.lib
 import QtQuick
 import QtQuick.Effects
 

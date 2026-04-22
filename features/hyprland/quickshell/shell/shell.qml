@@ -4,7 +4,7 @@ import qs.dialogs
 import qs.lockscreen
 import qs.notifications
 import qs.switcher
-import qs.theme
+import qs.lib
 
 import QtQuick
 import Quickshell

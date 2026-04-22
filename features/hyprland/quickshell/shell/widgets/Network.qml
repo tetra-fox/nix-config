@@ -1,6 +1,6 @@
 import qs.components
 import qs.widgets.network
-import qs.theme
+import qs.lib
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts

@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland

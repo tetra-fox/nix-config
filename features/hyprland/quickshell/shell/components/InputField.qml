@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import QtQuick
 
 // text input with placeholder + optional password reveal toggle

@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -12,8 +12,10 @@ Item {
 
     signal clicked
 
-    // heuristicLookup("") matches the first entry with no StartupWMClass
-    readonly property var desktopEntry: toplevel?.appId ? DesktopEntries.heuristicLookup(toplevel.appId) : null
+    readonly property var desktopEntry: {
+        Apps.rev;
+        return Apps.entry(toplevel?.appId);
+    }
 
     implicitHeight: 32
     implicitWidth: row.implicitWidth + Theme.pillHPad * 2

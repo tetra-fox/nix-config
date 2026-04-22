@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import QtQuick
 
 // dual-image container that crossfades + slides on source change

@@ -1,4 +1,4 @@
-import qs.theme
+import qs.lib
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
