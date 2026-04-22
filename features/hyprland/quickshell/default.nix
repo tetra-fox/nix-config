@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  main_mod,
+  ...
+}:
 let
   material-symbols-filled = import ./material-symbols-filled.nix { inherit pkgs; };
 in
@@ -25,4 +30,26 @@ in
     networkmanager
     wl-clipboard
   ];
+
+  wayland.windowManager.hyprland.settings = {
+    bind = [
+      "${main_mod},ESCAPE,global,quickshell:lock"
+      "${main_mod}&L_SHIFT,ESCAPE,global,quickshell:logout"
+      "L_ALT,TAB,global,quickshell:switcher-next"
+      "L_ALT&L_SHIFT,TAB,global,quickshell:switcher-prev"
+    ];
+
+    layerrule = [
+      "match:namespace quickshell-bar,blur on,ignore_alpha 0.1"
+      "match:namespace quickshell-popup,blur on,ignore_alpha 0.1"
+      "match:namespace quickshell-notifications,blur on,ignore_alpha 0.1"
+      "match:namespace quickshell-switcher,blur on,ignore_alpha 0.1"
+    ];
+  };
+
+  # hide tray applets that duplicate quickshell functionality (networkmanager, from cosmic)
+  xdg.configFile."autostart/nm-applet.desktop".text = ''
+    [Desktop Entry]
+    Hidden=true
+  '';
 }

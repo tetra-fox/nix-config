@@ -18,6 +18,7 @@
     features.helix.home
     features.hyprland.home
     features.kitty.home
+    features.nvidia.home
     features.obs-studio.home
     # features.openrgb.home
     features.ssh.home
@@ -55,11 +56,6 @@
     QT_QPA_PLATFORMTHEME = "qt6ct";
     QT_AUTO_SCREEN_SCALE_FACTOR = "1";
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-
-    # nvidia
-    LIBVA_DRIVER_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
   };
 
   systemd.user.sessionVariables = config.home.sessionVariables;

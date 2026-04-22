@@ -1,4 +1,4 @@
-{ ... }:
+{ username, ... }:
 
 {
   imports = [
@@ -9,4 +9,7 @@
     ./windows-systemd-boot-entry.nix
   ];
 
+  home-manager.users.${username}.imports = [
+    ./hyprland-display-configuration.nix
+  ];
 }

@@ -8,22 +8,31 @@ let
   terminal = "kitty";
   menu = "walker";
   browser = "firefox";
-  file_manager = "dolphin";
+  file_manager = "dolphin ~";
   main_mod = "SUPER";
 in
 {
+  _module.args = {
+    inherit
+      main_mod
+      terminal
+      menu
+      browser
+      file_manager
+      ;
+  };
+
   imports = [
     ./hyprpaper
     ./hyprcursor.nix
     ./quickshell
-    ./clipse.nix
-    ./hyprshot.nix
+    ./clipboard.nix
+    ./screen-capture.nix
     ./1password.nix
   ];
 
   home.packages = with pkgs; [
     app2unit
-    hyprpicker
     hyprshutdown
   ];
 
@@ -34,13 +43,6 @@ in
     portalPackage = null;
 
     settings = {
-      # display configuration
-      monitor = [
-        "DP-1,preferred,0x0,1.666"
-        "DP-3,preferred,auto-left,1.666"
-        "HDMI-A-3,preferred,auto-right,1.666"
-      ];
-
       # input
       input = {
         # keyboard
@@ -54,20 +56,15 @@ in
 
       # keybinds
       bind = [
+        # apps
         "${main_mod},GRAVE,exec,app2unit -- ${terminal}"
-        "${main_mod},E,exec,app2unit -- dolphin"
+        "${main_mod},E,exec,app2unit -- ${file_manager}"
+        "${main_mod},SPACE,exec,${menu}"
+        "${main_mod},C,exec,${pkgs.hyprpicker}/bin/hyprpicker -a"
 
-        "${main_mod},SPACE,exec,${menu}" # walker
+        # hyprland
         "${main_mod},mouse:274,togglefloating"
-
-        "${main_mod},C,exec,hyprpicker -a"
-
         "${main_mod},Q,killactive"
-        "${main_mod},ESCAPE,global,quickshell:lock"
-        "${main_mod}&L_SHIFT,ESCAPE,global,quickshell:logout"
-
-        "L_ALT,TAB,global,quickshell:switcher-next"
-        "L_ALT&L_SHIFT,TAB,global,quickshell:switcher-prev"
       ];
 
       bindm = [
@@ -172,13 +169,6 @@ in
         layers_hog_keyboard_focus = true;
       };
 
-      layerrule = [
-        "match:namespace quickshell-bar,blur on,ignore_alpha 0.1"
-        "match:namespace quickshell-popup,blur on,ignore_alpha 0.1"
-        "match:namespace quickshell-notifications,blur on,ignore_alpha 0.1"
-        "match:namespace quickshell-switcher,blur on,ignore_alpha 0.1"
-      ];
-
       exec-once = [
         "app2unit -- Telegram -startintray"
         "app2unit -- discord --start-minimized"
@@ -187,10 +177,4 @@ in
       ];
     };
   };
-
-  # Hide tray applets that duplicate quickshell functionality
-  xdg.configFile."autostart/nm-applet.desktop".text = ''
-    [Desktop Entry]
-    Hidden=true
-  '';
 }
