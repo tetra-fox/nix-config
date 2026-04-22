@@ -1,4 +1,5 @@
 import qs.theme
+import Quickshell
 import Quickshell.Wayland
 import QtQuick
 
@@ -30,7 +31,13 @@ Text {
         return null;
     }
 
-    readonly property string title: Apps.name(toplevel?.appId ?? "")
+    readonly property string title: {
+        const appId = toplevel?.appId ?? "";
+        // heuristicLookup("") matches the first entry with no StartupWMClass
+        if (!appId)
+            return "";
+        return DesktopEntries.heuristicLookup(appId)?.name ?? appId;
+    }
 
     text: title
     visible: title.length > 0

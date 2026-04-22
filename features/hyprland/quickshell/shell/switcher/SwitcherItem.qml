@@ -12,7 +12,8 @@ Item {
 
     signal clicked
 
-    readonly property var desktopEntry: DesktopEntries.heuristicLookup(toplevel?.appId ?? "")
+    // heuristicLookup("") matches the first entry with no StartupWMClass
+    readonly property var desktopEntry: toplevel?.appId ? DesktopEntries.heuristicLookup(toplevel.appId) : null
 
     implicitHeight: 32
     implicitWidth: row.implicitWidth + Theme.pillHPad * 2
@@ -68,7 +69,7 @@ Item {
 
         Text {
             Layout.fillWidth: true
-            text: root.toplevel?.title || Apps.name(root.toplevel?.appId ?? "")
+            text: root.toplevel?.title || root.desktopEntry?.name || root.toplevel?.appId || ""
             color: root.selected ? Theme.textActive : Theme.textPrimary
             font.pixelSize: Theme.fontMd
             font.family: Theme.fontFamily
