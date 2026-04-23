@@ -113,10 +113,12 @@
         ...
       }: {
         formatter = inputs'.alejandra.packages.default;
-        packages = pkgs.lib.packagesFromDirectoryRecursive {
-          inherit (pkgs) callPackage;
-          directory = ./pkgs;
-        };
+        packages = lib.filterAttrs (_: lib.meta.availableOn pkgs.stdenv.hostPlatform) (
+          pkgs.lib.packagesFromDirectoryRecursive {
+            inherit (pkgs) callPackage;
+            directory = ./pkgs;
+          }
+        );
       };
 
       easy-hosts = {
