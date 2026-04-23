@@ -100,6 +100,7 @@
     nixfmt
     dbeaver-bin
     python3
+    claude-code
   ];
 
   # paws off!
