@@ -11,6 +11,7 @@ PanelWindow { // qmllint disable uncreatable-type
     id: root
 
     required property var lockSession
+    required property var notificationModel
 
     anchors {
         top: true
@@ -113,7 +114,10 @@ PanelWindow { // qmllint disable uncreatable-type
                 Volume {
                     panelWindow: root
                 }
-                Clock {}
+                Clock {
+                    panelWindow: root
+                    notificationModel: root.notificationModel
+                }
                 SystemMenu {
                     panelWindow: root
                     lockSession: root.lockSession

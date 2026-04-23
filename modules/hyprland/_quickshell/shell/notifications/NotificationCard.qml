@@ -18,14 +18,24 @@ Item {
         return Theme.accent;
     }
 
+    // popup visibility (overlay only); flips false on timer expire so notif stays tracked for the center
+    property bool _popupShown: true
+
     implicitWidth: 320
-    implicitHeight: card.height
+    implicitHeight: _popupShown ? card.height : 0
+    opacity: _popupShown ? 1 : 0
     clip: true
 
     Behavior on implicitHeight {
         NumberAnimation {
             duration: Theme.animSlow
             easing.type: Easing.InOutQuad
+        }
+    }
+    Behavior on opacity {
+        NumberAnimation {
+            duration: 150
+            easing.type: Easing.InQuad
         }
     }
 
@@ -97,9 +107,10 @@ Item {
                 return 0;
             return 5000;
         }
-        running: interval > 0 && !hoverArea.containsMouse && !root._closing
+        running: interval > 0 && !hoverArea.containsMouse && !root._closing && root._popupShown
         repeat: false
-        onTriggered: root.dismiss()
+        // hide from overlay but keep tracked so it stays in the notification center
+        onTriggered: root._popupShown = false
     }
 
     Rectangle {

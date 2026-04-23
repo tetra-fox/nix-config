@@ -101,6 +101,7 @@ ShellRoot {
             property var modelData
             screen: modelData
             lockSession: root.lockSession
+            notificationModel: notifServer.trackedNotifications
         }
     }
 
