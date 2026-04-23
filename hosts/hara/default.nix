@@ -1,29 +1,29 @@
 {
   pkgs,
   username,
-  features,
+  modules,
   quirks,
   ...
 }: {
   imports = [
     quirks
-    features.bluetooth.system
-    features.cosmic.system
-    features.docker.system
-    features.fstrim.system
-    features.greetd.system
-    features.hyprland.system
-    features.nix.system
-    features.nvidia.system
-    features.obs-studio.system
-    features.onepassword.system
-    # features.openrgb.system
-    features.pipewire.system
-    features.pipewire-rnnoise.system
-    features.sshd.system
-    features.steam.system
-    features.systemd-boot.system
-    features.zsh.system
+    modules.bluetooth.system
+    modules.cosmic.system
+    modules.docker.system
+    modules.fstrim.system
+    modules.greetd.system
+    modules.hyprland.system
+    modules.nix.system
+    modules.nvidia.system
+    modules.obs-studio.system
+    modules.onepassword.system
+    # modules.openrgb.system
+    modules.pipewire.system
+    modules.pipewire-rnnoise.system
+    modules.sshd.system
+    modules.steam.system
+    modules.systemd-boot.system
+    modules.zsh.system
   ];
 
   networking = {

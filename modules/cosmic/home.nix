@@ -7,7 +7,7 @@
   ...
 }: {
   imports = [
-    ./catppuccin-mocha-mauve-slightlyround.nix
+    ./_catppuccin-mocha-mauve-slightlyround.nix
   ];
 
   systemd.user.services = {

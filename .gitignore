@@ -1,3 +1,3 @@
-features/firefox/bookmarks.private.nix
+modules/firefox/bookmarks.private.nix
 
 .qmlls.ini

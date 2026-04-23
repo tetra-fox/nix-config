@@ -4,7 +4,7 @@
   config,
   ...
 }: let
-  customExtensions = import ./custom-extensions.nix {inherit pkgs;};
+  customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
 in {
   programs.firefox = {
     enable = true;
@@ -101,7 +101,7 @@ in {
 
       bookmarks = {
         force = true;
-        settings = import ./bookmarks.nix {inherit config;};
+        settings = import ./_bookmarks.nix {inherit config;};
       };
 
       extensions = {

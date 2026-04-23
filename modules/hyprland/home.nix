@@ -20,12 +20,12 @@ in {
   };
 
   imports = [
-    ./hyprpaper
-    ./hyprcursor.nix
-    ./quickshell
-    ./clipboard.nix
-    ./screen-capture.nix
-    ./1password.nix
+    ./_hyprpaper
+    ./_hyprcursor.nix
+    ./_quickshell
+    ./_clipboard.nix
+    ./_screen-capture.nix
+    ./_1password.nix
   ];
 
   home.packages = with pkgs; [

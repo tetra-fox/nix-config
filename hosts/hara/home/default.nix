@@ -3,28 +3,28 @@
   inputs,
   config,
   username,
-  features,
+  modules,
   ...
 }: {
   imports = [
-    features.cosmic.home
-    features.vscode.home
-    features.fastfetch.home
-    features.firefox.home
-    features.fonts.home
-    features.git.home
-    features.helix.home
-    features.hyprland.home
-    features.kitty.home
-    features.nvidia.home
-    features.obs-studio.home
-    # features.openrgb.home
-    features.ssh.home
-    features.starship.home
-    features.steam.home
-    features.surge-dm.home
-    features.walker.home
-    features.zsh.home
+    modules.cosmic.home
+    modules.vscode.home
+    modules.fastfetch.home
+    modules.firefox.home
+    modules.fonts.home
+    modules.git.home
+    modules.helix.home
+    modules.hyprland.home
+    modules.kitty.home
+    modules.nvidia.home
+    modules.obs-studio.home
+    # modules.openrgb.home
+    modules.ssh.home
+    modules.starship.home
+    modules.steam.home
+    modules.surge-dm.home
+    modules.walker.home
+    modules.zsh.home
   ];
 
   home.username = username;
