@@ -31,6 +31,7 @@ jobs:
       - name: Update package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NIX_PATH: nixpkgs=flake:nixpkgs
         run: nix run nixpkgs#nix-update -- --flake --use-update-script ${{ matrix.package }}
 
       # https://github.com/actions/checkout#push-a-commit-using-the-built-in-token
