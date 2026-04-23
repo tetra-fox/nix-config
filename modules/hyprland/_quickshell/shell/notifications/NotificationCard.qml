@@ -89,8 +89,9 @@ Item {
     Timer {
         id: expireTimer
         interval: {
+            // expireTimeout is MILLISECONDS not SECONDS per dbus spec: >0 explicit, 0 never, -1 server default
             if (root.notif.expireTimeout > 0)
-                return root.notif.expireTimeout * 1000;
+                return root.notif.expireTimeout;
             // critical notifs stay until manually dismissed (interval 0 = never fires)
             if (root.notif.urgency === NotificationUrgency.Critical)
                 return 0;
