@@ -73,6 +73,7 @@
     bitwig-studio
     tenacity
     vrcx
+    nicotine-plus
 
     (prismlauncher.override {
       jdks = [
