@@ -17,6 +17,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Set up SSH agent for nix-secrets
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
+
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@v34
 
