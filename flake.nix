@@ -71,6 +71,9 @@
       url = "github:michel-kraemer/zsh-patina";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # private
+    nixos-secrets.url = "git+ssh://git@github.com/tetra-fox/nixos-secrets.git";
   };
 
   outputs = inputs @ {flake-parts, ...}:

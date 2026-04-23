@@ -1,7 +1,7 @@
 {
   username,
   pkgs,
-  config,
+  inputs,
   ...
 }: let
   customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
@@ -101,7 +101,7 @@ in {
 
       bookmarks = {
         force = true;
-        settings = import ./_bookmarks.nix {inherit config;};
+        settings = inputs.nixos-secrets.lib.firefox-bookmarks;
       };
 
       extensions = {
