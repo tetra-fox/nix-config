@@ -5,10 +5,7 @@
   ...
 }:
 let
-  customExtensions = import ./custom-extensions.nix {
-    inherit pkgs;
-    lib = pkgs.lib;
-  };
+  customExtensions = import ./custom-extensions.nix { inherit pkgs; };
 in
 
 {

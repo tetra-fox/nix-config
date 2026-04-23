@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config }:
 let
   # place bookmarks.private.nix in ~/.config/nix/bookmarks.private.nix
   privatePath = /. + "${config.xdg.configHome}/nix/bookmarks.private.nix";
