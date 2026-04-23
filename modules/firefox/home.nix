@@ -101,7 +101,7 @@ in {
 
       bookmarks = {
         force = true;
-        settings = inputs.nixos-secrets.lib.firefox-bookmarks;
+        settings = inputs.nix-secrets.lib.firefox-bookmarks;
       };
 
       extensions = {

@@ -378,6 +378,21 @@
         "type": "github"
       }
     },
+    "nix-secrets": {
+      "locked": {
+        "lastModified": 1776928953,
+        "narHash": "sha256-Cv2xmpAQPAbh5tc6kSLv6n8MFWxnHIWyHXqPBkrMnW8=",
+        "ref": "refs/heads/main",
+        "rev": "c09d961ec3a8730bb935dbdf06777f79b130f55a",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/tetra-fox/nix-secrets.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/tetra-fox/nix-secrets.git"
+      }
+    },
     "nix-vscode-extensions": {
       "inputs": {
         "nixpkgs": [
@@ -396,21 +411,6 @@
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
         "type": "github"
-      }
-    },
-    "nixos-secrets": {
-      "locked": {
-        "lastModified": 1776928953,
-        "narHash": "sha256-Cv2xmpAQPAbh5tc6kSLv6n8MFWxnHIWyHXqPBkrMnW8=",
-        "ref": "refs/heads/main",
-        "rev": "c09d961ec3a8730bb935dbdf06777f79b130f55a",
-        "revCount": 2,
-        "type": "git",
-        "url": "ssh://git@github.com/tetra-fox/nixos-secrets.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/tetra-fox/nixos-secrets.git"
       }
     },
     "nixpkgs": {
@@ -644,8 +644,8 @@
         "haumea": "haumea",
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
+        "nix-secrets": "nix-secrets",
         "nix-vscode-extensions": "nix-vscode-extensions",
-        "nixos-secrets": "nixos-secrets",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-xr": "nixpkgs-xr",
