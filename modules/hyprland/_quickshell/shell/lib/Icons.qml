@@ -79,6 +79,8 @@ QtObject {
     // ── actions ──────────────────────────────────────────────────────────────
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
+    readonly property string contentCopy: "\uE14D"
+    readonly property string send: "\uE163"
     readonly property string delete_: "\uE92E"
     readonly property string lock: "\uE899"
     readonly property string chevronLeft: "\uE5CB"

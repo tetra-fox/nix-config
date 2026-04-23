@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+import qs.components
 import qs.lib
 
 import Quickshell.Services.Notifications
@@ -9,6 +10,8 @@ Item {
     id: root
 
     required property Notification notif
+    // set true by DND / fullscreen; card starts fully collapsed and never animates in
+    property bool popupSuppressed: false
 
     readonly property color accentColor: {
         if (notif.urgency === NotificationUrgency.Critical)
@@ -39,7 +42,12 @@ Item {
         }
     }
 
-    Component.onCompleted: enterAnim.restart()
+    Component.onCompleted: {
+        if (popupSuppressed)
+            _popupShown = false;
+        else
+            enterAnim.restart();
+    }
 
     SequentialAnimation {
         id: enterAnim
@@ -109,8 +117,13 @@ Item {
         }
         running: interval > 0 && !hoverArea.containsMouse && !root._closing && root._popupShown
         repeat: false
-        // hide from overlay but keep tracked so it stays in the notification center
-        onTriggered: root._popupShown = false
+        onTriggered: {
+            // transient notifs shouldn't persist in the center; others just hide from overlay
+            if (root.notif.transient)
+                root.notif.dismiss();
+            else
+                root._popupShown = false;
+        }
     }
 
     Rectangle {
@@ -161,27 +174,10 @@ Item {
                 Layout.fillWidth: true
                 spacing: 8
 
-                // fallback icon
-                Text {
-                    text: Icons.notifications
-                    color: root.accentColor
-                    font.family: Theme.fontIconFamily
-                    font.pixelSize: Theme.fontIconLg
-                    visible: notifImage.status !== Image.Ready
-                }
-
-                Image {
-                    id: notifImage
-                    source: {
-                        if (root.notif.image !== "")
-                            return root.notif.image;
-                        if (root.notif.appIcon !== "")
-                            return root.notif.appIcon;
-                        return "";
-                    }
-                    visible: status === Image.Ready
-                    sourceSize.width: Theme.fontIconLg
-                    sourceSize.height: Theme.fontIconLg
+                NotificationIcon {
+                    notif: root.notif
+                    accentColor: root.accentColor
+                    size: Theme.fontIconLg
                     Layout.preferredWidth: Theme.fontIconLg
                     Layout.preferredHeight: Theme.fontIconLg
                 }
@@ -197,26 +193,10 @@ Item {
                     maximumLineCount: 1
                 }
 
-                Text {
-                    text: Icons.close
-                    color: closeArea.containsMouse ? Theme.textActive : Theme.textInactive
-                    font.family: Theme.fontIconFamily
-                    font.pixelSize: Theme.fontIcon
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: Theme.animFast
-                        }
-                    }
-
-                    MouseArea {
-                        id: closeArea
-                        anchors.fill: parent
-                        // extend hit area beyond the tiny icon glyph
-                        anchors.margins: -4
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.dismiss()
-                    }
+                GlyphButton {
+                    icon: Icons.close
+                    iconSize: Theme.fontIcon
+                    onClicked: root.dismiss()
                 }
             }
 
@@ -241,48 +221,9 @@ Item {
                 visible: root.notif.body !== ""
             }
 
-            RowLayout {
+            NotificationActions {
                 Layout.fillWidth: true
-                spacing: 6
-                visible: root.notif.actions.length > 0 // qmllint disable unresolved-type
-
-                Repeater {
-                    model: root.notif.actions // qmllint disable unresolved-type
-
-                    Rectangle {
-                        id: actionBtn
-                        required property NotificationAction modelData
-
-                        Layout.fillWidth: true
-                        implicitHeight: Theme.popupItemHeight - 4
-                        radius: Theme.radiusMd
-                        color: actionArea.pressed ? Theme.pressedBg : actionArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.hoverBg, 0)
-                        border.width: 1
-                        border.color: Theme.panelBorder
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.animFast
-                                easing.type: Easing.OutQuad
-                            }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: actionBtn.modelData.text
-                            color: Theme.textPrimary
-                            font.pixelSize: Theme.fontSm
-                            font.family: Theme.fontFamily
-                        }
-
-                        MouseArea {
-                            id: actionArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: actionBtn.modelData.invoke()
-                        }
-                    }
-                }
+                notif: root.notif
             }
         }
     }

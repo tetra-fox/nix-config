@@ -6,7 +6,7 @@ Item {
     id: root
 
     required property var panelWindow
-    required property var notificationModel
+    required property var notifList
 
     implicitWidth: timeTextProp.implicitWidth + Theme.iconPadH
     implicitHeight: timeTextProp.implicitHeight + Theme.iconPadV
@@ -65,6 +65,6 @@ Item {
         id: popup
         anchorItem: root
         panelWindow: root.panelWindow
-        notificationModel: root.notificationModel
+        notifList: root.notifList
     }
 }

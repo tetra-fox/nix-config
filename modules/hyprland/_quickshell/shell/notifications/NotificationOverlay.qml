@@ -3,13 +3,12 @@ import qs.lib
 
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Services.Notifications
 import QtQuick
 
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 
-    required property var notificationModel
+    required property var notifList
 
     screen: Quickshell.screens[0]
 
@@ -29,7 +28,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     color: "transparent"
 
-    visible: notificationModel.values.length > 0
+    visible: notifList.length > 0
 
     Column {
         id: notificationColumn
@@ -42,11 +41,12 @@ PanelWindow { // qmllint disable uncreatable-type
         spacing: 8
 
         Repeater {
-            model: root.notificationModel
+            model: root.notifList
 
             NotificationCard {
-                required property Notification modelData
-                notif: modelData
+                required property var modelData
+                notif: modelData.notif
+                popupSuppressed: modelData.popupSuppressed ?? false
             }
         }
     }
