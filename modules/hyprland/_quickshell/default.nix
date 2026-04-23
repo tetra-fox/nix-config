@@ -5,11 +5,15 @@
   ...
 }: let
   material-symbols-filled = import ./material-symbols-filled.nix {inherit pkgs;};
+
+  shell = pkgs.runCommand "quickshell-config" {} ''
+    cp -r ${./shell} $out
+  '';
 in {
   programs.quickshell = {
     enable = true;
     package = pkgs.quickshell;
-    configs.default = ./shell;
+    configs.default = shell;
     systemd = {
       enable = true;
       target = "wayland-session@hyprland.desktop.target";

@@ -335,9 +335,6 @@ WlSessionLockSurface {
     }
 
     Component.onCompleted: {
-        // grab a screenshot first, then animate in -- order matters because
-        // captureFrame is synchronous and active=true starts the blur/zoom
-        background.captureFrame();
         root.active = true;
         passwordField.forceActiveFocus();
     }

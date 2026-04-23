@@ -115,4 +115,6 @@ ShellRoot {
     Switcher {
         id: switcher
     }
+
+    ScreencopyPrewarm {}
 }
