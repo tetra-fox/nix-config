@@ -1,6 +1,5 @@
 # Converted from catppuccin/cosmic-desktop/themes/cosmic-settings/catppuccin-mocha-mauve+round.ron
-{ cosmicLib, ... }:
-let
+{cosmicLib, ...}: let
   c = cosmicLib.cosmic;
   raw = c.mkRON "raw";
   rgba = r: g: b: a: {
@@ -14,8 +13,7 @@ let
     green = raw g;
     blue = raw b;
   };
-in
-{
+in {
   wayland.desktopManager.cosmic.appearance.theme.dark = {
     palette = c.mkRON "enum" {
       variant = "Dark";

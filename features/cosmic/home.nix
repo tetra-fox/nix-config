@@ -5,9 +5,7 @@
   cosmicLib,
   shared,
   ...
-}:
-
-{
+}: {
   imports = [
     ./catppuccin-mocha-mauve-slightlyround.nix
   ];
@@ -16,45 +14,45 @@
     onepassword = {
       Unit = {
         Description = "1Password (COSMIC session)";
-        PartOf = [ "cosmic-session.target" ];
-        After = [ "cosmic-session.target" ];
+        PartOf = ["cosmic-session.target"];
+        After = ["cosmic-session.target"];
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
         ExecStart = "${pkgs._1password-gui}/bin/1password --silent";
       };
       Install = {
-        WantedBy = [ "cosmic-session.target" ];
+        WantedBy = ["cosmic-session.target"];
       };
     };
 
     discord = {
       Unit = {
         Description = "Discord (COSMIC session)";
-        PartOf = [ "cosmic-session.target" ];
-        After = [ "cosmic-session.target" ];
+        PartOf = ["cosmic-session.target"];
+        After = ["cosmic-session.target"];
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
         ExecStart = "${pkgs.discord}/bin/discord --start-minimized";
       };
       Install = {
-        WantedBy = [ "cosmic-session.target" ];
+        WantedBy = ["cosmic-session.target"];
       };
     };
 
     telegram = {
       Unit = {
         Description = "Telegram (COSMIC session)";
-        PartOf = [ "cosmic-session.target" ];
-        After = [ "cosmic-session.target" ];
+        PartOf = ["cosmic-session.target"];
+        After = ["cosmic-session.target"];
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
         ExecStart = "${pkgs.telegram-desktop}/bin/Telegram -startintray";
       };
       Install = {
-        WantedBy = [ "cosmic-session.target" ];
+        WantedBy = ["cosmic-session.target"];
       };
     };
   };
@@ -125,7 +123,7 @@
             output = "all";
             source = (
               cosmicLib.cosmic.mkRON "enum" {
-                value = [ "${shared.wallpapers}/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg" ];
+                value = ["${shared.wallpapers}/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg"];
                 variant = "Path";
               }
             );
@@ -180,11 +178,11 @@
         output = cosmicLib.cosmic.mkRON "enum" "All";
         padding = 4;
         padding_overlap = 0.5;
-        plugins_center = cosmicLib.cosmic.mkRON "optional" [ "com.system76.CosmicAppList" ];
+        plugins_center = cosmicLib.cosmic.mkRON "optional" ["com.system76.CosmicAppList"];
         plugins_wings = cosmicLib.cosmic.mkRON "optional" (
           cosmicLib.cosmic.mkRON "tuple" [
-            [ ]
-            [ "com.system76.CosmicAppletMinimize" ]
+            []
+            ["com.system76.CosmicAppletMinimize"]
           ]
         );
         size = cosmicLib.cosmic.mkRON "enum" "M";
@@ -209,7 +207,7 @@
         output = cosmicLib.cosmic.mkRON "enum" "All";
         padding = 0;
         padding_overlap = 0.5;
-        plugins_center = cosmicLib.cosmic.mkRON "optional" [ "com.system76.CosmicAppletTime" ];
+        plugins_center = cosmicLib.cosmic.mkRON "optional" ["com.system76.CosmicAppletTime"];
         plugins_wings = cosmicLib.cosmic.mkRON "optional" (
           cosmicLib.cosmic.mkRON "tuple" [
             [

@@ -5,9 +5,7 @@
   username,
   features,
   ...
-}:
-
-{
+}: {
   imports = [
     features.cosmic.home
     features.vscode.home
@@ -84,7 +82,7 @@
       ];
     })
 
-    (bottles.override { removeWarningPopup = true; })
+    (bottles.override {removeWarningPopup = true;})
 
     # system
     kdePackages.dolphin
@@ -97,10 +95,10 @@
     nodejs
     gcc
     sqlite
-    nixfmt
     dbeaver-bin
     python3
     claude-code
+    inputs.alejandra.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   # paws off!

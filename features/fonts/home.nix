@@ -1,11 +1,11 @@
-{ pkgs, inputs, ... }:
-
-let
+{
+  pkgs,
+  inputs,
+  ...
+}: let
   system = pkgs.stdenv.hostPlatform.system;
   apple = inputs.apple-fonts.packages.${system};
-in
-
-{
+in {
   home.packages = with pkgs; [
     cascadia-code
     nerd-fonts.caskaydia-cove
@@ -18,13 +18,13 @@ in
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
-      serif = [ "New York" ];
+      serif = ["New York"];
       sansSerif = [
         "Inter"
         "SF Pro"
       ];
-      monospace = [ "CaskaydiaCove Nerd Font" ];
-      emoji = [ "Apple Color Emoji" ];
+      monospace = ["CaskaydiaCove Nerd Font"];
+      emoji = ["Apple Color Emoji"];
     };
   };
 }

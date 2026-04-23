@@ -1,6 +1,4 @@
-{ ... }:
-
-let
+{...}: let
   baseOptions = [
     "noauto"
     "nofail"
@@ -10,18 +8,21 @@ let
     "gid=100"
     "umask=0022"
   ];
-  roOptions = baseOptions ++ [
-    "ro"
-    "x-systemd.idle-timeout=60"
-  ];
-  rwOptions = baseOptions ++ [
-    "rw"
-    "windows_names"
-    "x-systemd.idle-timeout=0"
-  ];
-in
-{
-  boot.supportedFilesystems = [ "ntfs" ];
+  roOptions =
+    baseOptions
+    ++ [
+      "ro"
+      "x-systemd.idle-timeout=60"
+    ];
+  rwOptions =
+    baseOptions
+    ++ [
+      "rw"
+      "windows_names"
+      "x-systemd.idle-timeout=0"
+    ];
+in {
+  boot.supportedFilesystems = ["ntfs"];
 
   fileSystems = {
     "/mnt/data" = {

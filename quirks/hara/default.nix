@@ -1,6 +1,4 @@
-{ username, ... }:
-
-{
+{username, ...}: {
   imports = [
     ./hardware-configuration.nix
     ./extra-drives.nix

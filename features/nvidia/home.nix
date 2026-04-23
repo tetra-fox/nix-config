@@ -1,6 +1,4 @@
-{ ... }:
-
-{
+{...}: {
   home.sessionVariables = {
     LIBVA_DRIVER_NAME = "nvidia";
     GBM_BACKEND = "nvidia-drm";

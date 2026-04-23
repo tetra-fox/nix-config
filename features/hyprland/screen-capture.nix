@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   programs.hyprshot.enable = true;
 
   home.packages = with pkgs; [

@@ -15,6 +15,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs-xr.url = "github:nix-community/nixpkgs-xr";
+    alejandra = {
+      url = "github:kamadorueda/alejandra";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-vscode-extensions = {
+      url = "github:nix-community/nix-vscode-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # look & feel
     apple-fonts.url = "github:Lyndeno/apple-fonts.nix";
@@ -50,39 +58,36 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    { self, ... }@inputs:
-    let
-      mkHost = import ./lib inputs;
-    in
-    {
-      formatter = inputs.nixpkgs.lib.genAttrs [
-        "aarch64-darwin"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "x86_64-linux"
-      ] (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
+  outputs = {self, ...} @ inputs: let
+    mkHost = import ./lib inputs;
+  in {
+    formatter = inputs.nixpkgs.lib.genAttrs [
+      "aarch64-darwin"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "x86_64-linux"
+    ] (system: inputs.alejandra.packages.${system}.default);
 
-      nixosConfigurations = {
-        hara = mkHost {
-          name = "hara";
-          system = "x86_64-linux";
-          extraModules = [
-            inputs.nur.modules.nixos.default
-            inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
-          ];
-          extraHomeModules = [
-            inputs.cosmic-manager.homeManagerModules.cosmic-manager
-            inputs.betterfox-nix.homeModules.betterfox
-          ];
-        };
-      };
-
-      darwinConfigurations = {
-        myputer = mkHost {
-          name = "myputer";
-          system = "x86_64-darwin";
-        };
+    nixosConfigurations = {
+      hara = mkHost {
+        name = "hara";
+        system = "x86_64-linux";
+        extraModules = [
+          inputs.nur.modules.nixos.default
+          inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
+        ];
+        extraHomeModules = [
+          inputs.cosmic-manager.homeManagerModules.cosmic-manager
+          inputs.betterfox-nix.homeModules.betterfox
+        ];
       };
     };
+
+    darwinConfigurations = {
+      myputer = mkHost {
+        name = "myputer";
+        system = "x86_64-darwin";
+      };
+    };
+  };
 }

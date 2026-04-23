@@ -1,11 +1,9 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   systemd.services.ram-led-suspend-hook = {
     description = "Manage RAM LEDs during suspend and resume";
 
-    before = [ "sleep.target" ];
-    wantedBy = [ "sleep.target" ];
+    before = ["sleep.target"];
+    wantedBy = ["sleep.target"];
 
     serviceConfig = {
       Type = "oneshot";

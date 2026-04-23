@@ -1,11 +1,9 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.pointerCursor = {
     name = "rose-pine-hyprcursor";
     hyprcursor = {
       enable = true;
-      size = 32;
+      size = 26;
     };
     package = pkgs.rose-pine-hyprcursor;
   };

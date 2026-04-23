@@ -1,6 +1,8 @@
-{ pkgs, username, ... }:
-
 {
+  pkgs,
+  username,
+  ...
+}: {
   # sudo setcap CAP_SYS_NICE+ep ~/.local/share/Steam/steamapps/common/SteamVR/bin/linux64/vrcompositor-launcher
   programs.steam = {
     enable = true;
@@ -54,8 +56,8 @@
   systemd.user.services.lighthouse-power-management = {
     description = "Lighthouse Power Management";
 
-    bindsTo = [ "monado.service" ];
-    before = [ "monado.service" ];
+    bindsTo = ["monado.service"];
+    before = ["monado.service"];
 
     serviceConfig = {
       Type = "oneshot";
@@ -65,6 +67,6 @@
       ExecStop = "${pkgs.lighthouse-steamvr}/bin/lighthouse -s standby -b LHB-460730FA -b LHB-E0CEB24B";
     };
 
-    wantedBy = [ "monado.service" ];
+    wantedBy = ["monado.service"];
   };
 }

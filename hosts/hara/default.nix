@@ -4,9 +4,7 @@
   features,
   quirks,
   ...
-}:
-
-{
+}: {
   imports = [
     quirks
     features.bluetooth.system
@@ -33,8 +31,8 @@
     hostName = "hara";
     firewall = {
       # enable = false;
-      allowedTCPPorts = [ 53 ];
-      allowedUDPPorts = [ 53 ];
+      allowedTCPPorts = [53];
+      allowedUDPPorts = [53];
     };
   };
 

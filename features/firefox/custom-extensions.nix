@@ -1,10 +1,8 @@
-{ pkgs }:
-let
+{pkgs}: let
   buildFirefoxXpiAddon = pkgs.nur.repos.rycee.lib.mozilla.mkBuildMozillaXpiAddon {
     inherit (pkgs) fetchurl stdenv;
   };
-in
-{
+in {
   scam = buildFirefoxXpiAddon {
     pname = "scam";
     version = "1.3.1";

@@ -5,8 +5,7 @@
   inputs,
   username,
   ...
-}:
-let
+}: let
   profiler = lib.mkBefore ''
     zmodload zsh/zprof
   '';
@@ -32,8 +31,7 @@ let
       inputs.zsh-patina.packages.${pkgs.stdenv.hostPlatform.system}.default
     }/bin/zsh-patina activate)"
   '';
-in
-{
+in {
   programs = {
     zsh = {
       enable = true;

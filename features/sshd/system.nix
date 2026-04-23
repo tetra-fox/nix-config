@@ -1,6 +1,8 @@
-{ pkgs, username, ... }:
-
 {
+  pkgs,
+  username,
+  ...
+}: {
   users.users.${username}.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFTvIWEt8h9xoHLvCV9M7tX/ZYhZtcAIwSYBbC6oNXc0"
   ];
@@ -22,7 +24,7 @@
     ];
 
     # remove small diffie-hellman moduli
-    moduliFile = pkgs.runCommand "ssh-moduli-hardened" { } ''
+    moduliFile = pkgs.runCommand "ssh-moduli-hardened" {} ''
       awk '$5 >= 3071' ${pkgs.openssh}/etc/ssh/moduli > $out
     '';
 
@@ -30,7 +32,7 @@
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
-      AllowUsers = [ username ];
+      AllowUsers = [username];
 
       # ssh-audit hardening
       KexAlgorithms = [

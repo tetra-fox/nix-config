@@ -1,6 +1,4 @@
-{ lib, ... }:
-
-let
+{lib, ...}: let
   opAgent = "~/.1password/agent.sock";
 
   opSshVaults = [
@@ -8,8 +6,7 @@ let
     "mesa"
     "homelab_DTW"
   ];
-in
-{
+in {
   programs.ssh = {
     enable = true;
 
@@ -30,8 +27,10 @@ in
     };
   };
 
-  xdg.configFile."1Password/ssh/agent.toml".text = lib.concatMapStringsSep "\n" (vault: ''
-    [[ssh-keys]]
-    vault = "${vault}"
-  '') opSshVaults;
+  xdg.configFile."1Password/ssh/agent.toml".text =
+    lib.concatMapStringsSep "\n" (vault: ''
+      [[ssh-keys]]
+      vault = "${vault}"
+    '')
+    opSshVaults;
 }

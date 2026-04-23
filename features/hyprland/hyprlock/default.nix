@@ -1,9 +1,6 @@
-{ shared, ... }:
-
-let
+{shared, ...}: let
   wallpaper = toString (shared.wallpapers + "/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg");
-in
-{
+in {
   programs.hyprlock = {
     enable = true;
 

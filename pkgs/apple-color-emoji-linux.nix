@@ -1,5 +1,7 @@
-{ stdenvNoCC, fetchurl }:
-
+{
+  stdenvNoCC,
+  fetchurl,
+}:
 stdenvNoCC.mkDerivation {
   pname = "apple-color-emoji-linux";
   version = "macos-26-20260219";

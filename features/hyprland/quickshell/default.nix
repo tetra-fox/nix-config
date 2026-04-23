@@ -3,11 +3,9 @@
   lib,
   main_mod,
   ...
-}:
-let
-  material-symbols-filled = import ./material-symbols-filled.nix { inherit pkgs; };
-in
-{
+}: let
+  material-symbols-filled = import ./material-symbols-filled.nix {inherit pkgs;};
+in {
   programs.quickshell = {
     enable = true;
     package = pkgs.quickshell;
@@ -18,7 +16,7 @@ in
     };
   };
 
-  home.activation.restartQuickshell = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+  home.activation.restartQuickshell = lib.hm.dag.entryAfter ["reloadSystemd"] ''
     ${pkgs.systemd}/bin/systemctl --user restart quickshell.service 2>/dev/null || true
   '';
 

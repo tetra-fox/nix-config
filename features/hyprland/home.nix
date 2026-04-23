@@ -2,16 +2,13 @@
   pkgs,
   config,
   ...
-}:
-
-let
+}: let
   terminal = "kitty";
   menu = "walker";
   browser = "firefox";
   file_manager = "dolphin ~";
   main_mod = "SUPER";
-in
-{
+in {
   _module.args = {
     inherit
       main_mod

@@ -1,11 +1,9 @@
-{ ... }:
-
-{
+{...}: {
   services.pipewire.wireplumber.extraConfig."51-scarlett-lowlatency" = {
     "monitor.alsa.rules" = [
       {
         matches = [
-          { "node.name" = "~alsa_(output|input)\\..*Y8DGCDH9A84CDF.*(source|sink)$"; }
+          {"node.name" = "~alsa_(output|input)\\..*Y8DGCDH9A84CDF.*(source|sink)$";}
         ];
         actions.update-props = {
           "audio.format" = "S32LE";

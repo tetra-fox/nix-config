@@ -3,12 +3,9 @@
   pkgs,
   config,
   ...
-}:
-let
-  customExtensions = import ./custom-extensions.nix { inherit pkgs; };
-in
-
-{
+}: let
+  customExtensions = import ./custom-extensions.nix {inherit pkgs;};
+in {
   programs.firefox = {
     enable = true;
     package = pkgs.firefox;
@@ -43,7 +40,7 @@ in
         "browser.download.always_ask_before_handling_new_types" = false;
         "browser.uiCustomization.state" = builtins.toJSON {
           placements = {
-            "widget-overflow-fixed-list" = [ ];
+            "widget-overflow-fixed-list" = [];
             "unified-extensions-area" = [
               "sponsorblocker_ajay_app-browser-action"
               "wappalyzer_crunchlabz_com-browser-action"
@@ -66,12 +63,12 @@ in
               "downloads-button"
               "unified-extensions-button"
             ];
-            "toolbar-menubar" = [ "menubar-items" ];
+            "toolbar-menubar" = ["menubar-items"];
             TabsToolbar = [
               "tabbrowser-tabs"
               "new-tab-button"
             ];
-            "vertical-tabs" = [ ];
+            "vertical-tabs" = [];
             PersonalToolbar = [
               "personal-bookmarks"
             ];
@@ -104,7 +101,7 @@ in
 
       bookmarks = {
         force = true;
-        settings = import ./bookmarks.nix { inherit config; };
+        settings = import ./bookmarks.nix {inherit config;};
       };
 
       extensions = {

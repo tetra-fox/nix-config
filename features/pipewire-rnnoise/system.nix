@@ -1,12 +1,10 @@
-{ pkgs, ... }:
-
-{
-  environment.systemPackages = with pkgs; [ rnnoise-plugin ];
+{pkgs, ...}: {
+  environment.systemPackages = with pkgs; [rnnoise-plugin];
 
   services.pipewire.wireplumber = {
     extraScripts."rnnoise-dynamic.lua" =
-      builtins.replaceStrings [ "@rnnoise_plugin@" ] [ "${pkgs.rnnoise-plugin}" ]
-        (builtins.readFile ./rnnoise-dynamic.lua);
+      builtins.replaceStrings ["@rnnoise_plugin@"] ["${pkgs.rnnoise-plugin}"]
+      (builtins.readFile ./rnnoise-dynamic.lua);
 
     extraConfig."99-rnnoise-dynamic" = {
       "wireplumber.components" = [
