@@ -1,4 +1,5 @@
 {
+  lib,
   stdenvNoCC,
   fetchurl,
 }:
@@ -15,4 +16,6 @@ stdenvNoCC.mkDerivation {
     install -D $src $out/share/fonts/truetype/AppleColorEmoji-Linux.ttf
     runHook postInstall
   '';
+  passthru.updateScript = ./apple-color-emoji-linux.update.sh;
+  meta.platforms = lib.platforms.linux;
 }

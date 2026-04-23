@@ -107,8 +107,16 @@
         "aarch64-darwin"
       ];
 
-      perSystem = {inputs', ...}: {
+      perSystem = {
+        inputs',
+        pkgs,
+        ...
+      }: {
         formatter = inputs'.alejandra.packages.default;
+        packages = pkgs.lib.packagesFromDirectoryRecursive {
+          inherit (pkgs) callPackage;
+          directory = ./pkgs;
+        };
       };
 
       easy-hosts = {

@@ -2,6 +2,7 @@
   lib,
   buildGoModule,
   fetchFromGitHub,
+  nix-update-script,
 }:
 buildGoModule (finalAttrs: {
   pname = "surge-dm";
@@ -24,8 +25,10 @@ buildGoModule (finalAttrs: {
     "-X main.version=${finalAttrs.version}"
   ];
 
+  passthru.updateScript = nix-update-script {};
+
   meta = {
-    description = "Blazing fast TUI download manager with parallel connections";
+    description = "Blazing fast TUI download manager built in Go for power users";
     homepage = "https://github.com/SurgeDM/Surge";
     license = lib.licenses.mit;
     mainProgram = "Surge";
