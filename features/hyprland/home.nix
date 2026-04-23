@@ -169,6 +169,8 @@ in
         layers_hog_keyboard_focus = true;
       };
 
+      xwayland.force_zero_scaling = true;
+
       exec-once = [
         "app2unit -- Telegram -startintray"
         "app2unit -- discord --start-minimized"
