@@ -66,11 +66,12 @@ in {
         ]
         # super+[1-9] switch workspace, super+shift+[1-9] move active window to workspace
         ++ builtins.concatLists (builtins.genList (i: let
-          n = toString (i + 1);
-        in [
-          "${main_mod},${n},workspace,${n}"
-          "${main_mod}_SHIFT,${n},movetoworkspace,${n}"
-        ]) 9);
+            n = toString (i + 1);
+          in [
+            "${main_mod},${n},workspace,${n}"
+            "${main_mod}_SHIFT,${n},movetoworkspace,${n}"
+          ])
+          9);
 
       bindm = [
         "${main_mod},mouse:272,movewindow" # rearrange windows with LMB

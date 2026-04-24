@@ -11,65 +11,71 @@ in {
     mutableExtensionsDir = false;
     profiles.default = {
       # add `++ (with pkgs.vscode-marketplace; [...])` for extensions not on openvsx
-      extensions = with pkgs.open-vsx; [
-        # looks
-        vscode-icons-team.vscode-icons
+      extensions = with pkgs.open-vsx;
+        [
+          # looks
+          vscode-icons-team.vscode-icons
 
-        # tooling
-        albert.tabout
-        anthropic.claude-code
-        bradlc.vscode-tailwindcss
-        esbenp.prettier-vscode
-        jeanp413.open-remote-ssh
-        ultram4rine.vscode-choosealicense
+          # tooling
+          albert.tabout
+          anthropic.claude-code
+          bradlc.vscode-tailwindcss
+          esbenp.prettier-vscode
+          jeanp413.open-remote-ssh
+          ultram4rine.vscode-choosealicense
 
-        # java
-        redhat.java
+          # java
+          redhat.java
 
-        # json5
-        blueglassblock.better-json5
+          # json5
+          blueglassblock.better-json5
 
-        # lua
-        sumneko.lua
+          # lua
+          sumneko.lua
 
-        # markdown
-        davidanson.vscode-markdownlint
+          # markdown
+          davidanson.vscode-markdownlint
 
-        # nix
-        jnoortheen.nix-ide
+          # nix
+          jnoortheen.nix-ide
 
-        # nodejs / typescript
-        dbaeumer.vscode-eslint
-        denoland.vscode-deno
-        yoavbls.pretty-ts-errors
+          # nodejs / typescript
+          dbaeumer.vscode-eslint
+          denoland.vscode-deno
+          yoavbls.pretty-ts-errors
 
-        # python
-        meta.pyrefly
+          # python
+          charliermarsh.ruff
+          meta.pyrefly
 
-        # qt
-        delgan.qml-format
-        theqtcompany.qt-core
-        theqtcompany.qt-qml
+          # qt
+          delgan.qml-format
+          theqtcompany.qt-core
+          theqtcompany.qt-qml
 
-        # rust
-        rust-lang.rust-analyzer
+          # rust
+          rust-lang.rust-analyzer
 
-        # shell
-        foxundermoon.shell-format
+          # shell
+          foxundermoon.shell-format
 
-        # sieve
-        adzero.vscode-sievehighlight
+          # sieve
+          adzero.vscode-sievehighlight
 
-        # svelte
-        svelte.svelte-vscode
+          # svelte
+          svelte.svelte-vscode
 
-        # toml
-        tamasfe.even-better-toml
-      ] ++ [
-        # nix-vscode-extensions pins vscode-lldb to an unbuildable version;
-        # use nixpkgs' own properly-wrapped build instead
-        pkgs.vscode-extensions.vadimcn.vscode-lldb
-      ];
+          # toml
+          tamasfe.even-better-toml
+        ]
+        ++ (with pkgs.vscode-marketplace; [
+          ms-python.python
+        ])
+        ++ [
+          # nix-vscode-extensions pins vscode-lldb to an unbuildable version;
+          # use nixpkgs' own properly-wrapped build instead
+          pkgs.vscode-extensions.vadimcn.vscode-lldb
+        ];
 
       userSettings = {
         # workbench
@@ -138,7 +144,16 @@ in {
         };
 
         # python
+        "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python3";
         "pyrefly.lspPath" = "${pkgs.pyrefly}/bin/pyrefly";
+        "ruff.path" = ["${pkgs.ruff}/bin/ruff"];
+        "[python]" = {
+          "editor.defaultFormatter" = "charliermarsh.ruff";
+          "editor.codeActionsOnSave" = {
+            "source.fixAll.ruff" = "explicit";
+            "source.organizeImports.ruff" = "explicit";
+          };
+        };
 
         # qml
         "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
