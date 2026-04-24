@@ -115,6 +115,7 @@
     gh
     dbeaver-bin
     claude-code
+    lldb
     inputs.alejandra.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
