@@ -47,7 +47,6 @@ in {
 
         # rust
         rust-lang.rust-analyzer
-        vadimcn.vscode-lldb
 
         # shell
         foxundermoon.shell-format
@@ -60,6 +59,10 @@ in {
 
         # toml
         tamasfe.even-better-toml
+      ] ++ [
+        # nix-vscode-extensions pins vscode-lldb to an unbuildable version;
+        # use nixpkgs' own properly-wrapped build instead
+        pkgs.vscode-extensions.vadimcn.vscode-lldb
       ];
 
       userSettings = {
