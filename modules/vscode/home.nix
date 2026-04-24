@@ -47,6 +47,7 @@ in {
 
         # rust
         rust-lang.rust-analyzer
+        vadimcn.vscode-lldb
 
         # shell
         foxundermoon.shell-format
@@ -138,6 +139,7 @@ in {
         "[rust]" = {
           "editor.defaultFormatter" = "rust-lang.rust-analyzer";
         };
+        "lldb.library" = "${pkgs.lldb}/lib/liblldb.so";
 
         # shell
         "shellformat.path" = "${pkgs.shfmt}/bin/shfmt";
