@@ -21,6 +21,7 @@ in {
         bradlc.vscode-tailwindcss
         esbenp.prettier-vscode
         jeanp413.open-remote-ssh
+        ultram4rine.vscode-choosealicense
 
         # json5
         blueglassblock.better-json5
