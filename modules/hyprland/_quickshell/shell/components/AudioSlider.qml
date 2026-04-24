@@ -15,6 +15,8 @@ Slider {
     from: 0
     to: 1.5
 
+    hoverEnabled: enabled
+
     // double-tap snaps to 100%: flag is set on double-tap, volume
     // resets on release so the user doesn't hear the intermediate jump
     property bool _resetOnRelease: false

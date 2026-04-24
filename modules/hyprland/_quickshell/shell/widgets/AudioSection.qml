@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import qs.components
 import qs.lib
+import qs.widgets.media
 
 import Quickshell.Services.Pipewire
 import QtQuick
@@ -13,43 +14,17 @@ ColumnLayout {
 
     property string label
     property string icon
-    property bool muted
-    property real volume
     property list<PwNode> devices
     property PwNode activeDevice
 
-    signal toggleMute
-    signal setVolume(real v)
     signal selectDevice(PwNode d)
 
     spacing: 14
 
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 12
-
-        IconButton {
-            icon: root.icon
-            iconColor: root.muted ? Theme.danger : Theme.textPrimary
-            iconSize: Theme.fontIconLg
-            onClicked: _ => root.toggleMute()
-        }
-
-        AudioSlider {
-            Layout.fillWidth: true
-            value: root.volume
-            muted: root.muted
-            onAdjusted: v => root.setVolume(v)
-        }
-
-        Text {
-            text: Math.round(root.volume * 100) + "%"
-            color: Theme.textSecondary
-            font.pixelSize: Theme.fontMd
-            font.family: Theme.fontFamily
-            Layout.minimumWidth: 40
-            horizontalAlignment: Text.AlignRight
-        }
+    VolumeSlider {
+        node: root.activeDevice
+        compact: false
+        icon: root.icon
     }
 
     Accordion {

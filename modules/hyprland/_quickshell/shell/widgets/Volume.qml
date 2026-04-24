@@ -29,6 +29,11 @@ Item {
     readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
 
+    // channelmix.lock-volumes disables software volume/mute entirely on the
+    // node; reflect that so the slider doesn't look interactive when it isn't
+    readonly property bool sinkLocked: sink && sink.properties && sink.properties["channelmix.lock-volumes"] === "true"
+    readonly property bool sourceLocked: source && source.properties && source.properties["channelmix.lock-volumes"] === "true"
+
     readonly property list<PwNode> sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio !== null)
     readonly property list<PwNode> sources: Pipewire.nodes.values.filter(n => !n.isSink && !n.isStream && n.audio !== null)
 
@@ -46,9 +51,9 @@ Item {
         iconColor: root.muted ? Theme.danger : Theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {
-            if (mouse.button === Qt.RightButton && root.sink?.audio)
+            if (mouse.button === Qt.RightButton && root.sink?.audio && !root.sinkLocked)
                 root.sink.audio.muted = !root.muted;
-            else
+            else if (mouse.button !== Qt.RightButton)
                 popup.visible = !popup.visible;
         }
     }
@@ -71,18 +76,9 @@ Item {
 
             AudioSection {
                 label: "Output"
-                icon: root.muted ? Icons.volumeOff : Icons.volumeUp
-                muted: root.muted
-                volume: root.volume
                 devices: root.sinks
                 activeDevice: Pipewire.defaultAudioSink
                 Layout.fillWidth: true
-                onToggleMute: if (root.sink?.audio)
-                    root.sink.audio.muted = !root.muted
-                onSetVolume: v => {
-                    if (root.sink?.audio)
-                        root.sink.audio.volume = v;
-                }
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
             }
 
@@ -91,17 +87,9 @@ Item {
             AudioSection {
                 label: "Input"
                 icon: root.micMuted ? Icons.micOff : Icons.mic
-                muted: root.micMuted
-                volume: root.micVolume
                 devices: root.sources
                 activeDevice: Pipewire.defaultAudioSource
                 Layout.fillWidth: true
-                onToggleMute: if (root.source?.audio)
-                    root.source.audio.muted = !root.micMuted
-                onSetVolume: v => {
-                    if (root.source?.audio)
-                        root.source.audio.volume = v;
-                }
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSource = d
             }
         }

@@ -9,6 +9,7 @@ Item {
     property color iconColor: Theme.textPrimary
     property bool isOpen: false
     property int iconSize: Theme.fontIcon
+    property bool interactive: true
 
     signal clicked(var mouse)
 
@@ -55,9 +56,10 @@ Item {
         MouseArea {
             id: area
             anchors.fill: parent
-            hoverEnabled: true
+            enabled: root.interactive
+            hoverEnabled: root.interactive
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: Qt.PointingHandCursor
+            cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: mouse => root.clicked(mouse)
         }
     }
