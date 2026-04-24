@@ -23,6 +23,9 @@ in {
         jeanp413.open-remote-ssh
         ultram4rine.vscode-choosealicense
 
+        # java
+        redhat.java
+
         # json5
         blueglassblock.better-json5
 
@@ -39,6 +42,9 @@ in {
         dbaeumer.vscode-eslint
         denoland.vscode-deno
         yoavbls.pretty-ts-errors
+
+        # python
+        meta.pyrefly
 
         # qt
         delgan.qml-format
@@ -90,6 +96,9 @@ in {
         "claudeCode.preferredLocation" = "sidebar";
         "claudeCode.claudeProcessWrapper" = "${pkgs.claude-code}/bin/claude";
 
+        # java
+        "java.jdt.ls.java.home" = pkgs.javaPackages.compiler.temurin-bin.jdk-25.home;
+
         # json
         "[json]" = {
           "editor.defaultFormatter" = "esbenp.prettier-vscode";
@@ -127,6 +136,9 @@ in {
         "[nix]" = {
           "editor.defaultFormatter" = "jnoortheen.nix-ide";
         };
+
+        # python
+        "pyrefly.lspPath" = "${pkgs.pyrefly}/bin/pyrefly";
 
         # qml
         "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
