@@ -67,12 +67,15 @@
     telegram-desktop
     discord
     signal-desktop
+    cinny-desktop
     vlc
     cider-2
     bitwig-studio
     tenacity
     vrcx
     nicotine-plus
+    blender
+    onlyoffice-desktopeditors
 
     (prismlauncher.override {
       jdks = [
