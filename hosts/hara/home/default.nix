@@ -9,6 +9,7 @@
   imports = [
     modules.catppuccin.home
     modules.cosmic.home
+    modules.direnv.home
     modules.vscode.home
     modules.fastfetch.home
     modules.firefox.home
