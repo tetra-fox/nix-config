@@ -30,11 +30,6 @@
   networking = {
     networkmanager.enable = true;
     hostName = "hara";
-    firewall = {
-      # enable = false;
-      allowedTCPPorts = [53];
-      allowedUDPPorts = [53];
-    };
   };
 
   # locale
@@ -50,31 +45,52 @@
   };
 
   environment.systemPackages = with pkgs; [
-    git
-    wget
+    # shell / text
     jq
-    bash
     ripgrep
+    tree
+
+    # net
+    wget
+    bind # dig, host, nslookup
+    nmap # also provides nc
+    mtr
+    rclone
+
+    # hardware / system inspection
     htop
+    usbutils # lsusb
+    lsof
+    smartmontools # smartctl
+
+    # archives
     unzip
-    bind
     unrar
-    eza
+    p7zip
+
+    # vcs
+    git
+
+    # misc
+    pv
   ];
 
-  programs.dconf.enable = true;
-  services.dbus.implementation = "broker";
-
-  programs.nix-ld = {
-    enable = true;
-    libraries = with pkgs; [
-      # needed for precompiled binaries that expect FHS glibc paths
-      # vscode extensions, some steam games, electron apps not in nixpkgs
-      glibc
-    ];
+  programs = {
+    dconf.enable = true;
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [
+        # needed for precompiled binaries that expect FHS glibc paths
+        # vscode extensions, some steam games, electron apps not in nixpkgs
+        glibc
+      ];
+    };
   };
 
-  services.printing.enable = true;
+  services = {
+    printing.enable = true;
+    dbus.implementation = "broker";
+  };
 
   # paws off!
   system.stateVersion = "25.11";

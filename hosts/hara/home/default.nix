@@ -63,21 +63,26 @@
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [
-    # apps
-    # firefox
+    # cli
+    eza
+
+    # chat / comms
     telegram-desktop
     discord
     signal-desktop
     cinny-desktop
+
+    # media / creative
     vlc
     cider-2
     bitwig-studio
     tenacity
-    vrcx
-    nicotine-plus
     blender
+
+    # productivity
     onlyoffice-desktopeditors
 
+    # gaming
     (prismlauncher.override {
       jdks = [
         javaPackages.compiler.temurin-bin.jre-25
@@ -86,26 +91,33 @@
         javaPackages.compiler.temurin-bin.jre-8
       ];
     })
-
     (bottles.override {removeWarningPopup = true;})
+    vrcx
 
-    # system
+    # p2p
+    nicotine-plus
+    qbittorrent
+
+    # system / gui utils
     kdePackages.dolphin
     vulkan-tools # vulkaninfo, vkcube
 
-    #dev
+    # dev — languages / runtimes
     rustup
+    gcc
     gnumake
     pnpm
     nodejs
-    gcc
-    sqlite
-    dbeaver-bin
     python3
+
+    # dev — tools
+    sqlite
+    gh
+    dbeaver-bin
     claude-code
     inputs.alejandra.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   # paws off!
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 }
