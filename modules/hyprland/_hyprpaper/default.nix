@@ -1,19 +1,7 @@
-{shared, ...}: let
-  imagePath = toString (shared.wallpapers + "/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg");
-in {
+{config, ...}: {
+  # wallpaper + splash are set by stylix; we only need to preload the image
   services.hyprpaper = {
     enable = true;
-    settings = {
-      splash = false;
-      preload = [imagePath];
-      # hyprpaper 0.8+ expects wallpaper { } blocks, not wallpaper=mon,path
-      wallpaper = [
-        {
-          monitor = "";
-          path = imagePath;
-          fit_mode = "cover";
-        }
-      ];
-    };
+    settings.preload = [(toString config.stylix.image)];
   };
 }

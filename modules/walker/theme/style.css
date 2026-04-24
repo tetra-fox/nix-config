@@ -1,19 +1,12 @@
-@define-color window_bg_color #18151a;
-@define-color accent_bg_color #665a6e;
-@define-color theme_fg_color #ebebeb;
-@define-color error_bg_color #C34043;
-@define-color error_fg_color #DCD7BA;
-
 * {
   all: unset;
 }
 
 popover {
-  background: lighter(@window_bg_color);
-  border: 1px solid darker(@accent_bg_color);
-  border-radius: 4px;
+  background: @surface0;
+  border: 1px solid @surface2;
+  border-radius: 12px;
   padding: 8px;
-  font-family: "SF Pro";
 }
 
 .normal-icons {
@@ -32,105 +25,99 @@ scrollbar {
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
     0 15px 12px rgba(0, 0, 0, 0.22);
-  background: @window_bg_color;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid darker(@accent_bg_color);
+  background: @base;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid alpha(@accent, 0.4);
 }
 
 .preview-box,
 .elephant-hint,
 .placeholder {
-  color: @theme_fg_color;
-}
-
-.box {
+  color: @subtext0;
 }
 
 .search-container {
   border-radius: 10px;
-}
-
-.input placeholder {
-  opacity: 0.5;
-}
-
-.input selection {
-  background: lighter(lighter(lighter(@window_bg_color)));
+  margin-bottom: 8px;
 }
 
 .input {
-  caret-color: @theme_fg_color;
-  background: lighter(@window_bg_color);
-  padding: 10px;
-  color: @theme_fg_color;
+  caret-color: @accent;
+  background: @mantle;
+  color: @text;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid @surface1;
 }
 
 .input:focus,
 .input:active {
+  border-color: alpha(@accent, 0.6);
 }
 
-.content-container {
+.input placeholder {
+  color: @overlay0;
 }
 
-.placeholder {
-}
-
-.scroll {
+.input selection {
+  background: alpha(@accent, 0.35);
+  color: @text;
 }
 
 .list {
-  color: @theme_fg_color;
-}
-
-child {
+  color: @text;
 }
 
 .item-box {
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: @text;
 }
 
 .item-quick-activation {
-  background: alpha(@accent_bg_color, 0.25);
+  background: alpha(@accent, 0.2);
+  color: @accent;
   border-radius: 5px;
-  padding: 10px;
+  padding: 4px 8px;
 }
 
-/* child:hover .item-box, */
-child:selected .item-box {
-  background: alpha(@accent_bg_color, 0.25);
-}
-
-.item-text-box {
+child:selected .item-box,
+row:selected .item-box {
+  background: alpha(@accent, 0.2);
+  color: @text;
 }
 
 .item-subtext {
   font-size: 12px;
-  opacity: 0.5;
+  color: @subtext0;
 }
 
 .providerlist .item-subtext {
   font-size: unset;
-  opacity: 0.75;
+  color: @subtext1;
 }
 
 .item-image-text {
   font-size: 28px;
+  color: @accent;
 }
 
 .preview {
-  border: 1px solid alpha(@accent_bg_color, 0.25);
-  /* padding: 10px; */
+  border: 1px solid @surface1;
   border-radius: 10px;
-  color: @theme_fg_color;
+  color: @text;
+  padding: 8px;
+  background: @mantle;
+}
+
+.preview .large-icons {
+  -gtk-icon-size: 64px;
 }
 
 .calc .item-text {
   font-size: 24px;
-}
-
-.calc .item-subtext {
+  color: @accent;
 }
 
 .symbols .item-image {
@@ -138,11 +125,12 @@ child:selected .item-box {
 }
 
 .todo.done .item-text-box {
-  opacity: 0.25;
+  color: @overlay0;
 }
 
 .todo.urgent {
   font-size: 24px;
+  color: @red;
 }
 
 .todo.active {
@@ -150,59 +138,50 @@ child:selected .item-box {
 }
 
 .bluetooth.disconnected {
-  opacity: 0.5;
-}
-
-.preview .large-icons {
-  -gtk-icon-size: 64px;
+  color: @overlay0;
 }
 
 .keybinds {
   padding-top: 10px;
-  border-top: 1px solid lighter(@window_bg_color);
+  border-top: 1px solid @surface0;
   font-size: 12px;
-  color: @theme_fg_color;
-}
-
-.global-keybinds {
-}
-
-.item-keybinds {
-}
-
-.keybind {
+  color: @subtext0;
 }
 
 .keybind-button {
-  opacity: 0.5;
+  color: @subtext0;
 }
 
 .keybind-button:hover {
-  opacity: 0.75;
+  color: @text;
   cursor: pointer;
 }
 
 .keybind-bind {
   text-transform: lowercase;
-  opacity: 0.35;
+  color: @overlay0;
 }
 
 .keybind-label {
-  padding: 2px 4px;
+  padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid @theme_fg_color;
+  border: 1px solid @surface2;
+  color: @subtext1;
 }
 
 .error {
   padding: 10px;
-  background: @error_bg_color;
-  color: @error_fg_color;
+  background: alpha(@red, 0.2);
+  color: @red;
+  border-radius: 6px;
 }
 
 :not(.calc).current {
   font-style: italic;
+  color: @accent;
 }
 
-.preview-content.archlinuxpkgs {
+.preview-content.archlinuxpkgs,
+.preview-content.dnfpackages {
   font-family: monospace;
 }

@@ -89,9 +89,6 @@ in {
 
         border_size = 1;
 
-        "col.active_border" = "rgba(ff34a8ee)";
-        "col.inactive_border" = "rgba(59595922)";
-
         resize_on_border = false;
 
         allow_tearing = false;

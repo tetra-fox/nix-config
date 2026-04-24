@@ -22,6 +22,7 @@
     modules.pipewire-rnnoise.system
     modules.sshd.system
     modules.steam.system
+    modules.stylix.system
     modules.systemd-boot.system
     modules.zsh.system
   ];

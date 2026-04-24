@@ -52,7 +52,14 @@
         home-manager.follows = "home-manager";
       };
     };
-    catppuccin.url = "github:catppuccin/nix";
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    catppuccin = {
+      url = "github:catppuccin/nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # fonts
     apple-fonts.url = "github:Lyndeno/apple-fonts.nix";
@@ -166,11 +173,13 @@
             modules = [
               inputs.nur.modules.nixos.default
               inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
+              inputs.stylix.nixosModules.stylix
               {
                 home-manager.users.${username}.imports = [
                   ./hosts/hara/home
                   inputs.cosmic-manager.homeManagerModules.cosmic-manager
                   inputs.betterfox-nix.homeModules.betterfox
+                  inputs.catppuccin.homeModules.catppuccin
                 ];
               }
             ];

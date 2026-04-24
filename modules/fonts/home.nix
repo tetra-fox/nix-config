@@ -3,28 +3,11 @@
   inputs,
   ...
 }: let
-  system = pkgs.stdenv.hostPlatform.system;
-  apple = inputs.apple-fonts.packages.${system};
+  apple = inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system};
 in {
-  home.packages = with pkgs; [
-    cascadia-code
-    nerd-fonts.caskaydia-cove
+  # extras only — default serif/sans/mono/emoji are installed by stylix
+  home.packages = [
+    pkgs.cascadia-code
     apple.sf-pro
-    apple.ny
-    apple-color-emoji-linux
-    inter
   ];
-
-  fonts.fontconfig = {
-    enable = true;
-    defaultFonts = {
-      serif = ["New York"];
-      sansSerif = [
-        "Inter"
-        "SF Pro"
-      ];
-      monospace = ["CaskaydiaCove Nerd Font"];
-      emoji = ["Apple Color Emoji"];
-    };
-  };
 }

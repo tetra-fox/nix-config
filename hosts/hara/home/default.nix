@@ -7,6 +7,7 @@
   ...
 }: {
   imports = [
+    modules.catppuccin.home
     modules.cosmic.home
     modules.vscode.home
     modules.fastfetch.home
@@ -22,6 +23,7 @@
     modules.ssh.home
     modules.starship.home
     modules.steam.home
+    modules.stylix.home
     modules.surge-dm.home
     modules.walker.home
     modules.zsh.home
@@ -49,9 +51,8 @@
     GDK_BACKEND = "wayland,x11,*";
     CLUTTER_BACKEND = "wayland";
 
-    # qt
+    # qt (QT_QPA_PLATFORMTHEME set by stylix)
     QT_QPA_PLATFORM = "wayland;xcb";
-    QT_QPA_PLATFORMTHEME = "qt6ct";
     QT_AUTO_SCREEN_SCALE_FACTOR = "1";
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
   };

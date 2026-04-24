@@ -1,19 +1,16 @@
 {
   pkgs,
-  lib,
-  config,
   inputs,
   ...
 }: {
   programs.vscode = {
     enable = true;
     package = pkgs.vscodium;
-    mutableExtensionsDir = true;
+    mutableExtensionsDir = false;
     profiles.default = {
       extensions = with pkgs.open-vsx;
         [
           # looks
-          catppuccin.catppuccin-vsc
           vscode-icons-team.vscode-icons
 
           # language support - nix
@@ -59,20 +56,15 @@
           # in case we need extensions NOT available on openvsx
         ]);
       userSettings = {
-        "workbench.colorTheme" = "Catppuccin Mocha";
         "workbench.iconTheme" = "vscode-icons";
         "workbench.editorAssociations" = {
           "{git,gitlens,chat-editing-snapshot-text-model,copilot,git-graph,git-graph-3}:/**/*.qrc" = "default";
           "*.qrc" = "qt-core.qrcEditor";
         };
 
-        "editor.fontFamily" = "Cascadia Code";
-        "editor.fontSize" = 14;
         "editor.fontLigatures" = true;
         "editor.formatOnSave" = true;
 
-        "terminal.integrated.fontFamily" = lib.head config.fonts.fontconfig.defaultFonts.monospace;
-        "terminal.integrated.fontSize" = 14;
         "terminal.integrated.fontLigatures.enabled" = true;
 
         "claudeCode.preferredLocation" = "sidebar";
