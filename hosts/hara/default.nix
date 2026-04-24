@@ -34,7 +34,16 @@
 
   # locale
   time.timeZone = "America/Los_Angeles";
-  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n = {
+    defaultLocale = "en_US.UTF-8";
+    extraLocaleSettings = {
+      LC_TIME = "en_GB.UTF-8"; # 24h, DD/MM
+      LC_MEASUREMENT = "en_GB.UTF-8"; # metric
+    };
+  };
+
+  console.keyMap = "us";
 
   users.users.${username} = {
     isNormalUser = true;
@@ -77,6 +86,7 @@
 
   programs = {
     dconf.enable = true;
+    command-not-found.enable = true;
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
@@ -90,7 +100,13 @@
   services = {
     printing.enable = true;
     dbus.implementation = "broker";
+    fwupd.enable = true;
+    earlyoom.enable = true;
   };
+
+  zramSwap.enable = true;
+
+  boot.tmp.cleanOnBoot = true;
 
   # paws off!
   system.stateVersion = "25.11";
