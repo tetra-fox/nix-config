@@ -48,7 +48,7 @@ in {
         llt = "eza -l --git --tree --icons";
         lt = "eza --tree --level=2 --all --icons";
         lld = "eza -lbhHFGmuSa --group-directories-first --icons";
-        rebuild = "sudo nixos-rebuild switch --impure --flake /home/${username}/Documents/git/nix-config#$(hostname)";
+        rebuild = "sudo nixos-rebuild switch --flake $HOME/Documents/git/nix-config#$(hostname)";
       };
       history = {
         ignoreAllDups = true;
