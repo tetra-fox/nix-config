@@ -1,92 +1,50 @@
+pragma ComponentBehavior: Bound
+
 import qs.components
 import qs.lib
 import Quickshell.Io
+import Quickshell.Networking
 import QtQuick
 import QtQuick.Layouts
 
 Item {
     id: root
 
-    readonly property bool connected: ifname !== "" && operstate === "UP" && ip !== ""
-    readonly property string ifname: _ifname
-    property bool polling: false
+    readonly property WiredDevice wiredDevice: Networking.devices.values.find(d => d && d.type === DeviceType.Wired) ?? null
+    readonly property bool available: wiredDevice !== null
+    readonly property string ifname: wiredDevice?.name ?? ""
+    readonly property bool hasLink: wiredDevice?.hasLink ?? false
+    readonly property bool connected: wiredDevice?.connected ?? false
+    readonly property int state: wiredDevice?.state ?? ConnectionState.Unknown
+    readonly property bool stateChanging: state === ConnectionState.Connecting || state === ConnectionState.Disconnecting
+    readonly property int linkSpeed: wiredDevice?.linkSpeed ?? 0
+    readonly property string mac: (wiredDevice?.address ?? "").toLowerCase() // qmllint disable missing-property
+    readonly property Network network: wiredDevice?.network ?? null // qmllint disable unresolved-type
 
-    property string _ifname: ""
-    property string operstate: ""
-    property string ip: ""
-    property string mac: ""
+    // mtu and duplex aren't exposed by quickshell; fetch from sysfs on link change
     property int mtu: 0
-    property int speed: -1
     property string duplex: ""
 
-    // find first physical non-wireless interface
-    BufferedProcess {
-        id: ifaceProc
-        command: ["sh", "-c", "for d in /sys/class/net/*/device; do i=$(basename $(dirname $d)); [ ! -d /sys/class/net/$i/wireless ] && echo $i; done"]
-        onFinished: output => {
-            const name = output.trim().split("\n")[0] ?? "";
-            if (name !== "" && name !== root.ifname) {
-                root._ifname = name;
-                root._fetchDetails();
-            } else if (name === "") {
-                root._ifname = "";
-                root._clearDetails();
-            }
+    function refreshSysfs() {
+        if (ifname === "") {
+            root.mtu = 0;
+            root.duplex = "";
+            return;
         }
-    }
-
-    function _clearDetails() {
-        root.ip = root.mac = root.duplex = "";
-        root.mtu = 0;
-        root.speed = -1;
-        root.operstate = "";
-    }
-
-    function _fetchDetails() {
-        if (!addrProc.running)
-            addrProc.running = true;
-        if (!linkProc.running)
-            linkProc.running = true;
-        speedFile.reload();
+        mtuFile.reload();
         duplexFile.reload();
     }
 
-    BufferedProcess {
-        id: addrProc
-        command: ["ip", "-j", "-4", "addr", "show", root.ifname]
-        onFinished: output => {
-            try {
-                root.ip = JSON.parse(output)?.[0]?.addr_info?.[0]?.local ?? "";
-            } catch (_) {
-                root.ip = "";
-            }
-        }
-    }
-
-    BufferedProcess {
-        id: linkProc
-        command: ["ip", "-j", "link", "show", root.ifname]
-        onFinished: output => {
-            try {
-                const r = JSON.parse(output)?.[0];
-                root.mac = r?.address ?? "";
-                root.mtu = r?.mtu ?? 0;
-                const newState = r?.operstate ?? "";
-                if (newState !== root.operstate) {
-                    root.operstate = newState;
-                    // re-fetch addr/speed/duplex since they change with link state
-                    root._fetchDetails();
-                }
-            } catch (_) {}
-        }
-    }
+    onIfnameChanged: refreshSysfs()
+    onHasLinkChanged: refreshSysfs()
+    onConnectedChanged: refreshSysfs()
 
     FileView {
-        id: speedFile
-        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/speed" : ""
+        id: mtuFile
+        path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/mtu" : ""
         onLoaded: {
             const n = parseInt(text().trim());
-            root.speed = isNaN(n) ? -1 : n;
+            root.mtu = isNaN(n) ? 0 : n;
         }
     }
 
@@ -96,42 +54,8 @@ Item {
         onLoaded: root.duplex = text().trim()
     }
 
-    BufferedProcess {
-        id: toggleUpProc
-        command: ["nmcli", "device", "connect", root.ifname]
-        onFinished: root._fetchDetails()
-    }
-
-    BufferedProcess {
-        id: toggleDownProc
-        command: ["nmcli", "device", "disconnect", root.ifname]
-        onFinished: root._fetchDetails()
-    }
-
-    Component.onCompleted: ifaceProc.running = true
-
-    // hotplug re-scan
-    Timer {
-        interval: 5000
-        running: root.polling
-        repeat: true
-        onTriggered: if (!ifaceProc.running)
-            ifaceProc.running = true
-    }
-
-    Timer {
-        interval: 2000
-        running: root.polling && root.ifname !== ""
-        repeat: true
-        onTriggered: {
-            if (!linkProc.running)
-                linkProc.running = true;
-            if (!addrProc.running)
-                addrProc.running = true;
-        }
-    }
-
-    implicitHeight: col.implicitHeight
+    implicitHeight: visible ? col.implicitHeight : 0
+    visible: root.available
 
     ColumnLayout {
         id: col
@@ -144,7 +68,6 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            visible: root.ifname !== ""
 
             Text {
                 text: "Ethernet"
@@ -155,12 +78,12 @@ Item {
             }
 
             ToggleSwitch {
-                checked: root.connected
+                checked: root.connected || root.state === ConnectionState.Connecting
                 onToggled: {
-                    if (root.connected)
-                        toggleDownProc.running = true;
+                    if (root.connected || root.stateChanging)
+                        root.wiredDevice.disconnect();
                     else
-                        toggleUpProc.running = true;
+                        root.network?.connect();
                 }
             }
         }
@@ -168,29 +91,53 @@ Item {
         Header {
             icon: root.connected ? Icons.settingsEthernet : Icons.cable
             iconColor: root.connected ? Theme.textPrimary : Theme.textInactive
-            title: root.ifname || "No connection"
-            badgeVisible: root.ifname !== ""
+            title: {
+                if (root.connected && root.network)
+                    return root.network.name || root.ifname;
+                return root.ifname || "Ethernet";
+            }
+            subtitle: (root.connected && root.network && root.network.name !== root.ifname) ? root.ifname : ""
+            badgeVisible: true
             badgeActive: root.connected
+            badgePulsing: root.stateChanging
+            badgeColor: {
+                if (root.connected)
+                    return Theme.colorGreen;
+                if (root.state === ConnectionState.Disconnecting)
+                    return Theme.colorRed;
+                if (root.state === ConnectionState.Connecting)
+                    return Theme.colorYellow;
+                if (!root.hasLink)
+                    return Theme.textInactive;
+                return Theme.colorRed;
+            }
             badgeText: {
-                if (!root.connected)
-                    return "Disconnected";
-                if (root.speed <= 0)
-                    return "Connected";
-                let duplex;
-                if (root.duplex === "full")
-                    duplex = " FDX";
-                else if (root.duplex === "half")
-                    duplex = " HDX";
-                else
-                    duplex = "";
-                return root.speed + " Mbps" + duplex;
+                if (root.state === ConnectionState.Connecting)
+                    return "Connecting";
+                if (root.state === ConnectionState.Disconnecting)
+                    return "Disconnecting";
+                if (root.connected) {
+                    if (root.linkSpeed <= 0)
+                        return "Connected";
+                    let dup;
+                    if (root.duplex === "full")
+                        dup = " FDX";
+                    else if (root.duplex === "half")
+                        dup = " HDX";
+                    else
+                        dup = "";
+                    return root.linkSpeed + " Mbps" + dup;
+                }
+                if (!root.hasLink)
+                    return "No cable";
+                return "Disconnected";
             }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 5
-            visible: root.connected
+            visible: root.hasLink
 
             InfoRow {
                 label: "MAC"
@@ -199,6 +146,7 @@ Item {
             InfoRow {
                 label: "MTU"
                 value: root.mtu > 0 ? String(root.mtu) : "-"
+                visible: root.connected
             }
         }
     }
