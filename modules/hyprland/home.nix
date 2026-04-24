@@ -52,17 +52,25 @@ in {
       };
 
       # keybinds
-      bind = [
-        # apps
-        "${main_mod},GRAVE,exec,app2unit -- ${terminal}"
-        "${main_mod},E,exec,app2unit -- ${file_manager}"
-        "${main_mod},SPACE,exec,${menu}"
-        "${main_mod},C,exec,${pkgs.hyprpicker}/bin/hyprpicker -a"
+      bind =
+        [
+          # apps
+          "${main_mod},GRAVE,exec,app2unit -- ${terminal}"
+          "${main_mod},E,exec,app2unit -- ${file_manager}"
+          "${main_mod},SPACE,exec,${menu}"
+          "${main_mod},C,exec,${pkgs.hyprpicker}/bin/hyprpicker -a"
 
-        # hyprland
-        "${main_mod},mouse:274,togglefloating"
-        "${main_mod},Q,killactive"
-      ];
+          # hyprland
+          "${main_mod},mouse:274,togglefloating"
+          "${main_mod},Q,killactive"
+        ]
+        # super+[1-9] switch workspace, super+shift+[1-9] move active window to workspace
+        ++ builtins.concatLists (builtins.genList (i: let
+          n = toString (i + 1);
+        in [
+          "${main_mod},${n},workspace,${n}"
+          "${main_mod}_SHIFT,${n},movetoworkspace,${n}"
+        ]) 9);
 
       bindm = [
         "${main_mod},mouse:272,movewindow" # rearrange windows with LMB
