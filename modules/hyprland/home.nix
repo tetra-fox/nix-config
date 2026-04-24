@@ -85,7 +85,9 @@ in {
 
       general = {
         gaps_in = 4;
-        gaps_out = 8;
+        # top=1 since Bar already adds its own vertical padding,
+        # but 0 looks uneven because of window border_size
+        gaps_out = "1, 8, 8, 8";
 
         border_size = 1;
 
