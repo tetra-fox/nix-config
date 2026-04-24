@@ -1,6 +1,5 @@
 {...}: {
-  # TODO: make this actually work
-  services.pipewire.extraConfig.pipewire."99-scarlett-volume-lock" = {
+  services.pipewire.wireplumber.extraConfig."99-scarlett-volume-lock" = {
     "monitor.alsa.rules" = [
       {
         matches = [
