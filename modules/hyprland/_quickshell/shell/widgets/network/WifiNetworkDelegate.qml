@@ -28,7 +28,7 @@ Item {
         function onConnectionFailed(reason) {
             root.psk = "";
             // collapse psk prompt for unknown networks so user can retry fresh
-            if (!root.network.known)
+            if (!root.network?.known)
                 root.expandToggled();
         }
     }
@@ -41,6 +41,9 @@ Item {
             top: parent.top
         }
         icon: {
+            // guard against transient null: delegate briefly outlives its WifiNetwork during AP removal
+            if (!root.network)
+                return Icons.wifiSignal0;
             const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown; // qmllint disable unresolved-type
             const sig = root.network.signalStrength;
             const lock = secured ? "Locked" : "";
@@ -55,16 +58,16 @@ Item {
             return Icons[`wifiSignal0${lock}`];
         }
         iconSize: Theme.fontIconLg
-        iconColor: root.network.connected ? Theme.colorGreen : Theme.textPrimary
-        text: root.network.name
-        textColor: root.network.connected ? Theme.colorGreen : Theme.textPrimary
+        iconColor: root.network?.connected ? Theme.colorGreen : Theme.textPrimary
+        text: root.network?.name ?? ""
+        textColor: root.network?.connected ? Theme.colorGreen : Theme.textPrimary
         showSeparator: root.showSeparator
         onSelected: root.clicked()
 
         InlineButton {
             text: "Forget"
             accentColor: Theme.colorRed
-            visible: root.network.known && !root.network.connected
+            visible: (root.network?.known ?? false) && !root.network?.connected
             onClicked: root.forgotNetwork()
         }
     }

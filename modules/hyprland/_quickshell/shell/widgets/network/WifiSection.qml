@@ -9,12 +9,12 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    readonly property WifiDevice wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
+    readonly property WifiDevice wifiDevice: Networking.devices.values.find(d => d && d.type === DeviceType.Wifi) ?? null
     readonly property bool available: wifiDevice !== null
     readonly property string ifname: root.wifiDevice?.name ?? ""
-    readonly property WifiNetwork activeNetwork: root.wifiDevice?.networks.values.find(n => n.connected) ?? null
-    readonly property WifiNetwork connectingNetwork: root.wifiDevice?.networks.values.find(n => n.state === ConnectionState.Connecting) ?? null
-    readonly property WifiNetwork disconnectingNetwork: root.wifiDevice?.networks.values.find(n => n.state === ConnectionState.Disconnecting) ?? null
+    readonly property WifiNetwork activeNetwork: root.wifiDevice?.networks.values.find(n => n && n.connected) ?? null
+    readonly property WifiNetwork connectingNetwork: root.wifiDevice?.networks.values.find(n => n && n.state === ConnectionState.Connecting) ?? null
+    readonly property WifiNetwork disconnectingNetwork: root.wifiDevice?.networks.values.find(n => n && n.state === ConnectionState.Disconnecting) ?? null
 
     property bool scannerEnabled: false
     onScannerEnabledChanged: {
@@ -114,14 +114,15 @@ Item {
 
     property var sortedNetworks: []
     property var expandedNetwork: null
-    readonly property var otherNetworks: root.sortedNetworks.filter(n => !n.connected)
+    readonly property var otherNetworks: root.sortedNetworks.filter(n => n && !n.connected)
 
     function refreshNetworks() {
         // skip re-sort while psk prompt is open to avoid yanking it away mid-type
         if (root.expandedNetwork !== null)
             return;
         const nets = root.wifiDevice?.networks.values ?? [];
-        root.sortedNetworks = nets.slice().filter(n => n.connected || n.signalStrength > 0).sort((a, b) => {
+        // filter out dangling entries that can appear mid-AP-removal before the sequence updates
+        root.sortedNetworks = nets.slice().filter(n => n && (n.connected || n.signalStrength > 0)).sort((a, b) => {
             if (a.connected !== b.connected)
                 return a.connected ? -1 : 1;
             return b.signalStrength - a.signalStrength;
