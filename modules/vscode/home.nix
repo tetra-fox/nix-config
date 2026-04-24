@@ -12,53 +12,53 @@ in {
     profiles.default = {
       # add `++ (with pkgs.vscode-marketplace; [...])` for extensions not on openvsx
       extensions = with pkgs.open-vsx; [
-          # looks
-          vscode-icons-team.vscode-icons
+        # looks
+        vscode-icons-team.vscode-icons
 
-          # tooling
-          albert.tabout
-          anthropic.claude-code
-          bradlc.vscode-tailwindcss
-          esbenp.prettier-vscode
-          jeanp413.open-remote-ssh
+        # tooling
+        albert.tabout
+        anthropic.claude-code
+        bradlc.vscode-tailwindcss
+        esbenp.prettier-vscode
+        jeanp413.open-remote-ssh
 
-          # json5
-          blueglassblock.better-json5
+        # json5
+        blueglassblock.better-json5
 
-          # lua
-          sumneko.lua
+        # lua
+        sumneko.lua
 
-          # markdown
-          davidanson.vscode-markdownlint
+        # markdown
+        davidanson.vscode-markdownlint
 
-          # nix
-          jnoortheen.nix-ide
+        # nix
+        jnoortheen.nix-ide
 
-          # nodejs / typescript
-          dbaeumer.vscode-eslint
-          denoland.vscode-deno
-          yoavbls.pretty-ts-errors
+        # nodejs / typescript
+        dbaeumer.vscode-eslint
+        denoland.vscode-deno
+        yoavbls.pretty-ts-errors
 
-          # qt
-          delgan.qml-format
-          theqtcompany.qt-core
-          theqtcompany.qt-qml
+        # qt
+        delgan.qml-format
+        theqtcompany.qt-core
+        theqtcompany.qt-qml
 
-          # rust
-          rust-lang.rust-analyzer
+        # rust
+        rust-lang.rust-analyzer
 
-          # shell
-          foxundermoon.shell-format
+        # shell
+        foxundermoon.shell-format
 
-          # sieve
-          adzero.vscode-sievehighlight
+        # sieve
+        adzero.vscode-sievehighlight
 
-          # svelte
-          svelte.svelte-vscode
+        # svelte
+        svelte.svelte-vscode
 
-          # toml
-          tamasfe.even-better-toml
-        ];
+        # toml
+        tamasfe.even-better-toml
+      ];
 
       userSettings = {
         # workbench
