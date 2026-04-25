@@ -2,6 +2,7 @@
   imports = [
     ./hardware-configuration.nix
     ./extra-drives.nix
+    ./network-tuning.nix
     ./ram-led-suspend-hook.nix
     ./scarlett-volume-lock.nix
     ./scarlett-configuration.nix

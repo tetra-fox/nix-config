@@ -101,6 +101,8 @@
     # system / gui utils
     kdePackages.dolphin
     vulkan-tools # vulkaninfo, vkcube
+    iperf3
+    ethtool
 
     # dev — languages / runtimes
     rustup
