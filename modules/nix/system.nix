@@ -14,7 +14,4 @@
       options = "--delete-generations +8"; # keep last 8 generations
     };
   };
-
-  # TODO: move this to features/nixpkgs/system.nix
-  nixpkgs.config.allowUnfree = true;
 }

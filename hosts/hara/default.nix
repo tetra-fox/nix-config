@@ -14,6 +14,7 @@
     modules.greetd.system
     modules.hyprland.system
     modules.nix.system
+    modules.nixpkgs.system
     modules.nvidia.system
     modules.obs-studio.system
     modules.onepassword.system
