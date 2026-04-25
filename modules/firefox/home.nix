@@ -6,6 +6,10 @@
 }: let
   customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
 in {
+  # firefox creates a fresh profile every time its nix-store path changes
+  # unless we opt out of dedicated-profile-per-install
+  home.sessionVariables.MOZ_LEGACY_PROFILES = "1";
+
   programs.firefox = {
     enable = true;
     package = pkgs.firefox;
