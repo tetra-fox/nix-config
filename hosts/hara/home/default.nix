@@ -39,25 +39,6 @@
     signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
   };
 
-  home.sessionVariables = {
-    # electron/ozone
-    NIXOS_OZONE_WL = "1";
-
-    # xdg session
-    XDG_SESSION_TYPE = "wayland";
-    XDG_CURRENT_DESKTOP = "Hyprland";
-    XDG_SESSION_DESKTOP = "Hyprland";
-
-    # gtk
-    GDK_BACKEND = "wayland,x11,*";
-    CLUTTER_BACKEND = "wayland";
-
-    # qt (QT_QPA_PLATFORMTHEME set by stylix)
-    QT_QPA_PLATFORM = "wayland;xcb";
-    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-  };
-
   systemd.user.sessionVariables = config.home.sessionVariables;
 
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
