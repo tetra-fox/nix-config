@@ -6,13 +6,12 @@
 }: let
   customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
 in {
-  # firefox creates a fresh profile every time its nix-store path changes
-  # unless we opt out of dedicated-profile-per-install
-  home.sessionVariables.MOZ_LEGACY_PROFILES = "1";
+  home.sessionVariables.MOZ_LEGACY_PROFILES = "1"; # missing profile fix
 
   programs.firefox = {
     enable = true;
     package = pkgs.firefox;
+    configPath = ".mozilla/firefox"; # missing profile fix
 
     betterfox = {
       enable = true;
