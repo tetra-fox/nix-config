@@ -32,13 +32,12 @@ RowLayout {
         spacing: 1
         Layout.fillWidth: true
 
-        Text {
-            text: root.title
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontMd
-            font.family: Theme.fontFamily
+        CopyableText {
             Layout.fillWidth: true
+            text: root.title
             elide: Text.ElideRight
+            leftAligned: true
+            fontPixelSize: Theme.fontMd
         }
 
         CopyableText {

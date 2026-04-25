@@ -2,13 +2,15 @@ import qs.lib
 import Quickshell.Io
 import QtQuick
 
-// right-aligned text that copies to clipboard on click
+// text that copies to clipboard on click; right-aligned by default, leftAligned for column layouts
 Item {
     id: root
 
     property alias text: innerText.text
     property alias elide: innerText.elide
+    property alias fontPixelSize: innerText.font.pixelSize
     property bool disabled: false
+    property bool leftAligned: false
     property color baseColor: Theme.textPrimary
 
     implicitWidth: innerText.implicitWidth
@@ -16,7 +18,8 @@ Item {
 
     Text {
         id: innerText
-        anchors.right: parent.right
+        anchors.left: root.leftAligned ? parent.left : undefined
+        anchors.right: root.leftAligned ? undefined : parent.right
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, root.width)
 
@@ -37,7 +40,8 @@ Item {
 
     MouseArea {
         id: area
-        anchors.right: parent.right
+        anchors.left: root.leftAligned ? parent.left : undefined
+        anchors.right: root.leftAligned ? undefined : parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: innerText.width
