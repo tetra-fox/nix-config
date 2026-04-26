@@ -84,6 +84,7 @@
     vulkan-tools # vulkaninfo, vkcube
     iperf3
     ethtool
+    wireshark
 
     # dev — languages / runtimes
     rustup
