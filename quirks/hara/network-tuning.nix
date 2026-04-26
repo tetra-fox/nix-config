@@ -1,5 +1,5 @@
 {pkgs, ...}: let
-  iface = "enp11s0f0np0"; # MCX4121A-ACAT
+  iface = ["enp11s0f0np0" "enp11s0f0np1"]; # MCX4121A-ACAT
 in {
   boot.kernel.sysctl = {
     "net.core.rmem_max" = 134217728;
@@ -27,5 +27,5 @@ in {
     };
   };
 
-  systemd.targets.multi-user.wants = ["ethtool-tune@${iface}.service"];
+  systemd.targets.multi-user.wants = map (i: "ethtool-tune@${i}.service") iface;
 }
