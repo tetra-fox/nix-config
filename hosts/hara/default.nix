@@ -25,6 +25,7 @@
     modules.steam.system
     modules.stylix.system
     modules.systemd-boot.system
+    modules.wireshark.system
     modules.zsh.system
   ];
 
@@ -104,8 +105,6 @@
     fwupd.enable = true;
     earlyoom.enable = true;
   };
-
-  zramSwap.enable = true;
 
   boot.tmp.cleanOnBoot = true;
 
