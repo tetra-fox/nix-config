@@ -3,6 +3,11 @@
   username,
   ...
 }: {
+  imports = [
+    ./_openvr-jsoncpp-fix.nix
+    ./_proton-max-map-count.nix
+  ];
+
   # sudo setcap CAP_SYS_NICE+ep ~/.local/share/Steam/steamapps/common/SteamVR/bin/linux64/vrcompositor-launcher
   programs.steam = {
     enable = true;
