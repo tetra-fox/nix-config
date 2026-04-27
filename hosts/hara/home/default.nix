@@ -151,6 +151,7 @@
     })
     (bottles.override {removeWarningPopup = true;})
     vrcx
+    parsec-bin
 
     # p2p
     nicotine-plus
@@ -163,6 +164,8 @@
     wireshark
     ffmpeg
     yt-dlp
+    imhex
+    ncdu
 
     # dev — languages / runtimes
     rustup
