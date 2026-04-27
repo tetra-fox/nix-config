@@ -165,6 +165,7 @@
     yt-dlp
     imhex
     ncdu
+    sops
 
     # dev — languages / runtimes
     rustup
