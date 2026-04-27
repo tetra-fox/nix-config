@@ -6,6 +6,8 @@
         "flakes"
       ];
       auto-optimise-store = true;
+      cores = 0; # use all cores per build
+      max-jobs = "auto"; # parallel derivations
     };
     gc = {
       automatic = true;
