@@ -26,6 +26,7 @@
     modules.stylix.system
     modules.systemd-boot.system
     modules.wireshark.system
+    modules.yazi.system
     modules.zsh.system
   ];
 

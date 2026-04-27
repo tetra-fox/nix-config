@@ -78,6 +78,14 @@
       url = "github:michel-kraemer/zsh-patina";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    yazi = {
+      url = "github:sxyazi/yazi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-yazi-plugins = {
+      url = "github:lordkekz/nix-yazi-plugins";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # private
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
@@ -136,6 +144,7 @@
               nixpkgs.overlays = [
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.quickshell.overlays.default
+                inputs.nix-yazi-plugins.overlays.default
                 pkgsOverlay
               ];
             }

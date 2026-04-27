@@ -2,6 +2,7 @@
   pkgs,
   inputs,
   config,
+  lib,
   username,
   modules,
   ...
@@ -10,6 +11,7 @@
     modules.catppuccin.home
     modules.cosmic.home
     modules.direnv.home
+    modules.dolphin.home
     modules.vscode.home
     modules.fastfetch.home
     modules.firefox.home
@@ -27,6 +29,7 @@
     modules.stylix.home
     modules.surge-dm.home
     modules.walker.home
+    modules.yazi.home
     modules.zsh.home
   ];
 
@@ -43,6 +46,79 @@
 
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications =
+      (lib.genAttrs [
+        "audio/mpeg"
+        "audio/mp4"
+        "audio/wav"
+        "audio/x-wav"
+        "audio/ogg"
+        "audio/flac"
+        "audio/aac"
+        "audio/x-vorbis+ogg"
+        "audio/x-flac"
+        "audio/x-matroska"
+        "audio/webm"
+        "audio/opus"
+        "video/mp4"
+        "video/x-matroska"
+        "video/webm"
+        "video/quicktime"
+        "video/x-msvideo"
+        "video/mpeg"
+        "video/x-flv"
+        "video/3gpp"
+      ] (_: "vlc.desktop"))
+      // (lib.genAttrs [
+        "image/bmp"
+        "image/x-win-bitmap"
+        "image/gif"
+        "image/icns"
+        "image/x-icon"
+        "image/jpeg"
+        "image/jpg"
+        "image/x-portable-bitmap"
+        "image/x-portable-graymap"
+        "image/png"
+        "image/x-portable-pixmap"
+        "image/svg+xml"
+        "image/tiff"
+        "image/vnd.wap.wbmp"
+        "image/webp"
+        "image/x-xbitmap"
+        "image/x-xpixmap"
+        "application/x-navi-animation"
+        "image/apng"
+        "image/avif"
+        "image/avif-sequence"
+        "image/x-sgi-bw"
+        "image/aces"
+        "image/x-exr"
+        "image/vnd.radiance"
+        "image/heic"
+        "image/heif"
+        "image/jxl"
+        "application/x-krita"
+        "image/openraster"
+        "image/vnd.zbrush.pcx"
+        "image/x-pcx"
+        "image/x-pic"
+        "image/vnd.adobe.photoshop"
+        "application/x-photoshop"
+        "application/photoshop"
+        "application/psd"
+        "image/psd"
+        "image/x-sun-raster"
+        "image/x-rgb"
+        "image/x-sgi-rgba"
+        "image/sgi"
+        "image/x-tga"
+        "image/x-xcf"
+      ] (_: "com.interversehq.qView.desktop"));
+  };
+
   home.packages = with pkgs; [
     # cli
     eza
@@ -55,6 +131,7 @@
 
     # media / creative
     vlc
+    qview
     cider-2
     bitwig-studio
     tenacity
@@ -80,11 +157,11 @@
     qbittorrent
 
     # system / gui utils
-    kdePackages.dolphin
     vulkan-tools # vulkaninfo, vkcube
     iperf3
     ethtool
     wireshark
+    ffmpeg
 
     # dev — languages / runtimes
     rustup
