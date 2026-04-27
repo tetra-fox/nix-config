@@ -162,6 +162,7 @@
     ethtool
     wireshark
     ffmpeg
+    yt-dlp
 
     # dev — languages / runtimes
     rustup
