@@ -6,13 +6,13 @@
 }:
 buildGoModule (finalAttrs: {
   pname = "surge-dm";
-  version = "0.8.2";
+  version = "0.8.3";
 
   src = fetchFromGitHub {
     owner = "SurgeDM";
     repo = "Surge";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-sRKbtGcsWn36YntYyZy9TdBHhWEwy23BD6CUZ3MvesY=";
+    hash = "sha256-uHCsisVe2O5hZ8W2kXmVd7IQ5QQZLKCx5EtywslSlI4=";
   };
 
   vendorHash = "sha256-aOgs3wbTqYdknT/aiV1KeBRGMREz2segvTy5I+z6jgE=";
