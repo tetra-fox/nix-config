@@ -1,7 +1,7 @@
 import qs.lib
 import QtQuick
 
-// bar pill base — size/anchors set at usage site
+// bar pill base - size/anchors set at usage site
 Rectangle {
     height: Theme.barHeight
     radius: Theme.radiusLg

@@ -2,8 +2,8 @@
   inputs = {
     # framework
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    # separate pin for x86_64-darwin — nixpkgs 26.05 is the last release to support it
-    # once pins diverge, shared inputs need to follow nixpkgs-darwin or be duplicated
+    # separate pin for x86_64-darwin - nixpkgs 26.05 is the last release to support it.
+    # once pins diverge, shared inputs need to follow nixpkgs-darwin or be duplicated.
     nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
@@ -87,6 +87,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # secrets
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # declarative disk partitioning (used by nixos-anywhere on first install)
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # private
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
   };
@@ -108,7 +120,12 @@
           src = ./modules;
           loader = inputs.haumea.lib.loaders.path;
         };
-        shared.wallpapers = ./shared/wallpapers;
+        shared = {
+          wallpapers = ./shared/wallpapers;
+          # public ssh keys trusted across hosts. each host imports the
+          # one(s) it wants from modules/sshd or per-host config.
+          keyring = ./shared/keyring;
+        };
       };
     in {
       imports = [
@@ -199,6 +216,25 @@
             arch = "x86_64";
             class = "darwin";
             nixpkgs = inputs.nixpkgs-darwin;
+          };
+
+          # services vm at the mesa site, hosted on milkfish (proxmox).
+          # server hosts override the workstation "tetra" username here.
+          # specialArgs is positional/raw - can't be made declarative via
+          # mkDefault in the profile; one-line per-host override is OK.
+          mesa-svc-01 = {
+            path = ./hosts/mesa-svc-01;
+            arch = "x86_64";
+            class = "nixos";
+            specialArgs =
+              {username = "admin";}
+              // lib.optionalAttrs (builtins.pathExists ./quirks/mesa-svc-01) {
+                quirks = ./quirks/mesa-svc-01;
+              };
+            modules = [
+              inputs.sops-nix.nixosModules.sops
+              inputs.disko.nixosModules.disko
+            ];
           };
         };
       };

@@ -1,10 +1,5 @@
-{
-  pkgs,
-  username,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
-    ./_openvr-jsoncpp-fix.nix
     ./_proton-max-map-count.nix
   ];
 

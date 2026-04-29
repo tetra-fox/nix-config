@@ -1,10 +1,15 @@
 {
+  lib,
   pkgs,
+  shared,
   username,
   ...
 }: {
+  # canonical user key from shared/keyring. lists merge across modules, so
+  # any host can append more keys via
+  # users.users.${username}.openssh.authorizedKeys.keys = [...] - no mkForce needed.
   users.users.${username}.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFTvIWEt8h9xoHLvCV9M7tX/ZYhZtcAIwSYBbC6oNXc0"
+    (lib.fileContents (shared.keyring + "/tetra.pub"))
   ];
 
   services.openssh = {

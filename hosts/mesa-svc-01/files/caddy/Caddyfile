@@ -1,0 +1,88 @@
+(lan_only) {
+	@notlan not remote_ip private_ranges
+	abort @notlan
+}
+
+# common log format access log; imported by every site that should be
+# subject to fail2ban. transform-encoder plugin produces apache-style logs
+# (stable + simple-regex-friendly vs caddy's default JSON).
+(log) {
+	log {
+		output file /var/log/caddy/access.log
+		format transform "{common_log}"
+	}
+}
+
+(authentik) {
+	reverse_proxy /outpost.goauthentik.io/* localhost:9000 {
+		header_up Host {http.reverse_proxy.upstream.hostport}
+	}
+
+	forward_auth localhost:9000 {
+		uri /outpost.goauthentik.io/auth/caddy
+		copy_headers Authorization
+	}
+}
+
+{
+	acme_dns cloudflare {$CF_TOKEN}
+}
+
+# public
+mesa.tetra.cool {
+	import log
+	respond "my paws hurt :("
+}
+
+auth.mesa.tetra.cool {
+	import log
+	reverse_proxy localhost:9000
+}
+
+home.mesa.tetra.cool {
+	import log
+	reverse_proxy 10.10.0.20:8123
+}
+
+jellyfin.mesa.tetra.cool {
+	import log
+	reverse_proxy localhost:8096
+}
+
+stats.mesa.tetra.cool {
+	import log
+	reverse_proxy localhost:3000
+}
+
+np.mesa.tetra.cool {
+	import log
+	reverse_proxy localhost:8090
+}
+
+# internal
+dns.mesa.tetra.cool {
+	import lan_only
+	reverse_proxy 192.168.10.53:5380
+}
+
+pve.mesa.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy https://192.168.10.2:8006 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+}
+
+qb.mesa.tetra.cool,
+sonarr.mesa.tetra.cool,
+radarr.mesa.tetra.cool,
+prowlarr.mesa.tetra.cool,
+sabnzbd.mesa.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy localhost:9000
+	}
+}

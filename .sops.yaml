@@ -1,0 +1,24 @@
+# sops-nix recipients. encrypted files live under ./secrets/.
+# generate the user age key once with `age-keygen -o ~/.config/sops/age/keys.txt`
+# and replace the placeholder below with the resulting public key.
+#
+# host age keys are derived from the vm's ssh ed25519 host key:
+#   ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+#
+# after editing this file, re-encrypt every yaml under secrets/ with:
+#   sops updatekeys secrets/<path>.yaml
+
+keys:
+  # users
+  - &user_tetra age1en4ycn72qkfzqge4exkxe6jjzuxtp5090zr6z3wqhgf0qsha8e4s8dhgs8
+
+  # hosts
+  - &host_mesa_svc_01 age1jwvvwvzlvqrxhyy5y84ltn7w6gtq52ss5ek93whlvx3hxezkjejqaxylpj
+
+creation_rules:
+  # one yaml per host. broader pattern catches future hosts (mesa-svc-02, dtw-*, etc.)
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_mesa_svc_01

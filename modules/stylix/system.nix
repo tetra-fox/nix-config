@@ -56,7 +56,7 @@
       size = 26;
     };
 
-    # sizes.terminal * 4/3 = vscode editor font size; 10.5 → 14pt
+    # sizes.terminal * 4/3 = vscode editor font size; 10.5 -> 14pt
     fonts.sizes.terminal = 10.5;
   };
 }

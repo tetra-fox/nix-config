@@ -13,7 +13,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 10
 
-    // not the same as components/InfoRow — this one has an icon
+    // not the same as components/InfoRow - this one has an icon
     component SysInfoRow: RowLayout {
         id: _ir
 

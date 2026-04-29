@@ -1,2 +1,4 @@
 .qmlls.ini
 .nixd.json
+result
+result-*

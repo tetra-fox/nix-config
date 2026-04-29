@@ -1,50 +1,23 @@
 {
   pkgs,
-  inputs,
-  config,
   lib,
-  username,
   modules,
   ...
 }: {
   imports = [
+    modules.profiles.workstation.home
+
+    # hara-specific desktop bits (DE choice, theme, hardware-tied)
     modules.catppuccin.home
     modules.cosmic.home
-    modules.direnv.home
     modules.dolphin.home
-    modules.vscode.home
-    modules.fastfetch.home
-    modules.firefox.home
-    modules.fonts.home
-    modules.git.home
-    modules.helix.home
     modules.hyprland.home
-    modules.kitty.home
     modules.nvidia.home
-    modules.obs-studio.home
     # modules.openrgb.home
-    modules.ssh.home
-    modules.starship.home
     modules.steam.home
     modules.stylix.home
     modules.surge-dm.home
-    modules.walker.home
-    modules.yazi.home
-    modules.zsh.home
   ];
-
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
-
-  my.git.identity = {
-    name = "tetra";
-    email = "me@tetra.cool";
-    signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
-  };
-
-  systemd.user.sessionVariables = config.home.sessionVariables;
-
-  dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   xdg.mimeApps = {
     enable = true;
@@ -120,25 +93,11 @@
   };
 
   home.packages = with pkgs; [
-    # cli
-    eza
-
-    # chat / comms
-    telegram-desktop
-    discord
-    signal-desktop
-    cinny-desktop
-
-    # media / creative
-    vlc
-    qview
+    # creative
     cider-2
     bitwig-studio
     tenacity
     blender
-
-    # productivity
-    onlyoffice-desktopeditors
 
     # gaming
     (prismlauncher.override {
@@ -151,37 +110,6 @@
     })
     (bottles.override {removeWarningPopup = true;})
     vrcx
-    parsec-bin
-
-    # p2p
-    nicotine-plus
-    qbittorrent
-
-    # system / gui utils
-    vulkan-tools # vulkaninfo, vkcube
-    iperf3
-    ethtool
-    ffmpeg
-    yt-dlp
-    imhex
-    ncdu
-    sops
-
-    # dev — languages / runtimes
-    rustup
-    gcc
-    gnumake
-    pnpm
-    nodejs
-    python3
-
-    # dev — tools
-    sqlite
-    gh
-    dbeaver-bin
-    claude-code
-    lldb
-    inputs.alejandra.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   # paws off!

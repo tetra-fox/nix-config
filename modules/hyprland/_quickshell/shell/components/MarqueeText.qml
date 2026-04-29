@@ -31,7 +31,7 @@ Item {
             }
             NumberAnimation {
                 to: -root.scrollDist
-                // 18ms per pixel — constant scroll speed regardless of text length
+                // 18ms per pixel - constant scroll speed regardless of text length
                 duration: root.scrollDist * 18
                 easing.type: Easing.Linear
             }

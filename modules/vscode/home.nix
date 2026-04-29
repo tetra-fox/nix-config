@@ -24,6 +24,9 @@ in {
           jeanp413.open-remote-ssh
           ultram4rine.vscode-choosealicense
 
+          # caddy
+          matthewpi.caddyfile-support
+
           # java
           redhat.java
 
@@ -58,6 +61,7 @@ in {
 
           # shell
           foxundermoon.shell-format
+          timonwong.shellcheck
 
           # sieve
           adzero.vscode-sievehighlight
@@ -97,6 +101,9 @@ in {
         "git.autofetch" = true;
         "git.confirmSync" = false;
         "git.enableSmartCommit" = true;
+
+        # caddy
+        "caddyfile.executable" = "${pkgs.caddy}/bin/caddy";
 
         # claude-code
         "claudeCode.preferredLocation" = "sidebar";
@@ -173,6 +180,7 @@ in {
 
         # shell
         "shellformat.path" = "${pkgs.shfmt}/bin/shfmt";
+        "shellcheck.executablePath" = "${pkgs.shellcheck}/bin/shellcheck";
         "[shellscript]" = {
           "editor.defaultFormatter" = "foxundermoon.shell-format";
         };

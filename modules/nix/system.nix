@@ -8,6 +8,9 @@
       auto-optimise-store = true;
       cores = 0; # use all cores per build
       max-jobs = "auto"; # parallel derivations
+
+      # let wheel members push unsigned store paths via `nixos-rebuild --target-host`
+      trusted-users = ["root" "@wheel"];
     };
     gc = {
       automatic = true;

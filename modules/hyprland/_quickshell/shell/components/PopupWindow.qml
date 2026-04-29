@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 
-// bar popup — layer-shell overlay with focus-grab
+// bar popup - layer-shell overlay with focus-grab
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 
@@ -30,11 +30,11 @@ PanelWindow { // qmllint disable uncreatable-type
     exclusiveZone: 0
 
     implicitWidth: contentWidth
-    // oversized so compositor never resizes — no jitter
+    // oversized so compositor never resizes - no jitter
     implicitHeight: (screen?.height ?? 1080) * 0.9
 
     // restrict input to the visible backdrop so the transparent area doesn't steal clicks
-    // (can't use item: backdrop — mapToScene bakes in the open animation's scale/translate
+    // (can't use item: backdrop - mapToScene bakes in the open animation's scale/translate
     // and Region doesn't re-evaluate when transforms change, so the mask stays undersized)
     mask: Region {
         width: root.contentWidth

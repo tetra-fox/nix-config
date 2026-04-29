@@ -48,7 +48,7 @@ RowLayout {
         root.node.audio.muted = !root._muted;
     }
 
-    // full variant — IconButton with animated bg
+    // full variant - IconButton with animated bg
     IconButton {
         visible: !root.compact
         icon: root._icon
@@ -59,7 +59,7 @@ RowLayout {
         onClicked: _ => root._toggleMute()
     }
 
-    // compact variant — inline text icon, no bg
+    // compact variant - inline text icon, no bg
     Text {
         visible: root.compact
         text: root._icon

@@ -9,7 +9,7 @@ Item {
 
     required property bool active
 
-    // static — fetched once per activation
+    // static - fetched once per activation
     property string hostname: ""
     property string kernel: ""
     property string os: ""
@@ -18,7 +18,7 @@ Item {
     property string gpuModel: ""
     property int uid: 0
 
-    // dynamic — polled every 3s while active
+    // dynamic - polled every 3s while active
     property real uptime: 0
     property real load1: 0
     property real load5: 0

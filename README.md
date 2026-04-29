@@ -12,7 +12,7 @@ files and directories prefixed with `_` are treated as internal (haumea conventi
 
 ## 🔧 quirks
 
-machine-specific configuration that doesn't fit as a module — hardware config, drive mounts, peripheral workarounds
+machine-specific configuration that doesn't fit as a module - hardware config, drive mounts, peripheral workarounds
 
 lives in `quirks/<hostname>/`, passed to the host as a `quirks` specialArg (wired in `flake.nix`)
 

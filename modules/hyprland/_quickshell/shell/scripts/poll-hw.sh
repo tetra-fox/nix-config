@@ -24,7 +24,7 @@ freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq 2>/dev/null)
 gpu=$(cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -1)
 
 if [ -n "$gpu" ]; then
-    # AMD — read sysfs directly
+    # AMD - read sysfs directly
     echo "gpu=$gpu"
     vram_u=0; vram_t=0
     for f in /sys/class/drm/card*/device/mem_info_vram_used; do
@@ -36,7 +36,7 @@ if [ -n "$gpu" ]; then
     echo "vram=$vram_u $vram_t"
 
 elif command -v nvidia-smi >/dev/null 2>&1; then
-    # NVIDIA — single nvidia-smi call
+    # NVIDIA - single nvidia-smi call
     nvidia-smi \
         --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu \
         --format=csv,noheader,nounits \
