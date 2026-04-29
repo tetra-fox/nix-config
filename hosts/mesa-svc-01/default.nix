@@ -40,17 +40,33 @@
 
   networking = {
     hostName = "mesa-svc-01";
+    # ens18 = server vlan (LAN-routable, default route),
+    # ens19 = proxmox SDN "internal" (vmbr10) for inter-vm traffic on
+    # milkfish. SDN's dnsmasq IPAM is buggy on pve 9.1 so everything
+    # pinned statically here.
+    useDHCP = false;
+    defaultGateway = "192.168.10.1";
+    nameservers = ["192.168.10.53"];
 
-    # proxmox SDN "internal"
-    interfaces.ens19 = {
-      useDHCP = false;
-      ipv4.addresses = [
-        {
-          address = "10.10.0.10";
-          prefixLength = 24;
-        }
-      ];
-    };
+    interfaces.ens18.ipv4.addresses = [
+      {
+        address = "192.168.10.208";
+        prefixLength = 24;
+      }
+    ];
+
+    interfaces.ens19.ipv4.addresses = [
+      {
+        address = "10.10.0.10";
+        prefixLength = 24;
+      }
+    ];
+  };
+
+  # nest under milkfish in nix-topology since this is a proxmox guest.
+  topology.self = {
+    parent = "milkfish";
+    guestType = "vm";
   };
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;

@@ -99,6 +99,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # generates network topology diagrams from nixos configs.
+    # build with: `nix build .#topology.x86_64-linux.config.output`
+    nix-topology = {
+      url = "github:oddlama/nix-topology";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # private
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
   };
@@ -151,7 +158,35 @@
             directory = ./pkgs;
           }
         );
+
+        # `nix run .#update-topology` builds the diagrams and copies them
+        # into images/topology/ so they can be referenced from README.md.
+        apps.update-topology = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
+          type = "app";
+          program = "${pkgs.writeShellScript "update-topology" ''
+            set -eu
+            out=$(nix build --no-link --print-out-paths .#topology.x86_64-linux.config.output)
+            mkdir -p images/topology
+            install -m 644 "$out"/main.svg     images/topology/main.svg
+            install -m 644 "$out"/network.svg  images/topology/network.svg
+            echo "wrote images/topology/{main,network}.svg"
+          ''}";
+        };
       };
+
+      # network topology diagram. run `nix build .#topology.x86_64-linux.config.output`
+      # to render an svg from every host's networking config.
+      flake.topology = lib.genAttrs ["x86_64-linux"] (system:
+        import inputs.nix-topology {
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [inputs.nix-topology.overlays.default];
+          };
+          modules = [
+            ./topology.nix
+            {nixosConfigurations = inputs.self.nixosConfigurations;}
+          ];
+        });
 
       easy-hosts = {
         shared = {
@@ -179,7 +214,10 @@
         perClass = class: {
           modules =
             {
-              nixos = [inputs.home-manager.nixosModules.home-manager];
+              nixos = [
+                inputs.home-manager.nixosModules.home-manager
+                inputs.nix-topology.nixosModules.default
+              ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
             .${
