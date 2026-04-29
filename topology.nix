@@ -58,13 +58,31 @@ in {
     };
   };
 
+  # proxmox host. enp10s0f0 = 10G uplink (no L3, just a port on vmbr0).
+  # vmbr0 is vlan-aware so each per-vlan subinterface is what guests
+  # actually attach their tagged vNICs to. vmbr10 is the SDN simple-zone
+  # bridge for inter-vm internal traffic.
   nodes.milkfish = {
     name = "milkfish";
     deviceType = "server";
     hardware.info = "Proxmox VE 9";
     interfaces.enp10s0f0 = {
+      addresses = [];
+    };
+    interfaces."vmbr0.10" = {
       addresses = ["192.168.10.2"];
       network = "server-vlan";
+      virtual = true;
+    };
+    interfaces."vmbr0.20" = {
+      addresses = [];
+      network = "trusted-vlan";
+      virtual = true;
+    };
+    interfaces."vmbr0.30" = {
+      addresses = [];
+      network = "iot-vlan";
+      virtual = true;
     };
     interfaces.vmbr10 = {
       addresses = ["10.10.0.1"];
@@ -78,23 +96,32 @@ in {
     deviceType = "vm";
     parent = "milkfish";
     guestType = "vm";
+    icon = ./images/icons/home-assistant.svg;
     hardware.info = "Home Assistant OS";
     interfaces = {
       enp0s18 = {
         addresses = ["192.168.10.5"];
         network = "server-vlan";
+        virtual = true;
+        physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
       };
       enp0s19 = {
         addresses = ["10.10.0.20"];
         network = "milkfish-internal";
+        virtual = true;
+        physicalConnections = [(mkConnection "milkfish" "vmbr10")];
       };
       enp0s20 = {
         addresses = ["192.168.30.5"];
         network = "iot-vlan";
+        virtual = true;
+        physicalConnections = [(mkConnection "milkfish" "vmbr0.30")];
       };
       enp0s21 = {
         addresses = ["192.168.20.56"];
         network = "trusted-vlan";
+        virtual = true;
+        physicalConnections = [(mkConnection "milkfish" "vmbr0.20")];
       };
     };
   };
@@ -104,10 +131,13 @@ in {
     deviceType = "container";
     parent = "milkfish";
     guestType = "lxc";
+    icon = ./images/icons/technitium.svg;
     hardware.info = "Technitium DNS (LXC)";
     interfaces.eth0 = {
       addresses = ["192.168.10.53"];
       network = "server-vlan";
+      virtual = true;
+      physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
     };
   };
 }

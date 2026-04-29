@@ -1,4 +1,5 @@
 {
+  config,
   username,
   modules,
   quirks,
@@ -64,9 +65,18 @@
   };
 
   # nest under milkfish in nix-topology since this is a proxmox guest.
+  # vNICs bridge to milkfish's vmbr0.10 (server vlan) and vmbr10 (sdn).
   topology.self = {
     parent = "milkfish";
     guestType = "vm";
+    interfaces.ens18 = {
+      virtual = true;
+      physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
+    };
+    interfaces.ens19 = {
+      virtual = true;
+      physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr10")];
+    };
   };
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
