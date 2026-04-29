@@ -45,8 +45,8 @@ in {
     info = "USW-Pro-XG-10-PoE";
     interfaceGroups = [["eth0" "eth1" "eth2" "eth3" "eth4" "eth5" "eth6" "eth7" "eth8" "eth9"] ["sfp0" "sfp1"]];
     connections = {
+      eth0 = mkConnection "xg-8" "sfp0";
       eth1 = mkConnection "hara" "enp11s0f0np0";
-      sfp0 = mkConnection "xg-8" "sfp1";
     };
   };
 
@@ -55,17 +55,15 @@ in {
     interfaceGroups = [["eth0" "eth1" "eth2" "eth3" "eth4" "eth5" "eth6" "eth7"] ["sfp0" "sfp1"]];
     connections = {
       eth1 = mkConnection "milkfish" "enp10s0f0";
+      sfp0 = mkConnection "tengigablort" "eth0";
     };
   };
 
-  # proxmox host. enp10s0f0 = 10G uplink (no L3, just a port on vmbr0).
-  # vmbr0 is vlan-aware so each per-vlan subinterface is what guests
-  # actually attach their tagged vNICs to. vmbr10 is the SDN simple-zone
-  # bridge for inter-vm internal traffic.
   nodes.milkfish = {
     name = "milkfish";
     deviceType = "server";
     hardware.info = "Proxmox VE 9";
+    icon = ./images/icons/proxmox.svg;
     interfaces.enp10s0f0 = {
       addresses = [];
     };
@@ -91,8 +89,8 @@ in {
     };
   };
 
-  nodes.haos = {
-    name = "haos";
+  nodes.homeassistant = {
+    name = "homeassistant";
     deviceType = "vm";
     parent = "milkfish";
     guestType = "vm";
@@ -132,7 +130,7 @@ in {
     parent = "milkfish";
     guestType = "lxc";
     icon = ./images/icons/technitium.svg;
-    hardware.info = "Technitium DNS (LXC)";
+    hardware.info = "Technitium DNS";
     interfaces.eth0 = {
       addresses = ["192.168.10.53"];
       network = "server-vlan";
