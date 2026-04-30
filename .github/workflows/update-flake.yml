@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-flake-lock:
+  update-flake-inputs:
     name: Update flake inputs
     runs-on: ubuntu-latest
 
@@ -24,6 +24,11 @@ jobs:
 
       - name: Install Nix
         uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/refs/heads/nixos-unstable.tar.gz
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Update flake inputs
         run: nix flake update
