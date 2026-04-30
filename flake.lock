@@ -1279,11 +1279,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777534661,
-        "narHash": "sha256-EzlXRseo2o5FE2fHI7WnGhBp3YadQxejcDFW0kxa1SE=",
+        "lastModified": 1777537827,
+        "narHash": "sha256-JiJSKHQ7CcWKMGl4dSH5yqcETQ0IUAGwCjljwBqGpoU=",
         "owner": "tetra-fox",
         "repo": "nurpkgs",
-        "rev": "05ac9537f20789845ad76da4fbfc9823fe89b0a8",
+        "rev": "604e7d06ec69edc96d7d4a9a969fa4a8dd635fd0",
         "type": "github"
       },
       "original": {
