@@ -45,7 +45,7 @@
         name = "CaskaydiaCove Nerd Font";
       };
       emoji = {
-        package = pkgs.apple-color-emoji-linux;
+        package = pkgs.apple-color-emoji;
         name = "Apple Color Emoji";
       };
     };

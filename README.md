@@ -16,10 +16,6 @@ machine-specific configuration that doesn't fit as a module - hardware config, d
 
 lives in `quirks/<hostname>/`, passed to the host as a `quirks` specialArg (wired in `flake.nix`)
 
-## 📦 pkgs
-
-every `.nix` file in `pkgs/` is exposed as `pkgs.<filename>` via nixpkgs' `lib.packagesFromDirectoryRecursive`, using `callPackage`
-
 ## topology
 
 ![main view](images/topology/main.svg)

@@ -106,7 +106,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # private
+    # personal
+    tetra-nurpkgs = {
+      url = "github:tetra-fox/nurpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
   };
 
@@ -114,12 +118,6 @@
     flake-parts.lib.mkFlake {inherit inputs;} (let
       inherit (inputs.nixpkgs) lib;
       username = "tetra";
-
-      pkgsOverlay = _: prev:
-        prev.lib.packagesFromDirectoryRecursive {
-          inherit (prev) callPackage;
-          directory = ./pkgs;
-        };
 
       commonSpecialArgs = {
         inherit username;
@@ -152,12 +150,7 @@
         ...
       }: {
         formatter = inputs'.alejandra.packages.default;
-        packages = lib.filterAttrs (_: lib.meta.availableOn pkgs.stdenv.hostPlatform) (
-          pkgs.lib.packagesFromDirectoryRecursive {
-            inherit (pkgs) callPackage;
-            directory = ./pkgs;
-          }
-        );
+        packages = inputs'.tetra-nurpkgs.packages;
 
         # `nix run .#update-topology` builds the diagrams and copies them
         # into images/topology/ so they can be referenced from README.md.
@@ -197,7 +190,7 @@
                 inputs.nix-vscode-extensions.overlays.default
                 inputs.quickshell.overlays.default
                 inputs.nix-yazi-plugins.overlays.default
-                pkgsOverlay
+                inputs.tetra-nurpkgs.overlays.default
               ];
             }
             {

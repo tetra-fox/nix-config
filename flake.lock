@@ -986,6 +986,7 @@
         "quickshell": "quickshell",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
+        "tetra-nurpkgs": "tetra-nurpkgs",
         "walker": "walker",
         "yazi": "yazi",
         "zsh-patina": "zsh-patina"
@@ -1268,6 +1269,26 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "tetra-nurpkgs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777534661,
+        "narHash": "sha256-EzlXRseo2o5FE2fHI7WnGhBp3YadQxejcDFW0kxa1SE=",
+        "owner": "tetra-fox",
+        "repo": "nurpkgs",
+        "rev": "05ac9537f20789845ad76da4fbfc9823fe89b0a8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tetra-fox",
+        "repo": "nurpkgs",
         "type": "github"
       }
     },
