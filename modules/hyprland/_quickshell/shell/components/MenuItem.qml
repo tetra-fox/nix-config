@@ -10,7 +10,6 @@ Item {
     property string icon: ""
     property string shortcutHint: ""
     property color textColor: root.enabled ? Theme.textPrimary : Theme.textInactive
-    property bool enabled: true
     property bool isSeparator: false
 
     signal clicked

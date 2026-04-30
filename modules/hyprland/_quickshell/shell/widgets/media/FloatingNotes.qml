@@ -35,7 +35,7 @@ Item {
     component FloatingNote: Item {
         id: fn
 
-        readonly property var palette: [Theme.colorPink, Theme.colorPurple, Theme.colorBlue, Theme.colorGreen, Theme.colorYellow, Theme.colorRed]
+        readonly property var noteColors: [Theme.colorPink, Theme.colorPurple, Theme.colorBlue, Theme.colorGreen, Theme.colorYellow, Theme.colorRed]
 
         required property real containerWidth
         required property real containerHeight
@@ -58,7 +58,7 @@ Item {
         function launch() {
             fn.angle = Math.random() * 2 * Math.PI;
             fnLabel.font.pixelSize = 10 + Math.round(Math.random() * 3);
-            fnLabel.color = fn.palette[Math.floor(Math.random() * fn.palette.length)];
+            fnLabel.color = fn.noteColors[Math.floor(Math.random() * fn.noteColors.length)];
             fnDrift.restart();
         }
 

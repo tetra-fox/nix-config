@@ -1,6 +1,5 @@
 import qs.lib
 import Quickshell
-import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 

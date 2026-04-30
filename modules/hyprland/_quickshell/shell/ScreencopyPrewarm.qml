@@ -4,8 +4,7 @@ import QtQuick
 
 // prewarms screencopy buffer manager from a proxied window
 // the lock surface can't init it on its own, so its screencopy would silently fail
-PanelWindow {
-    // qmllint disable uncreatable-type
+PanelWindow { // qmllint disable uncreatable-type
     anchors {
         top: true
         left: true

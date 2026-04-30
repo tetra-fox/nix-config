@@ -10,13 +10,15 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    readonly property WiredDevice wiredDevice: Networking.devices.values.find(d => d && d.type === DeviceType.Wired) ?? null
+    // multiple wired NICs enumerate in PCI order, not link order; prefer the one with carrier
+    readonly property var _wiredDevices: Networking.devices.values.filter(d => d && d.type === DeviceType.Wired)
+    readonly property WiredDevice wiredDevice: _wiredDevices.find(d => d.connected) ?? _wiredDevices.find(d => d.hasLink) ?? _wiredDevices[0] ?? null
     readonly property bool available: wiredDevice !== null
     readonly property string ifname: wiredDevice?.name ?? ""
     readonly property bool hasLink: wiredDevice?.hasLink ?? false
     readonly property bool connected: wiredDevice?.connected ?? false
-    readonly property int state: wiredDevice?.state ?? ConnectionState.Unknown
-    readonly property bool stateChanging: state === ConnectionState.Connecting || state === ConnectionState.Disconnecting
+    readonly property int connState: wiredDevice?.state ?? ConnectionState.Unknown
+    readonly property bool stateChanging: connState === ConnectionState.Connecting || connState === ConnectionState.Disconnecting
     readonly property int linkSpeed: wiredDevice?.linkSpeed ?? 0
     readonly property string mac: (wiredDevice?.address ?? "").toLowerCase() // qmllint disable missing-property
     readonly property Network network: wiredDevice?.network ?? null // qmllint disable unresolved-type
@@ -78,7 +80,7 @@ Item {
             }
 
             ToggleSwitch {
-                checked: root.connected || root.state === ConnectionState.Connecting
+                checked: root.connected || root.connState === ConnectionState.Connecting
                 onToggled: {
                     if (root.connected || root.stateChanging)
                         root.wiredDevice.disconnect();
@@ -103,18 +105,18 @@ Item {
             badgeColor: {
                 if (root.connected)
                     return Theme.colorGreen;
-                if (root.state === ConnectionState.Disconnecting)
+                if (root.connState === ConnectionState.Disconnecting)
                     return Theme.colorRed;
-                if (root.state === ConnectionState.Connecting)
+                if (root.connState === ConnectionState.Connecting)
                     return Theme.colorYellow;
                 if (!root.hasLink)
                     return Theme.textInactive;
                 return Theme.colorRed;
             }
             badgeText: {
-                if (root.state === ConnectionState.Connecting)
+                if (root.connState === ConnectionState.Connecting)
                     return "Connecting";
-                if (root.state === ConnectionState.Disconnecting)
+                if (root.connState === ConnectionState.Disconnecting)
                     return "Disconnecting";
                 if (root.connected) {
                     if (root.linkSpeed <= 0)
