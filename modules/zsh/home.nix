@@ -43,8 +43,19 @@ in {
       autosuggestion.enable = true;
       # disable global rc files (nix-generated)
       envExtra = "setopt no_global_rcs";
-      # disable permissions check on completion files (improves startup time by 12x)
-      completionInit = "zstyle '*:compinit' arguments -C";
+      # compdump cache rebuilt at most once per 24h; ~4x faster shell init for
+      # the rest of the day after the first rebuild. force a rebuild with
+      # `rm ~/.cache/zsh/compdump`.
+      completionInit = ''
+        () {
+          setopt local_options extendedglob
+          local _zac_dump=''${XDG_CACHE_HOME:-$HOME/.cache}/zsh/compdump
+          if [[ -n $_zac_dump(#qN.mh+24) ]]; then
+            rm -f "$_zac_dump"
+          fi
+          zstyle ':autocomplete::compinit' arguments -C
+        }
+      '';
       shellAliases = {
         ls = "eza --group-directories-first --icons";
         lsa = "eza --group-directories-first --all --icons";
