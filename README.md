@@ -33,7 +33,10 @@ individual modules can still be imported directly (`modules.<name>.[system|home]
 
 machine-specific configuration that doesn't fit as a module - hardware config, drive mounts, peripheral workarounds
 
-lives in `quirks/<hostname>/`, passed to the host as a `quirks` specialArg (wired in `flake.nix`)
+lives in `quirks/<hostname>/`
+
+> [!NOTE]
+> quirks are automatically imported for the matching host - if `quirks/<host>/` exists, `flake.nix` appends it to that host's module list with no per-host wiring
 
 ## 🗺️ topology
 

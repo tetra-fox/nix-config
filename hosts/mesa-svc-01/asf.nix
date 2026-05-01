@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   siteData,
   ...
 }: {
@@ -62,10 +63,14 @@
     mode = "0400";
   };
 
-  # asf module hardcodes StateDirectory=archisteamfarm with ProtectSystem=strict;
-  # widen ReadWritePaths so the unit's pre-start cp of ASF.json into our
-  # custom dataDir succeeds.
-  systemd.services.archisteamfarm.serviceConfig.ReadWritePaths = ["${siteData}/asf"];
+  # asf module derives StateDirectory from the basename of dataDir, so
+  # dataDir=/var/lib/mesa/asf yields StateDirectory=asf -> stray /var/lib/asf.
+  # pin it under mesa instead, and widen ReadWritePaths so the unit's
+  # pre-start cp of ASF.json into our custom dataDir succeeds.
+  systemd.services.archisteamfarm.serviceConfig = {
+    StateDirectory = lib.mkForce "mesa/asf";
+    ReadWritePaths = ["${siteData}/asf"];
+  };
 
   networking.firewall.allowedTCPPorts = [1242]; # asf web ui (KnownNetworks gates auth)
 }

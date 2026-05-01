@@ -2,11 +2,9 @@
   config,
   username,
   modules,
-  quirks,
   ...
 }: {
   imports = [
-    quirks
     ./disko.nix
     ./storage.nix
     ./asf.nix

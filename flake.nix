@@ -111,6 +111,10 @@
       url = "github:tetra-fox/nurpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nowplaying = {
+      url = "github:tetra-fox/nowplaying";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
   };
 
@@ -219,14 +223,19 @@
             ];
         };
 
-        hosts = {
+        # auto-import ./quirks/<name> for any host that has a matching dir.
+        # keeps host default.nix files free of quirks-import boilerplate.
+        hosts = lib.mapAttrs (name: cfg:
+          cfg
+          // {
+            modules =
+              (cfg.modules or [])
+              ++ lib.optional (builtins.pathExists (./quirks + "/${name}")) (./quirks + "/${name}");
+          }) {
           hara = {
             path = ./hosts/hara;
             arch = "x86_64";
             class = "nixos";
-            specialArgs = lib.optionalAttrs (builtins.pathExists ./quirks/hara) {
-              quirks = ./quirks/hara;
-            };
             modules = [
               inputs.nur.modules.nixos.default
               inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
@@ -257,14 +266,11 @@
             path = ./hosts/mesa-svc-01;
             arch = "x86_64";
             class = "nixos";
-            specialArgs =
-              {username = "admin";}
-              // lib.optionalAttrs (builtins.pathExists ./quirks/mesa-svc-01) {
-                quirks = ./quirks/mesa-svc-01;
-              };
+            specialArgs = {username = "admin";};
             modules = [
               inputs.sops-nix.nixosModules.sops
               inputs.disko.nixosModules.disko
+              inputs.nowplaying.nixosModules.default
             ];
           };
         };

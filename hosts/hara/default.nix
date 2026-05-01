@@ -1,11 +1,9 @@
 {
   config,
   modules,
-  quirks,
   ...
 }: {
   imports = [
-    quirks
     modules.profiles.workstation.system
 
     # hara-specific (DE, GPU, bootloader, gaming-flavor)
@@ -21,8 +19,6 @@
   networking = {
     hostName = "hara";
 
-    # 10G NIC pinned to the workstation vlan; the UDM Pro SE's DHCP
-    # reservation matches but pin in nix so it survives any router reset.
     interfaces.enp11s0f0np0.ipv4.addresses = [
       {
         address = "192.168.20.86";

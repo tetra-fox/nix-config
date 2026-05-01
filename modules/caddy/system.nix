@@ -62,7 +62,11 @@
         findtime = "10m";
         maxretry = 5;
       };
+      # keep state under siteData so a single backup target captures it
+      daemonSettings.Definition.dbfile = "${siteData}/fail2ban/fail2ban.sqlite3";
     };
+
+    systemd.services.fail2ban.serviceConfig.StateDirectory = lib.mkForce "mesa/fail2ban";
 
     environment.etc."fail2ban/filter.d/caddy-status.conf".text = ''
       [Definition]

@@ -36,8 +36,10 @@ sonarr/radarr/prowlarr/qbittorrent live inside a wireguard network namespace (vi
 - `arr` postgres role owning per-app `<app>-main` and `<app>-log` dbs (declared via `lab.postgres.roles.arr`)
 - sops secrets `apps/{sonarr,radarr,sabnzbd_*}_api_key`
 - sops env templates rendering `<APP>__POSTGRES__*` and `<APP>__AUTH__APIKEY`
+- the `media` group, shared by all stack services for file permissions
 - systemd binding: *arr units `requires` wg-vpn + the pg-password oneshot (fail closed; never start with vpn down or unset password)
 - LAN socat proxy units (one per port in `lanProxyPorts`) so direct browser access works without going through the netns (this will be removed at a later date, when i can get authentik working properly)
+- recyclarr running on a daily timer with an opinionated config (`recyclarr.nix`) that wires sonarr+radarr to a `best_recyclarr` quality profile and a custom-format scoring table (DV/HDR boosts, AV1/x265/upscaled/etc. negative-scored). intent: identical recyclarr policy on every host that imports `arr-stack`. edit `recyclarr.nix` to change the policy globally.
 
 ## expects
 
