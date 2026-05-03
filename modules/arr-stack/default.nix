@@ -110,11 +110,6 @@ in {
           log.level = "info";
         };
       in {
-        services.flaresolverr = {
-          enable = true;
-          openFirewall = true;
-        };
-
         lab.postgres = {
           allowedCidrs = ["10.200.200.0/24"];
           roles.${arrPgUser} = {
@@ -176,21 +171,7 @@ in {
               radarr = arrDeps;
               qbittorrent = arrDeps;
               # sabnzbd intentionally absent (stays in main ns).
-              # upstream's flaresolverr unit ships PrivateUsers=true and a
-              # narrow RestrictNamespaces list that breaks chromium's sandbox
-              # (it dies during test_browser_installation). relax just enough
-              # to let chromium spawn its sandbox helpers. flaresolverr stays
-              # in the main ns - it's not part of the netns-bound *arr group.
-              flaresolverr.serviceConfig = {
-                PrivateUsers = lib.mkForce false;
-                RestrictNamespaces = lib.mkForce false;
-              };
 
-              # prowlarr's upstream module hardcodes DynamicUser+StateDirectory and
-              # builds ExecStart from those, so we mkForce a static user (consistent
-              # ownership with the rest of the media-group services) and rebuild
-              # ExecStart by hand. fragile against upstream ExecStart changes - if
-              # prowlarr gains new flags we want, this block needs to be updated.
               prowlarr =
                 arrDeps
                 // {

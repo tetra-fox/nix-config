@@ -1,6 +1,6 @@
 # arr-stack
 
-*arr media stack. sonarr, radarr, prowlarr, flaresolverr, qbittorrent, sabnzbd, and recyclarr.
+*arr media stack. sonarr, radarr, prowlarr, qbittorrent, sabnzbd, and recyclarr.
 
 sonarr/radarr/prowlarr/qbittorrent live inside a wireguard network namespace (via `lab.netnsVpn`) -- sabnzbd stays in the main ns because there's no need for a vpn on usenet.
 
@@ -32,7 +32,7 @@ sonarr/radarr/prowlarr/qbittorrent live inside a wireguard network namespace (vi
 
 ## provides
 
-- `services.{sonarr,radarr,prowlarr,qbittorrent,sabnzbd,flaresolverr}`
+- `services.{sonarr,radarr,prowlarr,qbittorrent,sabnzbd}`
 - `arr` postgres role owning per-app `<app>-main` and `<app>-log` dbs (declared via `lab.postgres.roles.arr`)
 - sops secrets `apps/{sonarr,radarr,sabnzbd_*}_api_key`
 - sops env templates rendering `<APP>__POSTGRES__*` and `<APP>__AUTH__APIKEY`
