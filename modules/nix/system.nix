@@ -16,7 +16,12 @@
       automatic = true;
       dates = "weekly";
       persistent = true;
-      options = "--delete-generations +8"; # keep last 8 generations
+      options = "--delete-generations +8";
+    };
+    # periodic store dedupe
+    optimise = {
+      automatic = true;
+      dates = ["weekly"];
     };
   };
 }
