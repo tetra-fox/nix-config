@@ -1,7 +1,10 @@
-# nixos-anywhere consumes this on first install:
-#   nix run github:nix-community/nixos-anywhere -- --flake .#mesa-svc-01 root@<ip>
+# disko layout for a single-disk proxmox vm using virtio-scsi.
+# 512M EFI system partition (FAT32, /boot), rest = ext4 /.
 #
-# layout: 512M EFI system partition (FAT32, mounted /boot), rest = ext4 /.
+# boot drive MUST be at scsi0. use VirtIO SCSI single.
+#
+# nixos-anywhere consumes this on first install:
+#   nix run github:nix-community/nixos-anywhere -- --flake .#<host> root@<ip>
 {
   disko.devices.disk.main = {
     type = "disk";

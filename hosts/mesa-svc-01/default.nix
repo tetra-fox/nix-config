@@ -5,13 +5,13 @@
   ...
 }: {
   imports = [
-    ./disko.nix
     ./storage.nix
     ./asf.nix
     ./nowplaying.nix
     ./auth.nix
     ./monitoring.nix
 
+    modules.disko.proxmox-vm
     modules.profiles.server.system
 
     modules.sops.system
@@ -20,6 +20,7 @@
     modules.caddy.system
     modules.samba.system
     modules.docker.system
+    modules.nvidia.system
     modules.netns-vpn.system
     modules.arr-stack.default
   ];
@@ -81,6 +82,16 @@
 
   # nightly image auto-update; servers are unattended, breakage is fixable.
   lab.docker.watchtower.enable = true;
+
+  # container resource metrics for prometheus
+  lab.docker.cadvisor.enable = true;
+
+  # CUDA-in-docker via CDI; containers opt in per-service with `--gpus all`
+  # (cli) or deploy.resources.reservations.devices (compose).
+  hardware.nvidia-container-toolkit.enable = true;
+
+  # GPU metrics for prometheus (default port 9835, loopback only).
+  lab.nvidia.exporter.enable = true;
 
   users.users.${username} = {
     isNormalUser = true;

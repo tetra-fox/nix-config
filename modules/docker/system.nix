@@ -1,14 +1,49 @@
 {
   config,
   lib,
+  modules,
   username,
   ...
 }: let
   cfg = config.lab.docker;
 in {
-  options.lab.docker.watchtower.enable = lib.mkEnableOption "watchtower";
+  imports = [modules.observability.system];
+
+  options.lab.docker = {
+    watchtower.enable = lib.mkEnableOption "watchtower";
+
+    cadvisor = {
+      enable = lib.mkEnableOption "cadvisor container metrics";
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8081;
+        description = "cadvisor listen port. defaults to 8081 to avoid sabnzbd's 8080.";
+      };
+    };
+  };
 
   config = {
+    services.cadvisor = lib.mkIf cfg.cadvisor.enable {
+      enable = true;
+      port = cfg.cadvisor.port;
+    };
+
+    services.prometheus.scrapeConfigs = lib.mkIf cfg.cadvisor.enable [
+      {
+        job_name = "cadvisor-${config.networking.hostName}";
+        static_configs = [{targets = ["localhost:${toString cfg.cadvisor.port}"];}];
+      }
+    ];
+
+    lab.observability.communityDashboards = lib.mkIf cfg.cadvisor.enable [
+      {
+        id = 14282;
+        revision = 1;
+        sha256 = "sha256-dqhaC4r4rXHCJpASt5y3EZXW00g5fhkQM+MgNcgX1c0=";
+        name = "cadvisor";
+      }
+    ];
+
     virtualisation = {
       docker = {
         enable = true;

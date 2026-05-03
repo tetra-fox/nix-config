@@ -101,6 +101,11 @@
     autostart.enable = lib.mkDefault false;
   };
 
+  # nvidia suspend/resume hooks save+restore VRAM around system sleep -
+  # pointless on a server that never sleeps (see systemd.sleep below).
+  # only takes effect on hosts that import modules.nvidia.system.
+  hardware.nvidia.powerManagement.enable = false;
+
   systemd = {
     # remote-only access pattern: emergency mode hangs the box waiting for
     # console interaction, which we'll never see. better to retry boot and
