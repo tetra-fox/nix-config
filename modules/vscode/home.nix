@@ -27,6 +27,9 @@ in {
           # caddy
           matthewpi.caddyfile-support
 
+          # go
+          golang.go
+
           # java
           redhat.java
 
@@ -109,6 +112,29 @@ in {
         "claudeCode.preferredLocation" = "sidebar";
         "claudeCode.claudeProcessWrapper" = "${pkgs.claude-code}/bin/claude";
 
+        # go
+        "go.useLanguageServer" = true;
+        "go.toolsManagement.autoUpdate" = false;
+        "go.alternateTools" = {
+          "go" = "${pkgs.go}/bin/go";
+          "gopls" = "${pkgs.gopls}/bin/gopls";
+          "dlv" = "${pkgs.delve}/bin/dlv";
+          "gofumpt" = "${pkgs.gofumpt}/bin/gofumpt";
+          "golangci-lint" = "${pkgs.golangci-lint}/bin/golangci-lint";
+        };
+        "go.formatTool" = "gofumpt";
+        "go.lintTool" = "golangci-lint";
+        "go.lintOnSave" = "package";
+        "gopls" = {
+          "formatting.gofumpt" = true;
+        };
+        "[go]" = {
+          "editor.defaultFormatter" = "golang.go";
+          "editor.codeActionsOnSave" = {
+            "source.organizeImports" = "explicit";
+          };
+        };
+
         # java
         "java.jdt.ls.java.home" = pkgs.javaPackages.compiler.temurin-bin.jdk-25.home;
 
@@ -152,6 +178,8 @@ in {
 
         # python
         "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python3";
+        # pyrefly is the LSP, suppress ms-python.python's pylance prompt
+        "python.languageServer" = "None";
         "pyrefly.lspPath" = "${pkgs.pyrefly}/bin/pyrefly";
         "ruff.path" = ["${pkgs.ruff}/bin/ruff"];
         "[python]" = {
