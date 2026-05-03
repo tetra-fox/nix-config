@@ -14,7 +14,7 @@
     modules.onepassword.system
     modules.pipewire.system
     modules.pipewire-rnnoise.system
-    modules.wireshark.system
+    # modules.wireshark.system
     modules.yazi.system
   ];
 
@@ -29,7 +29,7 @@
 
   services = {
     printing.enable = true;
-    dbus.implementation = "broker";
+    fwupd.enable = true;
   };
 
   programs = {

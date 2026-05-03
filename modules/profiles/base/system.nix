@@ -27,10 +27,8 @@
   console.keyMap = lib.mkDefault "us";
 
   services = {
-    # firmware updates via `fwupdmgr`
-    fwupd.enable = true;
-    # kill memory hogs before the kernel oom killer freezes everything
     earlyoom.enable = true;
+    dbus.implementation = "broker";
   };
 
   boot.tmp.cleanOnBoot = true;

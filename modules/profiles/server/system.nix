@@ -34,12 +34,48 @@
   };
 
   services = {
-    # most servers will be VMs (proxmox in our case): graceful shutdown,
-    # freeze/thaw for snapshots, ip reporting back to host. bare-metal
-    # server hosts can override with services.qemuGuest.enable = false;.
+    # most servers will be VMs
     qemuGuest.enable = lib.mkDefault true;
     # no removable media auto-mount on a headless VM.
     udisks2.enable = lib.mkDefault false;
+    # cap log growth
+    journald.extraConfig = lib.mkDefault ''
+      SystemMaxUse=500M
+      RuntimeMaxUse=64M
+      MaxRetentionSec=2week
+    '';
+  };
+
+  # compressed in-RAM swap; trades a little CPU for measurably more effective
+  # memory. especially helpful on small VMs (mesa-svc-01).
+  zramSwap.enable = lib.mkDefault true;
+
+  # only generate the locales we actually use; full archive is ~100MB+.
+  i18n.supportedLocales = lib.mkDefault [
+    "en_US.UTF-8/UTF-8"
+    "en_GB.UTF-8/UTF-8"
+    "C.UTF-8/UTF-8"
+  ];
+
+  # keep manpages (useful over ssh) but drop the NixOS manual, package HTML
+  # docs, and info pages - none of which get read on a headless box.
+  documentation = {
+    nixos.enable = lib.mkDefault false;
+    doc.enable = lib.mkDefault false;
+    info.enable = lib.mkDefault false;
+    man.cache.enable = lib.mkDefault false;
+  };
+
+  boot.kernel.sysctl = {
+    # servers should evict page cache last; default 60 is desktop-tuned.
+    "vm.swappiness" = lib.mkDefault 10;
+    # keep dentry/inode cache hotter on file-heavy boxes.
+    "vm.vfs_cache_pressure" = lib.mkDefault 50;
+    # bbr + fq: better throughput on any externally-reachable server.
+    "net.ipv4.tcp_congestion_control" = lib.mkDefault "bbr";
+    "net.core.default_qdisc" = lib.mkDefault "fq";
+    # tcp fast open client+server; small latency win on repeat connections.
+    "net.ipv4.tcp_fastopen" = lib.mkDefault 3;
   };
 
   # no fonts on a server (no GUI; console doesn't honor fontconfig anyway).
@@ -76,5 +112,8 @@
       AllowSuspend = false;
       AllowHibernation = false;
     };
+
+    # a stuck container can fill /var/lib/systemd/coredump fast; drop them.
+    coredump.extraConfig = lib.mkDefault "Storage=none";
   };
 }
