@@ -8,8 +8,11 @@
 #   rebuild --target-host admin@1.2.3.4    # explicit user@ip target
 #
 # when --target-host is given:
-#   - bare hostname gets `admin@` prepended (servers use admin)
-#   - flake attr derives from the hostname (override with --flake-attr)
+#   - bare hostname/ip gets `admin@` prepended (servers use admin)
+#   - flake attr defaults to the hostname-shaped target; for ips or fqdns
+#     the script ssh's to the target and reads `hostname` (override with
+#     --flake-attr, which is also what you want during initial provisioning
+#     when the target's hostname isn't set yet)
 #   - --build-host=localhost and --sudo are added automatically
 #
 # works as user (auto-elevates with sudo) AND via `sudo rebuild`
@@ -61,7 +64,19 @@ if [ -n "$target_host" ]; then
     *)   target_host="admin@$target_host" ;;
   esac
   if [ -z "$flake_attr" ]; then
-    flake_attr="${target_host#*@}"
+    derived="${target_host#*@}"
+    if [[ "$derived" =~ ^[A-Za-z][A-Za-z0-9-]*$ ]]; then
+      # bare hostname; assume the flake attr matches.
+      flake_attr="$derived"
+    else
+      # ip or fqdn - ssh and ask the host its short name. caller can still
+      # override with --flake-attr (needed during initial provisioning when
+      # the target hasn't had its hostname set yet).
+      flake_attr=$(ssh -o ConnectTimeout=5 -o BatchMode=yes "$target_host" hostname 2>/dev/null) || {
+        echo "rebuild: couldn't reach $target_host to derive flake-attr; pass --flake-attr <name> explicitly" >&2
+        exit 1
+      }
+    fi
   fi
   # remote deploy: run as the invoking user (not local sudo) so ssh uses
   # our agent. --sudo tells nixos-rebuild to elevate on the *remote*. if
