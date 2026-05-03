@@ -99,6 +99,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # autopatchelfs the vscode remote-ssh server when it lands in
+    # ~/.vscode-server. without this the prebuilt binary fails on nixos
+    # because it expects /lib64/ld-linux-x86-64.so.2.
+    nixos-vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # generates network topology diagrams from nixos configs.
     # build with: `nix build .#topology.x86_64-linux.config.output`
     nix-topology = {
@@ -214,6 +222,7 @@
               nixos = [
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-topology.nixosModules.default
+                inputs.nixos-vscode-server.nixosModules.default
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
