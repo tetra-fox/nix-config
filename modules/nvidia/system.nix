@@ -1,13 +1,11 @@
 {
   config,
   lib,
-  modules,
+  pkgs,
   ...
 }: let
   cfg = config.lab.nvidia;
 in {
-  imports = [modules.observability.system];
-
   options.lab.nvidia.exporter = {
     enable = lib.mkEnableOption "prometheus nvidia-gpu exporter";
     port = lib.mkOption {
@@ -57,13 +55,8 @@ in {
       }
     ];
 
-    lab.observability.communityDashboards = lib.mkIf cfg.exporter.enable [
-      {
-        id = 14574;
-        revision = 11;
-        sha256 = "sha256-0qQ+nVYZ9skOsGhpIFbTtxSkYxe7yRv6WF/56/lbgpw=";
-        name = "nvidia-gpu";
-      }
+    services.grafana-dashboards.community = lib.mkIf cfg.exporter.enable [
+      pkgs.grafana-dashboards.nvidia-gpu
     ];
   };
 }

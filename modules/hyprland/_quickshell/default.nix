@@ -20,6 +20,9 @@ in {
     };
   };
 
+  # config lives in the read-only nix store, file watcher has nothing useful to do
+  systemd.user.services.quickshell.Service.Environment = ["QS_DISABLE_FILE_WATCHER=1"];
+
   home.activation.restartQuickshell = lib.hm.dag.entryAfter ["reloadSystemd"] ''
     ${pkgs.systemd}/bin/systemctl --user restart quickshell.service 2>/dev/null || true
   '';

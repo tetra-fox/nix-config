@@ -94,6 +94,7 @@ in {
         AUTHENTIK_HOST = "http://auth-server:9000";
         AUTHENTIK_INSECURE = "true";
       };
+      ports = ["127.0.0.1:3389:3389"];
       environmentFiles = siteEnvFile "authentik-ldap.env";
       extraOptions = ["--add-host=auth-server:host-gateway"];
     };

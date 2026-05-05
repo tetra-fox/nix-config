@@ -1,14 +1,12 @@
 {
   config,
   lib,
-  modules,
+  pkgs,
   username,
   ...
 }: let
   cfg = config.lab.docker;
 in {
-  imports = [modules.observability.system];
-
   options.lab.docker = {
     watchtower.enable = lib.mkEnableOption "watchtower";
 
@@ -35,13 +33,8 @@ in {
       }
     ];
 
-    lab.observability.communityDashboards = lib.mkIf cfg.cadvisor.enable [
-      {
-        id = 14282;
-        revision = 1;
-        sha256 = "sha256-dqhaC4r4rXHCJpASt5y3EZXW00g5fhkQM+MgNcgX1c0=";
-        name = "cadvisor";
-      }
+    services.grafana-dashboards.community = lib.mkIf cfg.cadvisor.enable [
+      pkgs.grafana-dashboards.cadvisor
     ];
 
     virtualisation = {

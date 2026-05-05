@@ -1,6 +1,7 @@
 {
   config,
   modules,
+  pkgs,
   ...
 }: {
   imports = [modules.monitoring.system];
@@ -50,49 +51,14 @@
     ];
   };
 
-  lab.observability.communityDashboards = [
-    {
-      id = 11314;
-      revision = 10;
-      sha256 = "sha256-2wKs35rC/2OIYCkZYwKaSeCVtwZVyWHVoETUH6iELLw=";
-      name = "unpoller-uap";
-    }
-    {
-      id = 11315;
-      revision = 9;
-      sha256 = "sha256-6T9ZJ5bzIzt9jBql83jNZsLDsx9Fih/dULCrVhYExuU=";
-      name = "unpoller-clients";
-    }
-    {
-      id = 11312;
-      revision = 9;
-      sha256 = "sha256-oZL0fxsI4Q+8vnJTkMJ4FzSdCTijQcbkrvubWu5fAu0=";
-      name = "unpoller-usw";
-    }
-    {
-      id = 11310;
-      revision = 5;
-      sha256 = "sha256-mXHsItiM4LkY/2d4u5jzd9B4JoXpPk34SLEMXjqgw1g=";
-      name = "unpoller-clients-dpi";
-    }
-    {
-      id = 11313;
-      revision = 9;
-      sha256 = "sha256-63+3J4yUC0lppWR2m52eIa1EL+FEWVy86WzimxF9tlE=";
-      name = "unpoller-usg";
-    }
-    {
-      id = 11311;
-      revision = 5;
-      sha256 = "sha256-qybSuaqc11tMpOnPCB6bMWrhubnmxuatfG55cpsrn18=";
-      name = "unpoller-network";
-    }
-    {
-      id = 23027;
-      revision = 1;
-      sha256 = "sha256-V0LVhfi/+9MasGQ2Xu+KS/RFvD20GM2L7huGvTGeU/M=";
-      name = "unpoller-pdu";
-    }
+  services.grafana-dashboards.community = with pkgs.grafana-dashboards; [
+    unpoller-uap-prometheus
+    unpoller-clients-prometheus
+    unpoller-usw-prometheus
+    unpoller-clients-dpi-prometheus
+    unpoller-usg-prometheus
+    unpoller-network-prometheus
+    unpoller-pdu-prometheus
   ];
 
   services.grafana.settings = {

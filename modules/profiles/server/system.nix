@@ -126,6 +126,6 @@
     };
 
     # a stuck container can fill /var/lib/systemd/coredump fast; drop them.
-    coredump.extraConfig = lib.mkDefault "Storage=none";
+    coredump.settings.Coredump.Storage = lib.mkDefault "none";
   };
 }

@@ -223,6 +223,7 @@
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-topology.nixosModules.default
                 inputs.nixos-vscode-server.nixosModules.default
+                inputs.tetra-nurpkgs.nixosModules.grafana-dashboards
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
