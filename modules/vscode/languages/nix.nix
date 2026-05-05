@@ -5,7 +5,7 @@
 }: let
   alejandra = inputs.alejandra.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in {
-  programs.vscode.profiles.default = {
+  programs.vscodium.profiles.default = {
     extensions = with pkgs.open-vsx; [
       jnoortheen.nix-ide
     ];

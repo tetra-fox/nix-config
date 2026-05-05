@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  programs.vscode.profiles.default = {
+  programs.vscodium.profiles.default = {
     extensions = with pkgs.open-vsx; [
       matthewpi.caddyfile-support
     ];

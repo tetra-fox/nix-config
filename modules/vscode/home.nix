@@ -7,13 +7,13 @@
     modules.vscode.languages.all
   ];
 
-  programs.vscode = {
+  programs.vscodium = {
     enable = true;
-    package = pkgs.vscodium;
     mutableExtensionsDir = false;
     profiles.default = {
       extensions = with pkgs.open-vsx; [
         # looks
+        catppuccin.catppuccin-vsc
         vscode-icons-team.vscode-icons
 
         # general tooling
