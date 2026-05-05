@@ -23,7 +23,7 @@
     autoEnable = false;
     polarity = "dark";
 
-    image = shared.wallpapers + "/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg";
+    image = shared.wallpapers + "/sleepytime.jpg";
     base16Scheme = "${inputs.stylix.inputs.tinted-schemes}/base24/catppuccin-mocha.yaml";
     # catppuccin puts blue at base0D (primary accent) and mauve at base0E; swap for mauve-accented ui
     override = {
