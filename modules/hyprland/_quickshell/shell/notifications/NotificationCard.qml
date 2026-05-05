@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import qs.components
 import qs.lib
 
+import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
@@ -9,9 +10,10 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    required property Notification notif
-    // set true by DND / fullscreen; card starts fully collapsed and never animates in
-    property bool popupSuppressed: false
+    // wrapper carries the popup flag; flipping it false removes us from the overlay
+    // while leaving the notif in the center
+    required property var wrapper
+    readonly property Notification notif: wrapper.notif
 
     readonly property color accentColor: {
         if (notif.urgency === NotificationUrgency.Critical)
@@ -21,12 +23,33 @@ Item {
         return Theme.accent;
     }
 
-    // popup visibility (overlay only); flips false on timer expire so notif stays tracked for the center
-    property bool _popupShown: true
+    // fall back to appName when summary is empty (some servers/apps send body-only notifs);
+    // hide the appName subtitle when it's already used as the title to avoid duplication
+    readonly property string title: notif.summary !== "" ? notif.summary : notif.appName
+    readonly property bool showAppNameSubtitle: notif.appName !== "" && notif.summary !== ""
+
+    // chromium-family browsers prepend an <a> line with the originating site URL to the body,
+    // duplicating appName. strip it. matches Ambxst's processNotificationBody helper.
+    function _cleanBody(body: string, appName: string): string {
+        if (!body || !appName)
+            return body || "";
+        const lower = appName.toLowerCase();
+        const isChromium = ["brave", "chrome", "chromium", "vivaldi", "opera", "microsoft edge"].some(n => lower.includes(n));
+        if (!isChromium)
+            return body;
+        const lines = body.split("\n\n");
+        if (lines.length > 1 && lines[0].startsWith("<a"))
+            return lines.slice(1).join("\n\n");
+        return body;
+    }
+
+    // _hiding drives the collapse+fade; _closing guards against double-trigger (timer + click)
+    property bool _hiding: false
+    property bool _closing: false
 
     implicitWidth: 320
-    implicitHeight: _popupShown ? card.height : 0
-    opacity: _popupShown ? 1 : 0
+    implicitHeight: _hiding ? 0 : card.height
+    opacity: _hiding ? 0 : 1
     clip: true
 
     Behavior on implicitHeight {
@@ -42,12 +65,7 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        if (popupSuppressed)
-            _popupShown = false;
-        else
-            enterAnim.restart();
-    }
+    Component.onCompleted: enterAnim.restart()
 
     SequentialAnimation {
         id: enterAnim
@@ -81,27 +99,34 @@ Item {
         }
     }
 
-    // guard against double-dismiss (timer + click can race)
-    property bool _closing: false
     function dismiss() {
         if (_closing)
             return;
         _closing = true;
-        exitAnim.restart();
+        _hiding = true;
+        dismissTimer.start();
     }
 
-    SequentialAnimation {
-        id: exitAnim
-        NumberAnimation {
-            target: card
-            property: "opacity"
-            to: 0
-            duration: 150
-            easing.type: Easing.InQuad
-        }
-        ScriptAction {
-            script: root.notif.dismiss()
-        }
+    function hideAsPopup() {
+        if (_closing)
+            return;
+        _closing = true;
+        _hiding = true;
+        hideTimer.start();
+    }
+
+    // wait for the collapse Behavior to finish before mutating state, otherwise the
+    // delegate is destroyed mid-animation and the column snaps shut
+    Timer {
+        id: dismissTimer
+        interval: Theme.animSlow + 30
+        onTriggered: root.notif.dismiss()
+    }
+
+    Timer {
+        id: hideTimer
+        interval: Theme.animSlow + 30
+        onTriggered: root.wrapper.popup = false
     }
 
     Timer {
@@ -115,14 +140,14 @@ Item {
                 return 0;
             return 5000;
         }
-        running: interval > 0 && !hoverArea.containsMouse && !root._closing && root._popupShown
+        running: interval > 0 && !cardHover.hovered && !root._closing
         repeat: false
         onTriggered: {
             // transient notifs shouldn't persist in the center; others just hide from overlay
             if (root.notif.transient)
-                root.notif.dismiss();
+                root.dismiss();
             else
-                root._popupShown = false;
+                root.hideAsPopup();
         }
     }
 
@@ -151,11 +176,30 @@ Item {
             color: root.accentColor
         }
 
+        // HoverHandler tracks hover regardless of child MouseAreas (action buttons, close);
+        // a plain MouseArea would lose hover the moment the cursor crosses a button
+        HoverHandler {
+            id: cardHover
+        }
+
+        // body click invokes the spec's "default" action and dismisses; child buttons (close,
+        // actions) are above this in the QML tree so their MouseAreas take precedence.
+        // hovered link takes priority over default action so <a> tags in markup-bodies work.
         MouseArea {
-            id: hoverArea
             anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
+            cursorShape: Qt.PointingHandCursor
+            acceptedButtons: Qt.LeftButton
+            onClicked: {
+                if (bodyText.hoveredLink !== "") {
+                    Quickshell.execDetached(["xdg-open", bodyText.hoveredLink]);
+                    root.dismiss();
+                    return;
+                }
+                const def = (root.notif.actions ?? []).find(a => a.identifier === "default");
+                if (def)
+                    def.invoke();
+                root.dismiss();
+            }
         }
 
         ColumnLayout {
@@ -184,13 +228,14 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.notif.summary
+                    text: root.title
                     color: Theme.textActive
                     font.pixelSize: Theme.fontBase
                     font.family: Theme.fontFamily
                     font.weight: Font.Medium
                     elide: Text.ElideRight
                     maximumLineCount: 1
+                    visible: root.title !== ""
                 }
 
                 GlyphButton {
@@ -206,23 +251,26 @@ Item {
                 color: Theme.textInactive
                 font.pixelSize: Theme.fontXs
                 font.family: Theme.fontFamily
-                visible: root.notif.appName !== ""
+                visible: root.showAppNameSubtitle
             }
 
             Text {
+                id: bodyText
                 Layout.fillWidth: true
-                text: root.notif.body
+                text: root._cleanBody(root.notif.body, root.notif.appName)
                 color: Theme.textSecondary
                 font.pixelSize: Theme.fontSm
                 font.family: Theme.fontFamily
                 wrapMode: Text.WordWrap
                 maximumLineCount: 4
                 elide: Text.ElideRight
-                visible: root.notif.body !== ""
+                visible: text !== ""
             }
 
             NotificationActions {
                 Layout.fillWidth: true
+                onActionInvoked: if (!root.notif.resident)
+                    root.dismiss()
                 notif: root.notif
             }
         }

@@ -28,7 +28,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     color: "transparent"
 
-    visible: notifList.length > 0
+    visible: notifList.some(w => w.popup)
 
     Column {
         id: notificationColumn
@@ -41,12 +41,15 @@ PanelWindow { // qmllint disable uncreatable-type
         spacing: 8
 
         Repeater {
-            model: root.notifList
+            // ScriptModel preserves delegate identity across array changes; a plain JS array
+            // would have Repeater destroy+recreate every card on prepend, replaying enterAnim
+            model: ScriptModel { // qmllint disable unresolved-type
+                values: root.notifList.filter(w => w.popup)    // qmllint disable unqualified
+            }
 
             NotificationCard {
                 required property var modelData
-                notif: modelData.notif
-                popupSuppressed: modelData.popupSuppressed ?? false
+                wrapper: modelData
             }
         }
     }

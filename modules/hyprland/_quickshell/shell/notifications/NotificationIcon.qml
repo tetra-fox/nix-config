@@ -1,5 +1,6 @@
 import qs.lib
 
+import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
 
@@ -23,6 +24,16 @@ Item {
         visible: img.status !== Image.Ready
     }
 
+    // dbus appIcon may be a freedesktop icon name (e.g. "discord") rather than a path/URI;
+    // route through iconPath so theme lookup works. notif.image is already a usable URI per Quickshell.
+    function _resolveIcon(s: string): string {
+        if (!s)
+            return "";
+        if (s.startsWith("/") || s.startsWith("file://") || s.startsWith("image://") || s.startsWith("data:"))
+            return s;
+        return Quickshell.iconPath(s, true);
+    }
+
     Image {
         id: img
         anchors.fill: parent
@@ -32,7 +43,7 @@ Item {
             if (root.notif.image !== "")
                 return root.notif.image;
             if (root.notif.appIcon !== "")
-                return root.notif.appIcon;
+                return root._resolveIcon(root.notif.appIcon);
             return "";
         }
         visible: status === Image.Ready

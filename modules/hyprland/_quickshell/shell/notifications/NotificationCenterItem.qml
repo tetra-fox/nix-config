@@ -25,6 +25,22 @@ Item {
         return Theme.accent;
     }
 
+    // mirrors NotificationCard: appName fallback when summary empty + chromium body cleanup
+    readonly property string title: notif.summary !== "" ? notif.summary : notif.appName
+
+    function _cleanBody(body: string, appName: string): string {
+        if (!body || !appName)
+            return body || "";
+        const lower = appName.toLowerCase();
+        const isChromium = ["brave", "chrome", "chromium", "vivaldi", "opera", "microsoft edge"].some(n => lower.includes(n));
+        if (!isChromium)
+            return body;
+        const lines = body.split("\n\n");
+        if (lines.length > 1 && lines[0].startsWith("<a"))
+            return lines.slice(1).join("\n\n");
+        return body;
+    }
+
     implicitHeight: _dismissing ? 0 : card.height
     opacity: _dismissing ? 0 : 1
     scale: _dismissing ? 0.9 : 1
@@ -158,13 +174,14 @@ Item {
 
                         Text {
                             Layout.fillWidth: true
-                            text: root.notif.summary
+                            text: root.title
                             color: Theme.textActive
                             font.pixelSize: Theme.fontSm
                             font.family: Theme.fontFamily
                             font.weight: Font.Medium
                             elide: Text.ElideRight
                             maximumLineCount: 1
+                            visible: root.title !== ""
                         }
 
                         Text {
@@ -191,7 +208,7 @@ Item {
                     Text {
                         id: bodyText
                         Layout.fillWidth: true
-                        text: root.notif.body
+                        text: root._cleanBody(root.notif.body, root.notif.appName)
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontXs
                         font.family: Theme.fontFamily
@@ -200,7 +217,11 @@ Item {
                         maximumLineCount: root.expanded ? 99 : 2
                         elide: Text.ElideRight
                         textFormat: Text.AutoText
-                        visible: root.notif.body !== ""
+                        visible: text !== ""
+                        onLinkActivated: link => {
+                            Quickshell.execDetached(["xdg-open", link]);
+                            root.dismiss();
+                        }
                     }
                 }
             }
@@ -209,6 +230,8 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: Theme.fontIcon + 8
                 notif: root.notif
+                onActionInvoked: if (!root.notif.resident)
+                    root.dismiss()
             }
 
             RowLayout {

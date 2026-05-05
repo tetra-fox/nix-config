@@ -126,7 +126,9 @@ ShellRoot {
         QtObject {
             property Notification notif
             property real time
-            property bool popupSuppressed
+            // true while the notif should be visible in the overlay; the card flips this
+            // false on timer expire so the wrapper survives in the center after fade-out
+            property bool popup
         }
     }
 
@@ -142,14 +144,17 @@ ShellRoot {
         persistenceSupported: true
 
         onNotification: notification => {
-            // transient + popup suppressed = drop entirely (don't persist to center either)
-            if (notification.transient && !root.popupsEnabled)
+            // transient = don't persist to history. drop entirely if popup also suppressed,
+            // and never resurrect a transient notif on quickshell reload (its contract is gone)
+            if (notification.transient && (notification.lastGeneration || !root.popupsEnabled))
                 return;
             notification.tracked = true;
             const wrapper = notifDataComp.createObject(root, {
                 "notif": notification,
                 "time": Date.now(),
-                "popupSuppressed": !root.popupsEnabled
+                // lastGeneration = quickshell reloaded; restored notifs go straight to the
+                // center without re-popping. fresh notifs pop unless DND/fullscreen suppress
+                "popup": !notification.lastGeneration && root.popupsEnabled
             });
             root.notifList = [wrapper, ...root.notifList];
             // history cap; dismiss oldest overflow. closed handler will filter notifList in place.
