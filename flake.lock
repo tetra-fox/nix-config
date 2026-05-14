@@ -920,11 +920,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778736683,
-        "narHash": "sha256-EVM5e9Zy+MP8gLlDDLGbahCtZIZjig88hns9FwUV0Q4=",
+        "lastModified": 1778757847,
+        "narHash": "sha256-ssnw2WNvyYmAg69pymytNawNsE8zzqUQ26zFT5DhwqA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8369d3a4e9b727f926cb19ee35acd0662444a922",
+        "rev": "2bdbb39e1881fe5167e9ac2023d2ddee52e9b378",
         "type": "github"
       },
       "original": {
@@ -1355,11 +1355,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778672714,
-        "narHash": "sha256-R+CdbLGeCiNMetbJ78BqbOMAaUnuiLyLncIazXfaO5E=",
+        "lastModified": 1778758603,
+        "narHash": "sha256-8Rim+VBF4vISwMBe+Zm7nZ0PZ5TNLbwYQVTij6pEVzc=",
         "owner": "tetra-fox",
         "repo": "nurpkgs",
-        "rev": "bedda50f296ee940d51a20ab07c6d9f0510409da",
+        "rev": "8ebeb2f588661647ec021903466baf16eb68c2e2",
         "type": "github"
       },
       "original": {
@@ -1504,11 +1504,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777874657,
-        "narHash": "sha256-vmXxDe4NhT3UvTTQ+xObFDmafjYhRI6GEUMtwA6hgFA=",
+        "lastModified": 1778747048,
+        "narHash": "sha256-29SRt9ENbzU0g4Md0I6N4TRu+MlEw80rcwzC4VDoHcc=",
         "owner": "michel-kraemer",
         "repo": "zsh-patina",
-        "rev": "6ddc28740c89c91bdad6d9340d5a371116bfe8e3",
+        "rev": "45d48a4c09315c7904c7ed668d419dfd71b9037c",
         "type": "github"
       },
       "original": {
