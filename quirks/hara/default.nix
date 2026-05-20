@@ -9,7 +9,7 @@
     ./openldap-flaky-test-fix.nix
     ./ram-led-suspend-hook.nix
     ./scarlett-volume-lock.nix
-    ./scarlett-configuration.nix
+    # ./scarlett-configuration.nix
     ./windows-systemd-boot-entry.nix
   ];
 
