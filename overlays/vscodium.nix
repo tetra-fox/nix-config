@@ -12,7 +12,9 @@ final: prev: {
         aarch64-linux = "linux-arm64";
         aarch64-darwin = "darwin-arm64";
       }
-      .${system};
+      .${
+        system
+      };
     hash =
       {
         x86_64-linux = "sha256-gscXPWqnQV9nd9XWbL5YkCdyxxnDDEY4WpFAgx5G7a0=";
@@ -20,7 +22,9 @@ final: prev: {
         aarch64-linux = "sha256-09C5ER/nZBphWHZRRAf9o/hyB6qc2mqIuxOLNdlVSfU=";
         aarch64-darwin = "sha256-utDPI80JCPcXTFvK65UR5CBlyb+EsocpHM0KWeojaUI=";
       }
-      .${system};
+      .${
+        system
+      };
     archive_fmt =
       if isDarwin
       then "zip"
