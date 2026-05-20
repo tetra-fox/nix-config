@@ -203,6 +203,7 @@
                 inputs.quickshell.overlays.default
                 inputs.nix-yazi-plugins.overlays.default
                 inputs.tetra-nurpkgs.overlays.default
+                (import ./overlays/vscodium.nix)
               ];
             }
             {
