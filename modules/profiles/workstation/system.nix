@@ -14,6 +14,7 @@
     modules.onepassword.system
     modules.pipewire.system
     modules.pipewire-rnnoise.system
+    modules.udiskie.system
     # modules.wireshark.system
     modules.yazi.system
   ];

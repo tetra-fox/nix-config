@@ -17,6 +17,7 @@
     modules.kitty.home
     modules.obs-studio.home
     modules.ssh.home
+    modules.udiskie.home
     modules.vscode.home
     modules.walker.home
     modules.yazi.home
