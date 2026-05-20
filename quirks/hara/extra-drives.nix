@@ -32,7 +32,7 @@ in {
     };
 
     "/mnt/games" = {
-      device = "/dev/disk/by-uuid/01D83AE4F9AF9D60";
+      device = "/dev/disk/by-uuid/56424FA6424F8A27";
       fsType = "ntfs3";
       options = rwOptions;
     };
