@@ -247,6 +247,9 @@
             arch = "x86_64";
             class = "darwin";
             nixpkgs = inputs.nixpkgs-darwin;
+            modules = [
+              {nixpkgs.config.allowDeprecatedx86_64Darwin = true;}
+            ];
           };
 
           mesa-svc-01 = {
