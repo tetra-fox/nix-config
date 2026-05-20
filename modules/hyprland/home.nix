@@ -58,6 +58,8 @@ in {
     package = null;
     portalPackage = null;
 
+    configType = "hyprlang"; # port to lua later...
+
     settings = {
       # input
       input = {
@@ -178,7 +180,6 @@ in {
       };
 
       dwindle = {
-        pseudotile = true;
         preserve_split = true;
       };
 
