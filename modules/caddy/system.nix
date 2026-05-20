@@ -19,7 +19,7 @@
           "github.com/caddy-dns/cloudflare@v0.2.4"
           "github.com/caddyserver/transform-encoder@v0.0.0-20260423033309-ba4124974830"
         ];
-        hash = "sha256-BGyzV4leV+CwGy0f11e1PojfNLsuPEqSryP3UpT5ZcU=";
+        hash = "sha256-G9QQ43HuIDzzuMuG7cvxS8OvrnrTMUrfSbeNMIqi9YY=";
       };
       configFile = lib.mkIf (config.lab.caddy.caddyfile != null) config.lab.caddy.caddyfile;
     };
