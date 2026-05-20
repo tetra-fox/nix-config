@@ -90,6 +90,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+
     nixos-vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
       flake = false;
@@ -261,6 +263,7 @@
               inputs.sops-nix.nixosModules.sops
               inputs.disko.nixosModules.disko
               inputs.nowplaying.nixosModules.default
+              inputs.vpn-confinement.nixosModules.default
             ];
           };
         };

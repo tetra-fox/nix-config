@@ -1,8 +1,8 @@
 {
   config,
-  nsVethIp,
   ...
 }: let
+  nsVethIp = config.vpnNamespaces.wg.namespaceAddress;
   mkScore = score: ids: {
     trash_ids =
       if builtins.isList ids

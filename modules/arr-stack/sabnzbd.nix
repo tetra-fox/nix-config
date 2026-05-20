@@ -2,17 +2,17 @@
   config,
   lib,
   siteData,
-  hostVethIp,
   ...
 }: let
   cfg = config.lab.arrStack;
   sabnzbdStateDir = "${lib.removePrefix "/var/lib/" siteData}/sabnzbd";
+  hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 in {
   config = {
     sops.secrets = {
       "apps/sabnzbd_api_key" = {};
       "apps/sabnzbd_nzb_key" = {};
-      # frugalusenet bundle (single cred pair, used by all 3 server endpoints).
+      # one frugalusenet cred pair reused across all 3 server endpoints
       "apps/sabnzbd_usenet_username" = {};
       "apps/sabnzbd_usenet_password" = {};
     };
@@ -65,7 +65,7 @@ in {
           complete_free = "1G";
           log_dir = "logs";
           admin_dir = "admin";
-          # sonarr/radarr in netns reach sabnzbd via http://${hostVethIp}:8080;
+          # netns clients reach sabnzbd via http://${hostVethIp}:8080
           host_whitelist = "${config.networking.hostName},${config.networking.hostName}.local,${hostVethIp}";
         };
 
@@ -75,8 +75,6 @@ in {
           log_backups = 5;
         };
 
-        # sonarr/radarr put completed downloads in <complete_dir>/<category>/
-        # via sabnzbd's category routing.
         categories = {
           "*" = {
             name = "*";

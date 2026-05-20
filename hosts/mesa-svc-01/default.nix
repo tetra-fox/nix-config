@@ -21,7 +21,6 @@
     modules.samba.system
     modules.docker.system
     modules.nvidia.system
-    modules.netns-vpn.system
     modules.arr-stack.default
   ];
 

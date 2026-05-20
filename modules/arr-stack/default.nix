@@ -5,27 +5,102 @@
   modules,
   siteData,
   siteEnvFile,
-  netns,
-  netnsPath,
-  nsVethIp,
-  hostVethIp,
   ...
 }: let
   cfg = config.lab.arrStack;
+  arrLib = import ./lib.nix {inherit lib;};
 
   arrPgUser = "arr";
-  arrApps = ["sonarr" "radarr" "prowlarr"];
-  arrDbs = lib.flatten (map (a: ["${a}-main" "${a}-log"]) arrApps);
 
-  mkPgEnv = appName: let
-    prefix = "${lib.toUpper appName}__POSTGRES";
-  in ''
-    ${prefix}__HOST=${hostVethIp}
-    ${prefix}__PORT=5432
-    ${prefix}__USER=${arrPgUser}
-    ${prefix}__PASSWORD=${config.sops.placeholder."arr/pg_pass"}
-    ${prefix}__MAIN_DB=${appName}-main
-    ${prefix}__LOG_DB=${appName}-log
+  # VPN-Confinement caps namespace names at 7 chars (used as unit + iface suffix)
+  vpnNs = "wg";
+  vpn = config.vpnNamespaces.${vpnNs};
+
+  arrServices = {
+    sonarr = {
+      port = cfg.lanProxyPorts.sonarr;
+      inNetns = true;
+      apiKey = {_sops = "apps/sonarr_api_key";};
+      hasNixosModule = true;
+    };
+    radarr = {
+      port = cfg.lanProxyPorts.radarr;
+      inNetns = true;
+      apiKey = {_sops = "apps/radarr_api_key";};
+      hasNixosModule = true;
+    };
+    prowlarr = {
+      port = cfg.lanProxyPorts.prowlarr;
+      inNetns = true;
+      # services.prowlarr has no environmentFiles option; we define the unit ourselves
+      apiKey = null;
+      hasNixosModule = false;
+      user = "prowlarr";
+      uid = 276; # next after radarr (275)
+    };
+  };
+
+  baseSettings = {
+    auth = {
+      method = "Forms";
+      required = "DisabledForLocalAddresses";
+    };
+    log.level = "info";
+    postgres = {
+      # netns clients reach pg via the bridge's host-side address
+      host = vpn.bridgeAddress;
+      port = 5432;
+      user = arrPgUser;
+      password = {_sops = "arr/pg_pass";};
+    };
+  };
+
+  mkServiceSettings = name: svc:
+    lib.recursiveUpdate baseSettings {
+      postgres = {
+        main_db = "${name}-main";
+        log_db = "${name}-log";
+      };
+      auth = lib.optionalAttrs (svc.apiKey != null) {apikey = svc.apiKey;};
+    };
+
+  allSopsRefs = lib.unique (lib.concatLists (
+    lib.mapAttrsToList (n: svc: arrLib.collectSopsRefs (mkServiceSettings n svc)) arrServices
+  ));
+
+  mkEnvFileContent = name: svc: let
+    prefix = lib.toUpper name;
+    envVars = arrLib.mkServarrEnv (s: config.sops.placeholder.${s}) prefix (mkServiceSettings name svc);
+  in
+    lib.concatStringsSep "\n" (lib.mapAttrsToList (k: v: "${k}=${v}") envVars);
+
+  arrDbs = lib.flatten (lib.mapAttrsToList (n: _: ["${n}-main" "${n}-log"]) arrServices);
+
+  # vpnConfinement already adds bindsTo+after on the wg unit; the extra
+  # `requires` here is belt-and-suspenders fail-closed
+  arrDeps = svc: {
+    after = [config.lab.postgres.passwordUnits.${arrPgUser}];
+    requires =
+      [config.lab.postgres.passwordUnits.${arrPgUser}]
+      ++ lib.optional svc.inNetns "${vpnNs}.service";
+    vpnConfinement = lib.optionalAttrs svc.inNetns {
+      enable = true;
+      vpnNamespace = vpnNs;
+    };
+  };
+
+  wgConfTemplate = ''
+    [Interface]
+    PrivateKey = ${config.sops.placeholder."arr/wg_private_key"}
+    Address = ${config.sops.placeholder."arr/wg_address"}
+    DNS = 1.1.1.1
+
+    [Peer]
+    PublicKey = ${config.sops.placeholder."arr/wg_peer_public_key"}
+    PresharedKey = ${config.sops.placeholder."arr/wg_preshared_key"}
+    Endpoint = ${config.sops.placeholder."arr/wg_peer_endpoint"}
+    AllowedIPs = 0.0.0.0/0,::/0
+    PersistentKeepalive = 15
   '';
 in {
   imports = [
@@ -36,7 +111,9 @@ in {
   ];
 
   options.lab.arrStack = {
-    lanProxy = lib.mkEnableOption "socat LAN proxies into the netns" // {default = true;};
+    lanProxy =
+      lib.mkEnableOption "DNAT host ports into the vpn netns for LAN access"
+      // {default = true;};
 
     mediaGroup = lib.mkOption {
       type = lib.types.str;
@@ -45,6 +122,18 @@ in {
 
     torrentsPath = lib.mkOption {type = lib.types.str;};
     nzbPath = lib.mkOption {type = lib.types.str;};
+
+    accessibleFrom = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = ["192.168.0.0/16" "10.0.0.0/8"];
+      description = "subnets allowed to reach the namespace via portMappings; covers return-route for any LAN client";
+    };
+
+    wgMtu = lib.mkOption {
+      type = lib.types.int;
+      default = 1320; # AirVPN
+      description = "MTU applied to the wg interface after wg setconf";
+    };
 
     lanProxyPorts = lib.mkOption {
       type = lib.types.attrsOf lib.types.port;
@@ -57,141 +146,150 @@ in {
     };
   };
 
-  config = let
-    arrSecrets = {
-      sops.secrets = {
-        "apps/sonarr_api_key" = {};
-        "apps/radarr_api_key" = {};
+  config = lib.mkMerge [
+    {
+      assertions = let
+        netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
+        anyArrInNetns = netnsArrs != [];
+      in [
+        {
+          assertion = anyArrInNetns -> lib.all (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
+          message = ''
+            arr-stack: all arr services must share the same VPN namespace
+            decision. currently in netns: ${lib.concatStringsSep ", " netnsArrs}.
+            split residence breaks indexer fan-out (sonarr/radarr reach
+            prowlarr on the netns-internal address).
+          '';
+        }
+        {
+          assertion = anyArrInNetns -> config.services.qbittorrent.enable;
+          message = ''
+            arr-stack: arr services are in the VPN namespace but qBittorrent
+            is disabled. qbit serves as the in-namespace torrent client and
+            must be running.
+          '';
+        }
+      ];
+    }
+
+    {
+      vpnNamespaces.${vpnNs} = {
+        enable = true;
+        wireguardConfigFile = config.sops.templates."wg.conf".path;
+        accessibleFrom = cfg.accessibleFrom;
+        portMappings = lib.optionals cfg.lanProxy (
+          lib.mapAttrsToList (_: port: {
+            from = port;
+            to = port;
+            protocol = "tcp";
+          })
+          cfg.lanProxyPorts
+        );
       };
-      sops.templates = let
-        mkEnv = content: {
-          inherit content;
-          group = cfg.mediaGroup;
-          mode = "0440";
+
+      # VPN-Confinement drops MTU during wg-quick parsing; set it on the iface ourselves
+      systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
+        "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
+      ];
+    }
+
+    {
+      sops.secrets =
+        lib.genAttrs allSopsRefs (_: {})
+        // lib.genAttrs [
+          "arr/wg_private_key"
+          "arr/wg_peer_public_key"
+          "arr/wg_preshared_key"
+          "arr/wg_peer_endpoint"
+          "arr/wg_address"
+        ] (_: {});
+
+      sops.templates =
+        {
+          "wg.conf" = {
+            content = wgConfTemplate;
+            mode = "0400";
+          };
+        }
+        // lib.mapAttrs' (name: svc:
+          lib.nameValuePair "${name}.env" {
+            content = mkEnvFileContent name svc;
+            group = cfg.mediaGroup;
+            mode = "0440";
+          })
+        arrServices;
+    }
+
+    {
+      lab.postgres = {
+        # /24 spans both ends of the veth bridge so netns clients can reach pg
+        allowedCidrs = ["${vpn.bridgeAddress}/24"];
+        roles.${arrPgUser} = {
+          passwordSecret = "arr/pg_pass";
+          owns = arrDbs;
         };
-      in {
-        "sonarr.env" = mkEnv ''
-          SONARR__AUTH__APIKEY=${config.sops.placeholder."apps/sonarr_api_key"}
-          ${mkPgEnv "sonarr"}
-        '';
-        "radarr.env" = mkEnv ''
-          RADARR__AUTH__APIKEY=${config.sops.placeholder."apps/radarr_api_key"}
-          ${mkPgEnv "radarr"}
-        '';
-        "prowlarr.env" = mkEnv (mkPgEnv "prowlarr");
       };
-    };
-  in
-    lib.mkMerge [
-      arrSecrets
-      (let
-        netnsBind = {
-          NetworkNamespacePath = netnsPath;
-          BindReadOnlyPaths = ["/etc/netns/${netns}/resolv.conf:/etc/resolv.conf"];
-        };
+    }
 
-        mkLanProxy = name: port: {
-          description = "LAN proxy for ${name}: host:${toString port} -> ${nsVethIp}:${toString port}";
-          after = ["wg-vpn.service"];
-          requires = ["wg-vpn.service"];
-          bindsTo = ["wg-vpn.service"];
-          wantedBy = ["multi-user.target"];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${pkgs.socat}/bin/socat TCP-LISTEN:${toString port},fork,reuseaddr TCP:${nsVethIp}:${toString port}";
-            Restart = "on-failure";
-            DynamicUser = true;
+    {
+      services = lib.mkMerge (lib.mapAttrsToList (name: svc:
+        lib.optionalAttrs svc.hasNixosModule {
+          ${name} = {
+            enable = true;
+            group = cfg.mediaGroup;
+            dataDir = "${siteData}/${name}";
+            environmentFiles = siteEnvFile "${name}.env";
+            # mirror the env-injected values so the module's defaults don't override them
+            settings = {
+              auth.method = "Forms";
+              auth.required = "DisabledForLocalAddresses";
+              log.level = "info";
+            };
           };
-        };
+        })
+      arrServices);
+    }
 
-        arrAuthSettings = {
-          auth.method = "Forms";
-          auth.required = "DisabledForLocalAddresses";
-          log.level = "info";
-        };
-      in {
-        lab.postgres = {
-          allowedCidrs = ["10.200.200.0/24"];
-          roles.${arrPgUser} = {
-            passwordSecret = "arr/pg_pass";
-            owns = arrDbs;
-          };
-        };
-
-        services.sonarr = {
-          enable = true;
-          group = cfg.mediaGroup;
-          dataDir = "${siteData}/sonarr";
-          environmentFiles = siteEnvFile "sonarr.env";
-          settings = arrAuthSettings;
-        };
-
-        services.radarr = {
-          enable = true;
-          group = cfg.mediaGroup;
-          dataDir = "${siteData}/radarr";
-          environmentFiles = siteEnvFile "radarr.env";
-          settings = arrAuthSettings;
-        };
-
-        services.prowlarr = {
-          enable = true;
-          dataDir = "${siteData}/prowlarr";
-          settings = arrAuthSettings;
-        };
-
-        users.groups.${cfg.mediaGroup} = {};
-
-        users.users.prowlarr = {
+    {
+      users.groups.${cfg.mediaGroup} = {};
+      users.users = lib.mapAttrs' (name: svc:
+        lib.nameValuePair (svc.user or name) {
           isSystemUser = true;
-          uid = 276; # next after radarr (275)
+          uid = svc.uid;
           group = cfg.mediaGroup;
-          home = "${siteData}/prowlarr";
-        };
+          home = "${siteData}/${name}";
+        }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices);
 
-        networking.firewall.allowedTCPPorts = lib.mkIf cfg.lanProxy (lib.attrValues cfg.lanProxyPorts);
+      systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
+        owner = svc.user or name;
+      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -") (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices);
+    }
 
-        systemd.tmpfiles.rules = [
-          "d ${siteData}/prowlarr 0750 prowlarr ${cfg.mediaGroup} -"
-        ];
+    {
+      systemd.services = lib.mkMerge [
+        (lib.mapAttrs (name: svc:
+          if svc.hasNixosModule
+          then arrDeps svc
+          else
+            arrDeps svc
+            // {
+              description = lib.toSentenceCase name;
+              wantedBy = ["multi-user.target"];
+              serviceConfig = {
+                Type = "simple";
+                User = svc.user or name;
+                Group = cfg.mediaGroup;
+                ExecStart = "${pkgs.${name}}/bin/${lib.toSentenceCase name} -nobrowser -data=${siteData}/${name}";
+                EnvironmentFile = siteEnvFile "${name}.env";
+                Restart = "on-failure";
+              };
+            })
+        arrServices)
 
-        # fail closed on wg; gate on pg-password to avoid auth-failure
-        # crash loop on first boot.
-        systemd.services = let
-          arrDeps = {
-            after = ["wg-vpn.service" config.lab.postgres.passwordUnits.${arrPgUser}];
-            requires = ["wg-vpn.service" config.lab.postgres.passwordUnits.${arrPgUser}];
-            bindsTo = ["wg-vpn.service"];
-            serviceConfig = netnsBind;
-          };
-        in
-          lib.mkMerge [
-            {
-              sonarr = arrDeps;
-              radarr = arrDeps;
-              qbittorrent = arrDeps;
-              # sabnzbd intentionally absent (stays in main ns).
-
-              prowlarr =
-                arrDeps
-                // {
-                  serviceConfig =
-                    netnsBind
-                    // {
-                      DynamicUser = lib.mkForce false;
-                      User = "prowlarr";
-                      Group = lib.mkForce cfg.mediaGroup;
-                      StateDirectory = lib.mkForce "";
-                      ExecStart = lib.mkForce "${pkgs.prowlarr}/bin/Prowlarr -nobrowser -data=${siteData}/prowlarr";
-                      EnvironmentFile = siteEnvFile "prowlarr.env";
-                    };
-                };
-            }
-
-            (lib.mkIf cfg.lanProxy (
-              lib.mapAttrs' (name: port: lib.nameValuePair "arr-lan-${name}" (mkLanProxy name port)) cfg.lanProxyPorts
-            ))
-          ];
-      })
-    ];
+        {
+          qbittorrent = arrDeps {inNetns = true;};
+        }
+      ];
+    }
+  ];
 }

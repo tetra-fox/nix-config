@@ -1,18 +1,12 @@
 # arr-stack
 
-*arr media stack. sonarr, radarr, prowlarr, qbittorrent, sabnzbd, and recyclarr.
+\*arr media stack. sonarr, radarr, prowlarr, qbittorrent, sabnzbd, recyclarr.
 
-sonarr/radarr/prowlarr/qbittorrent live inside a wireguard network namespace (via `lab.netnsVpn`) -- sabnzbd stays in the main ns because there's no need for a vpn on usenet.
-
-## usage
+sonarr/radarr/prowlarr/qbittorrent run inside a wireguard netns via `vpnNamespaces.wg` from `vpn-confinement`. sabnzbd stays in the main ns (no vpn needed for usenet).
 
 ```nix
 { modules, ... }: {
-  imports = [
-    modules.netns-vpn.system
-    modules.arr-stack.default
-  ];
-
+  imports = [modules.arr-stack.default];
   lab.arrStack = {
     torrentsPath = "/mnt/disk/path/to/torrents";
     nzbPath      = "/mnt/disk/path/to/nzb";
@@ -20,36 +14,23 @@ sonarr/radarr/prowlarr/qbittorrent live inside a wireguard network namespace (vi
 }
 ```
 
-## options (`lab.arrStack.*`)
+needs `inputs.vpn-confinement.nixosModules.default` on the host's module list (wired in `flake.nix` for mesa-svc-01).
 
-| option | type | default | description |
-|---|---|---|---|
-| `mediaGroup` | str | `"media"` | shared group for services for file permissions |
-| `torrentsPath` | str | (required) | qBittorrent download directory |
-| `nzbPath` | str | (required) | sabnzbd download directory |
-| `lanProxy` | bool | `true` | socat LAN proxies forwarding `host:<arr-port>` -> `netns:<port>`. |
-| `lanProxyPorts` | `attrsOf port` | `{ sonarr=8989; radarr=7878; prowlarr=9696; qbittorrent=8888; }` | host -> netns port forwards. sabnzbd is omitted (lives in main ns). |
+## options
 
-## provides
+- `mediaGroup` (default `"media"`) - shared group for file perms
+- `torrentsPath`, `nzbPath` (required) - download dirs
+- `lanProxy` (default `true`) - DNAT host ports into the netns
+- `lanProxyPorts` (default `{sonarr=8989; radarr=7878; prowlarr=9696; qbittorrent=8888;}`)
+- `accessibleFrom` (default `["192.168.0.0/16" "10.0.0.0/8"]`) - subnets the netns will return-route to
+- `wgMtu` (default `1320`, AirVPN-tuned) - applied via ExecStartPost since VPN-Confinement strips MTU from wg-quick
 
-- `services.{sonarr,radarr,prowlarr,qbittorrent,sabnzbd}`
-- `arr` postgres role owning per-app `<app>-main` and `<app>-log` dbs (declared via `lab.postgres.roles.arr`)
-- sops secrets `apps/{sonarr,radarr,sabnzbd_*}_api_key`
-- sops env templates rendering `<APP>__POSTGRES__*` and `<APP>__AUTH__APIKEY`
-- the `media` group, shared by all stack services for file permissions
-- systemd binding: *arr units `requires` wg-vpn + the pg-password oneshot (fail closed; never start with vpn down or unset password)
-- LAN socat proxy units (one per port in `lanProxyPorts`) so direct browser access works without going through the netns (this will be removed at a later date, when i can get authentik working properly)
-- recyclarr running on a daily timer with an opinionated config (`recyclarr.nix`) that wires sonarr+radarr to a `best_recyclarr` quality profile and a custom-format scoring table (DV/HDR boosts, AV1/x265/upscaled/etc. negative-scored). intent: identical recyclarr policy on every host that imports `arr-stack`. edit `recyclarr.nix` to change the policy globally.
+## gotchas
 
-## expects
-
-- `torrentsPath` / `nzbPath` (filesystem-specific)
-- anything qbittorrent-state related (BT_backup, RSS, GeoDB) - lives under `siteData/qbittorrent` and is not nix-managed
-- indexer config in prowlarr, download client config in sonarr/radarr; this gets written to the postgres databases
-
-## design notes
-
-- `arr-stack` depends on the `netns-vpn` module; **both must be imported** at the host level. `arr-stack` references the `netns-vpn` `_module.args` (`netnsPath`, `hostVethIp`, etc.)
-- *arr binaries inside the netns reach host-side postgres at `hostVethIp` (the host-side veth IP, currently `10.200.200.1`). The postgres module's `allowedCidrs` gets `10.200.200.0/24` contributed automatically
-- prowlarr's nixos module hardcodes `DynamicUser=true` with a bind-mounted `StateDirectory`; we override to a static `prowlarr` user in the media group so its data dir has predictable ownership consistent with the rest of the stack
-- qbittorrent's `ResumeDataStorageType` is pinned to `Legacy` (`.fastresume` files on disk, predictable + easy to back up)
+- namespace name capped at 7 chars by VPN-Confinement (used as the unit + iface suffix); `wg` here
+- in-namespace clients hit pg at `config.vpnNamespaces.wg.bridgeAddress`; the postgres module's `allowedCidrs` is set to that /24
+- `prowlarr` doesn't accept `environmentFiles` upstream, so the unit is defined here directly
+- qbittorrent's `ResumeDataStorageType` is pinned to `Legacy` (`.fastresume` on disk; easier to back up)
+- recyclarr runs daily with a fixed quality-profile + custom-format config in `recyclarr.nix`; edit there to change the policy globally
+- qbittorrent state (BT_backup, RSS, GeoDB) lives under `siteData/qbittorrent` and isn't nix-managed
+- indexer config in prowlarr and download-client config in sonarr/radarr land in postgres

@@ -2,11 +2,11 @@
   config,
   pkgs,
   siteData,
-  hostVethIp,
   ...
 }: let
   cfg = config.lab.arrStack;
   torrents = cfg.torrentsPath;
+  hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 
   autoUnrar = pkgs.writeShellApplication {
     name = "qbittorrent-auto-unrar";
