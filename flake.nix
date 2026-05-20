@@ -1,9 +1,7 @@
 {
   inputs = {
-    # framework
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    # separate pin for x86_64-darwin - nixpkgs 26.05 is the last release to support it.
-    # once pins diverge, shared inputs need to follow nixpkgs-darwin or be duplicated.
+    # separate pin for x86_64-darwin
     nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
@@ -23,7 +21,6 @@
     };
     easy-hosts.url = "github:tgirlcloud/easy-hosts";
 
-    # package sets & overlays
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,13 +31,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # tooling
     alejandra = {
       url = "github:kamadorueda/alejandra";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nixos / home-manager modules
     betterfox-nix = {
       url = "github:HeitorAugustoLN/betterfox-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -61,10 +56,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # fonts
     apple-fonts.url = "github:Lyndeno/apple-fonts.nix";
 
-    # desktop & shell
     quickshell = {
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -87,34 +80,26 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # secrets
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # declarative disk partitioning (used by nixos-anywhere on first install)
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # autopatchelfs the vscode remote-ssh server when it lands in
-    # ~/.vscode-server. without this the prebuilt binary fails on nixos
-    # because it expects /lib64/ld-linux-x86-64.so.2.
     nixos-vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # generates network topology diagrams from nixos configs.
-    # build with: `nix build .#topology.x86_64-linux.config.output`
     nix-topology = {
       url = "github:oddlama/nix-topology";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # personal
     tetra-nurpkgs = {
       url = "github:tetra-fox/nurpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -139,8 +124,6 @@
         };
         shared = {
           wallpapers = ./shared/wallpapers;
-          # public ssh keys trusted across hosts. each host imports the
-          # one(s) it wants from modules/sshd or per-host config.
           keyring = ./shared/keyring;
         };
       };
@@ -164,8 +147,7 @@
         formatter = inputs'.alejandra.packages.default;
         packages = inputs'.tetra-nurpkgs.packages;
 
-        # `nix run .#update-topology` builds the diagrams and copies them
-        # into images/topology/ so they can be referenced from README.md.
+        # `nix run .#update-topology` rebuilds images/topology/{main,network}.svg for the README
         apps.update-topology = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
           type = "app";
           program = "${pkgs.writeShellScript "update-topology" ''
@@ -179,8 +161,7 @@
         };
       };
 
-      # network topology diagram. run `nix build .#topology.x86_64-linux.config.output`
-      # to render an svg from every host's networking config.
+      # `nix build .#topology.x86_64-linux.config.output` renders the network diagram
       flake.topology = lib.genAttrs ["x86_64-linux"] (system:
         import inputs.nix-topology {
           pkgs = import inputs.nixpkgs {
@@ -234,8 +215,7 @@
             ];
         };
 
-        # auto-import ./quirks/<name> for any host that has a matching dir.
-        # keeps host default.nix files free of quirks-import boilerplate.
+        # auto-import ./quirks/<name> when the dir exists, so hosts don't have to wire it themselves
         hosts = lib.mapAttrs (name: cfg:
           cfg
           // {
@@ -269,10 +249,6 @@
             nixpkgs = inputs.nixpkgs-darwin;
           };
 
-          # services vm at the mesa site, hosted on milkfish (proxmox).
-          # server hosts override the workstation "tetra" username here.
-          # specialArgs is positional/raw - can't be made declarative via
-          # mkDefault in the profile; one-line per-host override is OK.
           mesa-svc-01 = {
             path = ./hosts/mesa-svc-01;
             arch = "x86_64";

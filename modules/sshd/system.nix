@@ -5,9 +5,7 @@
   username,
   ...
 }: {
-  # canonical user key from shared/keyring. lists merge across modules, so
-  # any host can append more keys via
-  # users.users.${username}.openssh.authorizedKeys.keys = [...] - no mkForce needed.
+  # base key from shared/keyring; hosts append more via the same option (lists merge, no mkForce)
   users.users.${username}.openssh.authorizedKeys.keys = [
     (lib.fileContents (shared.keyring + "/tetra.pub"))
   ];

@@ -7,11 +7,8 @@
 }: let
   cfg = config.lab.postgres;
 
-  # one systemd oneshot per role: ALTER USER <name> WITH PASSWORD :'pass'
-  # plus, for each db in role.owns, ALTER DATABASE OWNER + ALTER SCHEMA
-  # public OWNER. PG 15+ tightened the public schema so GRANT ALL ON
-  # DATABASE alone isn't enough; the schema's owner has to be the role
-  # that wants to CREATE TABLE there.
+  # ALTER USER ... PASSWORD, plus ALTER DATABASE OWNER + ALTER SCHEMA public OWNER for each owned db.
+  # pg 15+ needs the schema's owner to be the role that wants to CREATE TABLE in `public`.
   mkRoleUnit = name: role: {
     description = "Set ${name} postgres role password + ownership from sops";
     after = ["postgresql-setup.service"];
@@ -23,8 +20,7 @@
       RemainAfterExit = true;
       LoadCredential = "pgpass:${config.sops.secrets.${role.passwordSecret}.path}";
     };
-    # heredoc so embedded "${db-with-hyphen}" survives bash; EOF unquoted so
-    # $CREDENTIALS_DIRECTORY in the -v flag still expands.
+    # heredoc lets "${db-with-hyphen}" reach psql intact; EOF unquoted so $CREDENTIALS_DIRECTORY expands
     script = let
       ownerStmts = lib.concatMapStringsSep "\n" (db: ''
         ALTER DATABASE "${db}" OWNER TO ${name};
@@ -117,15 +113,12 @@ in {
         })
         cfg.roles;
 
-      # every db a role owns is a db that should exist. consumers can still
-      # add ensureDatabases entries for unowned dbs (none today).
       ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [5432];
 
-    # mkDefault so a consumer that also declares the same secret path (e.g.
-    # an env file template) wins and we don't conflict.
+    # mkDefault so a consumer redeclaring the same secret (e.g. for owner/group) wins
     sops.secrets =
       lib.mapAttrs' (
         name: role:

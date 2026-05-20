@@ -1,4 +1,4 @@
-# pascal: open modules need turing+, only supported through legacy 580.
+# pascal needs the legacy 580 driver; open modules require turing+
 {config, ...}: {
   hardware.nvidia = {
     open = false;

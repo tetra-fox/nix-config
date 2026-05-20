@@ -16,11 +16,7 @@ in {
     openFirewall = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = ''
-        Open the exporter port in the firewall. Off by default since the
-        local prometheus scrape doesn't need it. Turn this on if a remote
-        prometheus on the LAN needs to scrape this host.
-      '';
+      description = "open the exporter port in the firewall. off by default; local prometheus scrape doesn't need it. flip on if a LAN prometheus needs to reach this host.";
     };
   };
 

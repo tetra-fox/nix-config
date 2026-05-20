@@ -12,11 +12,9 @@
     mutableExtensionsDir = false;
     profiles.default = {
       extensions = with pkgs.open-vsx; [
-        # looks
         catppuccin.catppuccin-vsc
         vscode-icons-team.vscode-icons
 
-        # general tooling
         albert.tabout
         anthropic.claude-code
         esbenp.prettier-vscode
@@ -25,25 +23,20 @@
       ];
 
       userSettings = {
-        # workbench
         "workbench.iconTheme" = "vscode-icons";
         "workbench.startupEditor" = "none";
 
-        # editor
         "editor.fontLigatures" = true;
         "editor.formatOnSave" = true;
         "editor.stickyScroll.enabled" = true;
 
-        # files
         "files.eol" = "\n";
         "files.insertFinalNewline" = true;
         "files.trimFinalNewlines" = true;
         "files.trimTrailingWhitespace" = true;
 
-        # terminal
         "terminal.integrated.fontLigatures.enabled" = true;
 
-        # git
         "git.autofetch" = true;
         "git.confirmSync" = false;
         "git.enableSmartCommit" = true;
@@ -57,10 +50,8 @@
         "extensions.autoCheckUpdates" = false;
         "extensions.autoUpdate" = false;
 
-        # prettier
         "prettier.prettierPath" = "${pkgs.prettier}/lib/node_modules/prettier";
 
-        # claude-code
         "claudeCode.preferredLocation" = "sidebar";
         "claudeCode.claudeProcessWrapper" = "${pkgs.claude-code}/bin/claude";
       };

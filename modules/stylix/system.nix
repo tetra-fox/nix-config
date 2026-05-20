@@ -4,7 +4,7 @@
   inputs,
   ...
 }: {
-  # without plasma enabled, nixos doesn't link these by default, so dolphin can't find CatppuccinMocha.colors
+  # without plasma enabled, nixos skips these and dolphin can't find CatppuccinMocha.colors
   environment.pathsToLink = [
     "/share/color-schemes"
     "/share/plasma"
@@ -12,8 +12,8 @@
   ];
 
   stylix.targets = {
-    # apps pick their own colors for now; font targets stay on so fonts are installed AND
-    # fonts.fontconfig.defaultFonts is populated (modules like cosmic/kitty/vscode read it via lib.head)
+    # apps pick their own colors; font targets stay on so fonts.fontconfig.defaultFonts populates
+    # (cosmic/kitty/vscode read it via lib.head)
     font-packages.enable = true;
     fontconfig.enable = true;
   };

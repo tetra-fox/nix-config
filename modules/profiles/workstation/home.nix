@@ -33,33 +33,25 @@
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [
-    # secrets
     sops
 
-    # chat / comms
     telegram-desktop
     discord
     signal-desktop
     cinny-desktop
 
-    # media
     vlc
     qview
 
-    # productivity
     onlyoffice-desktopeditors
-    # notion-app
     obsidian
 
-    # remote desktop
     parsec-bin
 
-    # p2p
     nicotine-plus
     qbittorrent
 
-    # system / gui utils
-    vulkan-tools # vulkaninfo, vkcube
+    vulkan-tools
     iperf3
     ethtool
     ffmpeg
@@ -67,7 +59,6 @@
     imhex
     ncdu
 
-    # dev - languages / runtimes
     rustup
     gcc
     gnumake
@@ -75,7 +66,6 @@
     nodejs
     python3
 
-    # dev - tools
     sqlite
     gh
     dbeaver-bin

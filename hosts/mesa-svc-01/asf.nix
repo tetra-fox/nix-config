@@ -25,7 +25,7 @@
       SteamTokenDumperPluginEnabled = true;
     };
 
-    # gates web UI auth-free access to LAN subnets via KnownNetworks.
+    # KnownNetworks gates auth-free web UI access by subnet
     ipcSettings = {
       Kestrel = {
         Endpoints.HTTP.Url = "http://*:1242";
@@ -36,9 +36,7 @@
     };
   };
 
-  # bot config rendered via sops because the asf module's `username`
-  # option is a plain string (no usernameFile variant) and we want both
-  # creds in sops
+  # the asf module's `username` is a plain string (no usernameFile), so render the whole bot json via sops
   sops.templates."asf-tetra.json" = {
     content = builtins.toJSON {
       Enabled = true;
@@ -63,10 +61,8 @@
     mode = "0400";
   };
 
-  # asf module derives StateDirectory from the basename of dataDir, so
-  # dataDir=/var/lib/mesa/asf yields StateDirectory=asf -> stray /var/lib/asf.
-  # pin it under mesa instead, and widen ReadWritePaths so the unit's
-  # pre-start cp of ASF.json into our custom dataDir succeeds.
+  # asf derives StateDirectory from basename(dataDir), so dataDir=/var/lib/mesa/asf yields a stray /var/lib/asf.
+  # pin it under mesa, and widen ReadWritePaths so the pre-start cp of ASF.json into the custom dataDir succeeds.
   systemd.services.archisteamfarm.serviceConfig = {
     StateDirectory = lib.mkForce "mesa/asf";
     ReadWritePaths = ["${siteData}/asf"];

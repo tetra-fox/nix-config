@@ -1,4 +1,3 @@
-# universal baseline imported by every host (workstation or server).
 {
   lib,
   modules,
@@ -33,32 +32,26 @@
 
   boot.tmp.cleanOnBoot = true;
 
-  # universal toolkit
   environment.systemPackages = with pkgs; [
-    # core
     git
     jq
     ripgrep
     tree
     pv
 
-    # process / hardware inspection
     htop
     lsof
     smartmontools
 
-    # network debugging
     wget
     bind
     nmap
     mtr
 
-    # archives
     unzip
     p7zip
     unrar
 
-    # terminal
     kitty.terminfo
   ];
 }

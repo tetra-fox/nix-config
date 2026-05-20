@@ -49,8 +49,7 @@ in {
     };
   };
 
-  # gate the docker units on the password being set, otherwise authentik
-  # crash-loops on bad creds during the boot race.
+  # gate docker units on the password unit; without it authentik crash-loops on bad creds during the boot race
   systemd.services = let
     pgDeps = {
       after = [config.lab.postgres.passwordUnits.authentik];

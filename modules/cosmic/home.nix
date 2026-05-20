@@ -138,7 +138,6 @@
     };
 
     applets = {
-      # com.system76.CosmicAppList
       app-list.settings = {
         enable_drag_source = true;
         favorites = [
@@ -151,7 +150,6 @@
         ];
         filter_top_levels = cosmicLib.cosmic.mkRON "optional" null;
       };
-      # com.system76.CosmicAppletTime
       time.settings = {
         first_day_of_week = 6;
         military_time = true;

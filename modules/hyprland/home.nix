@@ -61,27 +61,21 @@ in {
     configType = "hyprlang"; # port to lua later...
 
     settings = {
-      # input
       input = {
-        # keyboard
         kb_layout = "us";
         numlock_by_default = true;
 
-        # mouse
-        follow_mouse = 2; # allow scroll in unfocused windows
+        follow_mouse = 2; # scroll in unfocused windows
         sensitivity = -0.5;
       };
 
-      # keybinds
       bind =
         [
-          # apps
           "${main_mod},GRAVE,exec,app2unit -- ${terminal}"
           "${main_mod},E,exec,app2unit -- ${file_manager}"
           "${main_mod},SPACE,exec,${menu}"
           "${main_mod},C,exec,${pkgs.hyprpicker}/bin/hyprpicker -a"
 
-          # hyprland
           "${main_mod},mouse:274,togglefloating"
           "${main_mod},Q,killactive"
         ]
@@ -95,12 +89,11 @@ in {
           9);
 
       bindm = [
-        "${main_mod},mouse:272,movewindow" # rearrange windows with LMB
-        "${main_mod},mouse:273,resizewindow" # resize windows with RMB
+        "${main_mod},mouse:272,movewindow"
+        "${main_mod},mouse:273,resizewindow"
       ];
 
       bindl = [
-        # media keys
         ",XF86AudioPlay,exec,playerctl play-pause"
         ",XF86AudioNext,exec,playerctl next"
         ",XF86AudioPrev,exec,playerctl previous"
@@ -108,7 +101,6 @@ in {
       ];
 
       bindel = [
-        # media keys
         ",XF86AudioRaiseVolume,exec,wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
         ",XF86AudioLowerVolume,exec,wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
       ];

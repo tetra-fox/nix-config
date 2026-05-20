@@ -7,7 +7,6 @@
   imports = [
     modules.profiles.workstation.home
 
-    # hara-specific desktop bits (DE choice, theme, hardware-tied)
     modules.catppuccin.home
     modules.cosmic.home
     modules.dolphin.home
@@ -93,13 +92,11 @@
   };
 
   home.packages = with pkgs; [
-    # creative
     cider-2
     bitwig-studio
     tenacity
     blender
 
-    # gaming
     (prismlauncher.override {
       jdks = [
         javaPackages.compiler.temurin-bin.jre-25

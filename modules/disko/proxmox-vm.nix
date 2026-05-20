@@ -1,7 +1,4 @@
-# disko layout for a single-disk proxmox vm using virtio-scsi.
-# boot drive MUST be at scsi0 (matches the device path below) - use the
-# "VirtIO SCSI single" controller in pve.
-#
+# boot drive must be at scsi0 (use "VirtIO SCSI single" controller in pve)
 # nixos-anywhere consumes this on first install:
 #   nix run github:nix-community/nixos-anywhere -- --flake .#<host> root@<ip>
 {

@@ -19,30 +19,26 @@ in {
     ++ (with pkgs.kdePackages; [
       qtsvg
       kio # needed since 25.11
-      kio-fuse # mount remote filesystems via FUSE
-      kio-extras # extra protocols (sftp, fish, etc)
-
-      # extensions
-      ark # archive support
-      audiocd-kio # audio CD support
+      kio-fuse
+      kio-extras
+      ark
+      audiocd-kio
       baloo # file tagging / search index
       dolphin-plugins # git/hg/dropbox/mount integration
-      kio-admin # manage files as root
-      kio-gdrive # google drive via KIO
-      kompare # diff dialog
-      konsole # embedded terminal panel
-
-      # thumbnailers
-      ffmpegthumbs # video
-      kdegraphics-thumbnailers # images, PDFs, .blend
+      kio-admin
+      kio-gdrive
+      kompare # diff
+      konsole
+      ffmpegthumbs
+      kdegraphics-thumbnailers
       kimageformats # GIMP .xcf, .heic
       qtimageformats # .webp, .tiff, .tga, .jp2
     ])
     ++ (with pkgs; [
-      icoutils # .ico/.cur and embedded .exe icons
+      icoutils # .ico, .cur, embedded .exe icons
       libappimage # embedded .AppImage icons
-      resvg # SVG thumbnails
-      taglib # audio metadata
+      resvg # svg thumbnails
+      taglib
     ]);
 
   # fixes dolphin theming under non-KDE compositors (hyprland, niri)

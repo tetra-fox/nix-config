@@ -1,10 +1,8 @@
 # monitoring
 
-prometheus + grafana + node_exporter + systemd_exporter on a single host. scrapes the host itself automatically; consumers add extra targets via `lab.monitoring.extraScrapeConfigs`.
+prometheus + grafana + node_exporter + systemd_exporter on a single host. scrapes the host itself; consumers add extra targets via `lab.monitoring.extraScrapeConfigs`.
 
-other service modules (e.g. `modules.docker.system`'s cadvisor, `modules.nvidia.system`'s gpu exporter) push their own scrape jobs directly to `services.prometheus.scrapeConfigs`, and grafana.com dashboards onto the `lab.observability.communityDashboards` bus this module consumes.
-
-## usage
+other service modules push scrape jobs directly to `services.prometheus.scrapeConfigs` and grafana.com dashboards onto the `lab.observability.communityDashboards` bus this module consumes. e.g. `modules.docker.system`'s cadvisor, `modules.nvidia.system`'s gpu exporter.
 
 ```nix
 { modules, ... }: {
@@ -14,54 +12,25 @@ other service modules (e.g. `modules.docker.system`'s cadvisor, `modules.nvidia.
     { job_name = "node-otherbox"; static_configs = [{targets = ["10.0.0.5:9100"];}]; }
   ];
 
-  # push community dashboards onto the bus (host-scoped)
   lab.observability.communityDashboards = [
     { id = 1860; revision = 45; sha256 = "sha256-..."; name = "node-exporter-full"; }
   ];
 
-  # one-off local JSONs go through extraDashboardDirs instead
-  lab.monitoring.extraDashboardDirs = [./dashboards];
-
-  # host-specific bits the module deliberately doesn't touch:
-  services.grafana.settings = {
-    server.root_url = "https://stats.example.com/";
-    "auth.generic_oauth" = { ... };   # SSO config
-  };
+  lab.monitoring.extraDashboardDirs = [./dashboards];   # one-off local JSON
 }
 ```
 
-## options (`lab.monitoring.*`)
+per-host bits the module deliberately doesn't touch: grafana's `server.root_url`, oauth/SSO config, the matching sops secret for the oauth client.
 
-| option | type | default | description |
-| --- | --- | --- | --- |
-| `extraScrapeConfigs` | `listOf attrs` | `[]` | additional prometheus scrape jobs (this host's `node-<hn>` and `systemd-<hn>` are added automatically) |
-| `extraDashboardDirs` | `listOf path` | `[]` | additional grafana provisioning dirs for one-off local dashboard JSONs (community dashboards go via the observability bus instead) |
+## options
 
-## options (`lab.observability.*`, contributed via the imported observability module)
+- `lab.monitoring.extraScrapeConfigs` - extra prometheus scrape jobs (this host's `node-<hn>` and `systemd-<hn>` are added automatically)
+- `lab.monitoring.extraDashboardDirs` - extra grafana provisioning dirs for one-off local JSON dashboards
+- `lab.observability.communityDashboards` - grafana.com dashboards by `{ id, revision, sha256, name, datasource? }`. fetched at build time, `${DS_PROMETHEUS}` rewritten to the configured datasource, bundled into one provider dir
 
-| option | type | default | description |
-| --- | --- | --- | --- |
-| `communityDashboards` | `listOf submodule` | `[]` | grafana.com dashboards by `{ id, revision, sha256, name, datasource? }`. fetched at build time, `${DS_PROMETHEUS}` rewritten to the configured datasource, bundled into a single grafana provider directory |
+## gotchas
 
-## provides
-
-- prometheus daemon (state under `siteData/prometheus`); not firewall-opened, only reachable from localhost + docker bridge
-- grafana daemon (state under `siteData/grafana`); listens 127.0.0.1:3000
-- node_exporter with systemd + processes collectors enabled
-- systemd_exporter (port 9558, loopback) with restart-count / fd-size / ip-accounting collectors on
-- `systemd.settings.Manager.DefaultIPAccounting = true;` so per-unit ingress/egress byte metrics actually populate
-- bundled host-level dashboards on the bus: `node-exporter-full` (1860) and `systemd-exporter` (22872)
-- `monitoring/grafana_secret_key` sops secret (with grafana ownership)
-
-## expects
-
-- grafana `root_url` (the public hostname caddy fronts)
-- oauth/SSO config (`auth.generic_oauth` + `auth.disable_login_form`)
-- the matching sops secret for oauth client credentials
-- caddy reverse proxy in front of grafana (if exposing externally)
-
-## design notes
-
-- prometheus is **not** firewall-opened - only reachable from localhost and the docker bridge. consumers reach it via grafana or by tunneling
-- grafana 26.05+ requires an explicit `security.secret_key`; the module declares the sops secret and wires it via `$__file{...}` substitution so the value isn't baked into the nix store
-- community dashboards are fetched + sha256-pinned at build time rather than vendored as JSON in the repo. add new ones by setting `lab.observability.communityDashboards` from anywhere; run with `sha256 = lib.fakeHash` once and copy the real hash from the build error
+- prometheus is not firewall-opened; only reachable from localhost + the docker bridge. consumers reach it via grafana or by tunneling
+- grafana 26.05+ wants an explicit `security.secret_key`; this module declares the sops secret and wires it via `$__file{...}` so the value doesn't land in the nix store
+- community dashboards are sha256-pinned and fetched at build time, not vendored. add a new one with `sha256 = lib.fakeHash` once and copy the real hash from the error
+- per-unit ingress/egress byte metrics need `DefaultIPAccounting = true`, set here. otherwise the `systemd_unit_ip_*_bytes` series are all zero

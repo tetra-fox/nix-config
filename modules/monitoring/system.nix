@@ -20,14 +20,9 @@ in {
       group = "grafana";
     };
 
-    # without this the systemd_unit_ip_{egress,ingress}_bytes metrics
-    # are flat zero - systemd only tracks per-unit traffic when ip
-    # accounting is enabled, off by default per-unit.
+    # without this the systemd_unit_ip_{egress,ingress}_bytes series are all zero
     systemd.settings.Manager.DefaultIPAccounting = true;
 
-    # host-level dashboards monitoring itself owns (node + systemd are always
-    # on when this module is enabled). merged with service-module
-    # contributions (cadvisor from docker, nvidia from nvidia, etc.).
     services.grafana-dashboards.community = with pkgs.grafana-dashboards; [
       node-exporter-full
       systemd-exporter
@@ -42,9 +37,6 @@ in {
         evaluation_interval = "15s";
       };
 
-      # base host-level scrapes + per-host extras. service modules append
-      # their own scrapes by setting services.prometheus.scrapeConfigs
-      # directly; the option's listOf merge concatenates them.
       scrapeConfigs =
         [
           {
@@ -60,14 +52,12 @@ in {
 
       exporters.node = {
         enable = true;
-        # node_exporter's systemd collector covers basic unit state +
-        # uptime; systemd_exporter (below) adds per-unit cpu/mem/restart.
         enabledCollectors = ["systemd" "processes"];
       };
 
       exporters.systemd = {
         enable = true;
-        # default port 9558. binds to 0.0.0.0 by default; pin to loopback.
+        # binds to 0.0.0.0 by default; pin to loopback
         listenAddress = "127.0.0.1";
         extraFlags = [
           "--systemd.collector.enable-restart-count"
@@ -89,7 +79,7 @@ in {
           reporting_enabled = false;
           check_for_updates = false;
         };
-        # grafana 26.05+ requires explicit secret_key (no default); cookie signing.
+        # grafana 26.05+ needs an explicit secret_key (cookie signing)
         security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
       };
 
@@ -98,10 +88,8 @@ in {
         grafana-piechart-panel
       ];
 
-      # dashboards.settings.providers wiring lives in
-      # tetra-nurpkgs/modules/grafana-dashboards.nix (imported via flake.nix),
-      # which reads services.grafana-dashboards.{community,extras} and writes
-      # the providers list directly into grafana provisioning.
+      # provider wiring lives in tetra-nurpkgs/modules/grafana-dashboards.nix;
+      # it reads services.grafana-dashboards.{community,extras} and writes the providers list
       provision = {
         enable = true;
         datasources.settings.datasources = [

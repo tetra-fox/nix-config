@@ -4,8 +4,7 @@
   pkgs,
   ...
 }: let
-  # 1Password SSH agent socket. cross-platform path because myputer (darwin)
-  # would put it in a Group Container, hara (linux) puts it under $HOME.
+  # 1P agent socket: darwin stores it in a Group Container, linux under $HOME
   opAgent =
     if pkgs.stdenv.isDarwin
     then "${config.home.homeDirectory}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
@@ -17,9 +16,8 @@
     "homelab_DTW"
   ];
 in {
-  # set SSH_AUTH_SOCK so tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere
-  # internals, scripts that just call `ssh`) talk to 1P instead of whatever
-  # gnome-keyring / cosmic-session set up.
+  # tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere, raw `ssh` in scripts) need this to talk to 1P
+  # instead of gnome-keyring / cosmic-session
   home.sessionVariables.SSH_AUTH_SOCK = opAgent;
 
   programs.ssh = {

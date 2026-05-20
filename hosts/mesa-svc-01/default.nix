@@ -40,10 +40,9 @@
 
   networking = {
     hostName = "mesa-svc-01";
-    # ens18 = server vlan (LAN-routable, default route),
-    # ens19 = proxmox SDN "internal" (vmbr10) for inter-vm traffic on
-    # milkfish. SDN's dnsmasq IPAM is buggy on pve 9.1 so everything
-    # pinned statically here.
+    # ens18 = server vlan (LAN-routable, default route)
+    # ens19 = proxmox SDN internal (vmbr10) for inter-vm traffic on milkfish
+    # SDN's dnsmasq IPAM is buggy on pve 9.1, so everything is pinned statically
     useDHCP = false;
     defaultGateway = "192.168.10.1";
     nameservers = ["192.168.10.53"];
@@ -63,8 +62,7 @@
     ];
   };
 
-  # nest under milkfish in nix-topology since this is a proxmox guest.
-  # vNICs bridge to milkfish's vmbr0.10 (server vlan) and vmbr10 (sdn).
+  # proxmox guest under milkfish; vNICs bridge to milkfish's vmbr0.10 (server vlan) and vmbr10 (sdn)
   topology.self = {
     parent = "milkfish";
     guestType = "vm";
@@ -80,17 +78,13 @@
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
-  # nightly image auto-update; servers are unattended, breakage is fixable.
+  # servers are unattended, breakage is fixable
   lab.docker.watchtower.enable = true;
-
-  # container resource metrics for prometheus
   lab.docker.cadvisor.enable = true;
 
-  # CUDA-in-docker via CDI; containers opt in per-service with `--gpus all`
-  # (cli) or deploy.resources.reservations.devices (compose).
+  # CUDA-in-docker via CDI; containers opt in with `--gpus all` (cli) or deploy.resources.reservations.devices (compose)
   hardware.nvidia-container-toolkit.enable = true;
 
-  # GPU metrics for prometheus (default port 9835, loopback only).
   lab.nvidia.exporter.enable = true;
 
   users.users.${username} = {
@@ -99,8 +93,7 @@
     extraGroups = [
       "wheel"
       "docker"
-      # admin browses /mnt/vol_1/milkfish frequently; `media` group makes
-      # ls/cp/mv work without sudo. service-specific groups stay closed.
+      # admin browses /mnt/vol_1/milkfish often; `media` makes ls/cp/mv work without sudo
       "media"
     ];
   };

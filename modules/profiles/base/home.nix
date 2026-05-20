@@ -1,4 +1,3 @@
-# universal home-manager base
 # if i interface with it i want these things
 {
   config,

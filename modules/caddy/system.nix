@@ -42,10 +42,9 @@
       bantime = "1h";
       bantime-increment = {
         enable = true;
-        maxtime = "168h"; # 1 week ceiling on repeat offenders
+        maxtime = "168h"; # 1 week ceiling for repeat offenders
         overalljails = true;
       };
-      # never ban LAN / loopback
       ignoreIP = [
         "127.0.0.0/8"
         "::1/128"
@@ -62,7 +61,7 @@
         findtime = "10m";
         maxretry = 5;
       };
-      # keep state under siteData so a single backup target captures it
+      # state under siteData so one backup target catches it
       daemonSettings.Definition.dbfile = "${siteData}/fail2ban/fail2ban.sqlite3";
     };
 

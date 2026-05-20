@@ -9,13 +9,13 @@
     };
   };
 
+  # without this stack greetd spams errors + bootlogs onto the tty
   # https://github.com/apognu/tuigreet/issues/68#issuecomment-1586359960
   systemd.services.greetd.serviceConfig = {
     Type = "idle";
     StandardInput = "tty";
     StandardOutput = "tty";
-    StandardError = "journal"; # Without this errors will spam on screen
-    # Without these bootlogs will spam on screen
+    StandardError = "journal";
     TTYReset = true;
     TTYVHangup = true;
     TTYVTDisallocate = true;

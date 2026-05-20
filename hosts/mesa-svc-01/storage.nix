@@ -1,15 +1,11 @@
-# mesa storage layout:
-#   /mnt/vol_1/milkfish        media + torrents + nzb
-#   /mnt/vol_1/homeassistant   HA backups
-#   /var/lib/mesa/<service>    state for every native + container service
-#                              (single backup target)
+# /mnt/vol_1/milkfish        media + torrents + nzb
+# /mnt/vol_1/homeassistant   HA backups
+# /var/lib/mesa/<service>    state for every native + container service (one backup target)
 {...}: let
   siteData = "/var/lib/mesa";
 in {
-  # exported so stack files can take `siteData` from module args
   _module.args.siteData = siteData;
 
-  # shared group for service users that need access to the media tree
   users.groups.media = {
     gid = 1002;
   };
@@ -28,7 +24,6 @@ in {
     options = ["defaults" "noatime" "nofail"];
   };
 
-  # non-admin local account for HAOS
   users.users.hassbackupuser = {
     isSystemUser = true;
     uid = 1069;

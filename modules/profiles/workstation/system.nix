@@ -1,4 +1,3 @@
-# workstation system base
 {
   modules,
   pkgs,
@@ -36,8 +35,7 @@
   programs = {
     dconf.enable = true;
     command-not-found.enable = true;
-    # FHS-expecting binaries (vscode extensions, some electron apps,
-    # precompiled steam tools) need glibc visible at /lib64/ld-linux.
+    # FHS binaries (vscode extensions, some electron apps, precompiled steam tools) want glibc at /lib64/ld-linux
     nix-ld = {
       enable = true;
       libraries = [pkgs.glibc];

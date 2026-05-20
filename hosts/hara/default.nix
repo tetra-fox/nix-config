@@ -6,7 +6,6 @@
   imports = [
     modules.profiles.workstation.system
 
-    # hara-specific (DE, GPU, bootloader, gaming-flavor)
     modules.cosmic.system
     modules.greetd.system
     modules.hyprland.system
@@ -29,7 +28,7 @@
     nameservers = ["192.168.10.53"];
   };
 
-  # nix-topology: declare physical cabling so the diagram draws the link.
+  # physical cabling for the topology diagram
   topology.self.interfaces.enp11s0f0np0.physicalConnections = [
     (config.lib.topology.mkConnection "tengigablort" "eth1")
   ];

@@ -17,8 +17,7 @@
     };
   };
 
-  # local user on the unifi controller is a view-only "Local Only User"
-  # (settings -> admins -> add admin -> limited admin / view only).
+  # unifi controller side: "Local Only User", limited admin / view only
   services.prometheus.exporters.unpoller = {
     enable = true;
     listenAddress = "127.0.0.1";
@@ -64,7 +63,7 @@
   services.grafana.settings = {
     server.root_url = "https://stats.mesa.tetra.cool/";
 
-    # grafana 26.05+ requires explicit secret_key (no default); cookie signing.
+    # grafana 26.05+ needs an explicit secret_key (cookie signing)
     security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
 
     auth.disable_login_form = true; # oauth only

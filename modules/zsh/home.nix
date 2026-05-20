@@ -43,9 +43,8 @@ in {
       autosuggestion.enable = true;
       # disable global rc files (nix-generated)
       envExtra = "setopt no_global_rcs";
-      # compdump cache rebuilt at most once per 24h; ~4x faster shell init for
-      # the rest of the day after the first rebuild. force a rebuild with
-      # `rm ~/.cache/zsh/compdump`.
+      # rebuild the compdump at most once per 24h (~4x faster shell init the rest of the day)
+      # force a rebuild with `rm ~/.cache/zsh/compdump`
       completionInit = ''
         () {
           setopt local_options extendedglob
