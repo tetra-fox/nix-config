@@ -57,6 +57,9 @@
         "extensions.autoCheckUpdates" = false;
         "extensions.autoUpdate" = false;
 
+        # prettier
+        "prettier.prettierPath" = "${pkgs.prettier}/lib/node_modules/prettier";
+
         # claude-code
         "claudeCode.preferredLocation" = "sidebar";
         "claudeCode.claudeProcessWrapper" = "${pkgs.claude-code}/bin/claude";

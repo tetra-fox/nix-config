@@ -11,11 +11,14 @@
           "strings" = "on";
           "other" = "on";
         };
-        "editor.defaultFormatter" = "DavidAnson.vscode-markdownlint";
+        "editor.defaultFormatter" = "esbenp.prettier-vscode";
+        "editor.formatOnSave" = true;
         "editor.codeActionsOnSave" = {
           "source.fixAll.markdownlint" = "explicit";
         };
       };
+      # preserve so prettier doesn't reflow paragraphs into one long line under wordWrap
+      "prettier.proseWrap" = "preserve";
     };
   };
 }
