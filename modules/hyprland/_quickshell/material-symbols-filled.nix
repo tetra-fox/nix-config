@@ -9,8 +9,8 @@ pkgs.runCommand "material-symbols-filled"
   ];
 }
 ''
-  mkdir -p $out/share/fonts/TTF
+  mkdir -p $out/share/fonts/truetype
   python3 ${./fill-font.py} \
-    "${pkgs.material-symbols}/share/fonts/TTF/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf" \
-    $out/share/fonts/TTF/MaterialSymbolsRoundedFilled.ttf
+    "${pkgs.material-symbols}/share/fonts/truetype/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf" \
+    $out/share/fonts/truetype/MaterialSymbolsRoundedFilled.ttf
 ''
