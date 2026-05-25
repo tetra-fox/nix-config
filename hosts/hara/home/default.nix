@@ -93,7 +93,10 @@
 
   home.packages = with pkgs; [
     cider-2
-    bitwig-studio
+    # TODO: re-enable once nixpkgs fetchurl can pass bitwig's new cookie/token CDN gate.
+    # the 6.0.6 .deb download loops (curl error 47, max redirects) because the CDN bounces
+    # any client that doesn't carry the session cookie set during the redirect handshake.
+    # bitwig-studio
     tenacity
     blender
 
