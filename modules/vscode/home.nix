@@ -1,11 +1,23 @@
 {
   modules,
   pkgs,
+  lib,
   ...
 }: {
   imports = [
     modules.vscode.languages.all
   ];
+
+  # vscodium-devpodcontainers shells out to the devpod cli
+  home.packages = [pkgs.devpod];
+
+  # the extension uses vscode proposed apis (off by default). enabling them
+  # requires listing the extension in argv.json, which is separate from
+  # userSettings and not exposed by programs.vscodium.
+  # https://github.com/3timeslazy/vscodium-devpodcontainers#requirements
+  xdg.configFile."VSCodium/argv.json".text = lib.generators.toJSON {} {
+    "enable-proposed-api" = ["3timeslazy.vscodium-devpodcontainers"];
+  };
 
   programs.vscodium = {
     enable = true;
@@ -20,6 +32,7 @@
         esbenp.prettier-vscode
         jeanp413.open-remote-ssh
         ultram4rine.vscode-choosealicense
+        pkgs.open-vsx."3timeslazy".vscodium-devpodcontainers
       ];
 
       userSettings = {
