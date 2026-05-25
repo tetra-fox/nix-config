@@ -28,6 +28,8 @@
     nameservers = ["192.168.10.53"];
   };
 
+  networking.firewall.allowedUDPPorts = [51820];
+
   # physical cabling for the topology diagram
   topology.self.interfaces.enp11s0f0np0.physicalConnections = [
     (config.lib.topology.mkConnection "tengigablort" "eth1")
