@@ -4,7 +4,7 @@
       jimeh.actionlint
     ];
     userSettings = {
-      "actionlint.executablePath" = "${pkgs.actionlint}/bin/actionlint";
+      "actionlint.executable" = "${pkgs.actionlint}/bin/actionlint";
       "[yaml]" = {
         "editor.defaultFormatter" = "esbenp.prettier-vscode";
       };
