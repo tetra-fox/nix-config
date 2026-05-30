@@ -1,0 +1,26 @@
+name: Set up Nix
+description: Install Nix with the deploy key for the private nix-secrets input and a github access token.
+
+inputs:
+  ssh-private-key:
+    description: Deploy key for the tetra-fox/nix-secrets flake input.
+    required: true
+  github-token:
+    description: Token used for github.com access-tokens, to avoid api rate limits when fetching inputs.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up SSH agent for tetra-fox/nix-secrets
+      uses: webfactory/ssh-agent@v0.10.0
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v31
+      with:
+        nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/refs/heads/nixos-unstable.tar.gz
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+          access-tokens = github.com=${{ inputs.github-token }}
