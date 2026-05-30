@@ -1,7 +1,4 @@
-{
-  config,
-  ...
-}: let
+{config, ...}: let
   nsVethIp = config.vpnNamespaces.wg.namespaceAddress;
   mkScore = score: ids: {
     trash_ids =
