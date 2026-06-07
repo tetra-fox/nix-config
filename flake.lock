@@ -173,11 +173,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780755633,
-        "narHash": "sha256-2NZLaQTroHWrXHOeBJhHD7cb8nM4BnlAMNoxIUqs/Os=",
+        "lastModified": 1780833533,
+        "narHash": "sha256-0StMUC1sOkiQq7qoLQpobwVlad09EA5cy7HZit172Fw=",
         "owner": "catppuccin",
         "repo": "nix",
-        "rev": "71770b00f2b97631339026e78b4a045cd9aee6f3",
+        "rev": "4dd4177dc14b0c0b23bf3ce403f813be0c4c30de",
         "type": "github"
       },
       "original": {
@@ -205,6 +205,22 @@
       "original": {
         "owner": "Lyndeno",
         "repo": "ci",
+        "type": "github"
+      }
+    },
+    "claude-code-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780791760,
+        "narHash": "sha256-Cg2mx6ILPC/cAoomJrwx1TvMaFvvNi9DNbd3Hy+7L18=",
+        "owner": "sadjow",
+        "repo": "claude-code-nix",
+        "rev": "2370568ed1eac96474fa3bb2e73081cc971f9c03",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sadjow",
+        "repo": "claude-code-nix",
         "type": "github"
       }
     },
@@ -946,11 +962,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780831863,
-        "narHash": "sha256-LGA2qqG5ML+eQgggsEdqB3hM+8dXVTjN5xAvfsAXzWQ=",
+        "lastModified": 1780866232,
+        "narHash": "sha256-qltV3xBJE6gz8w28hC7M0vHn6aqSgJJdSfmL3sAA/A8=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "6f72222b18b8ea0edad1c8c6de26802ae226470f",
+        "rev": "a966d0420010586a2dfe2429bddc8022a7c23bfa",
         "type": "github"
       },
       "original": {
@@ -1052,6 +1068,7 @@
         "apple-fonts": "apple-fonts",
         "betterfox-nix": "betterfox-nix",
         "catppuccin": "catppuccin",
+        "claude-code-nix": "claude-code-nix",
         "cosmic-manager": "cosmic-manager",
         "disko": "disko",
         "easy-hosts": "easy-hosts",
@@ -1511,11 +1528,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1780727712,
-        "narHash": "sha256-DLiicdEFCAL+seHErNwbs7P6+TMGI+VycShqZ7p1q2A=",
+        "lastModified": 1780839967,
+        "narHash": "sha256-9P7EkF5sjdUALyeq+mEqlqDG3WzYQFb3O79tE4xMSzo=",
         "owner": "sxyazi",
         "repo": "yazi",
-        "rev": "ea7fa2127cc032b669a4825157ace244f06cf31c",
+        "rev": "f6113d386539a07d4ae23d24595e603bc0be0343",
         "type": "github"
       },
       "original": {

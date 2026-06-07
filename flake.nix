@@ -110,6 +110,12 @@
       url = "github:tetra-fox/nowplaying";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # flake = false to skip the upstream flake-utils.eachDefaultSystem which
+    # eagerly evaluates x86_64-darwin and fires the 26.05 deprecation warning
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      flake = false;
+    };
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
   };
 
@@ -186,6 +192,9 @@
                 inputs.quickshell.overlays.default
                 inputs.nix-yazi-plugins.overlays.default
                 inputs.tetra-nurpkgs.overlays.default
+                (final: _prev: {
+                  claude-code = final.callPackage "${inputs.claude-code-nix}/package.nix" {};
+                })
               ];
             }
             {
