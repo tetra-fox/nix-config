@@ -21,6 +21,27 @@
   home.file.".local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Pictures/VRChat".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/Pictures/VRChat";
 
+  # vrcx reads vrchat's playerprefs by running `wine reg query` against the
+  # prefix. it finds wine at a hardcoded compatibilitytools.d/<tool>/files/bin/
+  # wine, where <tool> is the name config.vdf maps appid 438100 to
+  # (GE-Proton-rtsp here). but it execs that binary directly on the host via
+  # bash, with no steam-runtime container. proton's own wine is a 32-bit binary
+  # built for the pressure-vessel container (interpreter /lib/ld-linux.so.2,
+  # absent on nixos), so it fails with "cannot execute: required file not
+  # found". vrcx has no env/config override for the wine path, so the only
+  # lever is this directory.
+  #
+  # give vrcx a host-runnable wine by faking the compat-tool layout it expects:
+  # a dir named GE-Proton-rtsp with files/bin/wine pointing at nixpkgs wine.
+  # steam itself doesn't use this dir for proton (it finds GE-Proton-rtsp via
+  # STEAM_EXTRA_COMPAT_TOOLS_PATHS in the store), so vrchat launching is
+  # unaffected. wineWowPackages handles the 64-bit prefix vrchat uses.
+  home.file.".local/share/Steam/compatibilitytools.d/GE-Proton-rtsp".source =
+    pkgs.runCommandLocal "vrcx-wine-shim" {} ''
+      mkdir -p $out/files/bin
+      ln -s ${pkgs.wineWow64Packages.stable}/bin/wine $out/files/bin/wine
+    '';
+
   # link the monado runtime to openxr
   xdg.configFile."openxr/1/active_runtime.json".source = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
 
