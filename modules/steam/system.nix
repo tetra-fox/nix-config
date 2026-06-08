@@ -22,6 +22,14 @@
     ];
   };
 
+  # nix-ld only links the 64-bit loader at /lib64/ld-linux-x86-64.so.2. proton
+  # ships a 32-bit wine (the WoW64 entry point) whose interpreter is
+  # /lib/ld-linux.so.2, which then doesn't exist. anything running that binary
+  # directly on the host (e.g. vrcx shelling out to wine reg, see
+  # modules/steam/home.nix) fails with "cannot execute: required file not
+  # found". link the 32-bit loader too.
+  environment.ldso32 = "${pkgs.pkgsi686Linux.glibc}/lib/ld-linux.so.2";
+
   # use gamemode scheduler
   programs.gamemode.enable = true;
 
