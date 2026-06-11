@@ -7,8 +7,7 @@
 
 Log                      = Log.open_topic("s-rnnoise-dynamic")
 
-local rnnoise_so         =
-"@rnnoise_plugin@/lib/ladspa/librnnoise_ladspa.so"
+local rnnoise_plugin     = "librnnoise_ladspa"
 
 local raw_args           = ...
 local args               = (raw_args and raw_args:parse(1)) or {}
@@ -47,7 +46,7 @@ local function build_filter_args(node)
         Json.Object {
           type    = "ladspa",
           name    = "rnnoise",
-          plugin  = rnnoise_so,
+          plugin  = rnnoise_plugin,
           label   = label,
           control = Json.Object {
             ["VAD Threshold (%)"]          = vad_threshold,
