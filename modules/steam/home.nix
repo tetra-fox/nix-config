@@ -21,18 +21,6 @@
   home.file.".local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Pictures/VRChat".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/Pictures/VRChat";
 
-  # vrcx reads vrchat's playerprefs by running `wine reg query` against the
-  # prefix. it looks for wine at a hardcoded compatibilitytools.d/<tool>/files/
-  # bin/wine, where <tool> is the name config.vdf maps appid 438100 to
-  # (GE-Proton-rtsp). our proton comes from programs.steam.extraCompatPackages,
-  # so it's in the nix store surfaced via STEAM_EXTRA_COMPAT_TOOLS_PATHS, a path
-  # vrcx doesn't scan. symlink the real tool where vrcx expects it. steam finds
-  # proton via the env var regardless, so vrchat launching is unaffected. the
-  # 32-bit wine here runs because environment.ldso32 (see system.nix) provides
-  # /lib/ld-linux.so.2.
-  home.file.".local/share/Steam/compatibilitytools.d/GE-Proton-rtsp".source =
-    pkgs.proton-ge-rtsp-bin.steamcompattool;
-
   # link the monado runtime to openxr
   xdg.configFile."openxr/1/active_runtime.json".source = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
 

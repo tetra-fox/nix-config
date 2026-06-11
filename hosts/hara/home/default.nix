@@ -128,7 +128,7 @@
     # get the overlay, either wait for xrizer overlay-only support or try
     # pointing openvrpaths at opencomposite (already scaffolded in
     # modules/steam/home.nix), weighed against vrchat which is tuned for xrizer.
-    (vrcx.overrideAttrs (old: {
+    (vrcx-nightly.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [makeWrapper];
       postFixup =
         (old.postFixup or "")
