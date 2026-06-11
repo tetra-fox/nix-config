@@ -26,15 +26,15 @@
       };
     };
 
-    discord = {
+    vesktop = {
       Unit = {
-        Description = "Discord (COSMIC session)";
+        Description = "Vesktop (COSMIC session)";
         PartOf = ["cosmic-session.target"];
         After = ["cosmic-session.target"];
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
-        ExecStart = "${pkgs.discord}/bin/discord --start-minimized";
+        ExecStart = "${pkgs.vesktop}/bin/vesktop --start-minimized";
       };
       Install = {
         WantedBy = ["cosmic-session.target"];

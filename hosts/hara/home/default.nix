@@ -16,6 +16,7 @@
     modules.steam.home
     modules.stylix.home
     modules.surge-dm.home
+    modules.vencord.home
   ];
 
   xdg.mimeApps = {

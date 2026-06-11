@@ -36,7 +36,7 @@
     sops
 
     telegram-desktop
-    discord
+    # discord client comes from modules.vencord.home (vesktop + vencord)
     signal-desktop
     cinny-desktop
 
