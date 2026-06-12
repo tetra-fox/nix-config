@@ -18,6 +18,7 @@
     # provided by nix-community/nixpkgs-xr nixpkgs overlay
     # https://wiki.vronlinux.org/docs/vrchat/#recommended-proton
     extraCompatPackages = with pkgs; [
+      proton-ge-bin
       proton-ge-rtsp-bin
     ];
   };
