@@ -6,7 +6,13 @@
 }: let
   customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
 in {
-  home.sessionVariables.MOZ_LEGACY_PROFILES = "1"; # missing profile fix
+  home.sessionVariables = {
+    MOZ_LEGACY_PROFILES = "1"; # missing profile fix
+    # force the native wayland backend instead of relying on GDK_BACKEND
+    # ordering. needed so the fractional-scale workaround below takes the
+    # right code path on hyprland.
+    MOZ_ENABLE_WAYLAND = "1";
+  };
 
   programs.firefox = {
     enable = true;
@@ -33,6 +39,15 @@ in {
         "browser.ml.chat.shortcuts" = false;
 
         "devtools.jsonview.enabled" = false;
+
+        # extension toolbar popups (ublock, sponsorblock) render oversized and
+        # blurry on fractional display scale (monitors at 1.67). firefox's
+        # fractional-scale path computes the popup buffer at integer scale 1,
+        # then hyprland upscales it. disabling fractional makes firefox render
+        # at integer scale 2 and downscale to 1.67, which is sharp and correctly
+        # sized. main window was unaffected either way.
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=1849109
+        "widget.wayland.fractional-scale.enabled" = false;
 
         "media.eme.enabled" = true;
         "media.gmp-widevinecdm.enabled" = true;
