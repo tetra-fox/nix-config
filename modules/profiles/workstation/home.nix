@@ -66,6 +66,8 @@
     nodejs
     python3
 
+    davinci-resolve
+
     sqlite
     gh
     dbeaver-bin
