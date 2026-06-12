@@ -33,16 +33,16 @@ in {
 
   programs.elephant = {
     provider = {
-      "1password" = {
-        settings = {
-          vaults = [
-            "Private"
-            "mesa"
-            "fairlane"
-            "furryconvention2005"
-          ];
-        };
-      };
+      # "1password" = {
+      #   settings = {
+      #     vaults = [
+      #       "Private"
+      #       "mesa"
+      #       "fairlane"
+      #       "furryconvention2005"
+      #     ];
+      #   };
+      # };
       # fixes missing icon for websearch provider (applications-internet)
       websearch = {
         settings = {
