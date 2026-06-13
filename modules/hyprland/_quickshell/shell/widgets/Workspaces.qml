@@ -32,7 +32,7 @@ Item {
             if (wss[next].id === Hyprland.focusedWorkspace?.id)
                 return;
             root._lastScrollAt = now;
-            Hyprland.dispatch("workspace " + wss[next].id);
+            Hyprland.dispatch("hl.dsp.event([[workspace " + wss[next].id + "]])");
         }
     }
 

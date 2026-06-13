@@ -2,7 +2,6 @@ import qs.components
 import qs.dialogs
 import qs.widgets.system
 import qs.lib
-import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -30,7 +29,7 @@ Item {
     ConfirmDialog {
         id: dialog
         property string pendingCmd: ""
-        onConfirmed: Hyprland.dispatch(pendingCmd)
+        onConfirmed: Power.session(pendingCmd)
     }
 
     function confirm(title, body, actionLabel, cmd, icon) {

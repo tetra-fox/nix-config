@@ -29,7 +29,7 @@ ColumnLayout {
             icon: Icons.logout
             shortcutHint: "Super+Shift+Esc"
             Layout.fillWidth: true
-            onClicked: root.confirmRequested("Log out?", "Are you sure you want to log out?", "Log out", "exec hyprshutdown -p 'uwsm stop'", Icons.logout)
+            onClicked: root.confirmRequested("Log out?", "Are you sure you want to log out?", "Log out", Power.logout, Icons.logout)
         }
     }
 
@@ -46,7 +46,7 @@ ColumnLayout {
             text: "Reboot"
             icon: Icons.restart
             Layout.fillWidth: true
-            onClicked: root.confirmRequested("Reboot?", "Are you sure you want to reboot?", "Reboot", "exec hyprshutdown -p 'uwsm stop; systemctl reboot'", Icons.restart)
+            onClicked: root.confirmRequested("Reboot?", "Are you sure you want to reboot?", "Reboot", Power.reboot, Icons.restart)
         }
 
         MenuItem {
@@ -54,7 +54,7 @@ ColumnLayout {
             icon: Icons.power
             textColor: Theme.danger
             Layout.fillWidth: true
-            onClicked: root.confirmRequested("Shut down?", "Are you sure you want to shut down?", "Shut down", "exec hyprshutdown -p 'uwsm stop; systemctl poweroff'", Icons.power)
+            onClicked: root.confirmRequested("Shut down?", "Are you sure you want to shut down?", "Shut down", Power.shutdown, Icons.power)
         }
     }
 }

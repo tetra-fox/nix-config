@@ -92,7 +92,7 @@ Item {
     function focusWindow(): void {
         const cls = root.notif.desktopEntry || root.notif.appName;
         if (cls)
-            Hyprland.dispatch(`focuswindow class:${cls}`);    // qmllint disable unresolved-type
+            Hyprland.dispatch(`hl.dsp.event([[focuswindow class:${cls}]])`);    // qmllint disable unresolved-type
     }
 
     Timer {

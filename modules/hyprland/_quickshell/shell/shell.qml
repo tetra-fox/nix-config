@@ -86,7 +86,7 @@ ShellRoot {
         body: "Are you sure you want to log out?"
         actionLabel: "Log out"
         icon: Icons.logout
-        onConfirmed: Hyprland.dispatch("exec hyprshutdown -p 'uwsm stop'")
+        onConfirmed: Power.session(Power.logout)
     }
 
     // wrappers attach per-notif metadata (receive time, popup-suppression) that Quickshell's Notification doesn't carry

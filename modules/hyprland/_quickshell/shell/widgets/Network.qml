@@ -1,7 +1,7 @@
 import qs.components
 import qs.widgets.network
 import qs.lib
-import Quickshell.Hyprland
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
@@ -92,7 +92,7 @@ Item {
                 Layout.fillWidth: true
                 text: "More settings..."
                 onClicked: {
-                    Hyprland.dispatch("exec app2unit -- nm-connection-editor");
+                    Quickshell.execDetached(["app2unit", "--", "nm-connection-editor"]);
                     popup.visible = false;
                 }
             }

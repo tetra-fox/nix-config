@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import qs.components
 import qs.lib
-import Quickshell.Io
 import QtQuick
 
 // power buttons + inline confirm overlay for the lock screen
@@ -15,13 +14,13 @@ Item {
     property bool _confirming: false
     property string _confirmLabel: ""
     property string _confirmIcon: ""
-    property list<string> _confirmCmd: []
+    property var _confirmAction: null
     property int _confirmRemaining: 30
 
-    function _requestConfirm(label: string, icon: string, cmd: list<string>): void {
+    function _requestConfirm(label: string, icon: string, action: var): void {
         _confirmLabel = label;
         _confirmIcon = icon;
-        _confirmCmd = cmd;
+        _confirmAction = action;
         _confirmRemaining = 30;
         _confirming = true;
         confirmOverlay.forceActiveFocus();
@@ -33,12 +32,8 @@ Item {
     }
 
     function _executeConfirm(): void {
-        powerProc.command = _confirmCmd;
-        powerProc.running = true;
-    }
-
-    Process {
-        id: powerProc
+        if (root._confirmAction)
+            root._confirmAction();
     }
 
     Timer {
@@ -57,7 +52,7 @@ Item {
     component PowerButton: Column {
         property string icon
         property string label
-        property list<string> cmd
+        property var action
         spacing: 8
 
         Rectangle {
@@ -87,7 +82,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root._requestConfirm(label, icon, cmd)
+                onClicked: root._requestConfirm(label, icon, action)
             }
         }
 
@@ -109,19 +104,19 @@ Item {
         PowerButton {
             icon: Icons.sleep
             label: "Suspend"
-            cmd: ["systemctl", "suspend"]
+            action: () => Power.run("systemctl suspend")
         }
 
         PowerButton {
             icon: Icons.restart
             label: "Reboot"
-            cmd: ["systemctl", "reboot"]
+            action: () => Power.session(Power.reboot)
         }
 
         PowerButton {
             icon: Icons.power
             label: "Shut down"
-            cmd: ["systemctl", "poweroff"]
+            action: () => Power.session(Power.shutdown)
         }
     }
 

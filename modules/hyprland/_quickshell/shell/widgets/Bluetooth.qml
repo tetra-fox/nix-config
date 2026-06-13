@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import qs.components
 import qs.lib
+import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
@@ -285,7 +285,7 @@ Item {
                 visible: root.powered
                 text: "More settings..."
                 onClicked: {
-                    Hyprland.dispatch("exec app2unit -- overskride");
+                    Quickshell.execDetached(["app2unit", "--", "overskride"]);
                     popup.visible = false;
                 }
             }
