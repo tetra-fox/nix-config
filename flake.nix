@@ -106,6 +106,10 @@
       url = "github:tetra-fox/nurpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixcord = {
+      url = "github:FlameFlag/nixcord";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nowplaying = {
       url = "github:tetra-fox/nowplaying";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -247,6 +251,7 @@
                   inputs.cosmic-manager.homeManagerModules.cosmic-manager
                   inputs.betterfox-nix.homeModules.betterfox
                   inputs.catppuccin.homeModules.catppuccin
+                  inputs.nixcord.homeModules.default
                 ];
               }
             ];

@@ -26,21 +26,6 @@
       };
     };
 
-    vesktop = {
-      Unit = {
-        Description = "Vesktop (COSMIC session)";
-        PartOf = ["cosmic-session.target"];
-        After = ["cosmic-session.target"];
-      };
-      Service = {
-        ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
-        ExecStart = "${pkgs.vesktop}/bin/vesktop --start-minimized";
-      };
-      Install = {
-        WantedBy = ["cosmic-session.target"];
-      };
-    };
-
     telegram = {
       Unit = {
         Description = "Telegram (COSMIC session)";

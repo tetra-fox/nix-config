@@ -1,6 +1,6 @@
 hl.on("hyprland.start", function()
   hl.exec_cmd("app2unit -- Telegram -startintray")
-  hl.exec_cmd("app2unit -- vesktop --start-minimized")
+  hl.exec_cmd("app2unit -- discord --start-minimized")
   hl.exec_cmd("app2unit -- firefox")
   hl.exec_cmd("app2unit -- vrcx --no-sandbox --startup")
 end)

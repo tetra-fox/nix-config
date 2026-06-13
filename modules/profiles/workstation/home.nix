@@ -21,6 +21,7 @@
     modules.vscode.home
     modules.walker.home
     modules.yazi.home
+    modules.discord.home
   ];
 
   my.git.identity = {
@@ -36,7 +37,6 @@
     sops
 
     telegram-desktop
-    # discord client comes from modules.vencord.home (vesktop + vencord)
     signal-desktop
     cinny-desktop
 
