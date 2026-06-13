@@ -3,7 +3,8 @@ hl.config({
     kb_layout = "us",
     numlock_by_default = true,
 
-    follow_mouse = 2, -- scroll in unfocused windows
+    follow_mouse = 2,                -- scroll in unfocused windows
+    float_switch_override_focus = 0, -- dont steal my shit
     sensitivity = -0.5,
   },
 
