@@ -15,11 +15,15 @@
   # wayvr is OpenXR-native so its bindings live in its own config file
   xdg.configFile."wayvr/openxr_actions.json5".source = ./_wayvr/openxr_actions.json5;
 
-  # vrchat dumps screenshots inside the wine prefix by default. symlink
-  # Pictures/VRChat to ~/Pictures/VRChat so they land somewhere
-  # reachable. mkOutOfStoreSymlink because the target is mutable user data
-  home.file.".local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Pictures/VRChat".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/Pictures/VRChat";
+  # vrchat dumps screenshots inside the wine prefix. symlink that dir to
+  # ~/Pictures/VRChat so they land somewhere reachable
+  systemd.user.tmpfiles.rules = let
+    target = "${config.home.homeDirectory}/Pictures/VRChat";
+    link = "${config.home.homeDirectory}/.local/share/Steam/steamapps/compatdata/438100/pfx/drive_c/users/steamuser/Pictures/VRChat";
+  in [
+    "d ${target} 0755 - - - -"
+    "L+ ${link} - - - - ${target}"
+  ];
 
   # link the monado runtime to openxr
   xdg.configFile."openxr/1/active_runtime.json".source = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
