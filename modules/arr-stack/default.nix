@@ -87,6 +87,12 @@
       enable = true;
       vpnNamespace = vpnNs;
     };
+    # the arrs create show/season dirs in the shared media library; the servarr
+    # nixos modules hardcode UMask 0022, which makes those dirs group-unwritable
+    # so a later import by another media-group service (or the same one) hits
+    # UnauthorizedAccessException. mkForce 0002 keeps dirs 0775 and files 0664 so
+    # the whole media group can collaborate on the library
+    serviceConfig.UMask = lib.mkForce "0002";
   };
 
   wgConfTemplate = ''
