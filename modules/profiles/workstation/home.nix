@@ -36,6 +36,8 @@
   home.packages = with pkgs; [
     sops
 
+    chromium
+
     telegram-desktop
     signal-desktop
     cinny-desktop
