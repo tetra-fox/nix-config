@@ -22,6 +22,13 @@
     enable = true;
     defaultApplications =
       (lib.genAttrs [
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+        "x-scheme-handler/about"
+        "x-scheme-handler/unknown"
+        "text/html"
+      ] (_: "firefox.desktop"))
+      // (lib.genAttrs [
         "audio/mpeg"
         "audio/mp4"
         "audio/wav"
