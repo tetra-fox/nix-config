@@ -16,7 +16,7 @@
       automatic = true;
       dates = "weekly";
       persistent = true;
-      options = "--delete-generations +8";
+      options = "--delete-older-than 7d";
     };
     # periodic store dedupe
     optimise = {
