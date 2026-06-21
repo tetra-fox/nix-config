@@ -26,6 +26,7 @@
     ];
     defaultGateway = "192.168.20.1";
     nameservers = ["192.168.10.53"];
+    search = ["mesa.tetra.cool"];
   };
 
   networking.firewall.allowedUDPPorts = [51820];
