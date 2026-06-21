@@ -55,6 +55,7 @@ in {
           port = 8080;
           cache_limit = "1G";
           web_dir = "Glitter";
+          permissions = "775";
           language = "en";
           inet_exposure = "none";
           queue_limit = 20;
