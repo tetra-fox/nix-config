@@ -45,6 +45,8 @@
     };
   };
 
+  home.file."${config.programs.nixcord.discord.configDir}/settings.json".force = true;
+
   systemd.user.services.discord = {
     Unit = {
       Description = "Discord (COSMIC session)";
