@@ -9,6 +9,8 @@
     modules.avahi.system
   ];
 
+  lab.avahi.publish = true;
+
   environment = {
     systemPackages = with pkgs; [tmux];
     variables.BROWSER = "echo";

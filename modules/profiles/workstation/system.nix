@@ -7,6 +7,7 @@
   imports = [
     modules.profiles.base.system
 
+    modules.avahi.system
     modules.bluetooth.system
     modules.docker.system
     modules.obs-studio.system
