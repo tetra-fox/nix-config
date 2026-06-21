@@ -1,21 +1,6 @@
-{pkgs, ...}: let
-  # KF6's kservice no longer ships applications.menu; plasma-workspace ships
-  # plasma-applications.menu, so prefix-resolve via XDG_MENU_PREFIX.
-  dolphin-wrapped = pkgs.symlinkJoin {
-    name = "dolphin-wrapped";
-    paths = [pkgs.kdePackages.dolphin];
-    nativeBuildInputs = [pkgs.makeWrapper];
-    postBuild = ''
-      rm $out/bin/dolphin
-      makeWrapper ${pkgs.kdePackages.dolphin}/bin/dolphin $out/bin/dolphin \
-        --set XDG_MENU_PREFIX "plasma-" \
-        --set XDG_CONFIG_DIRS "${pkgs.kdePackages.plasma-workspace}/etc/xdg:$XDG_CONFIG_DIRS" \
-        --run "${pkgs.kdePackages.kservice}/bin/kbuildsycoca6 --noincremental ${pkgs.kdePackages.plasma-workspace}/etc/xdg/menus/plasma-applications.menu"
-    '';
-  };
-in {
+{pkgs, ...}: {
   home.packages =
-    [dolphin-wrapped]
+    [pkgs.kdePackages.dolphin]
     ++ (with pkgs.kdePackages; [
       qtsvg
       kio # needed since 25.11
