@@ -6,8 +6,8 @@
     userSettings = {
       "[svelte]" = {
         "editor.defaultFormatter" = "svelte.svelte-vscode";
-        "svelte.enable-ts-plugin" = true;
       };
+      "svelte.enable-ts-plugin" = true;
     };
   };
 }
