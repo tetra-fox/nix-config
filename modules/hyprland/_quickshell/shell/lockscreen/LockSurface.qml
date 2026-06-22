@@ -233,7 +233,7 @@ WlSessionLockSurface {
                         target: spinnerIcon
                         from: 0
                         to: 360
-                        duration: 900
+                        duration: Theme.animSpin
                         loops: Animation.Infinite
                         running: root.pam.authenticating
                     }

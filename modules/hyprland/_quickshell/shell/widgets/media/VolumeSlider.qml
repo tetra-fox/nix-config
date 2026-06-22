@@ -24,20 +24,14 @@ RowLayout {
 
     readonly property real _volume: node?.audio?.volume ?? 0
     readonly property bool _muted: node?.audio?.muted ?? false
-    readonly property bool _locked: node && node.properties && node.properties["channelmix.lock-volumes"] === "true"
+    readonly property bool _locked: Audio.locked(node)
 
     readonly property string _icon: {
         if (root._locked)
             return Icons.lock;
         if (root.icon)
             return root.icon;
-        if (root._muted)
-            return Icons.volumeOff;
-        if (root._volume >= 0.5)
-            return Icons.volumeUp;
-        if (root._volume >= 0.01)
-            return Icons.volumeDown;
-        return Icons.volumeMute;
+        return Icons.forVolume(root._volume, root._muted);
     }
 
     readonly property color _iconColor: root._muted && !root._locked ? Theme.danger : (root.compact ? Theme.textInactive : Theme.textPrimary)

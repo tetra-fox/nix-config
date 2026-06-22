@@ -29,25 +29,15 @@ Item {
     readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
 
-    // channelmix.lock-volumes disables software volume/mute entirely on the
-    // node; reflect that so the slider doesn't look interactive when it isn't
-    readonly property bool sinkLocked: sink && sink.properties && sink.properties["channelmix.lock-volumes"] === "true"
-    readonly property bool sourceLocked: source && source.properties && source.properties["channelmix.lock-volumes"] === "true"
+    readonly property bool sinkLocked: Audio.locked(sink)
+    readonly property bool sourceLocked: Audio.locked(source)
 
     readonly property list<PwNode> sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio !== null)
     readonly property list<PwNode> sources: Pipewire.nodes.values.filter(n => !n.isSink && !n.isStream && n.audio !== null)
 
     IconButton {
         id: btn
-        icon: {
-            if (root.muted)
-                return Icons.volumeOff;
-            if (root.volume >= 0.5)
-                return Icons.volumeUp;
-            if (root.volume >= 0.01)
-                return Icons.volumeDown;
-            return Icons.volumeMute;
-        }
+        icon: Icons.forVolume(root.volume, root.muted)
         iconColor: root.muted ? Theme.danger : Theme.textPrimary
         isOpen: popup.visible
         onClicked: mouse => {
@@ -63,7 +53,7 @@ Item {
         panelWindow: root.panelWindow
         anchorItem: btn
 
-        contentWidth: 320
+        contentWidth: Theme.popupWidth
         contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         ColumnLayout {

@@ -169,14 +169,14 @@ Item {
                         target: playerContent
                         property: "opacity"
                         to: 0
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
                         to: root._switchDir * -30
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
                 }
@@ -193,14 +193,14 @@ Item {
                         target: playerContent
                         property: "opacity"
                         to: 1
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.OutQuad
                     }
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
                         to: 0
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.OutQuad
                     }
                 }

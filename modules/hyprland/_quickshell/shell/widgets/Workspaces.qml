@@ -8,6 +8,9 @@ Item {
 
     required property var screen
 
+    // workspaces on this monitor, left-to-right; shared by the scroll handler and the pills
+    readonly property var monitorWorkspaces: Hyprland.workspaces.values.filter(ws => ws.monitor?.name === root.screen.name).sort((a, b) => a.id - b.id)
+
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
@@ -23,7 +26,7 @@ Item {
             const now = Date.now();
             if (now - root._lastScrollAt < root._scrollCooldownMs)
                 return;
-            const wss = Hyprland.workspaces.values.filter(ws => ws.monitor?.name === root.screen.name).sort((a, b) => a.id - b.id);
+            const wss = root.monitorWorkspaces;
             if (wss.length < 2)
                 return;
             const curIdx = wss.findIndex(ws => ws.id === Hyprland.focusedWorkspace?.id);
@@ -32,7 +35,7 @@ Item {
             if (wss[next].id === Hyprland.focusedWorkspace?.id)
                 return;
             root._lastScrollAt = now;
-            Hyprland.dispatch("hl.dsp.event([[workspace " + wss[next].id + "]])");
+            Hypr.switchWorkspace(wss[next].id);
         }
     }
 
@@ -42,7 +45,7 @@ Item {
         spacing: Theme.workspacePillSpacing
 
         Repeater {
-            model: Hyprland.workspaces.values.filter(ws => ws.monitor?.name === root.screen.name).sort((a, b) => a.id - b.id)
+            model: root.monitorWorkspaces
 
             delegate: WorkspacePill {
                 required property var modelData

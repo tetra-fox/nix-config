@@ -16,7 +16,7 @@ PopupWindow {
     readonly property var groups: {
         const map = {};
         for (const w of root.notifList) {
-            const key = (w.notif?.appName ?? "") || "Unknown";
+            const key = NotifState.groupKey(w);
             if (!map[key])
                 map[key] = [];
             map[key].push(w);
@@ -40,15 +40,11 @@ PopupWindow {
     animateSize: true
 
     function clearAll(): void {
-        const notifs = root.notifList.map(w => w.notif);
-        for (const n of notifs)
-            n.dismiss();
+        NotifState.dismissAll(root.notifList);
     }
 
     function clearApp(appName: string): void {
-        const notifs = root.notifList.filter(w => ((w.notif?.appName ?? "") || "Unknown") === appName).map(w => w.notif);
-        for (const n of notifs)
-            n.dismiss();
+        NotifState.dismissAll(root.notifList.filter(w => NotifState.groupKey(w) === appName));
     }
 
     ColumnLayout {

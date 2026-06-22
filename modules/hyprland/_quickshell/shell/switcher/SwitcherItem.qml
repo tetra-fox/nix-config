@@ -16,7 +16,7 @@ Item {
         return Apps.entry(toplevel?.appId);
     }
 
-    implicitHeight: 32
+    implicitHeight: Theme.popupItemHeight
     implicitWidth: row.implicitWidth + Theme.pillHPad * 2
 
     Rectangle {
@@ -45,7 +45,7 @@ Item {
             leftMargin: Theme.pillHPad
             rightMargin: Theme.pillHPad
         }
-        spacing: 8
+        spacing: Theme.buttonGap
 
         // accent bar for selected item
         Rectangle {
@@ -56,10 +56,10 @@ Item {
         }
 
         Image {
-            Layout.preferredWidth: 18
-            Layout.preferredHeight: 18
-            sourceSize.width: 18
-            sourceSize.height: 18
+            Layout.preferredWidth: Theme.fontIconLg
+            Layout.preferredHeight: Theme.fontIconLg
+            sourceSize.width: Theme.fontIconLg
+            sourceSize.height: Theme.fontIconLg
             asynchronous: true
             visible: source.toString().length > 0
             source: {

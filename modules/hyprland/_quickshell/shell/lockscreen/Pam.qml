@@ -21,7 +21,15 @@ Item {
         _password = password;
         authenticating = true;
         failed = false;
-        _pam.start();
+        // start() returns false if the conversation never opens; in that case neither
+        // completed nor the message handler ever fires, so recover here or the field
+        // stays disabled forever (inputEnabled binds to !authenticating)
+        if (!_pam.start()) {
+            authenticating = false;
+            failed = true;
+            _password = "";
+            shake();
+        }
     }
 
     property string _password: ""

@@ -96,9 +96,7 @@ ShellRoot {
     readonly property bool popupsEnabled: !NotifState.dnd && !root.inFullscreen
 
     function clearAllNotifs(): void {
-        const notifs = root.notifList.map(w => w.notif);
-        for (const n of notifs)
-            n.dismiss();
+        NotifState.dismissAll(root.notifList);
     }
 
     IpcHandler {

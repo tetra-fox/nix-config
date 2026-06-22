@@ -30,11 +30,6 @@ PanelWindow { // qmllint disable uncreatable-type
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusiveZone: -1
 
-    anchors.top: false
-    anchors.bottom: false
-    anchors.left: false
-    anchors.right: false
-
     implicitWidth: panel.width
     implicitHeight: panel.height
 
@@ -105,7 +100,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "opacity"
                 to: 1.0
-                duration: 180
+                duration: Theme.animSettle
                 easing.type: Easing.OutQuad
             }
         }

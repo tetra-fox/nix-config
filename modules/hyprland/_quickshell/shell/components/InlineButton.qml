@@ -13,9 +13,9 @@ Rectangle {
     implicitWidth: label.implicitWidth + 12
     implicitHeight: label.implicitHeight + 6
     radius: Theme.radiusSm
-    color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.white, 0.06)
+    color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.fillFaint
     border.width: 1
-    border.color: area.containsMouse ? Theme.withAlpha(root.accentColor, 0.3) : Theme.withAlpha(Theme.white, 0.06)
+    border.color: area.containsMouse ? Theme.withAlpha(root.accentColor, 0.3) : Theme.fillFaint
     Behavior on color {
         ColorAnimation {
             duration: Theme.animFast

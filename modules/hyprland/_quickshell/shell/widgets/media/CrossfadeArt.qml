@@ -9,7 +9,7 @@ Rectangle {
     property int slideDir: 1 // 1 = forward (slide left), -1 = backward (slide right)
     readonly property bool ready: artA.status === Image.Ready || artB.status === Image.Ready
 
-    color: Theme.withAlpha(Theme.white, 0.06)
+    color: Theme.fillFaint
     clip: true
 
     property bool _showingA: true

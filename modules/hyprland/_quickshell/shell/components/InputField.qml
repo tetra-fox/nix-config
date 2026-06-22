@@ -23,9 +23,9 @@ Rectangle {
 
     property bool _revealed: false
 
-    implicitHeight: 32
+    implicitHeight: Theme.popupItemHeight
     radius: Theme.radiusMd
-    color: "#10ffffff"
+    color: Theme.fillFaint
     border.width: 1
     border.color: root.error ? Theme.danger : input.activeFocus ? Theme.accent : Theme.panelBorder
 

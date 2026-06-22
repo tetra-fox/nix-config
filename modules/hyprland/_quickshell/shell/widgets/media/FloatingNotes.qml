@@ -64,8 +64,7 @@ Item {
 
         Text {
             id: fnLabel
-            // material symbols music_note glyph
-            text: "\uE405"
+            text: Icons.musicNote
             font.family: Theme.fontIconFamily
             font.pixelSize: 10
             font.variableAxes: Theme.fontIconAxes

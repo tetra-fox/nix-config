@@ -18,6 +18,8 @@ QtObject {
     readonly property string _rawAlbum: player?.trackAlbum ?? ""
     readonly property string _rawArtUrl: player?.trackArtUrl ?? ""
 
+    // these initializers are a one-shot seed; the on_RawXChanged handlers and
+    // _clearDelay take over driving them, so the binding is intentionally clobbered
     property string title: _rawTitle
     property string artist: _rawArtist
     property string album: _rawAlbum

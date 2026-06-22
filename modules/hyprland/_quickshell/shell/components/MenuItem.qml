@@ -21,7 +21,7 @@ Item {
         anchors.centerIn: parent
         width: parent.width - 16
         height: 1
-        color: Theme.inactiveBg
+        color: Theme.separatorBg
     }
 
     Rectangle {
@@ -32,7 +32,7 @@ Item {
             rightMargin: 4
         }
         radius: Theme.radiusMd
-        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : "transparent"
+        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast

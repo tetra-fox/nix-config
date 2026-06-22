@@ -17,7 +17,7 @@ Rectangle {
     color: {
         if (root._hasAccent)
             return area.pressed ? Qt.darker(root.accentColor, 1.3) : area.containsMouse ? root.accentColor : Theme.withAlpha(root.accentColor, 0.75);
-        return area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.hoverBg, 0);
+        return area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg;
     }
     border.width: root.bordered ? 1 : 0
     border.color: Theme.panelBorder

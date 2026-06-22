@@ -11,16 +11,15 @@ Item {
     implicitWidth: timeTextProp.implicitWidth + Theme.iconPadH
     implicitHeight: timeTextProp.implicitHeight + Theme.iconPadV
 
+    // local 1s tick; the Time singleton ticks at 30s so it can't drive the seconds field
+    property double now: Date.now()
+
     Timer {
         interval: 1000
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.tick()
-    }
-
-    function tick() {
-        timeTextProp.text = Qt.formatDateTime(new Date(), "ddd dd MMM • HH:mm:ss");
+        onTriggered: root.now = Date.now()
     }
 
     Rectangle {
@@ -34,7 +33,7 @@ Item {
                 return Theme.openBg;
             if (area.containsMouse)
                 return Theme.hoverBg;
-            return Theme.withAlpha(Theme.hoverBg, 0);
+            return Theme.idleBg;
         }
         Behavior on color {
             ColorAnimation {
@@ -47,7 +46,7 @@ Item {
     Text {
         id: timeTextProp
         anchors.centerIn: parent
-        text: Qt.formatDateTime(new Date(), "ddd dd MMM • HH:mm:ss")
+        text: Qt.formatDateTime(new Date(root.now), "ddd dd MMM • HH:mm:ss")
         color: Theme.textPrimary
         font.pixelSize: Theme.fontBase
         font.family: Theme.fontFamily

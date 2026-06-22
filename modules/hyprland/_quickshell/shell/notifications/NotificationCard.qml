@@ -15,39 +15,16 @@ Item {
     required property var wrapper
     readonly property Notification notif: wrapper.notif
 
-    readonly property color accentColor: {
-        if (notif.urgency === NotificationUrgency.Critical)
-            return Theme.colorRed;
-        if (notif.urgency === NotificationUrgency.Low)
-            return Theme.colorYellow;
-        return Theme.accent;
-    }
-
-    // fall back to appName when summary is empty (some servers/apps send body-only notifs);
+    readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
+    readonly property string title: NotifState.title(notif)
     // hide the appName subtitle when it's already used as the title to avoid duplication
-    readonly property string title: notif.summary !== "" ? notif.summary : notif.appName
     readonly property bool showAppNameSubtitle: notif.appName !== "" && notif.summary !== ""
-
-    // chromium-family browsers prepend an <a> line with the originating site URL to the body,
-    // duplicating appName. strip it. matches Ambxst's processNotificationBody helper.
-    function _cleanBody(body: string, appName: string): string {
-        if (!body || !appName)
-            return body || "";
-        const lower = appName.toLowerCase();
-        const isChromium = ["brave", "chrome", "chromium", "vivaldi", "opera", "microsoft edge"].some(n => lower.includes(n));
-        if (!isChromium)
-            return body;
-        const lines = body.split("\n\n");
-        if (lines.length > 1 && lines[0].startsWith("<a"))
-            return lines.slice(1).join("\n\n");
-        return body;
-    }
 
     // _hiding drives the collapse+fade; _closing guards against double-trigger (timer + click)
     property bool _hiding: false
     property bool _closing: false
 
-    implicitWidth: 320
+    implicitWidth: Theme.popupWidth
     implicitHeight: _hiding ? 0 : card.height
     opacity: _hiding ? 0 : 1
     clip: true
@@ -60,7 +37,7 @@ Item {
     }
     Behavior on opacity {
         NumberAnimation {
-            duration: 150
+            duration: Theme.animSlow
             easing.type: Easing.InQuad
         }
     }
@@ -73,12 +50,12 @@ Item {
             PropertyAction {
                 target: card
                 property: "scale"
-                value: 0.82
+                value: Theme.popupOpenScale
             }
             PropertyAction {
                 target: slideX
                 property: "x"
-                value: 16
+                value: Theme.popupSlideOffset
             }
         }
         ParallelAnimation {
@@ -86,14 +63,14 @@ Item {
                 target: card
                 property: "scale"
                 to: 1.0
-                duration: 280
+                duration: Theme.animPopupIn
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
                 target: slideX
                 property: "x"
                 to: 0
-                duration: 200
+                duration: Theme.animPopupSlide
                 easing.type: Easing.OutExpo
             }
         }
@@ -257,7 +234,7 @@ Item {
             Text {
                 id: bodyText
                 Layout.fillWidth: true
-                text: root._cleanBody(root.notif.body, root.notif.appName)
+                text: NotifState.cleanBody(root.notif.body, root.notif.appName)
                 color: Theme.textSecondary
                 font.pixelSize: Theme.fontSm
                 font.family: Theme.fontFamily

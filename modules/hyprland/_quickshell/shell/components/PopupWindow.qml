@@ -25,7 +25,6 @@ PanelWindow { // qmllint disable uncreatable-type
     screen: panelWindow?.screen
     anchors.top: true
     anchors.left: true
-    margins.top: 0    // qmllint disable missing-property unqualified unresolved-type
     margins.left: _margin    // qmllint disable missing-property unqualified
     exclusiveZone: 0
 
@@ -68,12 +67,12 @@ PanelWindow { // qmllint disable uncreatable-type
             PropertyAction {
                 target: backdrop
                 property: "scale"
-                value: 0.82
+                value: Theme.popupOpenScale
             }
             PropertyAction {
                 target: slideY
                 property: "y"
-                value: -16
+                value: -Theme.popupSlideOffset
             }
         }
         ParallelAnimation {
@@ -81,14 +80,14 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: backdrop
                 property: "scale"
                 to: 1.0
-                duration: 280
+                duration: Theme.animPopupIn
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
                 target: slideY
                 property: "y"
                 to: 0
-                duration: 200
+                duration: Theme.animPopupSlide
                 easing.type: Easing.OutExpo
             }
         }

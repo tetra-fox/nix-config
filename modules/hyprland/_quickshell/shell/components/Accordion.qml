@@ -20,7 +20,7 @@ ColumnLayout {
         implicitHeight: headerRow.implicitHeight + 14
         radius: Theme.radiusMd
         visible: root.label !== ""
-        color: headerHover.containsMouse ? Theme.hoverBg : "transparent"
+        color: headerHover.containsMouse ? Theme.hoverBg : Theme.idleBg
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast
@@ -45,6 +45,7 @@ ColumnLayout {
                 font.family: Theme.fontFamily
             }
 
+            // empty-but-visible fills the slack between label and chevron when value is ""
             Text {
                 Layout.fillWidth: true
                 text: root.value
@@ -52,47 +53,24 @@ ColumnLayout {
                 font.pixelSize: Theme.fontMd
                 font.family: Theme.fontFamily
                 elide: Text.ElideRight
-                visible: root.value !== ""
             }
 
-            Item {
-                Layout.fillWidth: true
-                visible: root.value === ""
-            }
-
-            Canvas {
+            Text {
                 id: spinner
-                width: Theme.fontSm
-                height: Theme.fontSm
+                text: Icons.progressActivity
+                color: Theme.textInactive
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontIconFamily
+                font.variableAxes: Theme.fontIconAxes
                 visible: root.loading
-                property real angle: 0
 
-                RotationAnimation on angle {
-                    loops: Animation.Infinite
+                RotationAnimator {
+                    target: spinner
                     from: 0
                     to: 360
-                    duration: 800
+                    duration: Theme.animSpin
+                    loops: Animation.Infinite
                     running: spinner.visible
-                }
-
-                onAngleChanged: requestPaint()
-                onPaint: {
-                    const ctx = getContext("2d");
-                    // 24 = material icon viewport; scale canvas to match actual size
-                    const s = width / 24;
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.save();
-                    ctx.scale(s, s);
-                    ctx.translate(12, 12);
-                    ctx.rotate(angle * Math.PI / 180);
-                    ctx.translate(-12, -12);
-                    ctx.beginPath();
-                    ctx.arc(12, 12, 8, 0.75 * Math.PI, 0.5 * Math.PI, false);
-                    ctx.strokeStyle = Theme.textInactive;
-                    ctx.lineWidth = 2;
-                    ctx.lineCap = "round";
-                    ctx.stroke();
-                    ctx.restore();
                 }
             }
 

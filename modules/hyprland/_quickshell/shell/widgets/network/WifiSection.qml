@@ -157,7 +157,8 @@ Item {
 
     Connections {
         target: root.wifiDevice?.networks ?? null
-        function onCountChanged() {
+        // networks is an UntypedObjectModel, whose only change signal is valuesChanged
+        function onValuesChanged() {
             root.refreshNetworks();
         }
     }

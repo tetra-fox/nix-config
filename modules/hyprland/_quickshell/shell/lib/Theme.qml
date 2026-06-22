@@ -5,7 +5,7 @@ import QtQuick
 // design tokens
 QtObject {
 
-    // ── typography ───────────────────────────────────────────────────────────
+    // typography
     readonly property string fontFamily: "monospace"
     readonly property string fontIconFamily: "Material Symbols Rounded Filled"
     // FILL=1 baked into font (see quickshell/default.nix)
@@ -21,7 +21,7 @@ QtObject {
     readonly property int fontIcon: 16
     readonly property int fontIconLg: 18
 
-    // ── colors ───────────────────────────────────────────────────────────────
+    // colors
     readonly property color textActive: "#ffffff"
     readonly property color textPrimary: "#dddddd"
     readonly property color textSecondary: "#cfcfcf"
@@ -35,6 +35,11 @@ QtObject {
     readonly property color openBg: withAlpha(accent, 0.15)
     readonly property color inactiveBg: "#e02e2e2e"
     readonly property color separatorBg: "#3a3a3a"
+    // transparent-white resting state for hover ladders; fades to hoverBg without
+    // walking through grey the way "transparent" (transparent-black) would
+    readonly property color idleBg: withAlpha(hoverBg, 0)
+    // faint resting fill for inset controls (input fields, inline buttons)
+    readonly property color fillFaint: withAlpha(white, 0.06)
 
     function withAlpha(color, alpha) {
         return Qt.rgba(color.r, color.g, color.b, alpha);
@@ -52,12 +57,12 @@ QtObject {
     readonly property color accent: colorPink
     readonly property color danger: colorRed
 
-    // ── shape ────────────────────────────────────────────────────────────────
+    // shape
     readonly property int radiusSm: 3
     readonly property int radiusMd: 4
     readonly property int radiusLg: 6
 
-    // ── layout ───────────────────────────────────────────────────────────────
+    // layout
     readonly property real barInactiveOpacity: 0.3
     readonly property int barHeight: 30
     readonly property int barVPad: 4
@@ -75,9 +80,21 @@ QtObject {
     readonly property int buttonGap: 8
     readonly property int popupItemHeight: 32
     readonly property int popupSeparatorHeight: 9
+    readonly property int popupWidth: 320
 
-    // ── animation ────────────────────────────────────────────────────────────
+    // animation
     readonly property int animFast: 80
     readonly property int animNormal: 120
     readonly property int animSlow: 150
+    // slowest settle, deliberately separate from animSlow so retuning the feel
+    // of sliders/dialogs doesn't drag the generic slow transitions with it
+    readonly property int animSettle: 180
+    // full revolution for the indeterminate spinner glyph
+    readonly property int animSpin: 900
+
+    // shared popup/notification open animation: scale-up + slide-in
+    readonly property int animPopupIn: 280
+    readonly property int animPopupSlide: 200
+    readonly property real popupOpenScale: 0.82
+    readonly property int popupSlideOffset: 16
 }

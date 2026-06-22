@@ -17,29 +17,8 @@ Item {
     property bool expanded: false
     property bool _dismissing: false
 
-    readonly property color accentColor: {
-        if (notif.urgency === NotificationUrgency.Critical)
-            return Theme.colorRed;
-        if (notif.urgency === NotificationUrgency.Low)
-            return Theme.colorYellow;
-        return Theme.accent;
-    }
-
-    // mirrors NotificationCard: appName fallback when summary empty + chromium body cleanup
-    readonly property string title: notif.summary !== "" ? notif.summary : notif.appName
-
-    function _cleanBody(body: string, appName: string): string {
-        if (!body || !appName)
-            return body || "";
-        const lower = appName.toLowerCase();
-        const isChromium = ["brave", "chrome", "chromium", "vivaldi", "opera", "microsoft edge"].some(n => lower.includes(n));
-        if (!isChromium)
-            return body;
-        const lines = body.split("\n\n");
-        if (lines.length > 1 && lines[0].startsWith("<a"))
-            return lines.slice(1).join("\n\n");
-        return body;
-    }
+    readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
+    readonly property string title: NotifState.title(notif)
 
     implicitHeight: _dismissing ? 0 : card.height
     opacity: _dismissing ? 0 : 1
@@ -55,13 +34,13 @@ Item {
     }
     Behavior on opacity {
         NumberAnimation {
-            duration: 150
+            duration: Theme.animSlow
             easing.type: Easing.OutQuad
         }
     }
     Behavior on scale {
         NumberAnimation {
-            duration: 150
+            duration: Theme.animSlow
             easing.type: Easing.OutQuad
         }
     }
@@ -90,7 +69,11 @@ Item {
     }
 
     function focusWindow(): void {
-        const cls = root.notif.desktopEntry || root.notif.appName;
+        const raw = root.notif.desktopEntry || root.notif.appName;
+        // desktopEntry/appName are untrusted dbus Notify fields interpolated into a lua
+        // long-bracket string that hyprland evaluates. strip the [[ ]] delimiters and
+        // newlines so a hostile appName can't close the bracket early and inject lua.
+        const cls = raw.replace(/\]\]|\[\[|[\r\n]/g, "");
         if (cls)
             Hyprland.dispatch(`hl.dsp.event([[focuswindow class:${cls}]])`);    // qmllint disable unresolved-type
     }
@@ -208,7 +191,7 @@ Item {
                     Text {
                         id: bodyText
                         Layout.fillWidth: true
-                        text: root._cleanBody(root.notif.body, root.notif.appName)
+                        text: NotifState.cleanBody(root.notif.body, root.notif.appName)
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontXs
                         font.family: Theme.fontFamily
@@ -244,7 +227,7 @@ Item {
                     id: replyInput
                     Layout.fillWidth: true
                     Layout.preferredHeight: 26
-                    placeholderText: (root.notif?.inlineReplyPlaceholder ?? "") || "Reply…"    // qmllint disable unresolved-type
+                    placeholderText: (root.notif?.inlineReplyPlaceholder ?? "") || "Reply..."    // qmllint disable unresolved-type
 
                     function submit(): void {
                         if (text === "")

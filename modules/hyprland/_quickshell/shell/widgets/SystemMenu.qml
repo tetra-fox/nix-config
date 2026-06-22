@@ -47,7 +47,7 @@ Item {
         anchorItem: btn
         panelWindow: root.panelWindow
 
-        contentWidth: 320
+        contentWidth: Theme.popupWidth
         contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         ColumnLayout {

@@ -24,7 +24,7 @@ Item {
         color: {
             if (root.highlight)
                 return area.pressed ? Qt.darker(Theme.accent, 1.3) : area.containsMouse ? Qt.lighter(Theme.accent, 1.2) : Theme.accent;
-            return area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : "transparent";
+            return area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg;
         }
         Behavior on color {
             ColorAnimation {

@@ -7,6 +7,9 @@ ColumnLayout {
 
     property var player: null
 
+    // position is only writable when both are true (mpris player.hpp)
+    readonly property bool seekable: (root.player?.canSeek ?? false) && (root.player?.positionSupported ?? false)
+
     Layout.fillWidth: true
     spacing: 4
 
@@ -69,8 +72,8 @@ ColumnLayout {
                 bottomMargin: -6
             }
             hoverEnabled: true
-            cursorShape: (root.player?.canSeek ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
-            enabled: root.player?.canSeek ?? false
+            cursorShape: root.seekable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            enabled: root.seekable
             function seekTo(mouseX: real) {
                 const fraction = Math.max(0, Math.min(1, mouseX / seekTrack.width));
                 const len = root.player?.length ?? 0;

@@ -81,24 +81,42 @@ Item {
     onIfnameChanged: reset()
 
     property int _pendingReloads: 0
+    // set if either read failed this tick (interface vanished mid-poll), so we don't
+    // compute a rate from a partial pair; a FileView fires loaded OR loadFailed, never both
+    property bool _tickFailed: false
 
     FileView {
         id: rxFile
         path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/statistics/rx_bytes" : ""
-        onLoaded: root._onStatsLoaded()
+        onLoaded: root._settle()
+        onLoadFailed: {
+            root._tickFailed = true;
+            root._settle();
+        }
     }
 
     FileView {
         id: txFile
         path: root.ifname !== "" ? "/sys/class/net/" + root.ifname + "/statistics/tx_bytes" : ""
-        onLoaded: root._onStatsLoaded()
+        onLoaded: root._settle()
+        onLoadFailed: {
+            root._tickFailed = true;
+            root._settle();
+        }
     }
 
     // waits for both rx and tx file reads to finish before computing rates
-    function _onStatsLoaded() {
+    function _settle() {
         if (--_pendingReloads > 0)
             return;
-        _pendingReloads = 0; // clamp
+        _pendingReloads = 0;
+
+        // a failed read leaves no usable byte count; skip this tick rather than freeze
+        // the barrier (the timer reseeds _pendingReloads on the next tick)
+        if (_tickFailed) {
+            _tickFailed = false;
+            return;
+        }
 
         const now = Date.now();
         const rx = parseInt(rxFile.text()) || 0;
@@ -140,6 +158,7 @@ Item {
         running: root.polling && root.ifname !== ""
         repeat: true
         onTriggered: {
+            root._tickFailed = false;
             root._pendingReloads = 2;
             rxFile.reload();
             txFile.reload();

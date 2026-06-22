@@ -15,13 +15,14 @@ Item {
     property string _confirmLabel: ""
     property string _confirmIcon: ""
     property var _confirmAction: null
-    property int _confirmRemaining: 30
+    readonly property int _confirmSeconds: 30
+    property int _confirmRemaining: _confirmSeconds
 
     function _requestConfirm(label: string, icon: string, action: var): void {
         _confirmLabel = label;
         _confirmIcon = icon;
         _confirmAction = action;
-        _confirmRemaining = 30;
+        _confirmRemaining = _confirmSeconds;
         _confirming = true;
         confirmOverlay.forceActiveFocus();
     }
@@ -32,6 +33,9 @@ Item {
     }
 
     function _executeConfirm(): void {
+        // clear here, not just in the timer branch: suspend doesn't tear down the
+        // session, so a still-running timer would re-fire the action every second
+        root._confirming = false;
         if (root._confirmAction)
             root._confirmAction();
     }
@@ -60,7 +64,7 @@ Item {
             height: 48
             radius: 24
             anchors.horizontalCenter: parent.horizontalCenter
-            color: powerArea.pressed ? Theme.pressedBg : powerArea.containsMouse ? Theme.hoverBg : "transparent"
+            color: powerArea.pressed ? Theme.pressedBg : powerArea.containsMouse ? Theme.hoverBg : Theme.idleBg
 
             Behavior on color {
                 ColorAnimation {
@@ -130,7 +134,7 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: 180
+                duration: Theme.animSettle
                 easing.type: Easing.OutQuad
             }
         }

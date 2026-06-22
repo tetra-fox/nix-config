@@ -36,7 +36,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusMd
-        color: area.containsMouse ? Theme.hoverBg : "transparent"
+        color: area.containsMouse ? Theme.hoverBg : Theme.idleBg
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast

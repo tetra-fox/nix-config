@@ -12,6 +12,8 @@ Item {
 
     readonly property var rates: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
     readonly property real currentRate: root.player?.rate ?? 1.0
+    // epsilon match: a player may report 1.0 as 0.999..., which exact compare would style as non-default
+    readonly property bool isDefaultRate: Math.abs(root.currentRate - 1.0) <= 0.01
 
     function cycleRate() {
         if (!root.player)
@@ -32,7 +34,7 @@ Item {
         width: label.implicitWidth + 12
         height: label.implicitHeight + 6
         radius: Theme.radiusMd
-        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : "transparent"
+        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast
@@ -43,10 +45,10 @@ Item {
             id: label
             anchors.centerIn: parent
             text: parseFloat(root.currentRate.toFixed(2)) + "x"
-            color: root.currentRate !== 1.0 ? Theme.accent : Theme.textInactive
+            color: root.isDefaultRate ? Theme.textInactive : Theme.accent
             font.pixelSize: Theme.fontXs
             font.family: Theme.fontFamily
-            font.bold: root.currentRate !== 1.0
+            font.bold: !root.isDefaultRate
         }
 
         MouseArea {

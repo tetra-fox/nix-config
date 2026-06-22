@@ -40,7 +40,7 @@ RowLayout {
             Layout.fillWidth: true
             implicitHeight: Theme.popupItemHeight - 6
             radius: Theme.radiusMd
-            color: actionArea.pressed ? Theme.pressedBg : actionArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.hoverBg, 0)
+            color: actionArea.pressed ? Theme.pressedBg : actionArea.containsMouse ? Theme.hoverBg : Theme.idleBg
             border.width: 1
             border.color: Theme.panelBorder
             Behavior on color {

@@ -12,7 +12,6 @@ Slider {
     // fires on real value changes (suppressed during double-tap gesture)
     signal adjusted(real value)
 
-    from: 0
     to: 1.5
 
     hoverEnabled: enabled
@@ -69,7 +68,7 @@ Slider {
                 Behavior on width {
                     enabled: !root.pressed
                     NumberAnimation {
-                        duration: 180
+                        duration: Theme.animSettle
                         easing.type: Easing.OutExpo
                     }
                 }
@@ -95,7 +94,7 @@ Slider {
         Behavior on x {
             enabled: !root.pressed
             NumberAnimation {
-                duration: 180
+                duration: Theme.animSettle
                 easing.type: Easing.OutExpo
             }
         }

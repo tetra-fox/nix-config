@@ -6,7 +6,7 @@ import QtQuick
 // ref: https://fonts.google.com/icons?icon.style=Rounded
 QtObject {
 
-    // ── network ─────────────────────────────────────────────────────────────
+    // network
     readonly property string wifi: "\uF065"
     readonly property string wifiOff: "\uE1DA"
     readonly property string wifiSignal0: "\uF0B0"
@@ -21,13 +21,13 @@ QtObject {
     readonly property string settingsEthernet: "\uE8BE"
     readonly property string cable: "\uEFE6"
 
-    // ── bluetooth ────────────────────────────────────────────────────────────
+    // bluetooth
     readonly property string bluetooth: "\uE1A7"
     readonly property string bluetoothConnected: "\uE1A8"
     readonly property string bluetoothDisabled: "\uE1A9"
     readonly property string bluetoothSearching: "\uE1AA"
 
-    // ── audio ────────────────────────────────────────────────────────────────
+    // audio
     readonly property string volumeUp: "\uE050"
     readonly property string volumeDown: "\uE04D"
     readonly property string volumeMute: "\uE04E"
@@ -35,14 +35,25 @@ QtObject {
     readonly property string mic: "\uE31D"
     readonly property string micOff: "\uE02B"
 
-    // ── notifications ────────────────────────────────────────────────────────
+    // volume glyph for a level, shared by the bar widget and the slider rows
+    function forVolume(volume: real, muted: bool): string {
+        if (muted)
+            return volumeOff;
+        if (volume >= 0.5)
+            return volumeUp;
+        if (volume >= 0.01)
+            return volumeDown;
+        return volumeMute;
+    }
+
+    // notifications
     readonly property string notifications: "\uE7F4"
     readonly property string notificationsOff: "\uE7F6"
     readonly property string info: "\uE88E"
     readonly property string warning: "\uE002"
     readonly property string error: "\uE160"
 
-    // ── system ──────────────────────────────────────────────────────────────
+    // system
     readonly property string computer: "\uE31E"
     readonly property string dns: "\uE875"
     readonly property string desktopWindows: "\uE30C"
@@ -58,13 +69,13 @@ QtObject {
     readonly property string deployedCode: "\uF720"
     readonly property string code: "\uE86F"
 
-    // ── power ────────────────────────────────────────────────────────────────
+    // power
     readonly property string logout: "\uE9BA"
     readonly property string restart: "\uF053"
     readonly property string power: "\uF8C7"
     readonly property string sleep: "\uEF44"
 
-    // ── media ────────────────────────────────────────────────────────────────
+    // media
     readonly property string playArrow: "\uE037"
     readonly property string pause: "\uE034"
     readonly property string skipPrevious: "\uE045"
@@ -76,7 +87,7 @@ QtObject {
     readonly property string shuffle: "\uE043"
     readonly property string speed: "\uEBE6"
 
-    // ── actions ──────────────────────────────────────────────────────────────
+    // actions
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
     readonly property string contentCopy: "\uE14D"

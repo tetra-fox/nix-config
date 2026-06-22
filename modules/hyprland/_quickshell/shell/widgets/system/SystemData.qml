@@ -257,6 +257,10 @@ Item {
             staticProc.running = true;
             uptimeFile.reload();
             pollAll();
+        } else {
+            // drop the baseline so the first sample after reopen measures the 3s poll
+            // window, not the whole interval the popup was closed
+            root._prevCpu = null;
         }
     }
 

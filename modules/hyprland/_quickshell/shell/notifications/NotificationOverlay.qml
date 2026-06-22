@@ -18,12 +18,11 @@ PanelWindow { // qmllint disable uncreatable-type
 
     anchors.top: true
     anchors.right: true
-    margins.top: 0    // qmllint disable missing-property unqualified unresolved-type
     margins.right: Theme.pillMargin    // qmllint disable missing-property unqualified
     // don't push other surfaces aside, just overlay on top
     exclusiveZone: 0
 
-    implicitWidth: 320 + Theme.pillMargin * 2
+    implicitWidth: Theme.popupWidth + Theme.pillMargin * 2
     implicitHeight: notificationColumn.height + Theme.pillMargin * 2
 
     color: "transparent"

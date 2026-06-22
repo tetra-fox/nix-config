@@ -32,9 +32,7 @@ PanelWindow { // qmllint disable uncreatable-type
     function show() {
         // snapshot the toplevel list, putting the active window first
         let windows = [];
-        const toplevels = ToplevelManager.toplevels.values;
-        for (let i = 0; i < toplevels.length; i++) {
-            const t = toplevels[i];
+        for (const t of ToplevelManager.toplevels.values) {
             // skip minimized windows
             if (t.minimized)
                 continue;
@@ -66,7 +64,9 @@ PanelWindow { // qmllint disable uncreatable-type
         const target = windowList[selectedIndex];
         open = false;
         visible = false;
-        if (target)
+        // the toplevel may have been closed while the switcher was open; the deleted
+        // C++ object leaves a stale-but-truthy js reference, so re-check it is still live
+        if (target && ToplevelManager.toplevels.values.includes(target))
             target.activate();
     }
 
@@ -79,11 +79,6 @@ PanelWindow { // qmllint disable uncreatable-type
     WlrLayershell.namespace: "quickshell-switcher"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusiveZone: -1
-
-    anchors.top: false
-    anchors.bottom: false
-    anchors.left: false
-    anchors.right: false
 
     implicitWidth: panel.width
     implicitHeight: panel.height
@@ -142,7 +137,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "opacity"
                 to: 1.0
-                duration: 180
+                duration: Theme.animSettle
                 easing.type: Easing.OutQuad
             }
         }
@@ -179,7 +174,7 @@ PanelWindow { // qmllint disable uncreatable-type
         Rectangle {
             id: panel
             anchors.centerIn: parent
-            width: Math.max(320, list.implicitWidth + Theme.pillHPad * 2)
+            width: Math.max(Theme.popupWidth, list.implicitWidth + Theme.pillHPad * 2)
             height: list.implicitHeight + Theme.pillHPad * 2
             radius: Theme.radiusLg
             color: Theme.panelBg

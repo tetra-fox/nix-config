@@ -52,7 +52,7 @@ Item {
 
     // -- layout --
 
-    implicitWidth: 320
+    implicitWidth: Theme.popupWidth
     implicitHeight: mpris.hasMedia ? card.height : 0
     opacity: mpris.hasMedia ? 1 : 0
     clip: true
@@ -171,14 +171,14 @@ Item {
                         target: playerContent
                         property: "opacity"
                         to: 0
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
                         to: root._switchDir * -30
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
                 }
@@ -195,14 +195,14 @@ Item {
                         target: playerContent
                         property: "opacity"
                         to: 1
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.OutQuad
                     }
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
                         to: 0
-                        duration: 120
+                        duration: Theme.animNormal
                         easing.type: Easing.OutQuad
                     }
                 }

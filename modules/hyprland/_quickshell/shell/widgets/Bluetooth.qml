@@ -46,7 +46,8 @@ Item {
 
     Connections {
         target: root.adapter?.devices ?? null // qmllint disable unresolved-type
-        function onCountChanged() {
+        // devices is an UntypedObjectModel, whose only change signal is valuesChanged
+        function onValuesChanged() {
             root.refreshDevices();
         }
     }
@@ -85,7 +86,7 @@ Item {
         panelWindow: root.panelWindow
         anchorItem: btn
 
-        contentWidth: 320
+        contentWidth: Theme.popupWidth
         contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         onVisibleChanged: {

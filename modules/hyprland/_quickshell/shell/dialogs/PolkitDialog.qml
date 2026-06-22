@@ -18,11 +18,6 @@ PanelWindow { // qmllint disable uncreatable-type
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.exclusiveZone: -1
 
-    anchors.top: false
-    anchors.bottom: false
-    anchors.left: false
-    anchors.right: false
-
     implicitWidth: panel.width
     implicitHeight: panel.height
 
@@ -87,7 +82,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "opacity"
                 to: 1.0
-                duration: 180
+                duration: Theme.animSettle
                 easing.type: Easing.OutQuad
             }
         }
@@ -160,16 +155,17 @@ PanelWindow { // qmllint disable uncreatable-type
                 id: passwordInput
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.pillHPad
-                implicitHeight: Theme.popupItemHeight
                 placeholderText: "Password"
                 password: !(root.agent.flow?.responseVisible ?? false)
 
-                onAccepted: {
+                function submit(): void {
                     if (text.length > 0 && root.agent.flow) {
                         root.agent.flow.submit(text);
                         clear();
                     }
                 }
+
+                onAccepted: submit()
             }
 
             Text {
@@ -200,12 +196,7 @@ PanelWindow { // qmllint disable uncreatable-type
                     Layout.fillWidth: true
                     text: "Authenticate"
                     accentColor: Theme.accent
-                    onClicked: {
-                        if (passwordInput.text.length > 0 && root.agent.flow) {
-                            root.agent.flow.submit(passwordInput.text);
-                            passwordInput.clear();
-                        }
-                    }
+                    onClicked: passwordInput.submit()
                 }
             }
         }

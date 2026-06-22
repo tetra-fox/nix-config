@@ -8,7 +8,7 @@ Item {
     property int maxItems: 8
     // pixel cap; when > 0 overrides maxItems (for lists with non-uniform row heights)
     property int maxHeight: 0
-    property int spacing: 0
+    property int spacing
     default property alias content: contentCol.data
 
     implicitHeight: Math.min(contentCol.implicitHeight, maxHeight > 0 ? maxHeight : maxItems * Theme.popupItemHeight)
@@ -37,7 +37,7 @@ Item {
             target: flick
             property: "contentY"
             to: flick.scrollTarget
-            duration: 150
+            duration: Theme.animSlow
             easing.type: Easing.OutCubic
         }
 

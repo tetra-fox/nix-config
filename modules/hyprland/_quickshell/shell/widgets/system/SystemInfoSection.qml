@@ -58,7 +58,6 @@ ColumnLayout {
         subtitle: root.sysData.user + " • uid " + root.sysData.uid
         badgeVisible: true
         badgeActive: true
-        badgeColor: Theme.colorGreen
         badgeText: root.sysData.formatUptime(root.sysData.uptime)
     }
 

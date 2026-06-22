@@ -29,7 +29,7 @@ Item {
                 return Theme.openBg;
             if (area.containsMouse)
                 return Theme.hoverBg;
-            return Theme.withAlpha(Theme.hoverBg, 0);
+            return Theme.idleBg;
         }
         Behavior on color {
             ColorAnimation {

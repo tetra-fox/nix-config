@@ -19,6 +19,10 @@ ColumnLayout {
 
     signal selectDevice(PwNode d)
 
+    function deviceLabel(n: PwNode): string {
+        return n ? (n.description || n.nickname || n.name) : "-";
+    }
+
     spacing: 14
 
     VolumeSlider {
@@ -31,7 +35,7 @@ ColumnLayout {
         id: deviceSelector
         Layout.fillWidth: true
         label: root.label
-        value: root.activeDevice ? (root.activeDevice.description || root.activeDevice.nickname || root.activeDevice.name) : "-"
+        value: root.deviceLabel(root.activeDevice)
 
         ScrollableList {
             width: parent.width
@@ -45,7 +49,7 @@ ColumnLayout {
                     required property int index
 
                     width: parent.width
-                    text: modelData.description || modelData.nickname || modelData.name
+                    text: root.deviceLabel(modelData)
                     active: modelData === root.activeDevice
                     showSeparator: index > 0
                     onSelected: {

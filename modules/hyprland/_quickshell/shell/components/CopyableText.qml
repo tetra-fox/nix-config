@@ -1,5 +1,5 @@
 import qs.lib
-import Quickshell.Io
+import Quickshell
 import QtQuick
 
 // text that copies to clipboard on click; right-aligned by default, leftAligned for column layouts
@@ -33,11 +33,6 @@ Item {
         }
     }
 
-    Process {
-        id: clip
-        command: ["wl-copy", innerText.text]
-    }
-
     MouseArea {
         id: area
         anchors.left: root.leftAligned ? parent.left : undefined
@@ -49,7 +44,7 @@ Item {
         cursorShape: root.disabled ? Qt.ArrowCursor : Qt.PointingHandCursor
         onClicked: {
             if (!root.disabled && innerText.text) {
-                clip.running = true;
+                Quickshell.execDetached(["wl-copy", innerText.text]);
                 floatAnim.restart();
             }
         }

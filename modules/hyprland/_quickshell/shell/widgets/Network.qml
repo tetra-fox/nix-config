@@ -29,7 +29,7 @@ Item {
         panelWindow: root.panelWindow
         anchorItem: btn
 
-        contentWidth: 320
+        contentWidth: Theme.popupWidth
         contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         onVisibleChanged: {
