@@ -51,9 +51,9 @@
     };
 
     cursor = {
-      package = pkgs.rose-pine-hyprcursor;
-      name = "rose-pine-hyprcursor";
-      size = 26;
+      package = pkgs.rainbow-dash-hyprcursor;
+      name = "Rainbow-Dash";
+      size = 38;
     };
 
     # sizes.terminal * 4/3 = vscode editor font size; 10.5 -> 14pt
