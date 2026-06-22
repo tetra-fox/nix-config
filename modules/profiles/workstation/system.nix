@@ -9,7 +9,7 @@
 
     modules.avahi.system
     modules.bluetooth.system
-    modules.docker.system
+    modules.podman.system
     modules.obs-studio.system
     modules.onepassword.system
     modules.pipewire.system

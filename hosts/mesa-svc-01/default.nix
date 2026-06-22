@@ -19,7 +19,7 @@
     modules.postgres.system
     modules.caddy.system
     modules.samba.system
-    modules.docker.system
+    modules.podman.system
     modules.nvidia.system
     modules.arr-stack.default
   ];
@@ -78,10 +78,10 @@
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
   # servers are unattended, breakage is fixable
-  lab.docker.watchtower.enable = true;
-  lab.docker.cadvisor.enable = true;
+  lab.podman.autoUpdate.enable = true;
+  lab.podman.cadvisor.enable = true;
 
-  # CUDA-in-docker via CDI; containers opt in with `--gpus all` (cli) or deploy.resources.reservations.devices (compose)
+  # CUDA-in-podman via CDI; containers opt in with `--device nvidia.com/gpu=all` (cli) or deploy.resources.reservations.devices (compose)
   hardware.nvidia-container-toolkit.enable = true;
 
   lab.nvidia.exporter.enable = true;
@@ -91,7 +91,7 @@
     uid = 1000;
     extraGroups = [
       "wheel"
-      "docker"
+      "podman"
       # admin browses /mnt/vol_1/milkfish often; `media` makes ls/cp/mv work without sudo
       "media"
     ];

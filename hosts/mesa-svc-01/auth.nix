@@ -11,11 +11,12 @@
 
   authentikBase = {
     image = "ghcr.io/goauthentik/server:${authentikTag}";
+    labels = config.lab.podman.autoUpdate.containerLabels;
     environment = {
       AUTHENTIK_POSTGRESQL__HOST = "postgres-host";
       AUTHENTIK_POSTGRESQL__NAME = "authentik";
       AUTHENTIK_POSTGRESQL__USER = "authentik";
-      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,172.16.0.0/12,10.10.0.0/24";
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,10.88.0.0/16,10.10.0.0/24";
       AUTHENTIK_WEB__WORKERS = "4";
     };
     environmentFiles = siteEnvFile "authentik.env";
@@ -41,23 +42,23 @@ in {
   };
 
   lab.postgres = {
-    # 172.16.0.0/12 = docker bridge gateway
-    allowedCidrs = ["172.16.0.0/12"];
+    # 10.88.0.0/16 = podman default network; containers reach pg as this source
+    allowedCidrs = ["10.88.0.0/16"];
     roles.authentik = {
       passwordSecret = "auth/pg_pass";
       owns = ["authentik"];
     };
   };
 
-  # gate docker units on the password unit; without it authentik crash-loops on bad creds during the boot race
+  # gate the container units on the password unit; without it authentik crash-loops on bad creds during the boot race
   systemd.services = let
     pgDeps = {
       after = [config.lab.postgres.passwordUnits.authentik];
       requires = [config.lab.postgres.passwordUnits.authentik];
     };
   in {
-    docker-auth-server = pgDeps;
-    docker-auth-worker = pgDeps;
+    podman-auth-server = pgDeps;
+    podman-auth-worker = pgDeps;
   };
 
   virtualisation.oci-containers.containers = {
@@ -88,6 +89,7 @@ in {
 
     auth-ldap = {
       image = "ghcr.io/goauthentik/ldap:${authentikTag}";
+      labels = config.lab.podman.autoUpdate.containerLabels;
       dependsOn = ["auth-server"];
       environment = {
         AUTHENTIK_HOST = "http://auth-server:9000";
