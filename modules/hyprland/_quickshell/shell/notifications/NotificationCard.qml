@@ -172,9 +172,7 @@ Item {
                     root.dismiss();
                     return;
                 }
-                const def = (root.notif.actions ?? []).find(a => a.identifier === "default");
-                if (def)
-                    def.invoke();
+                NotifState.activate(root.notif);
                 root.dismiss();
             }
         }

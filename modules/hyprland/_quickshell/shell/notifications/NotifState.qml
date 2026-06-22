@@ -50,6 +50,19 @@ QtObject {
         return body;
     }
 
+    // invoke the spec's "default" action: what "click the notification to jump to
+    // the source" means (e.g. discord opens the message). returns true when there
+    // was a default action to invoke, so callers can fall back otherwise. only valid
+    // while the notif is live, which persisted center notifs still are
+    function activate(notif): bool {
+        const def = (notif.actions ?? []).find(a => a.identifier === "default");
+        if (def) {
+            def.invoke();
+            return true;
+        }
+        return false;
+    }
+
     // dismiss every notif in a wrapper list (clear-all, per-app clear on a filtered subset)
     function dismissAll(list): void {
         for (const w of list)

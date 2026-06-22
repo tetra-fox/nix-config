@@ -20,6 +20,12 @@ Item {
     readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
     readonly property string title: NotifState.title(notif)
 
+    // whether a left-click can jump to the source (default action, or a window to raise)
+    readonly property bool canActivate: {
+        const hasDefault = (notif.actions ?? []).some(a => a.identifier === "default");
+        return hasDefault || (notif.desktopEntry || notif.appName) !== "";
+    }
+
     implicitHeight: _dismissing ? 0 : card.height
     opacity: _dismissing ? 0 : 1
     scale: _dismissing ? 0.9 : 1
@@ -68,14 +74,24 @@ Item {
             Quickshell.execDetached(["wl-copy", root.notif.body]);
     }
 
-    function focusWindow(): void {
+    function focusWindow(): bool {
         const raw = root.notif.desktopEntry || root.notif.appName;
         // desktopEntry/appName are untrusted dbus Notify fields interpolated into a lua
         // long-bracket string that hyprland evaluates. strip the [[ ]] delimiters and
         // newlines so a hostile appName can't close the bracket early and inject lua.
         const cls = raw.replace(/\]\]|\[\[|[\r\n]/g, "");
-        if (cls)
-            Hyprland.dispatch(`hl.dsp.event([[focuswindow class:${cls}]])`);    // qmllint disable unresolved-type
+        if (!cls)
+            return false;
+        Hyprland.dispatch(`hl.dsp.event([[focuswindow class:${cls}]])`);    // qmllint disable unresolved-type
+        return true;
+    }
+
+    // left-click activation: invoke the spec default action (jump to the source,
+    // e.g. discord opens the message), else raise the app window by class. dismiss
+    // on success since the user has been taken to the source
+    function activate(): void {
+        if (NotifState.activate(root.notif) || root.focusWindow())
+            root.dismiss();
     }
 
     Timer {
@@ -112,12 +128,13 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-            cursorShape: (bodyText.truncated || root.expanded) ? Qt.PointingHandCursor : Qt.ArrowCursor
+            cursorShape: root.canActivate ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: mouse => {
+                // middle-click always raises the window, never jumps to the message
                 if (mouse.button === Qt.MiddleButton)
                     root.focusWindow();
-                else if (bodyText.truncated || root.expanded)
-                    root.expanded = !root.expanded;
+                else if (root.canActivate)
+                    root.activate();
             }
         }
 
@@ -172,6 +189,21 @@ Item {
                             color: Theme.textInactive
                             font.pixelSize: Theme.fontXs
                             font.family: Theme.fontFamily
+                        }
+
+                        GlyphButton {
+                            icon: Icons.expandMore
+                            iconSize: Theme.fontSm
+                            // only offer expand when there's hidden text to reveal
+                            visible: bodyText.truncated || root.expanded
+                            rotation: root.expanded ? 180 : 0
+                            Behavior on rotation {
+                                NumberAnimation {
+                                    duration: Theme.animFast
+                                    easing.type: Easing.OutQuad
+                                }
+                            }
+                            onClicked: root.expanded = !root.expanded
                         }
 
                         GlyphButton {
