@@ -33,11 +33,17 @@
   '';
 in {
   home.packages = with pkgs; [
-    eza
     nix-zsh-completions
   ];
 
   programs = {
+    eza = {
+      enable = true;
+      enableZshIntegration = true;
+      icons = "auto";
+      git = true;
+      extraOptions = ["--group-directories-first"];
+    };
     zsh = {
       enable = true;
       autosuggestion.enable = true;
@@ -56,14 +62,8 @@ in {
         }
       '';
       shellAliases = {
-        ls = "eza --group-directories-first --icons";
-        lsa = "eza --group-directories-first --all --icons";
-        la = "eza -lbhHgmuSa --group-directories-first --color-scale --icons";
-        lx = "eza -lbhHgmuSa@ --group-directories-first --color-scale --icons";
-        llt = "eza -l --git --tree --icons";
-        lt = "eza --tree --level=2 --all --icons";
-        lld = "eza -lbhHFGmuSa --group-directories-first --icons";
-
+        # ls/ll/la/lla/lt come from programs.eza (mkDefault), carrying the
+        # global flags set there. nothing custom needed.
         nix-cleanup = "sudo nix-collect-garbage -d && nix-collect-garbage -d && sudo nix store optimise";
       };
       history = {
