@@ -13,13 +13,16 @@ Item {
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
 
-    readonly property string activeIfname: wired.connected ? wired.ifname : (wifi.activeNetwork ? wifi.ifname : "")
+    // a live wg tunnel owns the default route, so the detail/traffic blocks follow it.
+    // device is the enumerate DEVICE column, available without a detail round-trip
+    readonly property string activeIfname: vpn.anyActive ? vpn.activeTunnel.device : wired.connected ? wired.ifname : (wifi.activeNetwork ? wifi.ifname : "")
     readonly property bool anyConnected: activeIfname !== ""
 
     IconButton {
         id: btn
-        icon: wired.connected ? Icons.settingsEthernet : wifi.activeNetwork ? Icons.wifi : Icons.wifiOff
-        iconColor: (wired.connected || wifi.activeNetwork) ? Theme.textPrimary : Theme.textInactive
+        // vpn takes icon priority when up (most security-relevant state), tinted to read as secured
+        icon: vpn.anyActive ? Icons.vpnKey : wired.connected ? Icons.settingsEthernet : wifi.activeNetwork ? Icons.wifi : Icons.wifiOff
+        iconColor: vpn.anyActive ? Theme.colorGreen : (wired.connected || wifi.activeNetwork) ? Theme.textPrimary : Theme.textInactive
         isOpen: popup.visible
         onClicked: _ => popup.visible = !popup.visible
     }
@@ -62,6 +65,16 @@ Item {
             WifiSection {
                 id: wifi
                 Layout.fillWidth: true
+            }
+
+            Separator {
+                visible: vpn.visible
+            }
+
+            VpnSection {
+                id: vpn
+                Layout.fillWidth: true
+                polling: popup.visible
             }
 
             Separator {

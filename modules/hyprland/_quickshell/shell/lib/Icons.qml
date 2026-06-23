@@ -20,6 +20,9 @@ QtObject {
     readonly property string wifiLocked: "\uE1E1"
     readonly property string settingsEthernet: "\uE8BE"
     readonly property string cable: "\uEFE6"
+    readonly property string vpnKey: "\uE0DA"
+    readonly property string vpnKeyOff: "\uEB7A"
+    readonly property string vpnKeyAlert: "\F6CC"
 
     // bluetooth
     readonly property string bluetooth: "\uE1A7"
