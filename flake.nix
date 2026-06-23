@@ -295,6 +295,18 @@
               inputs.vpn-confinement.nixosModules.default
             ];
           };
+
+          fairlane-svc-01 = {
+            path = ./hosts/fairlane-svc-01;
+            arch = "x86_64";
+            class = "nixos";
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.sops-nix.nixosModules.sops
+              inputs.disko.nixosModules.disko
+              inputs.vpn-confinement.nixosModules.default
+            ];
+          };
         };
       };
     });

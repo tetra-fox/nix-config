@@ -35,6 +35,13 @@
       config.sops.templates."caddy.env".path
     ];
 
+    # upstream only sets StateDirectory (which creates dataDir) when dataDir is the
+    # default /var/lib/caddy; overriding it to siteData means we have to create the
+    # dir ourselves, or the unit's ReadWritePaths bind-mount fails with 226/NAMESPACE
+    systemd.tmpfiles.rules = [
+      "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
+    ];
+
     networking.firewall.allowedTCPPorts = [80 443];
 
     services.fail2ban = {
@@ -65,7 +72,8 @@
       daemonSettings.Definition.dbfile = "${siteData}/fail2ban/fail2ban.sqlite3";
     };
 
-    systemd.services.fail2ban.serviceConfig.StateDirectory = lib.mkForce "mesa/fail2ban";
+    # StateDirectory is relative to /var/lib, so strip the prefix off siteData to keep it in sync with dbfile above
+    systemd.services.fail2ban.serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
 
     environment.etc."fail2ban/filter.d/caddy-status.conf".text = ''
       [Definition]

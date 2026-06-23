@@ -116,6 +116,14 @@ in {
       ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
     };
 
+    # dataDir is overridden under siteData. the unit's ReadWritePaths bind-mounts the
+    # versioned dataDir, which must already exist or namespace setup fails (226/NAMESPACE).
+    # create both the parent and the versioned leaf so the mount target is present.
+    systemd.tmpfiles.rules = [
+      "d ${siteData}/postgresql 0700 postgres postgres -"
+      "d ${config.services.postgresql.dataDir} 0700 postgres postgres -"
+    ];
+
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [5432];
 
     # mkDefault so a consumer redeclaring the same secret (e.g. for owner/group) wins
