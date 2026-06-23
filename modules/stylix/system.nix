@@ -51,7 +51,7 @@
     };
 
     cursor = {
-      package = pkgs.rainbow-dash-hyprcursor;
+      package = pkgs.pony-hyprcursors;
       name = "Rainbow-Dash";
       size = 38;
     };
