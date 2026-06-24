@@ -76,7 +76,6 @@
 
   # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;
-  lab.podman.cadvisor.enable = true;
 
   users.users.${username} = {
     isNormalUser = true;
