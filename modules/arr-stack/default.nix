@@ -266,9 +266,13 @@ in {
           home = "${siteData}/${name}";
         }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices);
 
+      # every service gets its data dir created here, including the ones with a nixos
+      # module: upstream sonarr/radarr only set StateDirectory (which creates the dir)
+      # when dataDir is left at the default, and we override it to siteData, so the dir
+      # is ours to create or the unit fails on "Cannot create AppFolder".
       systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
         owner = svc.user or name;
-      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -") (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices);
+      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -") arrServices;
     }
 
     {
