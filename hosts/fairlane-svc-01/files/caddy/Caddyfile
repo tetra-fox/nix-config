@@ -36,37 +36,40 @@ home.fairlane.tetra.cool {
 }
 
 # private
+# sonarr/radarr/prowlarr/qbittorrent run in the wg netns; vpn-confinement DNATs their
+# lanProxy ports onto the host-side bridge gateway, so caddy reaches them at 192.168.15.1.
+# sabnzbd runs in the main namespace, so it's plain localhost.
 qb.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy TODO:8888
+		reverse_proxy 192.168.15.1:8888
 	}
 }
 
 sonarr.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy TODO:8989
+		reverse_proxy 192.168.15.1:8989
 	}
 }
 
 radarr.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy TODO:7878
+		reverse_proxy 192.168.15.1:7878
 	}
 }
 
 prowlarr.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy TODO:9696
+		reverse_proxy 192.168.15.1:9696
 	}
 }
 
 sabnzbd.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy TODO:8080
+		reverse_proxy localhost:8080
 	}
 }
