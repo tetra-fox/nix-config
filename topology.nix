@@ -228,4 +228,19 @@ in {
       physicalConnections = [(mkConnection "pooltoy" "vmbr1")];
     };
   };
+
+  nodes.fairlane-adguard = {
+    name = "adguard";
+    deviceType = "container";
+    parent = "pooltoy";
+    guestType = "lxc";
+    # TODO: drop an adguard icon in images/icons and reference it here
+    hardware.info = "AdGuard Home";
+    interfaces.eth0 = {
+      addresses = ["192.168.10.53"];
+      network = "fairlane-server-vlan";
+      virtual = true;
+      physicalConnections = [(mkConnection "pooltoy" "vmbr0.10")];
+    };
+  };
 }
