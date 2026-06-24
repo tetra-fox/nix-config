@@ -36,7 +36,6 @@
 
   networking = {
     hostName = "fairlane-svc-01";
-    # ens18 = server vlan (LAN-routable, default route). single-NIC, no SDN.
     useDHCP = false;
     defaultGateway = "192.168.10.1";
     nameservers = ["192.168.10.53"]; # adguard
@@ -47,15 +46,29 @@
         prefixLength = 24;
       }
     ];
+
+    interfaces.ens19.ipv4.addresses = [
+      {
+        address = "172.16.0.44";
+        prefixLength = 24;
+      }
+    ];
   };
 
-  # proxmox guest; vNIC bridges to the host's server vlan
+  # proxmox guest; vNICs bridge to the host's server vlan and the sdn segment
   topology.self = {
     parent = "pooltoy";
     guestType = "vm";
     interfaces.ens18 = {
+      network = "fairlane-server-vlan";
       virtual = true;
       physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr0.10")];
+    };
+    interfaces.ens19 = {
+      network = "fairlane-pooltoy-sdn";
+      virtual = true;
+      # TODO: confirm pooltoy's sdn bridge name for the 172.16.0.0/24 segment
+      physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr1")];
     };
   };
 

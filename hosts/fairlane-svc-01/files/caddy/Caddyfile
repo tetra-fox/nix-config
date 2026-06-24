@@ -22,7 +22,10 @@ fairlane.tetra.cool {
 
 jellyfin.fairlane.tetra.cool {
 	import log
-	reverse_proxy localhost:8096
+	route {
+		import lan_only
+		reverse_proxy localhost:8096
+	}
 }
 
 stats.fairlane.tetra.cool {
@@ -32,7 +35,7 @@ stats.fairlane.tetra.cool {
 
 home.fairlane.tetra.cool {
 	import log
-	reverse_proxy TODO:8123
+	reverse_proxy 172.16.0.32:8123
 }
 
 # private
