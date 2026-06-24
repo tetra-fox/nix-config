@@ -24,6 +24,8 @@
     # TODO: point at fairlane's media volume (see storage.nix mount)
     torrentsPath = "/mnt/vol_1/TODO/torrents";
     nzbPath = "/mnt/vol_1/TODO/nzb";
+    # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
+    sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
   };
 
   lab.sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;

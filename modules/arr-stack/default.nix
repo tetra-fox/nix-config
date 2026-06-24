@@ -150,6 +150,17 @@ in {
         qbittorrent = 8888;
       };
     };
+
+    sabnzbdHostWhitelist = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        extra hostnames to add to sabnzbd's host_whitelist. sabnzbd rejects requests
+        whose Host header isn't whitelisted (dns-rebinding protection), so the public
+        hostname caddy proxies it under (e.g. sabnzbd.<site>.tetra.cool) must be listed
+        here or you get "Hostname verification failed".
+      '';
+    };
   };
 
   config = lib.mkMerge [

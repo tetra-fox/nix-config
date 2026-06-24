@@ -66,8 +66,12 @@ in {
           complete_free = "1G";
           log_dir = "logs";
           admin_dir = "admin";
-          # netns clients reach sabnzbd via http://${hostVethIp}:8080
-          host_whitelist = "${config.networking.hostName},${config.networking.hostName}.local,${hostVethIp}";
+          # netns clients reach sabnzbd via http://${hostVethIp}:8080; extra entries
+          # (e.g. the public hostname caddy proxies under) come from lab.arrStack.sabnzbdHostWhitelist
+          host_whitelist = lib.concatStringsSep "," (
+            [config.networking.hostName "${config.networking.hostName}.local" hostVethIp]
+            ++ cfg.sabnzbdHostWhitelist
+          );
         };
 
         logging = {
