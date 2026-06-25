@@ -1,11 +1,12 @@
-# /mnt/media                    media + torrents + nzb (passthrough btrfs disk)
+# /mnt/media                    media + torrents + nzb (passthrough ext4 disk)
 # /var/lib/fairlane/<service>   state for every native + container service (one backup target)
 #
-# the media disk is a cheap DRAM-less SATA SSD on a flaky controller. NCQ is disabled
-# on the proxmox host (libata.force=noncq on pooltoy) because the controller hangs
-# juggling queued commands. it can still wedge and require a power-drain of pooltoy;
-# nofail keeps the box booting without it, and the failure domain is intentionally
-# just the media stack (HA + dns live on plush, not here).
+# the media disk is a cheap DRAM-less QLC SATA SSD (warranty replacement of the first
+# one, which locked up under sustained writes). ext4 over btrfs: lower write
+# amplification on a write-fragile drive, and the simplest/most-recoverable fs since
+# the content is re-downloadable. NCQ is disabled on the host (libata.force=noncq on
+# pooltoy). nofail keeps the box booting if the disk wedges/is absent; the failure
+# domain is intentionally just the media stack (HA + dns live on plush, not here).
 {...}: let
   siteData = "/var/lib/fairlane";
   media = "/mnt/media";
@@ -36,11 +37,11 @@ in {
   systemd.services.sabnzbd.unitConfig.RequiresMountsFor = [media];
 
   fileSystems.${media} = {
-    device = "/dev/disk/by-uuid/b6f680f5-f842-4dc6-bfd2-eabd5e5819f1";
-    fsType = "btrfs";
+    device = "/dev/disk/by-uuid/dffc8a76-9a1c-411a-9a53-4f3f720bf9f5";
+    fsType = "ext4";
     # nofail: boot even when the flaky disk is wedged/absent
     # noatime: fewer writes to a slow DRAM-less drive
-    options = ["defaults" "noatime" "nofail" "x-systemd.device-timeout=15s"];
+    options = ["defaults" "noatime" "nofail" "commit=60" "x-systemd.device-timeout=15s"];
   };
 
   services.samba.settings = {
