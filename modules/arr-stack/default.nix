@@ -113,6 +113,7 @@ in {
     ./qbittorrent.nix
     ./sabnzbd.nix
     ./recyclarr.nix
+    ./downloadclients.nix
     modules.postgres.system
   ];
 
