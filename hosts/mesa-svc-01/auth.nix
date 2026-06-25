@@ -16,7 +16,7 @@
       AUTHENTIK_POSTGRESQL__HOST = "postgres-host";
       AUTHENTIK_POSTGRESQL__NAME = "authentik";
       AUTHENTIK_POSTGRESQL__USER = "authentik";
-      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,10.88.0.0/16,10.10.0.0/24";
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,10.88.0.0/16";
       AUTHENTIK_WEB__WORKERS = "4";
     };
     environmentFiles = siteEnvFile "authentik.env";

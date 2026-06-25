@@ -21,9 +21,11 @@
   ];
 
   lab.arrStack = {
-    # TODO: point at fairlane's media volume (see storage.nix mount)
-    torrentsPath = "/mnt/vol_1/TODO/torrents";
-    nzbPath = "/mnt/vol_1/TODO/nzb";
+    # the arr DBs (migrated from the old box) have root folders baked in at
+    # /mnt/media/media/{Movies,TV} and download dirs at /mnt/media/torrents/{radarr,sonarr},
+    # so these must match or every item shows as missing. the disk already has that layout.
+    torrentsPath = "/mnt/media/torrents";
+    nzbPath = "/mnt/media/nzb";
     # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
     sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
   };
@@ -48,16 +50,9 @@
         prefixLength = 24;
       }
     ];
-
-    interfaces.ens19.ipv4.addresses = [
-      {
-        address = "172.16.0.44";
-        prefixLength = 24;
-      }
-    ];
   };
 
-  # proxmox guest; vNICs bridge to the host's server vlan and the sdn segment
+  # proxmox guest; single vNIC on the server vlan
   topology.self = {
     parent = "pooltoy";
     guestType = "vm";
@@ -65,12 +60,6 @@
       network = "fairlane-server-vlan";
       virtual = true;
       physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr0.10")];
-    };
-    interfaces.ens19 = {
-      network = "fairlane-pooltoy-sdn";
-      virtual = true;
-      # TODO: confirm pooltoy's sdn bridge name for the 172.16.0.0/24 segment
-      physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr1")];
     };
   };
 

@@ -39,39 +39,29 @@
 
   networking = {
     hostName = "mesa-svc-01";
-    # ens18 = server vlan (LAN-routable, default route)
-    # ens19 = proxmox SDN internal (vmbr10) for inter-vm traffic on milkfish
-    # SDN's dnsmasq IPAM is buggy on pve 9.1, so everything is pinned statically
+    # ens18 = server vlan (LAN-routable, default route). single-NIC.
     useDHCP = false;
     defaultGateway = "192.168.10.1";
     nameservers = ["192.168.10.53"];
 
-    interfaces.ens18.ipv4.addresses = [
-      {
-        address = "192.168.10.208";
-        prefixLength = 24;
-      }
-    ];
-
-    interfaces.ens19.ipv4.addresses = [
-      {
-        address = "10.10.0.10";
-        prefixLength = 24;
-      }
-    ];
+    interfaces.ens18 = {
+      mtu = 9000; # jumbo frames; milkfish bridge + switch are 9000 end-to-end
+      ipv4.addresses = [
+        {
+          address = "192.168.10.208";
+          prefixLength = 24;
+        }
+      ];
+    };
   };
 
-  # proxmox guest under milkfish; vNICs bridge to milkfish's vmbr0.10 (server vlan) and vmbr10 (sdn)
+  # proxmox guest under milkfish; single vNIC on the server vlan
   topology.self = {
     parent = "milkfish";
     guestType = "vm";
     interfaces.ens18 = {
       virtual = true;
       physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
-    };
-    interfaces.ens19 = {
-      virtual = true;
-      physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr10")];
     };
   };
 
