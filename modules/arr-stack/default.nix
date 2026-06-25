@@ -114,6 +114,7 @@ in {
     ./sabnzbd.nix
     ./recyclarr.nix
     ./downloadclients.nix
+    ./jellyfin-notify.nix
     modules.postgres.system
   ];
 

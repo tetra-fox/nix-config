@@ -3,6 +3,8 @@
   siteData,
   ...
 }: {
+  imports = [./apikey.nix];
+
   services.jellyfin = {
     enable = true;
     group = lib.mkDefault "media";
