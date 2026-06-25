@@ -12,32 +12,52 @@ in {
     sops.secrets = {
       "apps/sabnzbd_api_key" = {};
       "apps/sabnzbd_nzb_key" = {};
-      # one frugalusenet cred pair reused across all 3 server endpoints
-      "apps/sabnzbd_usenet_username" = {};
-      "apps/sabnzbd_usenet_password" = {};
+      # one frugalusenet cred pair reused across all 3 frugal endpoints
+      "apps/sabnzbd_fun_username" = {};
+      "apps/sabnzbd_fun_password" = {};
+      # usenetexpress block account (different backbone) for gap-fills
+      "apps/sabnzbd_une_username" = {};
+      "apps/sabnzbd_une_password" = {};
     };
 
     sops.templates."sabnzbd-secrets.ini" = {
       owner = "sabnzbd";
       content = let
-        user = config.sops.placeholder."apps/sabnzbd_usenet_username";
-        pass = config.sops.placeholder."apps/sabnzbd_usenet_password";
-        servers = [
-          "newswest.frugalusenet.com"
-          "news.frugalusenet.com"
-          "bonus.frugalusenet.com"
-        ];
-        mkServer = host: ''
+        user = config.sops.placeholder."apps/sabnzbd_fun_username";
+        pass = config.sops.placeholder."apps/sabnzbd_fun_password";
+        uneUser = config.sops.placeholder."apps/sabnzbd_une_username";
+        unePass = config.sops.placeholder."apps/sabnzbd_une_password";
+        # host -> (user, pass). frugal endpoints share one cred pair; UNE has its own.
+        servers = {
+          "newswest.frugalusenet.com" = {
+            u = user;
+            p = pass;
+          };
+          "news.frugalusenet.com" = {
+            u = user;
+            p = pass;
+          };
+          "bonus.frugalusenet.com" = {
+            u = user;
+            p = pass;
+          };
+          # TODO: replace with the real UNE block hostname once purchased
+          "news.usenetexpress.com" = {
+            u = uneUser;
+            p = unePass;
+          };
+        };
+        mkServer = host: cred: ''
           [[${host}]]
-          username = ${user}
-          password = ${pass}'';
+          username = ${cred.u}
+          password = ${cred.p}'';
       in ''
         [misc]
         api_key = ${config.sops.placeholder."apps/sabnzbd_api_key"}
         nzb_key = ${config.sops.placeholder."apps/sabnzbd_nzb_key"}
 
         [servers]
-        ${lib.concatMapStringsSep "\n" mkServer servers}
+        ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkServer servers)}
       '';
     };
 
@@ -119,9 +139,14 @@ in {
             inherit priority;
           };
         in {
+          # sabnzbd clamps priority to a 0-99 range; 99 is the lowest (last-tried).
+          # keep all 3 frugal endpoints above UNE so the block is only gap-fill.
           "newswest.frugalusenet.com" = mkUsenetProvider "newswest.frugalusenet.com" 0 100;
           "news.frugalusenet.com" = mkUsenetProvider "news.frugalusenet.com" 20 100;
-          "bonus.frugalusenet.com" = mkUsenetProvider "bonus.frugalusenet.com" 99 50;
+          "bonus.frugalusenet.com" = mkUsenetProvider "bonus.frugalusenet.com" 40 50;
+          # usenetexpress block at 99 (the floor) so every frugal endpoint is tried
+          # first and the block only spends data on gap-fills.
+          "news.usenetexpress.com" = mkUsenetProvider "news.usenetexpress.com" 99 50;
         };
       };
     };
