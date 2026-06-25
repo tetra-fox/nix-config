@@ -1,7 +1,14 @@
-# /mnt/vol_1/<pool>          media + torrents + nzb
-# /var/lib/fairlane/<service>  state for every native + container service (one backup target)
+# /mnt/media                    media + torrents + nzb (passthrough btrfs disk)
+# /var/lib/fairlane/<service>   state for every native + container service (one backup target)
+#
+# the media disk is a cheap DRAM-less SATA SSD on a flaky controller. NCQ is disabled
+# on the proxmox host (libata.force=noncq on pooltoy) because the controller hangs
+# juggling queued commands. it can still wedge and require a power-drain of pooltoy;
+# nofail keeps the box booting without it, and the failure domain is intentionally
+# just the media stack (HA + dns live on plush, not here).
 {...}: let
   siteData = "/var/lib/fairlane";
+  media = "/mnt/media";
 in {
   _module.args.siteData = siteData;
 
@@ -12,17 +19,28 @@ in {
   systemd.tmpfiles.rules = [
     "d ${siteData} 0755 root media -"
 
-    # TODO: replace <pool> with fairlane's media pool dir, keep paths in sync with lab.arrStack in default.nix
-    "Z /mnt/vol_1/TODO/media - admin media 2775"
-    "Z /mnt/vol_1/TODO/torrents - admin media 2775"
-    "Z /mnt/vol_1/TODO/nzb - admin media 2775"
+    # Z (not d) recursively fixes ownership on EXISTING paths but won't create them.
+    # so if the flaky disk is wedged/unmounted, these are no-ops instead of
+    # materializing empty dirs on the root fs that shadow the real ones on remount.
+    # the disk already has media/ and torrents/ (recovered layout).
+    "Z ${media}/media - admin media 2775"
+    "Z ${media}/torrents - admin media 2775"
+    # nzb is net-new for sabnzbd. create-if-missing only matters once the disk is
+    # mounted; sabnzbd's complete_dir points here. RequiresMountsFor on the unit (below)
+    # gates sabnzbd on the mount, so this only effectively runs with the disk present.
+    "d ${media}/nzb 2775 admin media -"
   ];
 
-  fileSystems."/mnt/vol_1" = {
-    # TODO: fairlane's media disk uuid (blkid /dev/disk/by-id/... on the host)
-    device = "/dev/disk/by-uuid/TODO";
+  # gate sabnzbd on the media mount so it doesn't start (and write complete_dir to the
+  # root fs) when the disk is wedged. RequiresMountsFor pulls in the mount unit.
+  systemd.services.sabnzbd.unitConfig.RequiresMountsFor = [media];
+
+  fileSystems.${media} = {
+    device = "/dev/disk/by-uuid/b6f680f5-f842-4dc6-bfd2-eabd5e5819f1";
     fsType = "btrfs";
-    options = ["defaults" "noatime" "nofail"];
+    # nofail: boot even when the flaky disk is wedged/absent
+    # noatime: fewer writes to a slow DRAM-less drive
+    options = ["defaults" "noatime" "nofail" "x-systemd.device-timeout=15s"];
   };
 
   services.samba.settings = {
@@ -31,9 +49,8 @@ in {
       "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
     };
 
-    # TODO: rename share + path to fairlane's pool
     media = {
-      path = "/mnt/vol_1/TODO";
+      path = media;
       browseable = "yes";
       "read only" = "no";
       "guest ok" = "yes";
