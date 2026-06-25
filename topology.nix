@@ -18,18 +18,10 @@ in {
       name = "mesa IoT VLAN";
       cidrv4 = "192.168.30.0/24";
     };
-    mesa-milkfish-internal = {
-      name = "milkfish SDN internal";
-      cidrv4 = "10.10.0.0/24";
-    };
 
     fairlane-server-vlan = {
       name = "fairlane Server VLAN";
       cidrv4 = "192.168.10.0/24";
-    };
-    fairlane-pooltoy-sdn = {
-      name = "pooltoy SDN internal";
-      cidrv4 = "172.16.0.0/24";
     };
   };
 
@@ -99,11 +91,6 @@ in {
       network = "mesa-iot-vlan";
       virtual = true;
     };
-    interfaces.vmbr10 = {
-      addresses = ["10.10.0.1"];
-      network = "mesa-milkfish-internal";
-      virtual = true;
-    };
   };
 
   nodes.homeassistant = {
@@ -119,12 +106,6 @@ in {
         network = "mesa-server-vlan";
         virtual = true;
         physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
-      };
-      enp0s19 = {
-        addresses = ["10.10.0.20"];
-        network = "mesa-milkfish-internal";
-        virtual = true;
-        physicalConnections = [(mkConnection "milkfish" "vmbr10")];
       };
       enp0s20 = {
         addresses = ["192.168.30.5"];
@@ -199,20 +180,14 @@ in {
       addresses = [];
     };
     interfaces."vmbr0.10" = {
-      addresses = ["192.168.10.2"];
+      addresses = ["192.168.10.7"];
       network = "fairlane-server-vlan";
-      virtual = true;
-    };
-    # pooltoy-internal sdn, not trunked to the switch (proxmox sdn local to this host)
-    interfaces.vmbr1 = {
-      addresses = ["172.16.0.1"];
-      network = "fairlane-pooltoy-sdn";
       virtual = true;
     };
   };
 
   # fairlane-svc-01 itself comes from the host's topology.self (hosts/fairlane-svc-01),
-  # same as mesa-svc-01. it attaches to pooltoy's vmbr0.10 + vmbr1, declared above.
+  # same as mesa-svc-01. it attaches to pooltoy's vmbr0.10, declared above.
 
   nodes.fairlane-homeassistant = {
     name = "homeassistant";
@@ -221,11 +196,11 @@ in {
     guestType = "vm";
     icon = ./images/icons/home-assistant.svg;
     hardware.info = "Home Assistant OS";
-    interfaces.sdn = {
-      addresses = ["172.16.0.32"];
-      network = "fairlane-pooltoy-sdn";
+    interfaces.ens18 = {
+      addresses = ["192.168.10.215"];
+      network = "fairlane-server-vlan";
       virtual = true;
-      physicalConnections = [(mkConnection "pooltoy" "vmbr1")];
+      physicalConnections = [(mkConnection "pooltoy" "vmbr0.10")];
     };
   };
 
