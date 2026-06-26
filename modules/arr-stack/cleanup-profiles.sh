@@ -97,8 +97,11 @@ reassign_media() {
       '{seriesIds: $ids, qualityProfileId: $q}' \
       | arr_put "${BASE_URL}/series/editor" >/dev/null
   else
+    # no applyTags: the field is a strict enum (add/remove/replace), and "noChange"
+    # is rejected with a 400. we send no tags, so omitting applyTags leaves tags
+    # untouched, which is what we want.
     jq -n --argjson ids "$ids" --argjson q "$default_id" \
-      '{movieIds: $ids, qualityProfileId: $q, applyTags: "noChange"}' \
+      '{movieIds: $ids, qualityProfileId: $q}' \
       | arr_put "${BASE_URL}/movie/editor" >/dev/null
   fi
 }
@@ -114,7 +117,7 @@ reassign_collections() {
     | arr_put "${BASE_URL}/collection" >/dev/null
 }
 
-echo "$orphans" | jq -c '.[]' | while IFS= read -r profile; do
+while IFS= read -r profile; do
   pid=$(echo "$profile" | jq -r '.id')
   pname=$(echo "$profile" | jq -r '.name')
   echo "processing orphan ${pname} (id ${pid})"
@@ -138,6 +141,6 @@ echo "$orphans" | jq -c '.[]' | while IFS= read -r profile; do
   else
     echo "  WARNING: delete failed for ${pname} (still in use?); left in place" >&2
   fi
-done
+done < <(echo "$orphans" | jq -c '.[]')
 
 echo "${APP} orphaned-profile cleanup complete"

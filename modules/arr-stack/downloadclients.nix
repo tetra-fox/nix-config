@@ -44,6 +44,10 @@
     {
       name = "qBittorrent";
       schemaName = "qBittorrent";
+      # the /downloadclient/schema template defaults enable=false, so a freshly
+      # created client would be disabled; force it on. (updates preserve the live
+      # value, but a from-scratch host takes the create path.)
+      top = {enable = true;};
       # qbit api key not needed: it's reached over netns-localhost with auth off.
       fields = {
         host = "127.0.0.1";
@@ -54,6 +58,7 @@
     {
       name = "SABnzbd";
       schemaName = "SABnzbd";
+      top = {enable = true;};
       # sab's category must match a category defined in sabnzbd.nix (radarr/sonarr).
       # the api key is read at runtime from the credential file, never inlined.
       secretField = "apiKey";
