@@ -115,6 +115,7 @@ in {
     ./recyclarr.nix
     ./downloadclients.nix
     ./jellyfin-notify.nix
+    ./cleanup-profiles.nix
     modules.postgres.system
   ];
 

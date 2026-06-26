@@ -37,7 +37,7 @@
   # resolution is enforced by each profile's hard quality cap (not scored here).
   # ---------------------------------------------------------------------------
 
-  profileNames = ["best-2160p" "best-1080p" "best-720p" "best-sd"];
+  profileNames = import ./profile-names.nix;
   mkScore = score: ids: {
     trash_ids =
       if builtins.isList ids
