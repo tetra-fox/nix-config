@@ -42,53 +42,47 @@
     then myIp
     else "127.0.0.1";
 
-  # node + systemd scrape jobs for one host. the scrape ADDRESS must match where that
-  # host's exporters actually bind: for myself that's `bindAddr` (loopback when I'm the
-  # only host in the site, my site IP once there are remote peers); for a remote peer
-  # it's the peer's site IP. the `instance` label is always the hostname so grafana
-  # legends read names, not ip:port (uniform labels -- deliberate change from the old
-  # localhost:9100 instance).
+  # the exporters a given site host runs, read from its registry. every exporter
+  # (node, systemd, nvidia, cadvisor, ...) registers a {name, port} here, so the
+  # server discovers them uniformly. reads only this sibling INPUT option -- never a
+  # monitoring-derived value -- so no cross-host eval cycle.
+  exportersOf = name: nixosConfigurations.${name}.config.lab.monitoring.exporters or [];
+
+  # the scrape ADDRESS for a host must match where its exporters actually bind: for
+  # myself that's `bindAddr` (loopback when I'm the only host in the site, my site IP
+  # once there are remote peers); for a remote peer it's the peer's site IP.
   scrapeAddr = name:
     if name == hn
     then bindAddr
     else ipOf name;
 
+  # one scrape job per exporter on one host. job name is "<exporter>-<host>" and the
+  # `instance` label is always the hostname so grafana legends read names, not ip:port.
   scrapeForHost = name: let
     addr = scrapeAddr name;
   in
-    lib.optionals (addr != null) [
-      {
-        job_name = "node-${name}";
+    lib.optionals (addr != null) (
+      map (e: {
+        job_name = "${e.name}-${name}";
         static_configs = [
           {
-            targets = ["${addr}:${toString nodePort}"];
+            targets = ["${addr}:${toString e.port}"];
             labels.instance = name;
           }
         ];
-      }
-      {
-        job_name = "systemd-${name}";
-        static_configs = [
-          {
-            targets = ["${addr}:${toString systemdPort}"];
-            labels.instance = name;
-          }
-        ];
-      }
-    ];
+      })
+      (exportersOf name)
+    );
 
   derivedScrapes = lib.concatMap scrapeForHost hostsInSite;
-in {
-  options.lab.monitoring = {
-    server.enable =
-      lib.mkEnableOption "the monitoring server (prometheus + grafana). one per site"
-      // {default = false;};
 
-    extraScrapeConfigs = lib.mkOption {
-      type = lib.types.listOf (lib.types.attrsOf lib.types.anything);
-      default = [];
-    };
-  };
+  # union of all exporter ports across this site's agents, to open to the server.
+  allExporterPorts = lib.unique (lib.concatMap (name: map (e: e.port) (exportersOf name)) hostsInSite);
+in {
+  # lab.monitoring.{server.enable, bindAddr, exporters, extraScrapeConfigs} are declared
+  # in the options-only registry module, so exporter producers can register without
+  # pulling in this whole stack.
+  imports = [./registry.nix];
 
   config = lib.mkMerge [
     # ---- agent: always on, every host ----
@@ -111,15 +105,28 @@ in {
         ];
       };
 
-      # open the exporter ports to this site's server only (source-scoped, nftables).
-      # empty/no-op while single-host (server is self, scraped over loopback).
-      networking.firewall.extraInputRules = lib.mkIf multiHost (
+      # node + systemd register into the exporter registry like any other exporter, so
+      # the server discovers them the same uniform way (no special-casing).
+      lab.monitoring.exporters = [
+        {
+          name = "node";
+          port = nodePort;
+        }
+        {
+          name = "systemd";
+          port = systemdPort;
+        }
+      ];
+
+      # open every registered exporter port to this site's server only (source-scoped,
+      # nftables). empty/no-op while single-host (server is self, scraped over loopback).
+      networking.firewall.extraInputRules = lib.mkIf (multiHost && allExporterPorts != []) (
         lib.concatMapStringsSep "\n" (
           name: let
             ip = ipOf name;
           in
             lib.optionalString (ip != null && name != hn)
-            "ip saddr ${ip} tcp dport { ${toString nodePort}, ${toString systemdPort} } accept"
+            "ip saddr ${ip} tcp dport { ${lib.concatMapStringsSep ", " toString allExporterPorts} } accept"
         )
         siteServers
       );

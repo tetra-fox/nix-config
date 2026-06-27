@@ -6,17 +6,17 @@
 }: let
   cfg = config.lab.nvidia;
 in {
+  # the exporter registry options (lab.monitoring.{exporters,bindAddr,server.enable})
+  # so we can register the gpu exporter without depending on the full monitoring stack
+  # being imported on this host (e.g. hara has the gpu but no monitoring server).
+  imports = [../monitoring/registry.nix];
+
   options.lab.nvidia.exporter = {
     enable = lib.mkEnableOption "prometheus nvidia-gpu exporter";
     port = lib.mkOption {
       type = lib.types.port;
       default = 9835;
       description = "nvidia_gpu_exporter listen port (upstream default).";
-    };
-    openFirewall = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "open the exporter port in the firewall. off by default; local prometheus scrape doesn't need it. flip on if a LAN prometheus needs to reach this host.";
     };
   };
 
@@ -41,17 +41,22 @@ in {
     services.prometheus.exporters.nvidia-gpu = lib.mkIf cfg.exporter.enable {
       enable = true;
       port = cfg.exporter.port;
-      openFirewall = cfg.exporter.openFirewall;
+      # bind where the monitoring server expects to scrape (loopback single-host, site
+      # IP once there's a remote server); the registry entry below tells it the port.
+      listenAddress = config.lab.monitoring.bindAddr;
     };
 
-    services.prometheus.scrapeConfigs = lib.mkIf cfg.exporter.enable [
+    # register the exporter so the site's monitoring server auto-discovers + scrapes it
+    # (agents expose exporters, the server scrapes them). no manual scrapeConfig.
+    lab.monitoring.exporters = lib.mkIf cfg.exporter.enable [
       {
-        job_name = "nvidia-${config.networking.hostName}";
-        static_configs = [{targets = ["localhost:${toString cfg.exporter.port}"];}];
+        name = "nvidia";
+        port = cfg.exporter.port;
       }
     ];
 
-    services.grafana-dashboards.community = lib.mkIf cfg.exporter.enable [
+    # the dashboard only makes sense where grafana runs (the server)
+    services.grafana-dashboards.community = lib.mkIf (cfg.exporter.enable && config.lab.monitoring.server.enable) [
       pkgs.grafana-dashboards.nvidia-gpu
     ];
   };

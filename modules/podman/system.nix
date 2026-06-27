@@ -3,10 +3,15 @@
   lib,
   pkgs,
   username,
+  modules,
   ...
 }: let
   cfg = config.lab.podman;
 in {
+  # the exporter registry options so cadvisor can register without depending on the
+  # full monitoring stack being imported on this host.
+  imports = [modules.monitoring.registry];
+
   options.lab.podman = {
     autoUpdate = {
       enable = lib.mkEnableOption "podman-auto-update timer (nightly pull+recreate of containers labelled io.containers.autoupdate=registry)";
@@ -36,16 +41,21 @@ in {
     services.cadvisor = lib.mkIf cfg.cadvisor.enable {
       enable = true;
       port = cfg.cadvisor.port;
+      # bind where the monitoring server expects to scrape (loopback single-host, site
+      # IP once there's a remote server); the registry entry below tells it the port.
+      listenAddress = config.lab.monitoring.bindAddr;
     };
 
-    services.prometheus.scrapeConfigs = lib.mkIf cfg.cadvisor.enable [
+    # register the exporter so the site's monitoring server auto-discovers + scrapes it
+    lab.monitoring.exporters = lib.mkIf cfg.cadvisor.enable [
       {
-        job_name = "cadvisor-${config.networking.hostName}";
-        static_configs = [{targets = ["localhost:${toString cfg.cadvisor.port}"];}];
+        name = "cadvisor";
+        port = cfg.cadvisor.port;
       }
     ];
 
-    services.grafana-dashboards.community = lib.mkIf cfg.cadvisor.enable [
+    # the dashboard only makes sense where grafana runs (the server)
+    services.grafana-dashboards.community = lib.mkIf (cfg.cadvisor.enable && config.lab.monitoring.server.enable) [
       pkgs.grafana-dashboards.cadvisor
     ];
 
