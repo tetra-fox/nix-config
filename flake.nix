@@ -190,6 +190,12 @@
         shared = {
           specialArgs = commonSpecialArgs;
           modules = [
+            # expose the flake's nixosConfigurations to every host module so a host
+            # can read sibling hosts' declared config (used by the monitoring module
+            # to auto-derive scrape targets from same-site hosts' static IPs). set via
+            # _module.args (NixOS-only) rather than commonSpecialArgs so `self` doesn't
+            # leak into the home-manager eval.
+            {_module.args.nixosConfigurations = inputs.self.nixosConfigurations;}
             {
               nixpkgs.overlays = [
                 inputs.nix-vscode-extensions.overlays.default

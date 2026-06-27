@@ -1,76 +1,67 @@
 {
   config,
   modules,
-  pkgs,
+  siteData,
   ...
 }: {
   imports = [
     modules.monitoring.system
+    modules.monitoring.unifi
     modules.logging.system
   ];
 
-  # journald -> loki -> the grafana provisioned above
-  lab.logging.enable = true;
+  # this host is the mesa site's monitoring server (prometheus + grafana + loki).
+  # the only host in the site today, so it scrapes itself; future mesa-svc-NN agents
+  # are auto-discovered by the monitoring module from the flake.
+  lab.monitoring.server.enable = true;
+  lab.monitoring.unifi.enable = true; # mesa has a UniFi network
 
-  sops.secrets = {
-    "monitoring/grafana_oauth_client_secret" = {
-      owner = "grafana";
-      group = "grafana";
-    };
-    "monitoring/unpoller_password" = {
-      owner = "unpoller-exporter";
-      group = "unpoller-exporter";
-    };
-  };
+  # source-scoped peer firewall rules (monitoring module) need the nftables backend
+  networking.nftables.enable = true;
 
-  # unifi controller side: "Local Only User", limited admin / view only
-  services.prometheus.exporters.unpoller = {
+  lab.logging = {
+    # journald -> loki -> the grafana provisioned above
     enable = true;
-    listenAddress = "127.0.0.1";
-    log.quiet = true;
-    controllers = [
+
+    # the *arr apps log more detail to their <name>.txt than to stdout. tail the
+    # current (non-rotated) file; sabnzbd/qbittorrent logs are 0600 owner-only so
+    # they stay journal-only. media group grants read on these 0644/0664 files
+    extraGroups = ["media"];
+    fileSources = [
       {
-        url = "https://192.168.10.1";
-        user = "unpoller";
-        pass = config.sops.secrets."monitoring/unpoller_password".path;
-        verify_ssl = false; # self-signed
-        save_dpi = true;
+        job = "sonarr";
+        path = "${siteData}/sonarr/logs/sonarr.txt";
+      }
+      {
+        job = "radarr";
+        path = "${siteData}/radarr/logs/radarr.txt";
+      }
+      {
+        job = "prowlarr";
+        path = "${siteData}/prowlarr/logs/prowlarr.txt";
       }
     ];
   };
 
-  lab.monitoring = {
-    extraScrapeConfigs = [
-      {
-        job_name = "node-haos";
-        static_configs = [{targets = ["172.16.0.10:9100"];}];
-      }
-      {
-        job_name = "node-milkfish";
-        static_configs = [{targets = ["172.16.0.2:9100"];}];
-      }
-      {
-        job_name = "unpoller-${config.networking.hostName}";
-        static_configs = [{targets = ["127.0.0.1:9130"];}];
-      }
-    ];
+  sops.secrets."monitoring/grafana_oauth_client_secret" = {
+    owner = "grafana";
+    group = "grafana";
   };
 
-  services.grafana-dashboards.community = with pkgs.grafana-dashboards; [
-    unpoller-uap-prometheus
-    unpoller-clients-prometheus
-    unpoller-usw-prometheus
-    unpoller-clients-dpi-prometheus
-    unpoller-usg-prometheus
-    unpoller-network-prometheus
-    unpoller-pdu-prometheus
+  lab.monitoring.extraScrapeConfigs = [
+    # non-NixOS node-exporter targets (not auto-discovered from the flake)
+    {
+      job_name = "node-haos";
+      static_configs = [{targets = ["172.16.0.10:9100"];}];
+    }
+    {
+      job_name = "node-milkfish";
+      static_configs = [{targets = ["172.16.0.2:9100"];}];
+    }
   ];
 
   services.grafana.settings = {
     server.root_url = "https://stats.mesa.tetra.cool/";
-
-    # grafana 26.05+ needs an explicit secret_key (cookie signing)
-    security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
 
     auth.disable_login_form = true; # oauth only
 

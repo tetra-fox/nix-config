@@ -1,6 +1,8 @@
-// host and LOKI_PORT come from the environment (set by the nixos module) so this
-// file stays pure alloy with no nix interpolation; that keeps `alloy fmt` and the
-// editor extension working against exactly what alloy parses
+// HOSTNAME, LOKI_HOST and LOKI_PORT come from the environment (set by the nixos
+// module) so this file stays pure alloy with no nix interpolation; that keeps
+// `alloy fmt` and the editor extension working against exactly what alloy parses.
+// LOKI_HOST is 127.0.0.1 on the monitoring server (loki is local) and the site
+// server's IP on an agent (ships logs to the server's loki over the network).
 
 // one journal source catches everything: native services log to the journal by
 // definition, and oci-containers run as podman-<name>.service whose conmon output
@@ -35,6 +37,6 @@ loki.relabel "journald" {
 
 loki.write "local" {
 	endpoint {
-		url = "http://127.0.0.1:" + sys.env("LOKI_PORT") + "/loki/api/v1/push"
+		url = "http://" + sys.env("LOKI_HOST") + ":" + sys.env("LOKI_PORT") + "/loki/api/v1/push"
 	}
 }

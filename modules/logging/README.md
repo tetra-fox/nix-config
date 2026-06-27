@@ -1,8 +1,16 @@
 # logging
 
-loki + grafana-alloy on a host that already runs `modules.monitoring.system`. alloy
-reads the systemd journal and ships every unit's logs to a local loki; loki is added
-as a datasource to the grafana that monitoring provisions.
+follows the monitoring module's server/agent split:
+
+- **agent** (`lab.logging.enable = true`, any host): grafana-alloy reads the systemd
+  journal (+ optional file sources) and ships logs to its site's loki.
+- **server** (the host with `lab.monitoring.server.enable`): runs loki, adds it as a
+  grafana datasource, and ships the log dashboards.
+
+an agent finds its site's loki by the same `site-topology.nix` derivation the monitoring
+module uses: alloy's `loki.write` endpoint (`LOKI_HOST`) is `127.0.0.1` on the server
+(loki is local) and the site server's derived IP on a remote agent. exactly one server
+per site is asserted.
 
 one journal source catches everything. native services log to the journal by
 definition, and oci-containers run as `podman-<name>.service` whose conmon output
@@ -17,12 +25,14 @@ just work in grafana's explore tab.
     modules.logging.system
   ];
 
-  lab.logging.enable = true;
+  lab.logging.enable = true;            # this host ships its logs
+  # loki itself only comes up where lab.monitoring.server.enable is set.
 }
 ```
 
-requires `modules.monitoring.system` on the same host (it provides the grafana the loki
-datasource attaches to) and a per-host `siteData` module arg (loki state goes under it).
+today each site is a single server host, so alloy ships to its own loopback loki -- same
+as before the split. a future `<site>-svc-NN` agent ships to `<site>-mon-01` over the
+network. needs a per-host `siteData` module arg (loki state goes under it).
 
 ## dashboards
 
@@ -41,14 +51,15 @@ Explore is still faster than touching these.
 
 ## the alloy config is a real file
 
-`config.alloy` is plain alloy, no nix interpolation. host and loki port come from the
-environment via `sys.env("HOSTNAME")` / `sys.env("LOKI_PORT")`, set on the alloy unit by
-`system.nix`. keeping it nix-free means `alloy fmt` and the editor extension lint exactly
-what alloy parses. validate locally with:
+`config.alloy` is plain alloy, no nix interpolation. hostname and the loki endpoint come
+from the environment via `sys.env("HOSTNAME")` / `sys.env("LOKI_HOST")` /
+`sys.env("LOKI_PORT")`, set on the alloy unit by `system.nix` (`LOKI_HOST` is loopback on
+the server, the derived server IP on an agent). keeping it nix-free means `alloy fmt` and
+the editor extension lint exactly what alloy parses. validate locally with:
 
 ```sh
 alloy fmt modules/logging/config.alloy        # formatting
-alloy validate modules/logging/config.alloy   # needs HOSTNAME and LOKI_PORT in env
+alloy validate modules/logging/config.alloy   # needs HOSTNAME, LOKI_HOST, LOKI_PORT in env
 ```
 
 ## options
