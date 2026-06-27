@@ -27,7 +27,7 @@ jellyfin.fairlane.tetra.cool {
 
 stats.fairlane.tetra.cool {
 	import log
-	reverse_proxy localhost:3000
+	reverse_proxy {$STATS_UPSTREAM}
 }
 
 home.fairlane.tetra.cool {

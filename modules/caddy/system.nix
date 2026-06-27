@@ -3,11 +3,40 @@
   lib,
   pkgs,
   siteData,
+  nixosConfigurations,
   ...
-}: {
-  options.lab.caddy.caddyfile = lib.mkOption {
-    type = lib.types.nullOr lib.types.path;
-    default = null;
+}: let
+  # grafana lives on the site's monitoring server. caddy on any site host should
+  # reverse-proxy stats.<site> to that server. derive its address from the same
+  # site-topology used by the monitoring module: loopback when this host IS the
+  # server (grafana is local), else the server's IP. exposed in the Caddyfile as
+  # {$STATS_UPSTREAM} so the static Caddyfile doesn't hardcode mon-01's location.
+  topo = import ../monitoring/site-topology.nix {inherit lib;} {
+    inherit nixosConfigurations;
+    hostName = config.networking.hostName;
+  };
+  defaultStatsUpstream =
+    if config.lab.monitoring.server.enable
+    then "127.0.0.1:3000"
+    else if topo.serverIp != null
+    then "${topo.serverIp}:3000"
+    else "127.0.0.1:3000"; # bootstrap fallback before a server exists
+in {
+  options.lab.caddy = {
+    caddyfile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+    };
+
+    statsUpstream = lib.mkOption {
+      type = lib.types.str;
+      default = defaultStatsUpstream;
+      description = ''
+        upstream for the stats.<site> vhost (grafana), referenced in the Caddyfile as
+        {$STATS_UPSTREAM}. defaults to the site's monitoring server (loopback if this
+        host is the server, else the derived <site>-mon-01 IP).
+      '';
+    };
   };
 
   config = {
@@ -34,6 +63,10 @@
     systemd.services.caddy.serviceConfig.EnvironmentFile = [
       config.sops.templates."caddy.env".path
     ];
+
+    # grafana upstream for the stats.<site> vhost, referenced as {$STATS_UPSTREAM}
+    # in the Caddyfile. derived from site-topology (the site's monitoring server).
+    systemd.services.caddy.environment.STATS_UPSTREAM = config.lab.caddy.statsUpstream;
 
     # upstream only sets StateDirectory (which creates dataDir) when dataDir is the
     # default /var/lib/caddy; overriding it to siteData means we have to create the
