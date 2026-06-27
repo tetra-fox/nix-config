@@ -42,7 +42,7 @@
     hostName = "fairlane-svc-01";
     useDHCP = false;
     defaultGateway = "192.168.10.1";
-    nameservers = ["192.168.10.53"]; # adguard
+    nameservers = ["192.168.10.1"];
 
     interfaces.ens18.ipv4.addresses = [
       {
