@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  modules,
   ...
 }: let
   cfg = config.lab.nvidia;
@@ -9,7 +10,7 @@ in {
   # the exporter registry options (lab.monitoring.{exporters,bindAddr,server.enable})
   # so we can register the gpu exporter without depending on the full monitoring stack
   # being imported on this host (e.g. hara has the gpu but no monitoring server).
-  imports = [../monitoring/registry.nix];
+  imports = [modules.monitoring.registry];
 
   options.lab.nvidia.exporter = {
     enable = lib.mkEnableOption "prometheus nvidia-gpu exporter";

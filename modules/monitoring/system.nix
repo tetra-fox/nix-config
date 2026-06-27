@@ -19,6 +19,7 @@
   pkgs,
   siteData,
   nixosConfigurations,
+  modules,
   ...
 }: let
   cfg = config.lab.monitoring;
@@ -82,7 +83,7 @@ in {
   # lab.monitoring.{server.enable, bindAddr, exporters, extraScrapeConfigs} are declared
   # in the options-only registry module, so exporter producers can register without
   # pulling in this whole stack.
-  imports = [./registry.nix];
+  imports = [modules.monitoring.registry];
 
   config = lib.mkMerge [
     # ---- agent: always on, every host ----
