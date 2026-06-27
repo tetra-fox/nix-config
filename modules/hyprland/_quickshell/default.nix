@@ -34,6 +34,7 @@ in {
     material-symbols-filled
     networkmanager
     wl-clipboard
+    selawik
   ];
 
   wayland.windowManager.hyprland.extraLuaFiles.quickshell.content =

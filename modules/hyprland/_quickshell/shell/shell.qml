@@ -4,6 +4,7 @@ import qs.dialogs
 import qs.lockscreen
 import qs.notifications
 import qs.switcher
+import qs.widgets
 import qs.lib
 
 import QtQuick
@@ -192,6 +193,8 @@ ShellRoot {
     Switcher {
         id: switcher
     }
+
+    ActivateWindows {}
 
     ScreencopyPrewarm {}
 }

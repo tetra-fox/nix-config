@@ -62,6 +62,8 @@ QtObject {
     readonly property int radiusMd: 4
     readonly property int radiusLg: 6
 
+    readonly property bool activateWindows: true
+
     // layout
     readonly property real barInactiveOpacity: 0.3
     readonly property int barHeight: 30
