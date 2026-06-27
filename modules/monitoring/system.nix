@@ -92,6 +92,7 @@ in {
       # it reads services.grafana-dashboards.{community,extras} and writes the providers list
       provision = {
         enable = true;
+        datasources.settings.prune = true;
         datasources.settings.datasources = [
           {
             name = "prometheus";

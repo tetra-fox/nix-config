@@ -4,7 +4,13 @@
   pkgs,
   ...
 }: {
-  imports = [modules.monitoring.system];
+  imports = [
+    modules.monitoring.system
+    modules.logging.system
+  ];
+
+  # journald -> loki -> the grafana provisioned above
+  lab.logging.enable = true;
 
   sops.secrets = {
     "monitoring/grafana_oauth_client_secret" = {

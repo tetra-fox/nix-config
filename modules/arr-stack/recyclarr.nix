@@ -82,7 +82,17 @@
     (mkScore 30 ids.repack3)
     (mkScore 20 ids.repack2)
     (mkScore 10 ids.repackProper)
-    # bans (x -1_000_000) -- never grab these, outweighs any positive sum
+    # demote band (x -20_000) -- "fine content, flagged for cosmetic/format reasons"
+    # (scene, obfuscated naming, missing group tag, dual-audio, hevc). magnitude is
+    # above the +12000 group-tier band so a demoted release ranks below ANY clean
+    # release, but it stays above min_format_score (-50000) so it still SURVIVES as a
+    # candidate. the point: when no clean release exists (or it failed), the arr falls
+    # back to a demoted 1080p rather than dropping to an unscored SDTV. quality-first
+    # sort then keeps the 1080p above SD. true junk stays in `bans` below.
+    (mkScore (-20000) ids.demotes)
+    # bans (x -1_000_000) -- never grab these at any resolution; below min_format_score
+    # so they're hard-REJECTED, not just unpreferred. reserved for genuinely-broken or
+    # unwanted content (disc images, av1/x266 playback issues, fake upscales, LQ groups).
     (mkScore (-1000000) ids.bans)
   ];
 
@@ -96,7 +106,11 @@
       until_quality = cap;
       until_score = 10000000; # never stop upgrading toward the best at this tier
     };
-    min_format_score = 0; # accept anything (archival: never reject for low score)
+    # reject anything scoring below this. set below the demote band (-20000, even
+    # double-stacked -40000) so a flagged-but-fine 1080p survives as a fallback, but
+    # above the ban band (-1000000) so genuinely-broken releases are still rejected.
+    # a release stacking 3+ demotes (-60000) also falls below this and is rejected.
+    min_format_score = -50000;
     # zero out scores for any format not in our managed set, so a stale/manual
     # score in the arr can't linger and skew selection -- this config is authoritative
     reset_unmatched_scores.enabled = true;
@@ -231,19 +245,25 @@
     repack3 = "44e7c4de10ae50265753082e5dc76047";
     repack2 = "eb3d5cc0a2be0db205fb823640db6a3c";
     repackProper = "ec8fa7296b64e8cd390a1600981f3923";
-    bans = [
+    # demoted (-20000): fine content, flagged for cosmetic/format reasons. unpreferred
+    # but still grabbed over a lower resolution. x265 demoted (not banned) since modern
+    # jellyfin clients direct-play hevc and lots of animated 1080p is x265-only.
+    demotes = [
       "47435ece6b99a0b477caf360e79ba0bb" # x265 (HD)
+      "e1a997ddb54e3ecbfe06341ad323c458" # Obfuscated
+      "06d66ab109d4d2eddb2794d21526d140" # Retags
+      "1b3994c551cbb92a2c781af061f4ab44" # Scene
+      "32b367365729d530ca1c124a0b180c64" # Bad Dual Groups
+      "82d40da2bc6923f41e14394075dd4b03" # No-RlsGroup
+    ];
+    # hard-banned (-1000000, rejected): genuinely broken or unwanted at any resolution.
+    bans = [
       "041d90b435ebd773271cea047a457a6a" # x266
       "15a05bc7c1a36e2b57fd628f8977e2fc" # AV1
       "85c61753df5da1fb2aab6f2a47426b09" # BR-DISK
       "9c11cd3f07101cdba90a2d81cf0e56b4" # LQ
       "e2315f990da2e2cbfc9fa5b7a6fcfe48" # LQ (Release Title)
       "23297a736ca77c0fc8e70f8edd7ee56c" # Upscaled
-      "e1a997ddb54e3ecbfe06341ad323c458" # Obfuscated
-      "06d66ab109d4d2eddb2794d21526d140" # Retags
-      "1b3994c551cbb92a2c781af061f4ab44" # Scene
-      "32b367365729d530ca1c124a0b180c64" # Bad Dual Groups
-      "82d40da2bc6923f41e14394075dd4b03" # No-RlsGroup
     ];
   };
 
@@ -275,19 +295,21 @@
     repack3 = "5caaaa1c08c1742aa4342d8c4cc463f2";
     repack2 = "ae43b294509409a6a13919dedd4764c4";
     repackProper = "e7718d7a3ce595f289bfee26adc178f5";
-    bans = [
+    demotes = [
       "dc98083864ea246d05a42df0d05f81cc" # x265 (HD)
+      "7357cf5161efbf8c4d5d0c30b4815ee2" # Obfuscated
+      "5c44f52a8714fdd79bb4d98e2673be1f" # Retags
+      "f537cf427b64c38c8e36298f657e4828" # Scene
+      "b6832f586342ef70d9c128d40c07b872" # Bad Dual Groups
+      "ae9b7c9ebde1f3bd336a8cbd1ec4c5e5" # No-RlsGroup
+    ];
+    bans = [
       "390455c22a9cac81a738f6cbad705c3c" # x266
       "cae4ca30163749b891686f95532519bd" # AV1
       "ed38b889b31be83fda192888e2286d83" # BR-DISK
       "90a6f9a284dff5103f6346090e6280c8" # LQ
       "e204b80c87be9497a8a6eaff48f72905" # LQ (Release Title)
       "bfd8eb01832d646a0a89c4deb46f8564" # Upscaled
-      "7357cf5161efbf8c4d5d0c30b4815ee2" # Obfuscated
-      "5c44f52a8714fdd79bb4d98e2673be1f" # Retags
-      "f537cf427b64c38c8e36298f657e4828" # Scene
-      "b6832f586342ef70d9c128d40c07b872" # Bad Dual Groups
-      "ae9b7c9ebde1f3bd336a8cbd1ec4c5e5" # No-RlsGroup
       "b8cd450cbfa689c0259a01d9e29ba3d6" # 3D
     ];
   };
