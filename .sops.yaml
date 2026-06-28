@@ -30,3 +30,10 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_fairlane_svc_01
+  # mesa-mon-01: bootstrap = user key only until the VM is installed and its host
+  # age key exists. after install, add `&host_mesa_mon_01` above and to this rule,
+  # then `sops updatekeys secrets/mesa-mon-01.yaml`.
+  - path_regex: secrets/mesa-mon-01\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra

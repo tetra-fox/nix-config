@@ -313,6 +313,17 @@
               inputs.vpn-confinement.nixosModules.default
             ];
           };
+
+          mesa-mon-01 = {
+            path = ./hosts/mesa-mon-01;
+            arch = "x86_64";
+            class = "nixos";
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.sops-nix.nixosModules.sops
+              inputs.disko.nixosModules.disko
+            ];
+          };
         };
       };
     });
