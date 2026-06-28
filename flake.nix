@@ -90,6 +90,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # fleet deploy. layered over easy-hosts: the colmenaHive output below reuses the
+    # already-built nixosConfigurations + their declared site IPs/tags.
+    colmena = {
+      url = "github:zhaofengli/colmena";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
 
     nixos-vscode-server = {
@@ -159,6 +166,22 @@
         formatter = inputs'.alejandra.packages.default;
         packages = inputs'.tetra-nurpkgs.packages;
 
+        # `nix develop` for deploys and secret management: colmena to push
+        # configs, sops/age/ssh-to-age for the .sops.yaml workflow. sops lives
+        # here rather than the global profile since it's only used in this repo.
+        # colmena comes from the flake INPUT, not nixpkgs -- nixpkgs ships 0.4.0 (the
+        # old evaluator that chokes on the colmenaHive schema); the input matches the
+        # makeHive output we expose.
+        devShells.default = pkgs.mkShell {
+          packages = [
+            inputs'.colmena.packages.colmena
+            pkgs.sops
+            pkgs.age
+            pkgs.ssh-to-age
+            inputs'.alejandra.packages.default
+          ];
+        };
+
         # `nix run .#update-topology` rebuilds images/topology/{main,network}.svg for the README
         apps.update-topology = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
           type = "app";
@@ -185,6 +208,54 @@
             {nixosConfigurations = inputs.self.nixosConfigurations;}
           ];
         });
+
+      # `colmena apply --on @mesa` (parallel fleet deploy). layered over easy-hosts:
+      # we don't redefine the hosts, we reuse the already-built nixosConfigurations and
+      # attach deployment metadata derived from data they already declare -- the site IP
+      # (lab.site.hostIp) and the site prefix (the same helper the monitoring derive uses).
+      # only hosts that declare lab.site.hostIp are in the hive (selects the mesa server
+      # fleet; skips hara/myputer/fairlane). `nixos-rebuild --target-host` still works too.
+      #
+      # colmena's CLI wants TWO outputs: the raw hive spec as `colmena`, and the evaluated
+      # `colmenaHive = colmena.lib.makeHive self.outputs.colmena` (per its own hint).
+      flake.colmena = let
+        # sitePrefix: mesa-svc-01 -> mesa (mirrors the monitoring site-topology helper)
+        sitePrefix = name: let
+          m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge)-[0-9]+" name;
+        in
+          if m == null
+          then name
+          else builtins.head m;
+
+        cfgs = inputs.self.nixosConfigurations;
+        # only NixOS hosts that declared a site IP (the deployable mesa fleet)
+        deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
+
+        mkNode = name: c: {
+          deployment = {
+            targetHost = c.config.lab.site.hostIp;
+            targetUser = "admin";
+            tags = [(sitePrefix name)];
+            buildOnTarget = false; # build on this host, push the closure
+          };
+          # reuse the exact module set easy-hosts assembled for this host. colmena
+          # re-evals nodes via eval-config, so we hand it the host's own imports +
+          # specialArgs rather than reconstructing easy-hosts' assembly logic.
+          imports = c._module.args.modules or [];
+        };
+      in
+        {
+          meta = {
+            nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
+            # each node carries the specialArgs easy-hosts gave it (username, modules,
+            # shared, nixosConfigurations, ...) so the reused module set resolves.
+            nodeSpecialArgs = lib.mapAttrs (_: c: c._module.specialArgs) deployable;
+            nodeNixpkgs = lib.mapAttrs (_: c: c.pkgs) deployable;
+          };
+        }
+        // lib.mapAttrs mkNode deployable;
+
+      flake.colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
 
       easy-hosts = {
         # tag a host with its site (e.g. tags = ["mesa"]) to inherit that site's
