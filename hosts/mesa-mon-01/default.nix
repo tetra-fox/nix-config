@@ -10,7 +10,8 @@
   imports = [
     ./monitoring.nix
 
-    modules.disko.proxmox-vm
+    modules.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
+    modules.disko.proxmox-vm # boot-disk layout
     modules.profiles.server.system
 
     modules.sops.system

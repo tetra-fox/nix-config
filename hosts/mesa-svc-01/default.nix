@@ -11,6 +11,7 @@
     ./auth.nix
     ./monitoring.nix
 
+    modules.proxmox-vm.system
     modules.disko.proxmox-vm
     modules.profiles.server.system
 

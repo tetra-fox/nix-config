@@ -1,3 +1,7 @@
+# disko layout for a proxmox VM boot drive. the "being a proxmox VM" platform config
+# (qemu-guest profile, virtio initrd modules) lives in modules.proxmox-vm.system --
+# this module is only about the disk.
+#
 # boot drive must be at scsi0 (use "VirtIO SCSI single" controller in pve)
 # nixos-anywhere consumes this on first install:
 #   nix run github:nix-community/nixos-anywhere -- --flake .#<host> root@<ip>

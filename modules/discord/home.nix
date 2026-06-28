@@ -39,7 +39,6 @@
         platformIndicators.enable = true;
         mutualGroupDms.enable = true;
         imageZoom.enable = true;
-        friendsSince.enable = true;
         fixImagesQuality.enable = true;
       };
     };
