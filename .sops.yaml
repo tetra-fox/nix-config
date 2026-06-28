@@ -15,6 +15,7 @@ keys:
   # hosts
   - &host_mesa_svc_01 age1jwvvwvzlvqrxhyy5y84ltn7w6gtq52ss5ek93whlvx3hxezkjejqaxylpj
   - &host_fairlane_svc_01 age14760cr4x8zzd5tuf3w8ff2auyhjxju20mp88w5ackqlsrlal4s9s6m4qyz
+  - &host_mesa_mon_01 age17h8yezx0j8sqmpwuxc836pzd386u59x6wfh8m02f48v8ycyrhvxq8v9avd
 
 creation_rules:
   # per-host file, encrypted to that host's key only (plus the user). a host must
@@ -30,10 +31,8 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_fairlane_svc_01
-  # mesa-mon-01: bootstrap = user key only until the VM is installed and its host
-  # age key exists. after install, add `&host_mesa_mon_01` above and to this rule,
-  # then `sops updatekeys secrets/mesa-mon-01.yaml`.
   - path_regex: secrets/mesa-mon-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *host_mesa_mon_01
