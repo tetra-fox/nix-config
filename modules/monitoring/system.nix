@@ -79,6 +79,14 @@
 
   # union of all exporter ports across this site's agents, to open to the server.
   allExporterPorts = lib.unique (lib.concatMap (name: map (e: e.port) (exportersOf name)) hostsInSite);
+
+  # the site's agents (every host in the site that isn't me/the server). the server
+  # exposes grafana + loki to these so a remote caddy can reach grafana and remote
+  # alloy can ship logs to loki. their IPs feed the server-side firewall allow rules.
+  siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
+
+  grafanaPort = 3000;
+  lokiPort = 3100;
 in {
   # lab.monitoring.{server.enable, bindAddr, exporters, extraScrapeConfigs} are declared
   # in the options-only registry module, so exporter producers can register without
@@ -163,8 +171,10 @@ in {
 
         settings = {
           server = {
-            http_addr = "127.0.0.1";
-            http_port = 3000;
+            # bind the site IP once there's a remote host that needs to reach grafana
+            # (e.g. caddy on a svc box proxying stats.<site>); loopback while single-host.
+            http_addr = bindAddr;
+            http_port = grafanaPort;
           };
           analytics = {
             reporting_enabled = false;
@@ -195,6 +205,17 @@ in {
           ];
         };
       };
+
+      # expose grafana (for a remote caddy proxying stats.<site>) and loki (for remote
+      # alloy shipping logs) to this site's agents only -- source-scoped, never the whole
+      # VLAN. empty/no-op while single-host. loki itself binds the site IP via the logging
+      # module's bindAddr; grafana binds it above.
+      networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
+        lib.concatMapStringsSep "\n" (
+          ip: "ip saddr ${ip} tcp dport { ${toString grafanaPort}, ${toString lokiPort} } accept"
+        )
+        siteAgentIps
+      );
     })
   ];
 }
