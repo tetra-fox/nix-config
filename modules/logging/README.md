@@ -30,9 +30,12 @@ just work in grafana's explore tab.
 }
 ```
 
-today each site is a single server host, so alloy ships to its own loopback loki -- same
-as before the split. a future `<site>-svc-NN` agent ships to `<site>-mon-01` over the
-network. needs a per-host `siteData` module arg (loki state goes under it).
+a single-host site (e.g. `fairlane`) ships to its own loopback loki. a multi-host site
+(e.g. `mesa`: `mesa-svc-NN` agents + `mesa-mon-01` server) has the agents ship to the
+server's loki over the network -- the agent's `LOKI_HOST` derives the server's IP, the
+server's loki binds `0.0.0.0` (firewall-gated to the site's agents by the monitoring
+module), and same-box grafana still reaches it on loopback. needs a per-host `siteData`
+module arg (loki state goes under it).
 
 ## dashboards
 
@@ -64,21 +67,22 @@ alloy validate modules/logging/config.alloy   # needs HOSTNAME, LOKI_HOST, LOKI_
 
 ## options
 
-- `lab.logging.enable` - turn on loki + alloy + the loki datasource
-- `lab.logging.lokiPort` - loki http port (default 3100, loopback only)
+- `lab.logging.enable` - this host ships its logs (alloy). loki itself only comes up on
+  the host with `lab.monitoring.server.enable`.
+- `lab.logging.lokiPort` - loki http port (default 3100)
 
 ## gotchas
 
 - promtail reached EOL and was removed from nixpkgs; alloy is the vendor-pointed
   successor. the journald-to-loki pipeline is the same shape, written in alloy's config
   language instead of promtail yaml
-- loki is loopback only and not firewall-opened; grafana proxies to it. logs are
-  per-host, same topology as prometheus self-scraping. centralize later by pointing
-  alloy's `loki.write` at a remote loki if you want one pane for the fleet
+- loki binds loopback single-host, `0.0.0.0` multi-host (gated to the site's agents by
+  the monitoring module's source-scoped nftables rule -- needs
+  `networking.nftables.enable = true`). same-box grafana queries it on loopback either way
 - `services.loki.dataDir` wants an absolute path (unlike `prometheus.stateDir` which is
   relative to /var/lib), so it takes `siteData` directly, not the stripped prefix
 - retention is 31 days (`limits_config.retention_period = "744h"`) with the compactor
-  doing the deletes; single host, finite disk
+  doing the deletes; finite disk on the mon box
 - apps that log to a file inside their container instead of stdout (some *arr apps) won't
   be in the journal; their container stdout still is. add a file-based alloy source if you
   need those specific logs
