@@ -20,11 +20,13 @@
   };
   inherit (topo) hostsInSite siteServers serverIp multiHost myIp;
 
-  # loki binds the site IP once there's a remote agent shipping logs to it; loopback
-  # while single-host. mirrors the monitoring module's bindAddr.
-  bindAddr =
-    if multiHost && myIp != null
-    then myIp
+  # loki must be reachable BOTH by same-box grafana (loopback) AND by remote agents
+  # shipping logs (site IP), so once there's a remote agent it binds all interfaces and
+  # relies on the source-scoped nftables rule (monitoring module) to gate access to just
+  # the site agents -- same pattern prometheus uses. loopback-only while single-host.
+  lokiListen =
+    if multiHost
+    then "0.0.0.0"
     else "127.0.0.1";
 
   # where alloy pushes logs: local loki if I'm the server, else my site's server.
@@ -158,9 +160,7 @@ in {
         dataDir = lokiStateDir;
         configuration = {
           server = {
-            # loopback while single-host; binds the site IP once remote agents ship logs
-            # here (the monitoring module's server firewall opens :3100 to them).
-            http_listen_address = bindAddr;
+            http_listen_address = lokiListen;
             http_listen_port = cfg.lokiPort;
             # alloy ships over http on the same port, no separate grpc listener needed
             grpc_listen_port = 0;
