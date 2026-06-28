@@ -187,6 +187,13 @@
         });
 
       easy-hosts = {
+        # tag a host with its site (e.g. tags = ["mesa"]) to inherit that site's
+        # shared facts -- VLAN/gateway/DNS layout, siteData root -- instead of
+        # repeating them in every host's default.nix. see modules/sites/.
+        perTag = tag: {
+          modules = lib.optional (builtins.pathExists (./modules/sites + "/${tag}.nix")) (./modules/sites + "/${tag}.nix");
+        };
+
         shared = {
           specialArgs = commonSpecialArgs;
           modules = [
@@ -293,6 +300,7 @@
             path = ./hosts/mesa-svc-01;
             arch = "x86_64";
             class = "nixos";
+            tags = ["mesa"];
             specialArgs = {username = "admin";};
             modules = [
               inputs.sops-nix.nixosModules.sops
@@ -318,6 +326,7 @@
             path = ./hosts/mesa-mon-01;
             arch = "x86_64";
             class = "nixos";
+            tags = ["mesa"];
             specialArgs = {username = "admin";};
             modules = [
               inputs.sops-nix.nixosModules.sops

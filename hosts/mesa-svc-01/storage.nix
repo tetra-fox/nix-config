@@ -1,11 +1,8 @@
 # /mnt/vol_1/milkfish        media + torrents + nzb
 # /mnt/vol_1/homeassistant   HA backups
 # /var/lib/mesa/<service>    state for every native + container service (one backup target)
-{...}: let
-  siteData = "/var/lib/mesa";
-in {
-  _module.args.siteData = siteData;
-
+# siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
+{siteData, ...}: {
   users.groups.media = {
     gid = 1002;
   };

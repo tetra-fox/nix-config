@@ -37,27 +37,13 @@
     admin.enable = true;
   };
 
-  networking = {
-    hostName = "mesa-svc-01";
-    # ens18 = server vlan (LAN-routable, default route). single-NIC.
-    useDHCP = false;
-    defaultGateway = "192.168.10.1";
-    nameservers = ["192.168.10.53"];
+  # site facts (server-VLAN networking, gateway/DNS, siteData root, topology parent)
+  # come from the `mesa` tag (modules/sites/mesa.nix). this host declares its own IP.
+  networking.hostName = "mesa-svc-01";
+  lab.site.hostIp = "192.168.10.208";
 
-    interfaces.ens18 = {
-      mtu = 9000; # jumbo frames; milkfish bridge + switch are 9000 end-to-end
-      ipv4.addresses = [
-        {
-          address = "192.168.10.208";
-          prefixLength = 24;
-        }
-      ];
-    };
-  };
-
-  # proxmox guest under milkfish; single vNIC on the server vlan
+  # extra topology detail beyond the site default's parent
   topology.self = {
-    parent = "milkfish";
     guestType = "vm";
     interfaces.ens18 = {
       virtual = true;
