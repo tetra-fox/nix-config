@@ -5,6 +5,7 @@
   modules,
   siteData,
   siteEnvFile,
+  nixosConfigurations,
   ...
 }: let
   cfg = config.lab.arrStack;
@@ -15,6 +16,23 @@
   # VPN-Confinement caps namespace names at 7 chars (used as unit + iface suffix)
   vpnNs = "wg";
   vpn = config.vpnNamespaces.${vpnNs};
+
+  # where the site's postgres server lives (same derive monitoring uses for grafana).
+  # null until some site host sets lab.postgres.server.enable.
+  dbServerIp =
+    (import ../monitoring/site-topology.nix {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).dbServerIp;
+
+  # the address the arrs (in the wg netns) use to reach postgres. if THIS host runs the
+  # db, postgres is local and the netns reaches it over the veth bridge. otherwise it's
+  # the derived db-server IP on the LAN (netnsSnatHosts must include it for the return
+  # path). this flips automatically when server.enable moves off this host in Phase 3.
+  defaultPostgresHost =
+    if config.lab.postgres.server.enable
+    then vpn.bridgeAddress
+    else dbServerIp;
 
   arrServices = {
     sonarr = {
@@ -143,11 +161,12 @@ in {
 
     postgresHost = lib.mkOption {
       type = lib.types.str;
-      default = vpn.bridgeAddress;
+      default = defaultPostgresHost;
       description = ''
-        host the arrs connect to for postgres. defaults to the veth bridge address
-        (postgres on this same box). set to a remote box's LAN IP once postgres moves
-        off-host, and add that IP to netnsSnatHosts so the netns can reach it.
+        host the arrs connect to for postgres. auto-derived: the veth bridge address
+        when this host runs the db (postgres is local), else the site's derived
+        db-server IP. when the db is remote, add that IP to netnsSnatHosts so the netns
+        gets its return path. override only for a non-fleet target.
       '';
     };
 
