@@ -26,11 +26,11 @@
     # non-NixOS node-exporter targets (not auto-discovered from the flake)
     {
       job_name = "node-haos";
-      static_configs = [{targets = ["172.16.0.10:9100"];}];
+      static_configs = [{targets = ["192.168.10.5:9100"];}];
     }
     {
       job_name = "node-milkfish";
-      static_configs = [{targets = ["172.16.0.2:9100"];}];
+      static_configs = [{targets = ["192.168.10.2:9100"];}];
     }
   ];
 
