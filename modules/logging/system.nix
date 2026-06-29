@@ -48,17 +48,19 @@
   # of the *arr "timestamp|Level|component|msg" format into a label, then on to
   # the loki.write defined in config.alloy. the *arr apps write more detail to
   # their file than to stdout, so this is additive
-  fileSourceBlocks = lib.concatMapStrings (s: ''
+  fileSourceBlocks =
+    lib.concatMapStrings (s: ''
 
-    local.file_match "${s.job}" {
-      path_targets = [{ __path__ = "${s.path}", job = "${s.job}" }]
-    }
+      local.file_match "${s.job}" {
+        path_targets = [{ __path__ = "${s.path}", job = "${s.job}" }]
+      }
 
-    loki.source.file "${s.job}" {
-      targets    = local.file_match.${s.job}.targets
-      forward_to = [loki.process.app_level.receiver]
-    }
-  '') cfg.fileSources;
+      loki.source.file "${s.job}" {
+        targets    = local.file_match.${s.job}.targets
+        forward_to = [loki.process.app_level.receiver]
+      }
+    '')
+    cfg.fileSources;
 
   fileProcessBlock = ''
 

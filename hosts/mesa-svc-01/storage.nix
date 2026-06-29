@@ -42,7 +42,7 @@ in {
   # RequiresMountsFor on the library path, which blocks the unit until the automount
   # has pulled the share up. listed explicitly: these are the units that touch it.
   systemd.services = builtins.listToAttrs (map (name: {
-      inherit name;
-      value.unitConfig.RequiresMountsFor = ["/mnt/vol_1/milkfish"];
-    }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
+    inherit name;
+    value.unitConfig.RequiresMountsFor = ["/mnt/vol_1/milkfish"];
+  }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
 }

@@ -250,9 +250,11 @@ in {
         # tear the masquerade rules down when the netns stops, so a restart doesn't stack
         # duplicate rules (ExecStartPost re-appends on every start). leading - ignores a
         # missing rule.
-        ExecStopPost = map (
-          ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
-        ) cfg.netnsSnatHosts;
+        ExecStopPost =
+          map (
+            ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
+          )
+          cfg.netnsSnatHosts;
       };
     }
 
@@ -329,7 +331,7 @@ in {
         # it stays identical across boxes (the NFS share squashes on uid, not name).
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {uid = svc.uid;})
-          (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
+        (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
       ];
 
       # every service gets its data dir created here, including the ones with a nixos
@@ -338,7 +340,8 @@ in {
       # is ours to create or the unit fails on "Cannot create AppFolder".
       systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
         owner = svc.user or name;
-      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -") arrServices;
+      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -")
+      arrServices;
     }
 
     {
