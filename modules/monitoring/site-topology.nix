@@ -11,10 +11,12 @@
   nixosConfigurations,
   hostName,
 }: let
-  # site = hostname with the trailing -(svc|mon)-NN role suffix stripped.
-  # mesa-svc-01 -> mesa, fairlane-svc-01 -> fairlane, hara -> hara (self-prefixes).
+  # site = hostname with the trailing -<role>-NN suffix stripped.
+  # mesa-svc-01 -> mesa, mesa-store-01 -> mesa, fairlane-svc-01 -> fairlane, hara -> hara.
+  # the role list must cover every fleet tier or that host lands in a site of its own and
+  # the monitoring derive misses it (kept in sync with the same helper in flake.nix).
   sitePrefix = name: let
-    m = builtins.match "(.+)-(svc|mon)-[0-9]+" name;
+    m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge)-[0-9]+" name;
   in
     if m == null
     then name

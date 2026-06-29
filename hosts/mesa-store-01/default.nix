@@ -8,6 +8,7 @@
 }: {
   imports = [
     ./storage.nix
+    ./monitoring.nix
 
     modules.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
     modules.disko.proxmox-vm # boot-disk layout (scsi0); the media disk is separate
