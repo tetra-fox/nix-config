@@ -22,12 +22,14 @@
       inNetns = true;
       apiKey = {_sops = "apps/sonarr_api_key";};
       hasNixosModule = true;
+      uid = 274; # pinned so the uid is identical across boxes (NFS share)
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
       inNetns = true;
       apiKey = {_sops = "apps/radarr_api_key";};
       hasNixosModule = true;
+      uid = 275; # pinned so the uid is identical across boxes (NFS share)
     };
     prowlarr = {
       port = cfg.lanProxyPorts.prowlarr;
@@ -272,13 +274,22 @@ in {
 
     {
       users.groups.${cfg.mediaGroup} = {};
-      users.users = lib.mapAttrs' (name: svc:
-        lib.nameValuePair (svc.user or name) {
-          isSystemUser = true;
-          uid = svc.uid;
-          group = cfg.mediaGroup;
-          home = "${siteData}/${name}";
-        }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices);
+      users.users = lib.mkMerge [
+        # services we define ourselves (no upstream nixos module): create the user here.
+        (lib.mapAttrs' (name: svc:
+          lib.nameValuePair (svc.user or name) {
+            isSystemUser = true;
+            uid = svc.uid;
+            group = cfg.mediaGroup;
+            home = "${siteData}/${name}";
+          }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices))
+
+        # services with an upstream module already create the user; pin only its uid so
+        # it stays identical across boxes (the NFS share squashes on uid, not name).
+        (lib.mapAttrs' (name: svc:
+          lib.nameValuePair (svc.user or name) {uid = svc.uid;})
+          (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
+      ];
 
       # every service gets its data dir created here, including the ones with a nixos
       # module: upstream sonarr/radarr only set StateDirectory (which creates the dir)

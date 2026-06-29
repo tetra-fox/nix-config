@@ -63,6 +63,10 @@ in {
     # the sops secret is already decrypted and readable. mkBefore prepends it.
     systemd.services.sabnzbd.preStart = lib.mkBefore renderServersCmd;
 
+    # pin the uid so it's identical across boxes; the NFS share squashes on uid, not
+    # name. upstream services.sabnzbd creates the user but auto-allocates the uid.
+    users.users.sabnzbd.uid = 992;
+
     services.sabnzbd = {
       enable = true;
       group = cfg.mediaGroup;

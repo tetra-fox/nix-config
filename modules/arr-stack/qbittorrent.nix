@@ -19,6 +19,10 @@ in {
       "d ${siteData}/qbittorrent 0750 qbittorrent ${cfg.mediaGroup} -"
     ];
 
+    # pin the uid so it's identical across boxes; the NFS share squashes on uid, not
+    # name. upstream services.qbittorrent creates the user but auto-allocates the uid.
+    users.users.qbittorrent.uid = 993;
+
     services.qbittorrent = {
       enable = true;
       group = cfg.mediaGroup;
