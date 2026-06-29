@@ -97,12 +97,19 @@
 
   arrDbs = lib.flatten (lib.mapAttrsToList (n: _: ["${n}-main" "${n}-log"]) arrServices);
 
+  # the password-ownership oneshot only exists where postgres runs. when the db is local
+  # the arrs gate on it (avoids a bad-creds crash-loop during the boot race); when it's
+  # remote that unit lives on the db box, so we don't reference it -- the arrs just retry
+  # the connection until db-01 answers.
+  dbIsLocal = config.lab.postgres.server.enable;
+  pgPasswordUnit = lib.optional dbIsLocal config.lab.postgres.passwordUnits.${arrPgUser};
+
   # vpnConfinement already adds bindsTo+after on the wg unit; the extra
   # `requires` here is belt-and-suspenders fail-closed
   arrDeps = svc: {
-    after = [config.lab.postgres.passwordUnits.${arrPgUser}];
+    after = pgPasswordUnit;
     requires =
-      [config.lab.postgres.passwordUnits.${arrPgUser}]
+      pgPasswordUnit
       ++ lib.optional svc.inNetns "${vpnNs}.service";
     vpnConfinement = lib.optionalAttrs svc.inNetns {
       enable = true;
@@ -304,7 +311,10 @@ in {
         arrServices;
     }
 
-    {
+    # only contribute the arr role/cidr when postgres runs on THIS host. when the db is
+    # remote, the db box (mesa-db-01) declares the arr role + its own allowedCidrs, so
+    # svc-01 must not -- it's a pure client here.
+    (lib.mkIf dbIsLocal {
       lab.postgres = {
         # /24 spans both ends of the veth bridge so netns clients can reach pg
         allowedCidrs = ["${vpn.bridgeAddress}/24"];
@@ -313,7 +323,7 @@ in {
           owns = arrDbs;
         };
       };
-    }
+    })
 
     {
       services = lib.mkMerge (lib.mapAttrsToList (name: svc:

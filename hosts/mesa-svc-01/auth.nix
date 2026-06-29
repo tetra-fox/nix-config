@@ -22,13 +22,17 @@
     environmentFiles = siteEnvFile "authentik.env";
     extraOptions = [
       "--shm-size=512m"
-      "--add-host=postgres-host:host-gateway"
+      # postgres lives on db-01 now (Phase 3); authentik's podman isn't in the netns, it
+      # reaches the LAN directly, so just point the host alias at db-01's IP.
+      "--add-host=postgres-host:192.168.10.245"
     ];
   };
 in {
-  imports = [modules.postgres.system];
-
   sops.secrets = {
+    # authentik's db password. used to come from the postgres module's role declaration
+    # (back when svc-01 ran the server); now that the server is on db-01, declare it
+    # directly here -- authentik still needs it to authenticate to the remote db.
+    "auth/pg_pass" = {};
     "auth/authentik_secret_key" = {};
     "auth/ldap_outpost_token" = {};
   };
@@ -41,25 +45,9 @@ in {
     "authentik-ldap.env".content = "AUTHENTIK_TOKEN=${config.sops.placeholder."auth/ldap_outpost_token"}\n";
   };
 
-  lab.postgres = {
-    # 10.88.0.0/16 = podman default network; containers reach pg as this source
-    allowedCidrs = ["10.88.0.0/16"];
-    roles.authentik = {
-      passwordSecret = "auth/pg_pass";
-      owns = ["authentik"];
-    };
-  };
-
-  # gate the container units on the password unit; without it authentik crash-loops on bad creds during the boot race
-  systemd.services = let
-    pgDeps = {
-      after = [config.lab.postgres.passwordUnits.authentik];
-      requires = [config.lab.postgres.passwordUnits.authentik];
-    };
-  in {
-    podman-auth-server = pgDeps;
-    podman-auth-worker = pgDeps;
-  };
+  # the authentik postgres role + db now live on mesa-db-01 (which declares the role and
+  # gates ownership). svc-01 is a pure client here, so there's no local passwordUnit to
+  # depend on -- authentik retries the connection on startup until db-01 answers.
 
   virtualisation.oci-containers.containers = {
     auth-server =

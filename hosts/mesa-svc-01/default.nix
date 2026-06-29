@@ -27,18 +27,17 @@
   lab.arrStack = {
     torrentsPath = "/mnt/vol_1/milkfish/torrents";
     nzbPath = "/mnt/vol_1/milkfish/nzb";
+    # the arrs run in the wg netns; db-01 is off-tunnel (accessibleFrom covers the LAN)
+    # but needs host-side SNAT so its replies route back. activates the Phase 0b scaffold.
+    netnsSnatHosts = ["192.168.10.245"];
   };
 
   lab.sops.secretsFile = ../../secrets/mesa-svc-01.yaml;
 
-  lab.postgres = {
-    # svc-01 still runs the db today; Phase 3 moves the server to mesa-db-01 and svc-01
-    # becomes a pure client (drop this flag then, after the data migration).
-    server.enable = true;
-    allowedCidrs = ["192.168.20.0/24"]; # trusted VLAN
-    openFirewall = true; # 5432
-    admin.enable = true;
-  };
+  # postgres moved to mesa-db-01 (Phase 3). svc-01 is now a pure client: the arrs reach
+  # db-01 via the auto-derived postgresHost (dbServerIp -> db-01) + the netns SNAT below.
+  # data was migrated; svc-01 no longer runs a postgres server. the old local data dir
+  # under siteData stays on disk untouched as a rollback point.
 
   # site facts (server-VLAN networking, gateway/DNS, siteData root, topology parent)
   # come from the `mesa` tag (modules/sites/mesa.nix). this host declares its own IP.
