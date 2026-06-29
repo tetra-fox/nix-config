@@ -77,8 +77,8 @@ alloy validate modules/logging/config.alloy   # needs HOSTNAME, LOKI_HOST, LOKI_
   successor. the journald-to-loki pipeline is the same shape, written in alloy's config
   language instead of promtail yaml
 - loki binds loopback single-host, `0.0.0.0` multi-host (gated to the site's agents by
-  the monitoring module's source-scoped nftables rule -- needs
-  `networking.nftables.enable = true`). same-box grafana queries it on loopback either way
+  the monitoring module's source-scoped nftables rule; the base profile enables the
+  nftables backend fleet-wide). same-box grafana queries it on loopback either way
 - `services.loki.dataDir` wants an absolute path (unlike `prometheus.stateDir` which is
   relative to /var/lib), so it takes `siteData` directly, not the stripped prefix
 - retention is 31 days (`limits_config.retention_period = "744h"`) with the compactor

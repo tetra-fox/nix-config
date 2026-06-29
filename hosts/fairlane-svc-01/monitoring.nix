@@ -13,9 +13,6 @@
   lab.monitoring.server.enable = true;
   lab.monitoring.unifi.enable = true; # fairlane has a UniFi network
 
-  # source-scoped peer firewall rules (monitoring module) need the nftables backend
-  networking.nftables.enable = true;
-
   # journald -> loki -> the grafana provisioned above
   lab.logging.enable = true;
 

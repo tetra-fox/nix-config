@@ -83,8 +83,8 @@ from the `tetra-nurpkgs` package set) -- list-merged across modules.
 
 - agent exporters bind loopback while a site has one host; they bind the site IP (ens18)
   once there's a remote peer to serve, with source-scoped nftables rules opening
-  `:9100`/`:9558` to the server only. **requires `networking.nftables.enable = true`** --
-  `extraInputRules` is silently ignored under the iptables backend.
+  `:9100`/`:9558` to the server only. these `extraInputRules` need the nftables backend
+  (silently ignored under iptables); the base profile enables nftables fleet-wide.
 - the scrape derivation reads ONLY sibling INPUT attrs (`networking.hostName`,
   `networking.interfaces.*.ipv4.addresses`, `lab.monitoring.server.enable`). never read a
   sibling's monitoring-derived output (scrapeConfigs/firewall) -- that creates an A<->B

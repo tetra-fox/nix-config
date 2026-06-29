@@ -25,6 +25,12 @@
 
   console.keyMap = lib.mkDefault "us";
 
+  # nftables backend everywhere. it's the modern default (iptables is the legacy
+  # compat shim over nft now), and source-scoped firewall.extraInputRules are silently
+  # ignored under the iptables backend -- several modules rely on them (monitoring,
+  # logging, the store NFS export), so this is the single place that flag lives.
+  networking.nftables.enable = lib.mkDefault true;
+
   services = {
     earlyoom.enable = true;
     dbus.implementation = "broker";

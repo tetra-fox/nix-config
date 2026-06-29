@@ -12,10 +12,6 @@
   # mesa site's server (mesa-mon-01) scrapes/collects from it. no prometheus/grafana
   # here -- that lives on mon-01.
 
-  # source-scoped peer firewall rules (monitoring module) need the nftables backend,
-  # so mon-01 can reach this agent's exporters
-  networking.nftables.enable = true;
-
   lab.logging = {
     # journald + the arr file logs -> shipped to mon-01's loki
     enable = true;
