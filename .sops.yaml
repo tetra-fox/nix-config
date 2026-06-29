@@ -16,8 +16,7 @@ keys:
   - &host_mesa_svc_01 age1jwvvwvzlvqrxhyy5y84ltn7w6gtq52ss5ek93whlvx3hxezkjejqaxylpj
   - &host_fairlane_svc_01 age14760cr4x8zzd5tuf3w8ff2auyhjxju20mp88w5ackqlsrlal4s9s6m4qyz
   - &host_mesa_mon_01 age17h8yezx0j8sqmpwuxc836pzd386u59x6wfh8m02f48v8ycyrhvxq8v9avd
-  # installer-derived; re-run `sops updatekeys` after nixos-anywhere generates the final key
-  - &host_mesa_db_01 age1cexl5n5dwf9mrxgxm88gs5hpqghcpjtfcy2782jfyms3gc8ky52swwz4wc
+  - &host_mesa_db_01 age187esnmkpydleuaygxvzze0yaqzypamxrm8a8sx9t0p2vz5dz0uaszcp86m
 
 creation_rules:
   # per-host file, encrypted to that host's key only (plus the user). a host must
