@@ -1,16 +1,20 @@
-# the storage tier: this box owns the media disk and serves it two ways.
+# the storage tier: this box owns the media disk and serves it over NFS + SMB.
 #   NFS  -> the service VMs (svc-01 arrs/downloaders, jelly-01 jellyfin) mount the
 #           library; exported without all_squash so the pinned numeric uids pass
 #           through and files stay <svc-uid>:media instead of squashing to nobody.
-#   SMB  -> real people (@users) and the HA backup user, local-account auth.
+#           also the HAOS box mounts /mnt/vol_1/homeassistant for its backups.
+#   SMB  -> real people (@users) browse the library, local-account auth.
 #
 # /mnt/vol_1/milkfish        media + torrents + nzb (the shared library)
-# /mnt/vol_1/homeassistant   HA backups
+# /mnt/vol_1/homeassistant   HA backups (NFS only)
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {siteData, ...}: let
   # the service VMs that mount the library over NFS. svc-01 runs the arrs + qbit/sab
   # (read-write); jelly-01 will mount read-only once it exists (Phase 5).
   svcIp = "192.168.10.208";
+  # the HAOS box mounts the homeassistant share for its backups. it connects as root
+  # (appliance, no shell), so that export all_squashes to the homeassistant user.
+  haIp = "192.168.10.5";
 in {
   users.groups.media = {
     gid = 1002;
@@ -40,26 +44,34 @@ in {
   # the same pinned uids (Phase 0a), so numeric ownership passes through and an arr
   # import lands <svc-uid>:media rather than nobody:nobody. svc-01 gets rw; jelly-01
   # will be added read-only in Phase 5.
+  # each export gets a distinct fsid (NFSv4 allows only one fsid=0 pseudo-root). svc-01
+  # mounts the library at `:/` (fsid=0); the HA box mounts the backup share at
+  # `:/mnt/vol_1/homeassistant` (fsid=1). the library export keeps numeric uids
+  # (no all_squash) so arr imports stay <svc-uid>:media; the homeassistant export
+  # all_squashes to the homeassistant user (uid 1069) since HAOS connects as root.
   services.nfs.server = {
     enable = true;
-    # a single v4 pseudo-root; the export path sits directly under it
     exports = ''
       /mnt/vol_1/milkfish ${svcIp}(rw,sync,no_subtree_check,fsid=0)
+      /mnt/vol_1/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=1,all_squash,anonuid=1069,anongid=100)
     '';
   };
 
-  # open NFSv4 (2049/tcp) to the service VMs only, not the whole VLAN. source-scoped
+  # open NFSv4 (2049/tcp) to the specific clients only, not the whole VLAN. source-scoped
   # extraInputRules need the nftables backend, which the base profile enables fleet-wide.
   networking.firewall.extraInputRules = ''
     ip saddr ${svcIp} tcp dport 2049 accept
+    ip saddr ${haIp} tcp dport 2049 accept
   '';
 
-  # ---- SMB shares (moved from svc-01): local-account auth, no auth-tier dependency ----
-  users.users.hassbackupuser = {
+  # the identity the homeassistant NFS export squashes every HA-side uid to
+  # (anonuid=1069); also the on-disk owner of the existing backups. not a samba account
+  # anymore -- HAOS reaches its backups over NFS, so there's no homeassistant SMB share.
+  users.users.homeassistant = {
     isSystemUser = true;
     uid = 1069;
     group = "users";
-    description = "HAOS backup samba user";
+    description = "home assistant backup owner (NFS squash target)";
   };
 
   services.samba.settings = {
@@ -78,17 +90,6 @@ in {
       "create mask" = "0664";
       "directory mask" = "0775";
       "force group" = "media";
-    };
-
-    homeassistant = {
-      path = "/mnt/vol_1/homeassistant";
-      browseable = "yes";
-      "read only" = "no";
-      "guest ok" = "no";
-      "valid users" = "@users hassbackupuser";
-      "write list" = "@users hassbackupuser";
-      "create mask" = "0664";
-      "directory mask" = "0775";
     };
   };
 }
