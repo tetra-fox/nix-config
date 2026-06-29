@@ -1,60 +1,48 @@
-# /mnt/vol_1/milkfish        media + torrents + nzb
-# /mnt/vol_1/homeassistant   HA backups
-# /var/lib/mesa/<service>    state for every native + container service (one backup target)
+# svc-01 is now an NFS CLIENT of mesa-store-01: the media disk + samba shares moved to
+# the storage tier (Phase 1). this box mounts the shared library over NFS and keeps
+# running the arrs + qbit/sab, which write into it as their pinned uids (Phase 0a) so
+# files land <svc-uid>:media, not nobody.
+#
+# /mnt/vol_1/milkfish        the shared library, now NFS-mounted from store-01
+# /var/lib/mesa/<service>    local state for every native + container service
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
-{siteData, ...}: {
+{siteData, ...}: let
+  storeIp = "192.168.10.222";
+in {
+  # the media group's gid must match store-01 (1002): NFS squashes on the numeric gid,
+  # so a mismatch would make group-write fail. the arr-stack also declares this group
+  # (without a gid); this is where the gid is pinned.
   users.groups.media = {
     gid = 1002;
   };
 
   systemd.tmpfiles.rules = [
     "d ${siteData} 0755 root media -"
-
-    "Z /mnt/vol_1/milkfish/media - admin media 2775"
-    "Z /mnt/vol_1/milkfish/torrents - admin media 2775"
-    "Z /mnt/vol_1/milkfish/nzb - admin media 2775"
   ];
 
-  fileSystems."/mnt/vol_1" = {
-    device = "/dev/disk/by-uuid/e9bcf2e9-1a1d-4fd8-b2ab-6852302dcb78";
-    fsType = "btrfs";
-    options = ["defaults" "noatime" "nofail"];
+  # mount the shared library over NFSv4 from store-01. the export uses fsid=0, so the
+  # server's /mnt/vol_1/milkfish is the v4 pseudo-root -- the client mounts `:/` onto
+  # the same local path. automount + idle-timeout so the mount comes up on first access
+  # and a store-01 reboot doesn't wedge svc-01; nofail keeps boot non-blocking. jumbo
+  # MTU 9000 is already set site-wide (modules/sites/mesa.nix).
+  fileSystems."/mnt/vol_1/milkfish" = {
+    device = "${storeIp}:/";
+    fsType = "nfs";
+    options = [
+      "nfsvers=4.2"
+      "nofail"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=600"
+      "_netdev"
+    ];
   };
 
-  users.users.hassbackupuser = {
-    isSystemUser = true;
-    uid = 1069;
-    group = "users";
-    description = "HAOS backup samba user";
-  };
-
-  services.samba.settings = {
-    global = {
-      "server string" = "mesa";
-      "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
-    };
-
-    milkfish = {
-      path = "/mnt/vol_1/milkfish";
-      browseable = "yes";
-      "read only" = "no";
-      "guest ok" = "yes";
-      "valid users" = "@users";
-      "write list" = "@users";
-      "create mask" = "0664";
-      "directory mask" = "0775";
-      "force group" = "media";
-    };
-
-    homeassistant = {
-      path = "/mnt/vol_1/homeassistant";
-      browseable = "yes";
-      "read only" = "no";
-      "guest ok" = "no";
-      "valid users" = "@users hassbackupuser";
-      "write list" = "@users hassbackupuser";
-      "create mask" = "0664";
-      "directory mask" = "0775";
-    };
-  };
+  # the media services read/write the library, so they must wait for the (auto)mount
+  # rather than racing it and operating on the empty mountpoint underneath. each gets
+  # RequiresMountsFor on the library path, which blocks the unit until the automount
+  # has pulled the share up. listed explicitly: these are the units that touch it.
+  systemd.services = builtins.listToAttrs (map (name: {
+      inherit name;
+      value.unitConfig.RequiresMountsFor = ["/mnt/vol_1/milkfish"];
+    }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
 }

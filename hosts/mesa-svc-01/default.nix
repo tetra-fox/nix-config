@@ -19,7 +19,6 @@
     modules.jellyfin.system
     modules.postgres.system
     modules.caddy.system
-    modules.samba.system
     modules.podman.system
     modules.nvidia.system
     modules.arr-stack.default
