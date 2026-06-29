@@ -49,8 +49,9 @@
     };
     log.level = "info";
     postgres = {
-      # netns clients reach pg via the bridge's host-side address
-      host = vpn.bridgeAddress;
+      # netns clients reach pg via the bridge's host-side address by default; override
+      # with cfg.postgresHost (+ netnsSnatHosts) when postgres moves to another box
+      host = cfg.postgresHost;
       port = 5432;
       user = arrPgUser;
       password = {_sops = "arr/pg_pass";};
@@ -140,6 +141,28 @@ in {
       description = "subnets allowed to reach the namespace via portMappings; covers return-route for any LAN client";
     };
 
+    postgresHost = lib.mkOption {
+      type = lib.types.str;
+      default = vpn.bridgeAddress;
+      description = ''
+        host the arrs connect to for postgres. defaults to the veth bridge address
+        (postgres on this same box). set to a remote box's LAN IP once postgres moves
+        off-host, and add that IP to netnsSnatHosts so the netns can reach it.
+      '';
+    };
+
+    netnsSnatHosts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        LAN IPs whose netns-initiated traffic must be SNAT'd to this host's LAN address
+        so they can reply. the accessibleFrom routes already take LAN destinations off
+        the tunnel, but replies would target the private namespaceAddress (unroutable on
+        the LAN) without this masquerade. populate when a service the arrs talk to moves
+        to another box (postgres, jellyfin). empty = no masquerade, behaves as before.
+      '';
+    };
+
     wgMtu = lib.mkOption {
       type = lib.types.int;
       default = 1320; # AirVPN
@@ -209,10 +232,28 @@ in {
         );
       };
 
-      # VPN-Confinement drops MTU during wg-quick parsing; set it on the iface ourselves
-      systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
-        "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
-      ];
+      # VPN-Confinement drops MTU during wg-quick parsing; set it on the iface ourselves.
+      # also masquerade netns-initiated traffic to each netnsSnatHosts dest so the reply
+      # comes back: accessibleFrom already routes these LAN dests off the tunnel, but
+      # without SNAT the dest sees the private namespaceAddress and can't reply. scoped to
+      # -d <ip>/32 so it never touches the inbound portMappings DNAT flows or tunnel egress.
+      systemd.services.${vpnNs}.serviceConfig = {
+        ExecStartPost =
+          [
+            "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
+          ]
+          ++ map (
+            ip: "${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
+          )
+          cfg.netnsSnatHosts;
+
+        # tear the masquerade rules down when the netns stops, so a restart doesn't stack
+        # duplicate rules (ExecStartPost re-appends on every start). leading - ignores a
+        # missing rule.
+        ExecStopPost = map (
+          ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
+        ) cfg.netnsSnatHosts;
+      };
     }
 
     {
