@@ -36,6 +36,12 @@
   };
 in {
   options.lab.postgres = {
+    # this host runs the postgres server (mirrors lab.monitoring.server.enable). one per
+    # site today; the site-topology derive reads this flag to point clients at its IP, so
+    # an HA cluster later just moves which host/endpoint the flag-derived address resolves
+    # to without touching any client.
+    server.enable = lib.mkEnableOption "run the postgres server on this host";
+
     openFirewall = lib.mkEnableOption "5432/tcp in the host firewall";
 
     package = lib.mkOption {
@@ -79,66 +85,76 @@ in {
     };
   };
 
-  config = {
-    lab.postgres = {
-      passwordUnits = lib.mapAttrs (name: _: "postgresql-set-${name}-password.service") cfg.roles;
+  config = lib.mkMerge [
+    # always: the readonly passwordUnits map + the admin role default. these are option
+    # plumbing, not the server -- they're computed from cfg.roles regardless of where the
+    # server runs (a client host can declare roles that the server-side host materializes).
+    {
+      lab.postgres = {
+        passwordUnits = lib.mapAttrs (name: _: "postgresql-set-${name}-password.service") cfg.roles;
 
-      roles = lib.mkIf cfg.admin.enable {
-        admin = {
-          passwordSecret = cfg.admin.passwordSecret;
-          clauses = {
-            superuser = true;
-            createdb = true;
-            createrole = true;
-            replication = true;
+        roles = lib.mkIf cfg.admin.enable {
+          admin = {
+            passwordSecret = cfg.admin.passwordSecret;
+            clauses = {
+              superuser = true;
+              createdb = true;
+              createrole = true;
+              replication = true;
+            };
           };
         };
       };
-    };
+    }
 
-    services.postgresql = {
-      enable = true;
-      package = cfg.package;
-      dataDir = "${siteData}/postgresql/${cfg.package.psqlSchema}";
-      enableTCPIP = true;
-      settings.listen_addresses = "*";
-      authentication =
-        lib.optionalString (cfg.allowedCidrs != [])
-        (lib.concatMapStringsSep "\n" (cidr: "host all all ${cidr} scram-sha-256") cfg.allowedCidrs + "\n");
+    # only where this host IS the postgres server: run postgresql, create the roles/dbs,
+    # the per-role password+ownership oneshots, the firewall hole, the secrets. a pure
+    # client (server.enable = false) gets none of this; it points at the derived endpoint.
+    (lib.mkIf cfg.server.enable {
+      services.postgresql = {
+        enable = true;
+        package = cfg.package;
+        dataDir = "${siteData}/postgresql/${cfg.package.psqlSchema}";
+        enableTCPIP = true;
+        settings.listen_addresses = "*";
+        authentication =
+          lib.optionalString (cfg.allowedCidrs != [])
+          (lib.concatMapStringsSep "\n" (cidr: "host all all ${cidr} scram-sha-256") cfg.allowedCidrs + "\n");
 
-      ensureUsers =
-        lib.mapAttrsToList (name: role: {
-          inherit name;
-          ensureClauses = role.clauses;
-        })
+        ensureUsers =
+          lib.mapAttrsToList (name: role: {
+            inherit name;
+            ensureClauses = role.clauses;
+          })
+          cfg.roles;
+
+        ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
+      };
+
+      # dataDir is overridden under siteData. the unit's ReadWritePaths bind-mounts the
+      # versioned dataDir, which must already exist or namespace setup fails (226/NAMESPACE).
+      # create both the parent and the versioned leaf so the mount target is present.
+      systemd.tmpfiles.rules = [
+        "d ${siteData}/postgresql 0700 postgres postgres -"
+        "d ${config.services.postgresql.dataDir} 0700 postgres postgres -"
+      ];
+
+      networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [5432];
+
+      # mkDefault so a consumer redeclaring the same secret (e.g. for owner/group) wins
+      sops.secrets =
+        lib.mapAttrs' (
+          name: role:
+            lib.nameValuePair role.passwordSecret (lib.mkDefault {})
+        )
         cfg.roles;
 
-      ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
-    };
-
-    # dataDir is overridden under siteData. the unit's ReadWritePaths bind-mounts the
-    # versioned dataDir, which must already exist or namespace setup fails (226/NAMESPACE).
-    # create both the parent and the versioned leaf so the mount target is present.
-    systemd.tmpfiles.rules = [
-      "d ${siteData}/postgresql 0700 postgres postgres -"
-      "d ${config.services.postgresql.dataDir} 0700 postgres postgres -"
-    ];
-
-    networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [5432];
-
-    # mkDefault so a consumer redeclaring the same secret (e.g. for owner/group) wins
-    sops.secrets =
-      lib.mapAttrs' (
-        name: role:
-          lib.nameValuePair role.passwordSecret (lib.mkDefault {})
-      )
-      cfg.roles;
-
-    systemd.services =
-      lib.mapAttrs' (
-        name: role:
-          lib.nameValuePair "postgresql-set-${name}-password" (mkRoleUnit name role)
-      )
-      cfg.roles;
-  };
+      systemd.services =
+        lib.mapAttrs' (
+          name: role:
+            lib.nameValuePair "postgresql-set-${name}-password" (mkRoleUnit name role)
+        )
+        cfg.roles;
+    })
+  ];
 }

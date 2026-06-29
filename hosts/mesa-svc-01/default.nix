@@ -32,6 +32,9 @@
   lab.sops.secretsFile = ../../secrets/mesa-svc-01.yaml;
 
   lab.postgres = {
+    # svc-01 still runs the db today; Phase 3 moves the server to mesa-db-01 and svc-01
+    # becomes a pure client (drop this flag then, after the data migration).
+    server.enable = true;
     allowedCidrs = ["192.168.20.0/24"]; # trusted VLAN
     openFirewall = true; # 5432
     admin.enable = true;
