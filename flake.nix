@@ -404,6 +404,18 @@
               inputs.disko.nixosModules.disko
             ];
           };
+
+          mesa-store-01 = {
+            path = ./hosts/mesa-store-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            # no sops-nix: store-01 has no per-host secrets (see hosts/mesa-store-01)
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
         };
       };
     });
