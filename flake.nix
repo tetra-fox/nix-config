@@ -175,6 +175,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             inputs'.colmena.packages.colmena
+            pkgs.nixos-anywhere # install a fresh box; pinned via nixpkgs, no `nix run github:`
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
@@ -409,6 +410,17 @@
 
           mesa-store-01 = {
             path = ./hosts/mesa-store-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
+
+          mesa-db-01 = {
+            path = ./hosts/mesa-db-01;
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
