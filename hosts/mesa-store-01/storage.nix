@@ -39,21 +39,20 @@ in {
     options = ["defaults" "noatime" "nofail"];
   };
 
-  # ---- NFS server: serve the library to the service VMs ----
-  # NFSv4 only (no rpcbind/statd/mountd port sprawl). no all_squash: the clients run
-  # the same pinned uids (Phase 0a), so numeric ownership passes through and an arr
-  # import lands <svc-uid>:media rather than nobody:nobody. svc-01 gets rw; jelly-01
-  # will be added read-only in Phase 5.
-  # each export gets a distinct fsid (NFSv4 allows only one fsid=0 pseudo-root). svc-01
-  # mounts the library at `:/` (fsid=0); the HA box mounts the backup share at
-  # `:/mnt/vol_1/homeassistant` (fsid=1). the library export keeps numeric uids
-  # (no all_squash) so arr imports stay <svc-uid>:media; the homeassistant export
-  # all_squashes to the homeassistant user (uid 1069) since HAOS connects as root.
+  # ---- NFS server ----
+  # two fully independent shares, each its own NFSv4 fsid=0 root scoped to a single
+  # client. the kernel keys the v4 pseudo-root per-client, so two fsid=0 exports to
+  # different IPs are isolated namespaces -- svc-01 sees only milkfish, the HA box sees
+  # only homeassistant, neither can traverse to the other. each client mounts `:/`.
+  #
+  # milkfish keeps numeric uids (no all_squash) so arr imports stay <svc-uid>:media
+  # (Phase 0a). homeassistant all_squashes to the homeassistant user (uid 1069) since
+  # HAOS connects as root. svc-01 is rw; jelly-01 joins read-only in Phase 5.
   services.nfs.server = {
     enable = true;
     exports = ''
       /mnt/vol_1/milkfish ${svcIp}(rw,sync,no_subtree_check,fsid=0)
-      /mnt/vol_1/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=1,all_squash,anonuid=1069,anongid=100)
+      /mnt/vol_1/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1069,anongid=100)
     '';
   };
 

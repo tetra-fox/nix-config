@@ -20,11 +20,11 @@ in {
     "d ${siteData} 0755 root media -"
   ];
 
-  # mount the shared library over NFSv4 from store-01. the export uses fsid=0, so the
-  # server's /mnt/vol_1/milkfish is the v4 pseudo-root -- the client mounts `:/` onto
-  # the same local path. automount + idle-timeout so the mount comes up on first access
-  # and a store-01 reboot doesn't wedge svc-01; nofail keeps boot non-blocking. jumbo
-  # MTU 9000 is already set site-wide (modules/sites/mesa.nix).
+  # mount the library over NFSv4 from store-01. milkfish is its own fsid=0 v4 root
+  # scoped to svc-01, so the client mounts `:/` (svc-01 can't even see store-01's other
+  # shares -- separate per-client namespaces). automount + idle-timeout so the mount
+  # comes up on first access and a store-01 reboot doesn't wedge svc-01; nofail keeps
+  # boot non-blocking. jumbo MTU 9000 is already set site-wide (modules/sites/mesa.nix).
   fileSystems."/mnt/vol_1/milkfish" = {
     device = "${storeIp}:/";
     fsType = "nfs";
