@@ -320,6 +320,11 @@
                 inputs.nix-topology.nixosModules.default
                 "${inputs.nixos-vscode-server}/modules/vscode-server"
                 inputs.tetra-nurpkgs.nixosModules.grafana-dashboards
+                # the `sops` option, needed by any host importing modules that reference
+                # config.sops (monitoring/logging, plus the sops.system host-key module).
+                # lives here so every nixos host has it without a per-host import; modules
+                # themselves can't reach `inputs` to pull it in.
+                inputs.sops-nix.nixosModules.sops
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
@@ -374,7 +379,6 @@
             tags = ["mesa"];
             specialArgs = {username = "admin";};
             modules = [
-              inputs.sops-nix.nixosModules.sops
               inputs.disko.nixosModules.disko
               inputs.nowplaying.nixosModules.default
               inputs.vpn-confinement.nixosModules.default
@@ -387,7 +391,6 @@
             class = "nixos";
             specialArgs = {username = "admin";};
             modules = [
-              inputs.sops-nix.nixosModules.sops
               inputs.disko.nixosModules.disko
               inputs.vpn-confinement.nixosModules.default
             ];
@@ -400,7 +403,6 @@
             tags = ["mesa"];
             specialArgs = {username = "admin";};
             modules = [
-              inputs.sops-nix.nixosModules.sops
               inputs.disko.nixosModules.disko
             ];
           };
@@ -411,7 +413,6 @@
             class = "nixos";
             tags = ["mesa"];
             specialArgs = {username = "admin";};
-            # no sops-nix: store-01 has no per-host secrets (see hosts/mesa-store-01)
             modules = [
               inputs.disko.nixosModules.disko
             ];
