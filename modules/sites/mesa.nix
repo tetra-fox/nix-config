@@ -22,7 +22,7 @@
       # ens18 = server vlan (LAN-routable, default route). single-NIC proxmox guests.
       useDHCP = false;
       defaultGateway = "192.168.10.1";
-      nameservers = ["192.168.10.53"]; # mesa AdGuard
+      nameservers = ["192.168.10.1"];
 
       interfaces.ens18 = {
         mtu = 9000; # jumbo frames; milkfish bridge + switch are 9000 end-to-end
