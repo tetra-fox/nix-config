@@ -43,6 +43,7 @@
   # come from the `mesa` tag (modules/sites/mesa.nix). this host declares its own IP.
   networking.hostName = "mesa-svc-01";
   lab.site.hostIp = "192.168.10.208";
+  lab.site.internalIp = "10.10.0.208"; # isolated internal VLAN (ens19)
 
   # extra topology detail beyond the site default's parent
   topology.self = {

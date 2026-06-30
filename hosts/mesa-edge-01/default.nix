@@ -22,6 +22,7 @@
 
   networking.hostName = "mesa-edge-01";
   lab.site.hostIp = "192.168.10.194";
+  lab.site.internalIp = "10.10.0.194"; # isolated internal VLAN (ens19)
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 

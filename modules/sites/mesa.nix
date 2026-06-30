@@ -17,6 +17,16 @@
     example = "192.168.10.208";
   };
 
+  # the isolated internal VLAN (10.10.0.0/24, VLAN 1010) for VM east-west traffic
+  # (postgres, NFS). no gateway, no DNS, no WAN -- it's a pure L2 fabric, the default
+  # route stays on ens18. a host opts in by setting this; the second NIC is ens19.
+  options.lab.site.internalIp = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    description = "this host's IPv4 on the isolated internal VLAN (ens19); null = not on it";
+    example = "10.10.0.208";
+  };
+
   config = {
     networking = {
       # ens18 = server vlan (LAN-routable, default route). single-NIC proxmox guests.
@@ -29,6 +39,17 @@
         ipv4.addresses = [
           {
             address = config.lab.site.hostIp;
+            prefixLength = 24;
+          }
+        ];
+      };
+
+      # ens19 = isolated internal VLAN. just an address on the segment -- no gateway/DNS
+      # here (those stay on ens18), the VLAN has no route off itself by design.
+      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+        ipv4.addresses = [
+          {
+            address = config.lab.site.internalIp;
             prefixLength = 24;
           }
         ];

@@ -24,6 +24,7 @@
   # the `mesa` tag (modules/sites/mesa.nix). this host just declares its own IP.
   networking.hostName = "mesa-store-01";
   lab.site.hostIp = "192.168.10.222";
+  lab.site.internalIp = "10.10.0.222"; # isolated internal VLAN (ens19)
 
   users.users.${username} = {
     isNormalUser = true;

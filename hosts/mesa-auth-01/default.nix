@@ -21,6 +21,7 @@
 
   networking.hostName = "mesa-auth-01";
   lab.site.hostIp = "192.168.10.166";
+  lab.site.internalIp = "10.10.0.166"; # isolated internal VLAN (ens19)
 
   lab.authentik.enable = true;
 

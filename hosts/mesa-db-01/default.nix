@@ -30,6 +30,7 @@ in {
 
   networking.hostName = "mesa-db-01";
   lab.site.hostIp = "192.168.10.245";
+  lab.site.internalIp = "10.10.0.245"; # isolated internal VLAN (ens19)
 
   lab.postgres = {
     server.enable = true; # this host IS the site's db server (the derive points here)
