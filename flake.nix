@@ -325,6 +325,11 @@
                 # so site-topology + the deploy output can read them as a fleet-wide
                 # contract regardless of which site a host is in.
                 ./modules/site/options.nix
+                # the `vpnNamespaces` option, needed by arr-stack. inert on hosts that
+                # declare no namespace, so it's safe fleet-wide; this avoids the trap where
+                # adding arr-stack to a host silently fails unless you also remember this
+                # per-host (same fix as sops -- modules can't reach `inputs` themselves).
+                inputs.vpn-confinement.nixosModules.default
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
@@ -381,7 +386,6 @@
             modules = [
               inputs.disko.nixosModules.disko
               inputs.nowplaying.nixosModules.default
-              inputs.vpn-confinement.nixosModules.default
             ];
           };
 
@@ -392,7 +396,6 @@
             specialArgs = {username = "admin";};
             modules = [
               inputs.disko.nixosModules.disko
-              inputs.vpn-confinement.nixosModules.default
             ];
           };
 
