@@ -30,6 +30,16 @@
     else if topo.authServerIp != null
     then "${topo.authServerIp}:9000"
     else "127.0.0.1:9000"; # bootstrap fallback
+
+  # jellyfin + nowplaying live on the media host. loopback if this box IS the media host
+  # (jellyfin local), else the derived media host IP. {$JELLYFIN_UPSTREAM}/{$NP_UPSTREAM}.
+  mediaIsLocal = config.services.jellyfin.enable;
+  mediaHostAddr =
+    if mediaIsLocal
+    then "127.0.0.1"
+    else if topo.mediaHostIp != null
+    then topo.mediaHostIp
+    else "127.0.0.1"; # bootstrap fallback
 in {
   options.lab.caddy = {
     caddyfile = lib.mkOption {
@@ -55,6 +65,18 @@ in {
         the Caddyfile as {$AUTH_UPSTREAM}. defaults to the site's authentik host
         (loopback if local, else the derived auth host IP).
       '';
+    };
+
+    jellyfinUpstream = lib.mkOption {
+      type = lib.types.str;
+      default = "${mediaHostAddr}:8096";
+      description = "upstream for jellyfin.<site> ({$JELLYFIN_UPSTREAM}); the derived media host";
+    };
+
+    npUpstream = lib.mkOption {
+      type = lib.types.str;
+      default = "${mediaHostAddr}:8090";
+      description = "upstream for np.<site> ({$NP_UPSTREAM}); the derived media host (nowplaying)";
     };
   };
 
@@ -88,6 +110,9 @@ in {
     systemd.services.caddy.environment.STATS_UPSTREAM = config.lab.caddy.statsUpstream;
     # authentik upstream ({$AUTH_UPSTREAM}); derived from site-topology (the auth host).
     systemd.services.caddy.environment.AUTH_UPSTREAM = config.lab.caddy.authUpstream;
+    # jellyfin + nowplaying upstreams ({$JELLYFIN_UPSTREAM}/{$NP_UPSTREAM}); the media host.
+    systemd.services.caddy.environment.JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
+    systemd.services.caddy.environment.NP_UPSTREAM = config.lab.caddy.npUpstream;
 
     # upstream only sets StateDirectory (which creates dataDir) when dataDir is the
     # default /var/lib/caddy; overriding it to siteData means we have to create the

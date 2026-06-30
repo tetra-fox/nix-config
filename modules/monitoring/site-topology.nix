@@ -65,6 +65,9 @@
   isDbServer = c: c.lab.postgres.server.enable or false;
   isDbClient = c: c.lab.postgres.client.enable or false;
   isAuthServer = c: c.lab.authentik.enable or false;
+  # the media host runs jellyfin (+ nowplaying alongside it). services.jellyfin.enable is
+  # an INPUT (set directly in the jellyfin module), so reading it keeps the no-recursion rule.
+  isMediaHost = c: c.services.jellyfin.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 in {
@@ -83,4 +86,7 @@ in {
   dbClientCidrs = map (ip: "${ip}/32") (ipsWhere isDbClient);
   # the single authentik host's IP -- what caddy reverse-proxies auth.<site> + forward_auth to.
   authServerIp = ipWhere isAuthServer;
+  # the single media host's IP (jellyfin + nowplaying) -- caddy proxies jellyfin.<site>
+  # and np.<site> here. today the same box as the arr stack.
+  mediaHostIp = ipWhere isMediaHost;
 }

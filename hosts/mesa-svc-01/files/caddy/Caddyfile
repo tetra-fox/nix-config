@@ -46,7 +46,7 @@ home.mesa.tetra.cool {
 
 jellyfin.mesa.tetra.cool {
 	import log
-	reverse_proxy localhost:8096
+	reverse_proxy {$JELLYFIN_UPSTREAM}
 }
 
 stats.mesa.tetra.cool {
@@ -56,7 +56,7 @@ stats.mesa.tetra.cool {
 
 np.mesa.tetra.cool {
 	import log
-	reverse_proxy localhost:8090
+	reverse_proxy {$NP_UPSTREAM}
 }
 
 # internal
