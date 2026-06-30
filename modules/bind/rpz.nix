@@ -1,14 +1,13 @@
-# RPZ blocklist refresh: fetch the lists, write them as RPZ zone files, reload named. bind's
-# RPZ (response policy zones) is the "official" DNS blocking mechanism -- a policy zone whose
-# records rewrite answers; `domain CNAME .` means NXDOMAIN. a daily timer keeps the lists fresh
-# without a rebuild; the list content is runtime state, the fetch logic is declared here.
+# RPZ blocklist refresh: fetch each configured list, write it as an RPZ zone file, reload named.
+# bind's RPZ (response policy zones) is the "official" DNS blocking mechanism -- a policy zone
+# whose records rewrite answers; `domain CNAME .` means NXDOMAIN. a daily timer keeps the lists
+# fresh without a rebuild; the list content is runtime state, the fetch logic is declared here.
+# the lists themselves come from lab.bind.rpzLists, so this is site-agnostic.
 #
-# two sources:
-#   OISD big  -- already RPZ format (SOA + NS + domain/*.domain CNAME . pairs), fetched as-is.
-#                https://big.oisd.nl/rpz
-#   VRChat    -- plain hosts format (0.0.0.0 domain), converted to RPZ. owner renamed
-#                Luois45 -> louisa-uno; raw.githubusercontent doesn't redirect, so the URL
-#                must use louisa-uno or it 404s. small + frozen (last update jan 2024).
+# per-list `format`:
+#   rpz   -- already an RPZ zone (SOA + NS + domain/*.domain CNAME . pairs), fetched verbatim.
+#   hosts -- a 0.0.0.0 hosts file, converted: a header (SOA + NS), then per domain a
+#            `domain CNAME .` (block the name) and `*.domain CNAME .` (block everything under it).
 {
   config,
   lib,
@@ -18,13 +17,31 @@
   cfg = config.lab.bind;
   rpzDir = "/var/lib/named/rpz";
 
-  oisdUrl = "https://big.oisd.nl/rpz";
-  vrchatUrl = "https://raw.githubusercontent.com/louisa-uno/VRChatAnalyticsBlocklist/main/hosts.txt";
+  # one fetch+convert+reload block per configured list. fetch to a temp file first so a failed
+  # download (curl --fail exits non-zero, set -e aborts before the mv) leaves the previous good
+  # file in place. then rndc reload the policy zone (doesn't drop the cache a restart would).
+  mkFetch = l: let
+    convert =
+      if l.format == "rpz"
+      then ''curl --fail --silent --show-error --location --max-time 60 "${l.url}" -o "$tmp/${l.name}"''
+      else ''
+        {
+          # $TTL is literal RPZ zone-file syntax, not a shell variable; single quotes keep it literal
+          printf '$TTL 30\n@ IN SOA localhost. hostmaster.localhost. 1 3600 900 604800 30\n  IN NS localhost.\n'
+          curl --fail --silent --show-error --location --max-time 60 "${l.url}" \
+            | awk '$1 == "0.0.0.0" && NF >= 2 { printf "%s CNAME .\n*.%s CNAME .\n", $2, $2 }'
+        } > "$tmp/${l.name}"
+      '';
+  in ''
+    ${convert}
+    mv "$tmp/${l.name}" "$dir/${l.name}"
+    rndc reload ${l.name}
+  '';
 
   refresh = pkgs.writeShellApplication {
     name = "bind-rpz-refresh";
     runtimeInputs = [pkgs.curl pkgs.gawk pkgs.bind];
-    # SC2016: the printf below emits literal `$TTL` (RPZ zone syntax), single quotes are correct.
+    # SC2016: the printf above emits literal `$TTL` (RPZ zone syntax), single quotes are correct.
     excludeShellChecks = ["SC2016"];
     text = ''
       set -euo pipefail
@@ -32,31 +49,11 @@
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
 
-      # OISD ships a full RPZ zone; take it verbatim. fetch to temp first so a failed download
-      # (curl --fail exits non-zero, set -e aborts before the mv) leaves the previous good file.
-      curl --fail --silent --show-error --location --max-time 60 "${oisdUrl}" -o "$tmp/oisd.rpz"
-
-      # VRChat is hosts format. build an RPZ zone: a header (SOA + NS), then per domain a
-      # `domain CNAME .` (block the name) and `*.domain CNAME .` (block everything under it),
-      # matching how OISD pairs them. guard on a leading 0.0.0.0 so comments/blanks emit nothing.
-      {
-        # $TTL is literal RPZ zone-file syntax, not a shell variable; single quotes keep it literal
-        printf '$TTL 30\n@ IN SOA localhost. hostmaster.localhost. 1 3600 900 604800 30\n  IN NS localhost.\n'
-        curl --fail --silent --show-error --location --max-time 60 "${vrchatUrl}" \
-          | awk '$1 == "0.0.0.0" && NF >= 2 { printf "%s CNAME .\n*.%s CNAME .\n", $2, $2 }'
-      } > "$tmp/vrchat.rpz"
-
-      mv "$tmp/oisd.rpz" "$dir/oisd.rpz"
-      mv "$tmp/vrchat.rpz" "$dir/vrchat.rpz"
-
-      # reload just the policy zones (named picks up the new files); rndc reload <zone> doesn't
-      # drop the cache the way a full restart would.
-      rndc reload oisd.rpz
-      rndc reload vrchat.rpz
+      ${lib.concatMapStrings mkFetch cfg.rpzLists}
     '';
   };
 in {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg.enable && cfg.rpzLists != []) {
     systemd.services.bind-rpz-refresh = {
       description = "fetch RPZ blocklists and reload named";
       after = ["network-online.target" "bind.service"];

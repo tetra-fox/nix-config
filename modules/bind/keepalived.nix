@@ -1,9 +1,9 @@
-# resolver HA: float the .53 VIP across the mesa dns hosts. the keepalived scaffolding lives in
-# modules.vrrp.system (shared with the db + edge clusters); this module only derives the dns-
-# specific peer list + priority and the health check, then hands them to lab.vrrp.
+# resolver HA: float the resolver VIP across the site's dns hosts. the keepalived scaffolding
+# lives in modules.vrrp.system (shared with the db + edge clusters); this module only derives the
+# dns-specific peer list + priority and the health check, then hands them to lab.vrrp.
 #
 # the VRRP heartbeat rides ens19 (isolated VLAN, peers are internalIps) like the db cluster; the
-# managed .53 VIP lands on ens18 (server VLAN) where clients/router reach it.
+# managed VIP lands on ens18 (server VLAN) where clients/router reach it.
 {
   config,
   lib,
@@ -46,11 +46,11 @@ in {
       instanceName = "bindvip";
       healthCheck = {
         name = "chk_bind";
-        # query the LOCAL listener for the split-horizon apex, which bind answers from its
-        # internal view (no recursion, so an upstream blip can't false-fail it). dig @127.0.0.1
-        # needs no credentials, so it works as the unprivileged keepalived_script user, and it
-        # exits non-zero when named is down.
-        script = ''${pkgs.dnsutils}/bin/dig +short +tries=1 +time=2 @127.0.0.1 mesa.tetra.cool A'';
+        # query the LOCAL listener for the split-horizon apex (the configured zone), which bind
+        # answers from its internal view (no recursion, so an upstream blip can't false-fail it).
+        # dig @127.0.0.1 needs no credentials, so it works as the unprivileged keepalived_script
+        # user, and it exits non-zero when named is down.
+        script = ''${pkgs.dnsutils}/bin/dig +short +tries=1 +time=2 @127.0.0.1 ${cfg.zone.name} A'';
       };
     };
   };

@@ -14,7 +14,8 @@
     modules.disko.proxmox-vm # boot-disk layout (scsi0)
     modules.profiles.server.system
 
-    modules.bind.system
+    # the mesa-dns site layer (the mesa zone + blocklists), which imports the generic bind module
+    modules.sites.mesa-dns
   ];
 
   # no modules.sops.system: the resolver decrypts nothing. see mesa-dns-01.
