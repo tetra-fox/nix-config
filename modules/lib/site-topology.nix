@@ -99,11 +99,28 @@
     if dbHaVip != null && dbServerIp == null
     then dbHaVip
     else dbServerIp;
+
+  # edge derives, same shape as the db ones. edgeHostIp is the single ingress host (null with
+  # >1 edge box). edgeHaVip is the floating ingress VIP any edge host declares. edgeEndpointIp
+  # is what the world reaches edge at: the VIP when an edge host runs HA, else the single host.
+  edgeHostIp = ipWhere isEdgeHost;
+  edgeHaVip = let
+    vips = lib.unique (lib.filter (v: v != null)
+      (map (name: nixosConfigurations.${name}.config.lab.caddy.ha.vip or null) (hostsWhere isEdgeHost)));
+  in
+    if vips != []
+    then builtins.head vips
+    else null;
+  edgeEndpointIp =
+    if edgeHaVip != null
+    then edgeHaVip
+    else edgeHostIp;
 in {
   inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere siteServers;
-  # the HA-node predicate, exported so the postgres-ha module can fold the cluster's nodes
-  # (ipsWhere isDbHaNode) into etcd initialCluster / patroni otherNodesIps / haproxy backends.
-  inherit isDbHaNode;
+  # predicates exported for modules that fold over a class of hosts: isDbHaNode (the postgres
+  # module builds etcd/patroni/haproxy peer lists), isEdgeHost (the caddy module builds the
+  # keepalived peer list + priority from the edge hosts).
+  inherit isDbHaNode isEdgeHost;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
   # the single monitoring server's IP (null if 0 or >1 -- caller asserts exactly one)
@@ -122,9 +139,13 @@ in {
   # the single media host's IP (jellyfin + nowplaying) -- caddy proxies jellyfin.<site>
   # and np.<site> here. today the same box as the arr stack.
   mediaHostIp = ipWhere isMediaHost;
-  # the single ingress host's IP (caddy). a backend on another box opens its port to this
-  # IP only (the reverse proxy is the sole legitimate client of an off-box backend).
-  edgeHostIp = ipWhere isEdgeHost;
+  # the single ingress host's IP (caddy, null with >1), the floating ingress VIP, and the
+  # endpoint the world reaches edge at (vip when HA, else the single host). let-bindings above.
+  inherit edgeHostIp edgeHaVip edgeEndpointIp;
+  # the IPs of EVERY edge host (plural) -- for a backend that allow-lists caddy as a source.
+  # caddy proxies FROM its own box IP (not the VIP, which is a destination), so a backend with
+  # two edge boxes must allow both real IPs. this is the plural form of edgeHostIp.
+  edgeHostIps = ipsWhere isEdgeHost;
   # the single storage host's IP (NFS server) -- what the media host mounts the library
   # from. its NFS client is the media host (mediaHostIp), which today is the same box that
   # runs the arrs; store-01 scopes its export + firewall to that client IP.

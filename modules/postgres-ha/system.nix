@@ -263,6 +263,16 @@ in {
     # address) and isn't ready to serve the instant the VIP fails over to them.
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
+    # enableScriptSecurity needs the keepalived_script user to exist (the nixpkgs module writes
+    # enable_script_security but doesn't create the user); without it keepalived silently
+    # ignores the track script, so the VIP wouldn't leave a node whose haproxy died.
+    users.users.keepalived_script = {
+      isSystemUser = true;
+      group = "keepalived_script";
+      description = "runs keepalived track scripts under enableScriptSecurity";
+    };
+    users.groups.keepalived_script = {};
+
     services.keepalived = {
       enable = true;
       enableScriptSecurity = true;
@@ -271,7 +281,10 @@ in {
         interval = 2;
         fall = 2;
         rise = 2;
-        weight = 20;
+        # weight 0 = weightless: haproxy down -> FAULT -> release the VIP unconditionally, so it
+        # moves to a node whose haproxy is up (a weighted script only nudges priority, which can
+        # leave the VIP on a node that can no longer route to the db).
+        weight = 0;
       };
       vrrpInstances.pgvip = {
         interface = "ens19";
