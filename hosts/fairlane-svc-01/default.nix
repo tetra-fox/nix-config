@@ -70,18 +70,13 @@
   # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;
 
-  users.users.${username} = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = [
-      "wheel"
-      "podman"
-      # admin browses the media volume often; `media` makes ls/cp/mv work without sudo
-      "media"
-    ];
-  };
-
-  home-manager.users.${username}.imports = [./home.nix];
+  # the admin user + its home config come from the server profile (base.system declares the
+  # user, server.system attaches home-manager). only this box's extra groups are added here.
+  users.users.${username}.extraGroups = [
+    "podman"
+    # admin browses the media volume often; `media` makes ls/cp/mv work without sudo
+    "media"
+  ];
 
   # paws off!
   system.stateVersion = "26.05";

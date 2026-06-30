@@ -2,6 +2,7 @@
   lib,
   modules,
   pkgs,
+  username,
   ...
 }: {
   imports = [
@@ -10,6 +11,12 @@
   ];
 
   lab.avahi.publish = true;
+
+  # every server gets the server home-manager config (the shared shell setup -- zsh/starship/
+  # etc) so an ssh session looks the same on every box, not bare-zsh ugly. the admin user
+  # itself is declared in base.system; this only attaches its home config. was wired per-host
+  # before (only svc-01 + fairlane did it), now every server profile host gets it.
+  home-manager.users.${username}.imports = [modules.meta.profiles.server.home];
 
   environment = {
     systemPackages = with pkgs; [tmux];

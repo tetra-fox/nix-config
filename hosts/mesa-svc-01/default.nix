@@ -53,18 +53,14 @@
 
   lab.nvidia.exporter.enable = true;
 
-  users.users.${username} = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = [
-      "wheel"
-      "podman"
-      # admin browses /mnt/store often; `media` makes ls/cp/mv work without sudo
-      "media"
-    ];
-  };
-
-  home-manager.users.${username}.imports = [./home.nix];
+  # the admin user + its home config come from the server profile (base.system declares the
+  # user, server.system attaches the home-manager shell config). only the extra groups this
+  # box needs are added here -- they merge with the profile's ["wheel"].
+  users.users.${username}.extraGroups = [
+    "podman"
+    # admin browses /mnt/store often; `media` makes ls/cp/mv work without sudo
+    "media"
+  ];
 
   # paws off!
   system.stateVersion = "26.05";

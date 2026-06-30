@@ -26,11 +26,5 @@
   lab.site.hostIp = "192.168.10.100";
   lab.site.internalIp = "10.10.0.100"; # isolated internal VLAN (ens19)
 
-  users.users.${username} = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = ["wheel"];
-  };
-
   system.stateVersion = "26.11";
 }

@@ -25,11 +25,5 @@
 
   lab.authentik.enable = true;
 
-  users.users.${username} = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = ["wheel"];
-  };
-
   system.stateVersion = "26.11";
 }

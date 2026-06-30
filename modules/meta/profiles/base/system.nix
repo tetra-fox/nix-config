@@ -2,6 +2,7 @@
   lib,
   modules,
   pkgs,
+  username,
   ...
 }: {
   imports = [
@@ -12,6 +13,15 @@
     modules.cli.zsh.system
     modules.platform.systemd-boot.system
   ];
+
+  # the admin user, on every host (server + workstation -- both ran this identical block
+  # before). a host adds extra groups (svc-01: podman/media; hara: the desktop set) by
+  # appending to extraGroups -- the lists merge. uid is mkDefault so a host can override.
+  users.users.${username} = {
+    isNormalUser = true;
+    uid = lib.mkDefault 1000;
+    extraGroups = ["wheel"];
+  };
 
   time.timeZone = lib.mkDefault "UTC";
 

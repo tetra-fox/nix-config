@@ -28,11 +28,5 @@
   # mon-01 is a plain single-disk VM (no media group); create the siteData root itself
   systemd.tmpfiles.rules = ["d /var/lib/mesa 0755 root root -"];
 
-  users.users.${username} = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = ["wheel"];
-  };
-
   system.stateVersion = "26.11";
 }
