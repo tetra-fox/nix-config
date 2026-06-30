@@ -37,9 +37,9 @@ in {
   # the flaky disk is wedged. RequiresMountsFor pulls in the mount unit. (prowlarr is an
   # indexer proxy, doesn't touch the disk, so it's omitted -- same set as mesa-svc-01.)
   systemd.services = builtins.listToAttrs (map (name: {
-      inherit name;
-      value.unitConfig.RequiresMountsFor = [media];
-    }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
+    inherit name;
+    value.unitConfig.RequiresMountsFor = [media];
+  }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
 
   fileSystems.${media} = {
     device = "/dev/disk/by-uuid/dffc8a76-9a1c-411a-9a53-4f3f720bf9f5";

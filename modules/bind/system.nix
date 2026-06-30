@@ -82,12 +82,14 @@
   # zone to find matches, and allow-query { none; } refuses that lookup too (the symptom is
   # "query '<name>.<zone>/CNAME/IN' denied" in the log and zero rewrites). the zone is only ever
   # consulted by the engine for clients already in the internal view, so it needs no extra ACL.
-  rpzZoneClauses = lib.concatMapStrings (z: ''
-    zone "${z.name}" {
-      type master;
-      file "${z.file}";
-    };
-  '') rpzZones;
+  rpzZoneClauses =
+    lib.concatMapStrings (z: ''
+      zone "${z.name}" {
+        type master;
+        file "${z.file}";
+      };
+    '')
+    rpzZones;
 
   # the response-policy clause inside the internal view: apply each RPZ in order. qname-wait-recurse
   # no speeds up the common case (a blocked name never recurses).

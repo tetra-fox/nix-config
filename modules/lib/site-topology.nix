@@ -88,8 +88,9 @@
   # attr can't read a sibling attr by bare name). exposed in the `in` set below.
   dbServerIp = ipWhere isDbServer;
   dbHaVip = let
-    vips = lib.unique (lib.filter (v: v != null)
-      (map (name: nixosConfigurations.${name}.config.lab.postgres.ha.vip or null) (hostsWhere isDbHaNode)));
+    vips =
+      lib.unique (lib.filter (v: v != null)
+        (map (name: nixosConfigurations.${name}.config.lab.postgres.ha.vip or null) (hostsWhere isDbHaNode)));
   in
     if vips != []
     then builtins.head vips
@@ -108,8 +109,9 @@
   # is what the world reaches edge at: the VIP when an edge host runs HA, else the single host.
   edgeHostIp = ipWhere isEdgeHost;
   edgeHaVip = let
-    vips = lib.unique (lib.filter (v: v != null)
-      (map (name: nixosConfigurations.${name}.config.lab.caddy.ha.vip or null) (hostsWhere isEdgeHost)));
+    vips =
+      lib.unique (lib.filter (v: v != null)
+        (map (name: nixosConfigurations.${name}.config.lab.caddy.ha.vip or null) (hostsWhere isEdgeHost)));
   in
     if vips != []
     then builtins.head vips
@@ -124,8 +126,9 @@
   # points-at-the-resolver should use: the VIP when HA is live, else the single host.
   dnsHostIp = ipWhere isDnsHost;
   dnsHaVip = let
-    vips = lib.unique (lib.filter (v: v != null)
-      (map (name: nixosConfigurations.${name}.config.lab.bind.ha.vip or null) (hostsWhere isDnsHost)));
+    vips =
+      lib.unique (lib.filter (v: v != null)
+        (map (name: nixosConfigurations.${name}.config.lab.bind.ha.vip or null) (hostsWhere isDnsHost)));
   in
     if vips != []
     then builtins.head vips

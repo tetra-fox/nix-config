@@ -291,9 +291,9 @@ in {
           chain postrouting {
             type nat hook postrouting priority srcnat; policy accept;
             ${lib.concatMapStringsSep "\n    " (
-            ip: "ip saddr ${vpn.namespaceAddress}/24 ip daddr ${ip} masquerade"
-          )
-          cfg.netnsSnatHosts}
+              ip: "ip saddr ${vpn.namespaceAddress}/24 ip daddr ${ip} masquerade"
+            )
+            cfg.netnsSnatHosts}
           }
         '';
       };

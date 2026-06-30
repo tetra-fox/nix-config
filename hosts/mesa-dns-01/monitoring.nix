@@ -1,7 +1,4 @@
-{
-  modules,
-  ...
-}: {
+{modules, ...}: {
   imports = [
     modules.monitoring.system
     modules.logging.system
