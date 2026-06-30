@@ -35,9 +35,6 @@ in {
     ha = {
       enable = true;
       vip = "10.10.0.240"; # the floating endpoint clients reach
-      # held until the coordinated 3-node cutover: install the stack but don't let this node
-      # form a partial cluster before db-01 joins. flip to false on all members at cutover.
-      bootstrapHold = true;
     };
     admin.enable = true; # superuser for dbeaver/psql (reconciled on the leader)
 

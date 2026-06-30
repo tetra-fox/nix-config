@@ -1,11 +1,14 @@
-# mesa-db-01: the mesa site's data tier. runs the postgres server for the whole site --
-# authentik (auth-01) and the arrs (svc-01) connect here. clients find it via the
-# site-topology dbServerIp derive (lab.postgres.server.enable below is the flag that
-# derive keys on), so nothing hardcodes this box's address.
+# mesa-db-01: first node of the mesa site's HA data tier (Patroni + etcd + HAProxy +
+# keepalived). clients reach the cluster via the floating VIP (lab.postgres.ha.vip),
+# resolved by the site-topology dbEndpointIp derive; nothing hardcodes which node is primary.
 #
 # db-01 owns the databases the arrs + authentik use, but doesn't run those services. the
 # arr db list is read from svc-01's published lab.arrStack.databases (single source in the
 # arr-stack), so it can't drift from the actual arr set. authentik's db is a fixed name.
+#
+# this was the single-server postgres box before the HA cutover; the old data dir under
+# ${siteData}/postgresql stays on disk untouched as a rollback point (Patroni uses a fresh
+# dir under ${siteData}/patroni). data was migrated by dump/restore at cutover.
 {
   username,
   modules,
@@ -21,7 +24,7 @@ in {
     modules.disko.proxmox-vm # boot-disk layout (scsi0); single disk
     modules.profiles.server.system
 
-    modules.postgres.system
+    modules.postgres-ha.system
     modules.sops.system
   ];
 
@@ -29,12 +32,14 @@ in {
 
   networking.hostName = "mesa-db-01";
   lab.site.hostIp = "192.168.10.245";
-  lab.site.internalIp = "10.10.0.245"; # isolated internal VLAN (ens19)
+  lab.site.internalIp = "10.10.0.245"; # isolated internal VLAN (ens19); HA traffic rides this
 
   lab.postgres = {
-    server.enable = true; # this host IS the site's db server (the derive points here)
-    openFirewall = true; # 5432
-    admin.enable = true; # superuser for dbeaver/psql
+    ha = {
+      enable = true;
+      vip = "10.10.0.240"; # the floating endpoint clients reach
+    };
+    admin.enable = true; # superuser for dbeaver/psql (reconciled on the leader)
 
     # fleet clients (svc-01's arrs via the netns SNAT, auth-01's authentik) are derived
     # from their lab.postgres.client.enable flag -> their hostIp. only non-fleet sources

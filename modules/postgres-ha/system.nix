@@ -175,6 +175,7 @@ in {
     # (the internal VLAN is isolated L2 with only the db nodes on it -- the VLAN's isolation
     # is the trust boundary; see README). client URL also on localhost for the local Patroni.
     services.etcd = {
+      enable = true;
       name = config.networking.hostName;
       dataDir = "${siteData}/etcd";
       initialCluster = etcdInitialCluster;
@@ -187,15 +188,20 @@ in {
     };
 
     services.patroni = {
+      enable = true;
       scope = ha.scope;
       name = config.networking.hostName;
       nodeIp = selfIp;
       otherNodesIps = otherNodeIps;
       postgresqlPackage = postgresPkg;
-      # a FRESH datadir (not the single-server module's ${siteData}/postgresql/<v>), so the
-      # assertion against services.postgresql.dataDir holds and the old data survives as a
-      # rollback point through the migration.
-      postgresqlDataDir = "${siteData}/patroni/${postgresPkg.psqlSchema}";
+      # patroni's own state dir (holds the pgpass file). overriding postgresqlDataDir below
+      # disables the module's automatic StateDirectory=patroni, so point dataDir under siteData
+      # and create it via tmpfiles (the dir must exist + be writable by the patroni user).
+      dataDir = "${siteData}/patroni";
+      # a FRESH postgres datadir (not the single-server module's ${siteData}/postgresql/<v>),
+      # so the assertion against services.postgresql.dataDir holds and the old data survives
+      # as a rollback point through the migration.
+      postgresqlDataDir = "${siteData}/patroni/pgdata/${postgresPkg.psqlSchema}";
       restApiPort = 8008;
       # patroni owns /dev/watchdog here for split-brain fencing; systemd's watchdog is
       # disabled below so the single VM watchdog isn't contended.
@@ -229,10 +235,16 @@ in {
           ];
         };
 
-        postgresql.authentication = {
-          # passwords come from the PATRONI_*_PASSWORD env vars sourced above.
-          replication.username = "replicator";
-          superuser.username = "postgres";
+        postgresql = {
+          authentication = {
+            # passwords come from the PATRONI_*_PASSWORD env vars sourced above.
+            replication.username = "replicator";
+            superuser.username = "postgres";
+          };
+          # per-node runtime params (the bootstrap.dcs block above is init-only). put the
+          # unix socket in /run/postgresql so the reconcile oneshot can reach it at a stable
+          # path; tmpfiles creates the dir owned by patroni below.
+          parameters.unix_socket_directories = "/run/postgresql";
         };
       };
     };
@@ -245,6 +257,11 @@ in {
       enable = true;
       config = haproxyConfig;
     };
+
+    # let haproxy bind the VIP on every node, not just the one keepalived currently parked it
+    # on. without this, haproxy fails to start on the non-VIP nodes (cannot bind a non-local
+    # address) and isn't ready to serve the instant the VIP fails over to them.
+    boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
     services.keepalived = {
       enable = true;
@@ -281,23 +298,45 @@ in {
     # replica (gate on the local REST /primary 200) so it's a no-op everywhere but the leader.
     systemd.services = lib.mkMerge [
       {
+        # the patroni module ships a udev rule giving the patroni user /dev/watchdog, but the
+        # device pre-exists at boot (the VM exposes an iTCO hardware watchdog), so the rule
+        # isn't re-applied unless udev is triggered. patroni's mode=required refuses to start
+        # without the watchdog, so re-trigger + settle the rule before patroni starts.
+        patroni-watchdog-perms = {
+          description = "Apply the patroni /dev/watchdog ownership udev rule before patroni starts";
+          before = ["patroni.service"];
+          requiredBy = ["patroni.service"];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = [
+              "${pkgs.systemd}/bin/udevadm trigger --subsystem-match=misc --action=add"
+              "${pkgs.systemd}/bin/udevadm settle"
+            ];
+          };
+        };
+
         patroni-role-reconcile = {
           description = "Reconcile postgres roles/passwords/ownership on the Patroni leader";
           after = ["patroni.service"];
           wantedBy = ["multi-user.target"];
           serviceConfig = {
             Type = "oneshot";
-            User = "postgres";
+            # patroni runs postgres as the `patroni` OS user (there is no `postgres` OS user
+            # on an HA node). it connects to the postgres superuser role over the local socket,
+            # which the `local all all trust` pg_hba line permits.
+            User = "patroni";
             RemainAfterExit = true;
             LoadCredential = roleLoadCreds;
           };
           # wait for this node to actually serve as primary before reconciling; a fresh cluster
           # takes a moment to elect. give up quietly if this node never becomes leader (it's a
-          # replica) -- the leader's own unit does the work.
+          # replica) -- the leader's own unit does the work. connect as the postgres superuser
+          # role over the socket dir patroni configures (settings.postgresql.parameters below).
           script = ''
             for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -sf http://127.0.0.1:8008/primary >/dev/null 2>&1; then
-                ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 ${roleCredArgs} <<'EOF'
+              if ${pkgs.curl}/bin/curl -sf http://${selfIp}:8008/primary >/dev/null 2>&1; then
+                ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
             ${roleReconcileSql}
             EOF
                 exit 0
@@ -323,11 +362,14 @@ in {
     ];
 
     # superuser + replication secrets (shared value across nodes) + the per-role secrets.
-    # mkDefault so a host redeclaring a secret (owner/group) wins.
+    # the superuser/replication secrets are read directly by the patroni unit's start script
+    # (via environmentFiles, sourced as the patroni user), so they must be owned by patroni.
+    # the role secrets are read by the reconcile oneshot via LoadCredential (root reads, then
+    # hands the patroni-run unit a copy), so they don't need an owner override.
     sops.secrets = lib.mkMerge [
       {
-        "postgres/superuser_pass" = lib.mkDefault {};
-        "postgres/replication_pass" = lib.mkDefault {};
+        "postgres/superuser_pass" = lib.mkDefault {owner = "patroni";};
+        "postgres/replication_pass" = lib.mkDefault {owner = "patroni";};
       }
       (lib.mapAttrs' (name: role:
         lib.nameValuePair role.passwordSecret (lib.mkDefault {}))
@@ -350,7 +392,12 @@ in {
 
     systemd.tmpfiles.rules = [
       "d ${siteData}/etcd 0700 etcd etcd -"
+      # patroni state dir (pgpass) + the postgres data parent; patroni creates the versioned
+      # leaf itself but the parents must exist and be writable by the patroni user.
       "d ${siteData}/patroni 0750 patroni patroni -"
+      "d ${siteData}/patroni/pgdata 0750 patroni patroni -"
+      # the postgres unix socket dir, owned by the patroni user that runs the postmaster
+      "d /run/postgresql 0755 patroni patroni -"
     ];
   };
 }
