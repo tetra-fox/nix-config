@@ -31,10 +31,12 @@
   '';
 
   # one policy zone per configured RPZ list; the fetched/converted file lives in rpzDir.
-  rpzZones = map (l: {
-    name = l.name;
-    file = "${rpzDir}/${l.name}";
-  }) cfg.rpzLists;
+  rpzZones =
+    map (l: {
+      name = l.name;
+      file = "${rpzDir}/${l.name}";
+    })
+    cfg.rpzLists;
 
   # RPZ zone definitions. with views in play, every zone must live INSIDE a view, so these go
   # in the internal view (not at top level -- bind: "all zones must be in views"). and the
