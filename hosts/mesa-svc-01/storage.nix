@@ -7,7 +7,7 @@
 # /var/lib/mesa/<service>    local state for every native + container service
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {siteData, ...}: let
-  storeIp = "192.168.10.222";
+  storeIp = "10.10.0.222"; # store-01 over the isolated internal VLAN (east-west NFS)
 in {
   # the media group's gid must match store-01 (1002): NFS squashes on the numeric gid,
   # so a mismatch would make group-write fail. the arr-stack also declares this group

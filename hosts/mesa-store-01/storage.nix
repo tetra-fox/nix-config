@@ -9,11 +9,12 @@
 # /mnt/vol_1/homeassistant   HA backups (NFS only)
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {siteData, ...}: let
-  # the service VMs that mount the library over NFS. svc-01 runs the arrs + qbit/sab
-  # (read-write); jelly-01 will mount read-only once it exists (Phase 5).
-  svcIp = "192.168.10.208";
-  # the HAOS box mounts the homeassistant share for its backups. it connects as root
-  # (appliance, no shell), so that export all_squashes to the homeassistant user.
+  # svc-01 mounts the library over the isolated internal VLAN (east-west NFS); it runs
+  # the arrs + qbit/sab (read-write). its internal-VLAN IP.
+  svcIp = "10.10.0.208";
+  # the HAOS box mounts the homeassistant share for its backups. it's an external
+  # appliance NOT on the internal VLAN, so it stays on the server VLAN. connects as root
+  # (no shell), so that export all_squashes to the homeassistant user.
   haIp = "192.168.10.5";
 in {
   users.groups.media = {
