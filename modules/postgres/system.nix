@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  modules,
   pkgs,
   siteData,
   nixosConfigurations,
@@ -11,7 +12,7 @@
   # same-site postgres clients (lab.postgres.client.enable) as /32s, for pg_hba. the
   # inverse of the dbServerIp derive clients use to find this server.
   dbClientCidrs =
-    (import ../monitoring/site-topology.nix {inherit lib;} {
+    (import modules.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbClientCidrs;

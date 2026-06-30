@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  modules,
   siteData,
   nixosConfigurations,
   ...
@@ -14,7 +15,7 @@
 
   # shared site-topology derivation (same one the monitoring module uses). an agent
   # ships its logs to its site's server's loki; the server ships to its own loopback.
-  topo = import ../monitoring/site-topology.nix {inherit lib;} {
+  topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };

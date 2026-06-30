@@ -10,6 +10,7 @@
 {
   config,
   lib,
+  modules,
   nixosConfigurations,
   ...
 }: let
@@ -17,7 +18,7 @@
   # a remote server to serve. uses the shared site-topology (same as the server's
   # scrape derive). only ever read by exporter modules when their exporter is enabled,
   # so on a host that runs no exporter (e.g. hara) this default is declared but unread.
-  topo = import ./site-topology.nix {inherit lib;} {
+  topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

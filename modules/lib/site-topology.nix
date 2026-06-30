@@ -1,11 +1,13 @@
-# shared site-topology derivation used by the monitoring, logging, and postgres modules.
+# shared site-topology derivation. a neutral library (modules.lib.site-topology), imported
+# by monitoring, logging, postgres, caddy, arr-stack, authentik -- it's fleet-wide service
+# discovery, not a monitoring concern, so it lives under lib/ not any one service module.
 # given a host's own config + the flake's nixosConfigurations, works out which other
-# hosts share this host's site (by hostname prefix) and their declared static IPs, so a
+# hosts share this host's site (by hostname prefix) and their declared addresses, so a
 # module can find the same-site host running some service (monitoring server, db server)
 # without a hand-maintained address list.
 #
 # IMPORTANT (no-recursion rule): predicates passed to hostsWhere / ipWhere must only read
-# sibling INPUT attributes (networking.hostName, networking.interfaces.*.ipv4.addresses,
+# sibling INPUT attributes (networking.hostName, lab.site.{hostIp,internalIp},
 # lab.<module>.server.enable -- plain flags the host sets). never read a sibling's
 # module-DERIVED output (scrapeConfigs / firewall / bindAddr / the derived db endpoint) --
 # that creates a real A<->B eval cycle once two hosts in a site each derive from the other.

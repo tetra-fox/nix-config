@@ -29,9 +29,9 @@
   nodePort = 9100;
   systemdPort = 9558;
 
-  # shared site-topology derivation (see site-topology.nix; same logic the logging
-  # module uses to find this host's site peers + server).
-  topo = import ./site-topology.nix {inherit lib;} {
+  # shared site-topology derivation (see modules/lib/site-topology.nix; same logic the
+  # logging module uses to find this host's site peers + server).
+  topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };

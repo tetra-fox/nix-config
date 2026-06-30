@@ -20,7 +20,7 @@
   # the site's postgres server (same derive the arr-stack uses). authentik's podman is
   # not in any netns, so it reaches the db host directly over the LAN.
   dbHost =
-    (import ../monitoring/site-topology.nix {inherit lib;} {
+    (import modules.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbServerIp;

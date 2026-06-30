@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  modules,
   pkgs,
   siteData,
   nixosConfigurations,
@@ -11,7 +12,7 @@
   # site-topology used by the monitoring module: loopback when this host IS the
   # server (grafana is local), else the server's IP. exposed in the Caddyfile as
   # {$STATS_UPSTREAM} so the static Caddyfile doesn't hardcode mon-01's location.
-  topo = import ../monitoring/site-topology.nix {inherit lib;} {
+  topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

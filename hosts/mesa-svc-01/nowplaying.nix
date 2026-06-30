@@ -1,13 +1,14 @@
 {
   config,
   lib,
+  modules,
   nixosConfigurations,
   ...
 }: let
   # caddy lives on the edge box now, so nowplaying has to bind svc-01's site IP (not
   # loopback) for the proxy to reach it. open 8090 to the edge host only -- it's the sole
   # legitimate client. both derived from site-topology (the host running caddy).
-  topo = import ../../modules/monitoring/site-topology.nix {inherit lib;} {
+  topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

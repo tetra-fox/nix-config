@@ -20,7 +20,7 @@
   # where the site's postgres server lives (same derive monitoring uses for grafana).
   # null until some site host sets lab.postgres.server.enable.
   dbServerIp =
-    (import ../monitoring/site-topology.nix {inherit lib;} {
+    (import modules.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbServerIp;
