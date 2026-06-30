@@ -3,9 +3,22 @@
   lib,
   pkgs,
   siteData,
+  nixosConfigurations,
   ...
 }: let
   cfg = config.lab.postgres;
+
+  # same-site postgres clients (lab.postgres.client.enable) as /32s, for pg_hba. the
+  # inverse of the dbServerIp derive clients use to find this server.
+  dbClientCidrs =
+    (import ../monitoring/site-topology.nix {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).dbClientCidrs;
+
+  # full allow-list: derived client /32s + any explicit extras (admin VLAN, external
+  # tooling -- things that aren't fleet hosts and can't be derived).
+  effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
   # ALTER USER ... PASSWORD, plus ALTER DATABASE OWNER + ALTER SCHEMA public OWNER for each owned db.
   # pg 15+ needs the schema's owner to be the role that wants to CREATE TABLE in `public`.
@@ -42,6 +55,11 @@ in {
     # to without touching any client.
     server.enable = lib.mkEnableOption "run the postgres server on this host";
 
+    # this host connects to the site's postgres server. the server folds every client's
+    # hostIp into its pg_hba allow-list via the dbClientCidrs derive, so adding a client
+    # box is just setting this flag -- no edit to the server's config.
+    client.enable = lib.mkEnableOption "this host is a postgres client (server allow-lists its IP)";
+
     openFirewall = lib.mkEnableOption "5432/tcp in the host firewall";
 
     package = lib.mkOption {
@@ -49,9 +67,12 @@ in {
       default = pkgs.postgresql_17;
     };
 
-    allowedCidrs = lib.mkOption {
+    # explicit extras the derive can't see: non-fleet sources like the admin VLAN or
+    # external tooling. fleet clients should set lab.postgres.client.enable instead.
+    extraAllowedCidrs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [];
+      description = "additional pg_hba CIDRs beyond the derived fleet clients (admin VLAN, external tools)";
     };
 
     passwordUnits = lib.mkOption {
@@ -118,8 +139,8 @@ in {
         enableTCPIP = true;
         settings.listen_addresses = "*";
         authentication =
-          lib.optionalString (cfg.allowedCidrs != [])
-          (lib.concatMapStringsSep "\n" (cidr: "host all all ${cidr} scram-sha-256") cfg.allowedCidrs + "\n");
+          lib.optionalString (effectiveCidrs != [])
+          (lib.concatMapStringsSep "\n" (cidr: "host all all ${cidr} scram-sha-256") effectiveCidrs + "\n");
 
         ensureUsers =
           lib.mapAttrsToList (name: role: {

@@ -44,12 +44,16 @@
     ];
   };
 in {
-  imports = [modules.podman.system];
+  # postgres.system for the lab.postgres.client option (authentik is a db client, so the
+  # db server allow-lists this host via the dbClientCidrs derive).
+  imports = [modules.podman.system modules.postgres.system];
 
   options.lab.authentik.enable =
     lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
 
   config = lib.mkIf cfg.enable {
+    lab.postgres.client.enable = true;
+
     sops.secrets = {
       "auth/pg_pass" = {};
       "auth/authentik_secret_key" = {};

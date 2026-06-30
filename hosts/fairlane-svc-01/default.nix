@@ -34,7 +34,8 @@
   lab.sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
 
   lab.postgres = {
-    allowedCidrs = ["192.168.20.0/24"]; # trusted VLAN
+    server.enable = true; # fairlane runs its own postgres (single-box site)
+    extraAllowedCidrs = ["192.168.20.0/24"]; # trusted VLAN
     openFirewall = true; # 5432
     admin.enable = true;
   };

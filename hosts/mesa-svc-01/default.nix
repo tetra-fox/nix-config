@@ -35,8 +35,10 @@
 
   # postgres moved to mesa-db-01 (Phase 3). svc-01 is now a pure client: the arrs reach
   # db-01 via the auto-derived postgresHost (dbServerIp -> db-01) + the netns SNAT below.
-  # data was migrated; svc-01 no longer runs a postgres server. the old local data dir
+  # client.enable gets svc-01's hostIp into db-01's pg_hba allow-list (the arrs' netns
+  # traffic is SNAT'd to this same hostIp). data was migrated; the old local data dir
   # under siteData stays on disk untouched as a rollback point.
+  lab.postgres.client.enable = true;
 
   # site facts (server-VLAN networking, gateway/DNS, siteData root, topology parent)
   # come from the `mesa` tag (modules/sites/mesa.nix). this host declares its own IP.

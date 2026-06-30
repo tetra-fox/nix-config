@@ -55,15 +55,20 @@
     then ipOf (builtins.head hosts)
     else null;
 
+  # the IPs of ALL same-site hosts satisfying `pred` (the set form of ipWhere). for the
+  # inverse of an endpoint derive: a server building its allow-list of clients.
+  ipsWhere = pred: lib.filter (ip: ip != null) (map ipOf (hostsWhere pred));
+
   # named predicates, one per service flag. keeping them here documents which INPUT flag
   # each derive keys on (and keeps the no-recursion rule auditable in one place).
   isMonitoringServer = c: c.lab.monitoring.server.enable or false;
   isDbServer = c: c.lab.postgres.server.enable or false;
+  isDbClient = c: c.lab.postgres.client.enable or false;
   isAuthServer = c: c.lab.authentik.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 in {
-  inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere siteServers;
+  inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere siteServers;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
   # the single monitoring server's IP (null if 0 or >1 -- caller asserts exactly one)
@@ -71,6 +76,11 @@ in {
   # the single postgres server's IP -- what arr/authentik clients point at. today a lone
   # db-NN; an HA setup swaps the flag's holder (or this derive) for the floating endpoint.
   dbServerIp = ipWhere isDbServer;
+  # the IPs of every same-site postgres client (lab.postgres.client.enable) -- the inverse
+  # of dbServerIp: the db server folds these into its pg_hba allow-list. assumes a client
+  # reaches the db FROM its declared hostIp (true for direct LAN clients, and for a netns
+  # client whose traffic is SNAT'd to its hostIp via lab.arrStack.netnsSnatHosts).
+  dbClientCidrs = map (ip: "${ip}/32") (ipsWhere isDbClient);
   # the single authentik host's IP -- what caddy reverse-proxies auth.<site> + forward_auth to.
   authServerIp = ipWhere isAuthServer;
 }

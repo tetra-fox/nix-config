@@ -316,8 +316,10 @@ in {
     # svc-01 must not -- it's a pure client here.
     (lib.mkIf dbIsLocal {
       lab.postgres = {
-        # /24 spans both ends of the veth bridge so netns clients can reach pg
-        allowedCidrs = ["${vpn.bridgeAddress}/24"];
+        # the netns reaches a LOCAL pg over the veth bridge (192.168.15.x), not a fleet
+        # hostIp, so this must be an explicit extra (not derivable from client.enable).
+        # /24 spans both ends of the bridge.
+        extraAllowedCidrs = ["${vpn.bridgeAddress}/24"];
         roles.${arrPgUser} = {
           passwordSecret = "arr/pg_pass";
           owns = arrDbs;
