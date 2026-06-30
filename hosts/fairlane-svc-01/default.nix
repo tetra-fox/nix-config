@@ -8,17 +8,17 @@
     ./storage.nix
     ./monitoring.nix
 
-    modules.proxmox-vm.system
-    modules.disko.proxmox-vm
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
+    modules.meta.profiles.server.system
 
-    modules.sops.system
-    modules.jellyfin.system
-    modules.postgres.system
-    modules.caddy.system
-    modules.samba.system
-    modules.podman.system
-    modules.arr-stack.default
+    modules.platform.sops.system
+    modules.services.jellyfin.system
+    modules.services.postgres.system
+    modules.services.caddy.system
+    modules.services.samba.system
+    modules.services.podman.system
+    modules.services.arr-stack.default
   ];
 
   lab.arrStack = {

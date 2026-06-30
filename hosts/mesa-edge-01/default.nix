@@ -10,12 +10,12 @@
   imports = [
     ./monitoring.nix
 
-    modules.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.disko.proxmox-vm # boot-disk layout (scsi0)
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
+    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0)
+    modules.meta.profiles.server.system
 
-    modules.caddy.system
-    modules.sops.system
+    modules.services.caddy.system
+    modules.platform.sops.system
   ];
 
   lab.sops.secretsFile = ../../secrets/mesa-edge-01.yaml;

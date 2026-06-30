@@ -10,11 +10,11 @@
   imports = [
     ./monitoring.nix
 
-    modules.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
-    modules.disko.proxmox-vm # boot-disk layout
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
+    modules.platform.disko.proxmox-vm # boot-disk layout
+    modules.meta.profiles.server.system
 
-    modules.sops.system
+    modules.platform.sops.system
   ];
 
   lab.sops.secretsFile = ../../secrets/mesa-mon-01.yaml;

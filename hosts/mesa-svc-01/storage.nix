@@ -16,7 +16,7 @@
 }: let
   # the storage host's internal-VLAN IP, derived (NFS server) -- no hardcoded store-01 IP.
   storeIp =
-    (import modules.lib.site-topology {inherit lib;} {
+    (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).storageHostIp;

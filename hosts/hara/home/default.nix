@@ -5,17 +5,17 @@
   ...
 }: {
   imports = [
-    modules.profiles.workstation.home
+    modules.meta.profiles.workstation.home
 
-    modules.catppuccin.home
-    modules.cosmic.home
-    modules.dolphin.home
-    modules.hyprland.home
-    modules.nvidia.home
-    # modules.openrgb.home
-    modules.steam.home
-    modules.stylix.home
-    modules.surge-dm.home
+    modules.desktop.catppuccin.home
+    modules.desktop.cosmic.home
+    modules.desktop.dolphin.home
+    modules.desktop.hyprland.home
+    modules.services.nvidia.home
+    # modules.desktop.openrgb.home
+    modules.desktop.steam.home
+    modules.desktop.stylix.home
+    modules.desktop.surge-dm.home
   ];
 
   xdg.mimeApps = {

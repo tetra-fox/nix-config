@@ -5,7 +5,7 @@
   nixosConfigurations,
   ...
 }: let
-  topo = import modules.lib.site-topology {inherit lib;} {
+  topo = import modules.meta.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

@@ -1,8 +1,8 @@
 {modules, ...}: {
   imports = [
-    modules.monitoring.system
-    modules.monitoring.unifi
-    modules.logging.system
+    modules.services.monitoring.system
+    modules.services.monitoring.unifi
+    modules.services.logging.system
   ];
 
   # this host is the fairlane site's monitoring server. only host in the site today,

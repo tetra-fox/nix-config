@@ -14,15 +14,15 @@
   imports = [
     ./monitoring.nix
 
-    modules.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.disko.proxmox-vm # boot-disk layout (scsi0)
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
+    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0)
+    modules.meta.profiles.server.system
 
     # the mesa-dns site layer (the mesa zone + blocklists), which imports the generic bind module
     modules.sites.mesa-dns
   ];
 
-  # no modules.sops.system: the resolver decrypts nothing (bind declares no secrets, and the
+  # no modules.platform.sops.system: the resolver decrypts nothing (bind declares no secrets, and the
   # monitoring/logging agent path gates all its secrets behind the server role). adding sops
   # would only create an unused secrets file to maintain.
 
@@ -38,7 +38,7 @@
   # mkForce overrides the mesa site facts, which point every host's resolver at the router.
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 
-  # the split-horizon zone + RPZ blocklists are built in modules.bind.system (they're a site
+  # the split-horizon zone + RPZ blocklists are built in modules.services.bind.system (they're a site
   # fact, identical on both resolvers), so this host only flips enable + the VIP.
   lab.bind.enable = true;
 

@@ -4,15 +4,15 @@
   ...
 }: {
   imports = [
-    modules.profiles.workstation.system
+    modules.meta.profiles.workstation.system
 
-    modules.cosmic.system
-    modules.greetd.system
-    modules.hyprland.system
-    modules.nvidia.system
-    # modules.openrgb.system
-    modules.steam.system
-    modules.stylix.system
+    modules.desktop.cosmic.system
+    modules.desktop.greetd.system
+    modules.desktop.hyprland.system
+    modules.services.nvidia.system
+    # modules.desktop.openrgb.system
+    modules.desktop.steam.system
+    modules.desktop.stylix.system
   ];
 
   networking = {

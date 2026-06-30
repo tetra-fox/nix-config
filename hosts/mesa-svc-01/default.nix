@@ -10,16 +10,16 @@
     ./nowplaying.nix
     ./monitoring.nix
 
-    modules.proxmox-vm.system
-    modules.disko.proxmox-vm
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
+    modules.meta.profiles.server.system
 
-    modules.sops.system
-    modules.jellyfin.system
-    modules.postgres.system
-    modules.podman.system
-    modules.nvidia.system
-    modules.arr-stack.default
+    modules.platform.sops.system
+    modules.services.jellyfin.system
+    modules.services.postgres.system
+    modules.services.podman.system
+    modules.services.nvidia.system
+    modules.services.arr-stack.default
   ];
 
   lab.arrStack = {

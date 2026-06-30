@@ -4,9 +4,9 @@
   ...
 }: {
   imports = [
-    modules.monitoring.system
-    modules.monitoring.unifi
-    modules.logging.system
+    modules.services.monitoring.system
+    modules.services.monitoring.unifi
+    modules.services.logging.system
   ];
 
   # this host is the mesa site's monitoring server (prometheus + grafana + loki).

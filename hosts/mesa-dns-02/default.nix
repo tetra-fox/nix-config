@@ -10,15 +10,15 @@
   imports = [
     ./monitoring.nix
 
-    modules.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.disko.proxmox-vm # boot-disk layout (scsi0)
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
+    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0)
+    modules.meta.profiles.server.system
 
     # the mesa-dns site layer (the mesa zone + blocklists), which imports the generic bind module
     modules.sites.mesa-dns
   ];
 
-  # no modules.sops.system: the resolver decrypts nothing. see mesa-dns-01.
+  # no modules.platform.sops.system: the resolver decrypts nothing. see mesa-dns-01.
 
   networking.hostName = "mesa-dns-02";
   lab.site.hostIp = "192.168.10.161";
@@ -28,7 +28,7 @@
   # ask itself, never the router -- see mesa-dns-01 for why (the Technitium forwarding loop).
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 
-  # zone + RPZ built in modules.bind.system; this host only flips enable + VIP.
+  # zone + RPZ built in modules.services.bind.system; this host only flips enable + VIP.
   lab.bind.enable = true;
 
   lab.bind.ha = {

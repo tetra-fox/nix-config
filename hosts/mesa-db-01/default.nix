@@ -20,12 +20,12 @@ in {
   imports = [
     ./monitoring.nix
 
-    modules.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.disko.proxmox-vm # boot-disk layout (scsi0); single disk
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
+    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0); single disk
+    modules.meta.profiles.server.system
 
-    modules.postgres-ha.system
-    modules.sops.system
+    modules.services.postgres-ha.system
+    modules.platform.sops.system
   ];
 
   lab.sops.secretsFile = ../../secrets/mesa-db-01.yaml;

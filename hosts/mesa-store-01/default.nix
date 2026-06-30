@@ -10,14 +10,14 @@
     ./storage.nix
     ./monitoring.nix
 
-    modules.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
-    modules.disko.proxmox-vm # boot-disk layout (scsi0); the media disk is separate
-    modules.profiles.server.system
+    modules.platform.proxmox-vm.system # this host is a proxmox VM (qemu-guest + virtio initrd)
+    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0); the media disk is separate
+    modules.meta.profiles.server.system
 
-    modules.samba.system
+    modules.services.samba.system
   ];
 
-  # no modules.sops.system: store-01 has no per-host secrets (NFS needs none, SMB uses
+  # no modules.platform.sops.system: store-01 has no per-host secrets (NFS needs none, SMB uses
   # local passwd auth set out-of-band). add it back with a secrets file if that changes.
 
   # site facts (VLAN/gateway/DNS layout, siteData root, topology parent) come from

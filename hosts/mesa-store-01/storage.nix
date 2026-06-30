@@ -20,7 +20,7 @@
   # derived to its internal-VLAN IP -- no hardcoded svc-01 IP. the export + firewall scope
   # to this. (today the media host is svc-01.)
   svcIp =
-    (import modules.lib.site-topology {inherit lib;} {
+    (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).mediaHostIp;

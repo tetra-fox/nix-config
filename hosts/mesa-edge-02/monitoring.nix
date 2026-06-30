@@ -1,7 +1,7 @@
 {modules, ...}: {
   imports = [
-    modules.monitoring.system
-    modules.logging.system
+    modules.services.monitoring.system
+    modules.services.logging.system
   ];
 
   lab.logging.enable = true;
