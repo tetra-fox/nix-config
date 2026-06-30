@@ -46,28 +46,21 @@
     dbus.implementation = "broker";
   };
 
+  # one oom killer, not two. earlyoom (simple, no cgroup-pressure config) is kept; systemd-oomd
+  # is disabled so they don't both run (NixOS enables oomd by default).
+  systemd.oomd.enable = lib.mkForce false;
+
   boot.tmp.cleanOnBoot = true;
 
+  # debug-only toolbox: the "something's wrong, let me poke" set. dev tools (git, ripgrep,
+  # tree), archive tools (unzip/p7zip/unrar), and the rest are gone -- reach for them with
+  # `nix shell nixpkgs#<tool>` on demand. unrar moved to the arr-stack module (qbit autounrar
+  # is the only thing that needs it). kitty.terminfo stays so ssh-from-kitty renders right.
   environment.systemPackages = with pkgs; [
-    git
-    jq
-    ripgrep
-    tree
-    pv
-
     htop
     lsof
-    smartmontools
-
-    wget
-    bind
-    nmap
     mtr
-
-    unzip
-    p7zip
-    unrar
-
+    bind # dig/nslookup for dns debugging
     kitty.terminfo
   ];
 }

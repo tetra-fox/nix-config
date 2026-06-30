@@ -39,14 +39,6 @@
       RuntimeMaxUse=64M
       MaxRetentionSec=2week
     '';
-    vscode-server = {
-      enable = lib.mkDefault true;
-      # vscodium uses jeanp413/open-remote-ssh
-      installPath = lib.mkDefault [
-        "$HOME/.vscode-server"
-        "$HOME/.vscodium-server"
-      ];
-    };
   };
 
   zramSwap.enable = lib.mkDefault true;

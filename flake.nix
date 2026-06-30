@@ -97,11 +97,6 @@
 
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
 
-    nixos-vscode-server = {
-      url = "github:nix-community/nixos-vscode-server";
-      flake = false;
-    };
-
     nix-topology = {
       url = "github:oddlama/nix-topology";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -306,7 +301,6 @@
               nixos = [
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-topology.nixosModules.default
-                "${inputs.nixos-vscode-server}/modules/vscode-server"
                 inputs.tetra-nurpkgs.nixosModules.grafana-dashboards
                 # the `sops` option, needed by any host importing modules that reference
                 # config.sops (monitoring/logging, plus the sops.system host-key module).

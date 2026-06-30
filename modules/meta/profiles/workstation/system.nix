@@ -47,5 +47,20 @@
     rclone
     usbutils # lsusb
     (writeShellScriptBin "rebuild" (builtins.readFile ./rebuild.sh))
+
+    # the general toolbox -- on the workstation (hara), not the headless servers. servers keep
+    # only a minimal debug set (htop/lsof/mtr/bind) in the base profile and reach for the rest
+    # with `nix shell` on demand.
+    git
+    jq
+    ripgrep
+    tree
+    pv
+    smartmontools
+    wget
+    nmap
+    unzip
+    p7zip
+    unrar
   ];
 }
