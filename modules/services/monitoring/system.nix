@@ -66,17 +66,18 @@
   # flatten to (exporter-name, host, addr) tuples first (dropping hosts with no scrape addr),
   # then group by exporter name. each exporter's {name,port} is the same across hosts (it's a
   # fleet-wide registry), so the port comes from any member -- read it off the first.
-  scrapeTuples = lib.concatMap (
-    name: let
-      addr = scrapeAddr name;
-    in
-      lib.optionals (addr != null) (map (e: {
-        inherit (e) name port;
-        host = name;
-        inherit addr;
-      }) (exportersOf name))
-  )
-  hostsInSite;
+  scrapeTuples =
+    lib.concatMap (
+      name: let
+        addr = scrapeAddr name;
+      in
+        lib.optionals (addr != null) (map (e: {
+          inherit (e) name port;
+          host = name;
+          inherit addr;
+        }) (exportersOf name))
+    )
+    hostsInSite;
 
   byExporter = lib.groupBy (t: t.name) scrapeTuples;
 
