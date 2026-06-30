@@ -300,11 +300,15 @@ in {
       {
         # the patroni module ships a udev rule giving the patroni user /dev/watchdog, but the
         # device pre-exists at boot (the VM exposes an iTCO hardware watchdog), so the rule
-        # isn't re-applied unless udev is triggered. patroni's mode=required refuses to start
-        # without the watchdog, so re-trigger + settle the rule before patroni starts.
+        # isn't re-applied unless udev is triggered. patroni's mode=required refuses to BE
+        # primary without the watchdog -- which blocks not just startup but runtime promotion
+        # on failover. so this must run at every boot (wantedBy multi-user.target, not only as
+        # a patroni dependency) and complete before patroni, on every node, so any node can
+        # promote. it chowns directly too in case the udev trigger races.
         patroni-watchdog-perms = {
-          description = "Apply the patroni /dev/watchdog ownership udev rule before patroni starts";
+          description = "Give the patroni user /dev/watchdog (chown + re-apply the udev rule) before patroni";
           before = ["patroni.service"];
+          wantedBy = ["multi-user.target"];
           requiredBy = ["patroni.service"];
           serviceConfig = {
             Type = "oneshot";
@@ -312,6 +316,8 @@ in {
             ExecStart = [
               "${pkgs.systemd}/bin/udevadm trigger --subsystem-match=misc --action=add"
               "${pkgs.systemd}/bin/udevadm settle"
+              # belt-and-suspenders: chown the device directly in case udev didn't re-apply
+              "${pkgs.coreutils}/bin/chown patroni:patroni /dev/watchdog"
             ];
           };
         };
