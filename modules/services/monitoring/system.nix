@@ -57,25 +57,40 @@
     then bindAddr
     else ipOf name;
 
-  # one scrape job per exporter on one host. job name is "<exporter>-<host>" and the
-  # `instance` label is always the hostname so grafana legends read names, not ip:port.
-  scrapeForHost = name: let
-    addr = scrapeAddr name;
-  in
-    lib.optionals (addr != null) (
-      map (e: {
-        job_name = "${e.name}-${name}";
-        static_configs = [
-          {
-            targets = ["${addr}:${toString e.port}"];
-            labels.instance = name;
-          }
-        ];
-      })
-      (exportersOf name)
-    );
+  # one scrape job per EXPORTER TYPE (node, systemd, ...), not per host -- the prometheus-
+  # native shape where a job is a class of target and the hosts are its members. every host
+  # running an exporter contributes one static_config entry (its own addr + an instance label
+  # = hostname, so grafana legends read names not ip:port). querying up{job="node"} then means
+  # "are all node-exporters healthy" without a job=~"node-.*" regex.
+  #
+  # flatten to (exporter-name, host, addr) tuples first (dropping hosts with no scrape addr),
+  # then group by exporter name. each exporter's {name,port} is the same across hosts (it's a
+  # fleet-wide registry), so the port comes from any member -- read it off the first.
+  scrapeTuples = lib.concatMap (
+    name: let
+      addr = scrapeAddr name;
+    in
+      lib.optionals (addr != null) (map (e: {
+        inherit (e) name port;
+        host = name;
+        inherit addr;
+      }) (exportersOf name))
+  )
+  hostsInSite;
 
-  derivedScrapes = lib.concatMap scrapeForHost hostsInSite;
+  byExporter = lib.groupBy (t: t.name) scrapeTuples;
+
+  derivedScrapes =
+    lib.mapAttrsToList (exporterName: members: {
+      job_name = exporterName;
+      static_configs =
+        map (t: {
+          targets = ["${t.addr}:${toString t.port}"];
+          labels.instance = t.host;
+        })
+        members;
+    })
+    byExporter;
 
   # union of all exporter ports across this site's agents, to open to the server.
   allExporterPorts = lib.unique (lib.concatMap (name: map (e: e.port) (exportersOf name)) hostsInSite);
