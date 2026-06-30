@@ -17,7 +17,6 @@
     modules.sops.system
     modules.jellyfin.system
     modules.postgres.system
-    modules.caddy.system
     modules.podman.system
     modules.nvidia.system
     modules.arr-stack.default
@@ -53,8 +52,6 @@
       physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
     };
   };
-
-  lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
   # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;

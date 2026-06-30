@@ -440,6 +440,17 @@
               inputs.disko.nixosModules.disko
             ];
           };
+
+          mesa-edge-01 = {
+            path = ./hosts/mesa-edge-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
         };
       };
     });

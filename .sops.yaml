@@ -18,6 +18,7 @@ keys:
   - &host_mesa_mon_01 age17h8yezx0j8sqmpwuxc836pzd386u59x6wfh8m02f48v8ycyrhvxq8v9avd
   - &host_mesa_db_01 age187esnmkpydleuaygxvzze0yaqzypamxrm8a8sx9t0p2vz5dz0uaszcp86m
   - &host_mesa_auth_01 age17qpwggy9h6vfwh7dvyltxum5hdce8lmgp9sxnr205pelmh9qpurqdq6wex
+  - &host_mesa_edge_01 age1ww87qy6watdrne3r94vzaal9xamu9sdxkfp9awswymkha6y5ruus8396eq
 
 creation_rules:
   # per-host file, encrypted to that host's key only (plus the user). a host must
@@ -48,3 +49,8 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_mesa_auth_01
+  - path_regex: secrets/mesa-edge-01\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_mesa_edge_01

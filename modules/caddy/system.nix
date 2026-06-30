@@ -116,9 +116,12 @@ in {
 
     # upstream only sets StateDirectory (which creates dataDir) when dataDir is the
     # default /var/lib/caddy; overriding it to siteData means we have to create the
-    # dir ourselves, or the unit's ReadWritePaths bind-mount fails with 226/NAMESPACE
+    # dir ourselves, or the unit's ReadWritePaths bind-mount fails with 226/NAMESPACE.
+    # also pre-create the access log: fail2ban's caddy-status jail refuses to start if
+    # its logpath is missing, which it is on a fresh box before caddy's first request.
     systemd.tmpfiles.rules = [
       "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
+      "f /var/log/caddy/access.log 0644 caddy caddy -"
     ];
 
     networking.firewall.allowedTCPPorts = [80 443];
@@ -153,6 +156,12 @@ in {
 
     # StateDirectory is relative to /var/lib, so strip the prefix off siteData to keep it in sync with dbfile above
     systemd.services.fail2ban.serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
+
+    # order fail2ban after caddy (its jail watches caddy's access log, pre-created above)
+    systemd.services.fail2ban = {
+      after = ["caddy.service"];
+      wants = ["caddy.service"];
+    };
 
     environment.etc."fail2ban/filter.d/caddy-status.conf".text = ''
       [Definition]
