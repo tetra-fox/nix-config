@@ -70,6 +70,9 @@
   # the ingress host runs caddy. a backend whose proxy moved to this box binds its site IP
   # and opens its port to this IP only. services.caddy.enable is an INPUT signal.
   isEdgeHost = c: c.services.caddy.enable or false;
+  # the storage host runs the NFS server (the media library). services.nfs.server.enable
+  # is an INPUT signal. clients mount it at this host's internal IP.
+  isStorageHost = c: c.services.nfs.server.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 in {
@@ -94,4 +97,8 @@ in {
   # the single ingress host's IP (caddy). a backend on another box opens its port to this
   # IP only (the reverse proxy is the sole legitimate client of an off-box backend).
   edgeHostIp = ipWhere isEdgeHost;
+  # the single storage host's IP (NFS server) -- what the media host mounts the library
+  # from. its NFS client is the media host (mediaHostIp), which today is the same box that
+  # runs the arrs; store-01 scopes its export + firewall to that client IP.
+  storageHostIp = ipWhere isStorageHost;
 }

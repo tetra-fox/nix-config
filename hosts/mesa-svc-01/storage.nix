@@ -6,8 +6,20 @@
 # /mnt/vol_1/milkfish        the shared library, now NFS-mounted from store-01
 # /var/lib/mesa/<service>    local state for every native + container service
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
-{siteData, ...}: let
-  storeIp = "10.10.0.222"; # store-01 over the isolated internal VLAN (east-west NFS)
+{
+  config,
+  lib,
+  modules,
+  siteData,
+  nixosConfigurations,
+  ...
+}: let
+  # the storage host's internal-VLAN IP, derived (NFS server) -- no hardcoded store-01 IP.
+  storeIp =
+    (import modules.lib.site-topology {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).storageHostIp;
 in {
   # the media group's gid must match store-01 (1002): NFS squashes on the numeric gid,
   # so a mismatch would make group-write fail. the arr-stack also declares this group

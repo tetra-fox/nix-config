@@ -8,10 +8,22 @@
 # /mnt/vol_1/milkfish        media + torrents + nzb (the shared library)
 # /mnt/vol_1/homeassistant   HA backups (NFS only)
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
-{siteData, ...}: let
-  # svc-01 mounts the library over the isolated internal VLAN (east-west NFS); it runs
-  # the arrs + qbit/sab (read-write). its internal-VLAN IP.
-  svcIp = "10.10.0.208";
+{
+  config,
+  lib,
+  modules,
+  siteData,
+  nixosConfigurations,
+  ...
+}: let
+  # the NFS client that mounts the library = the media host (runs the arrs + jellyfin),
+  # derived to its internal-VLAN IP -- no hardcoded svc-01 IP. the export + firewall scope
+  # to this. (today the media host is svc-01.)
+  svcIp =
+    (import modules.lib.site-topology {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).mediaHostIp;
   # the HAOS box mounts the homeassistant share for its backups. it's an external
   # appliance NOT on the internal VLAN, so it stays on the server VLAN. connects as root
   # (no shell), so that export all_squashes to the homeassistant user.

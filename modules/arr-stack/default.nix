@@ -188,13 +188,16 @@ in {
 
     netnsSnatHosts = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      # auto: when the db is remote, SNAT netns->db so db's replies route back (its address
+      # is the derived dbServerIp). when the db is local there's nothing to SNAT. add more
+      # dests by hand only for other off-box services the netns talks to (e.g. jellyfin).
+      default = lib.optional (!dbIsLocal && dbServerIp != null) dbServerIp;
       description = ''
         LAN IPs whose netns-initiated traffic must be SNAT'd to this host's LAN address
         so they can reply. the accessibleFrom routes already take LAN destinations off
         the tunnel, but replies would target the private namespaceAddress (unroutable on
-        the LAN) without this masquerade. populate when a service the arrs talk to moves
-        to another box (postgres, jellyfin). empty = no masquerade, behaves as before.
+        the LAN) without this masquerade. defaults to the remote db's IP; populate with
+        extra dests when another off-box service (jellyfin) is added.
       '';
     };
 

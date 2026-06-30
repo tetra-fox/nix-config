@@ -25,10 +25,8 @@
   lab.arrStack = {
     torrentsPath = "/mnt/vol_1/milkfish/torrents";
     nzbPath = "/mnt/vol_1/milkfish/nzb";
-    # the arrs run in the wg netns; db-01 is reached over the isolated internal VLAN now
-    # (10.10.0.245). off-tunnel via accessibleFrom (10.0.0.0/8 covers it), with host-side
-    # SNAT so db's replies route back through ens19. matches the dbServerIp derive.
-    netnsSnatHosts = ["10.10.0.245"];
+    # netnsSnatHosts defaults to [dbServerIp] (db is remote) -- the arrs' netns traffic to
+    # db-01 over the internal VLAN gets SNAT'd so replies route back. no need to set it.
   };
 
   lab.sops.secretsFile = ../../secrets/mesa-svc-01.yaml;
