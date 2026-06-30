@@ -478,6 +478,28 @@
               inputs.disko.nixosModules.disko
             ];
           };
+
+          mesa-dns-01 = {
+            path = ./hosts/mesa-dns-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
+
+          mesa-dns-02 = {
+            path = ./hosts/mesa-dns-02;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
         };
       };
     });

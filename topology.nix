@@ -135,20 +135,9 @@ in {
     };
   };
 
-  nodes.technitium = {
-    name = "technitiumdns";
-    deviceType = "container";
-    parent = "milkfish";
-    guestType = "lxc";
-    icon = ./images/icons/technitium.svg;
-    hardware.info = "Technitium DNS";
-    interfaces.eth0 = {
-      addresses = ["192.168.10.53"];
-      network = "mesa-server-vlan";
-      virtual = true;
-      physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
-    };
-  };
+  # the mesa resolver is now mesa-dns-01/02 (NixOS), which self-render from their topology.self
+  # like every other mesa VM. the old Technitium LXC node is gone; the .53 they serve is a
+  # floating keepalived VIP, not a host, so it isn't a node here.
 
   # ---- fairlane site ----
 

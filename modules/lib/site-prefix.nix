@@ -6,7 +6,7 @@
 # imported by both site-topology.nix (the topology fold) and flake.nix (the colmena deploy
 # tag) so the regex lives in exactly one place -- it drifted once when it was copy-pasted.
 {lib}: name: let
-  m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge)-[0-9]+" name;
+  m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge|dns)-[0-9]+" name;
 in
   if m == null
   then name

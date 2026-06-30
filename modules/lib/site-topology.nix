@@ -77,6 +77,9 @@
   # the storage host runs the NFS server (the media library). services.nfs.server.enable
   # is an INPUT signal. clients mount it at this host's internal IP.
   isStorageHost = c: c.services.nfs.server.enable or false;
+  # the resolver host runs bind. services.bind.enable is an INPUT signal, set in the bind
+  # module. the keepalived module folds over these to build its VIP peer list.
+  isDnsHost = c: c.services.bind.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 
@@ -115,12 +118,28 @@
     if edgeHaVip != null
     then edgeHaVip
     else edgeHostIp;
+
+  # dns derives, same shape. dnsHostIp is the single resolver host (null with >1 box).
+  # dnsHaVip is the floating resolver VIP any dns host declares. dnsEndpointIp is what
+  # points-at-the-resolver should use: the VIP when HA is live, else the single host.
+  dnsHostIp = ipWhere isDnsHost;
+  dnsHaVip = let
+    vips = lib.unique (lib.filter (v: v != null)
+      (map (name: nixosConfigurations.${name}.config.lab.bind.ha.vip or null) (hostsWhere isDnsHost)));
+  in
+    if vips != []
+    then builtins.head vips
+    else null;
+  dnsEndpointIp =
+    if dnsHaVip != null
+    then dnsHaVip
+    else dnsHostIp;
 in {
   inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere siteServers;
   # predicates exported for modules that fold over a class of hosts: isDbHaNode (the postgres
   # module builds etcd/patroni/haproxy peer lists), isEdgeHost (the caddy module builds the
   # keepalived peer list + priority from the edge hosts).
-  inherit isDbHaNode isEdgeHost;
+  inherit isDbHaNode isEdgeHost isDnsHost;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
   # the single monitoring server's IP (null if 0 or >1 -- caller asserts exactly one)
@@ -142,6 +161,10 @@ in {
   # the single ingress host's IP (caddy, null with >1), the floating ingress VIP, and the
   # endpoint the world reaches edge at (vip when HA, else the single host). let-bindings above.
   inherit edgeHostIp edgeHaVip edgeEndpointIp;
+  # the single resolver host's IP (null with >1), the floating resolver VIP, and the endpoint
+  # that points-at-the-resolver should use (the VIP when HA, else the single host). the router's
+  # upstream DNS targets dnsEndpointIp. let-bindings above (same reason as the edge derives).
+  inherit dnsHostIp dnsHaVip dnsEndpointIp;
   # the IPs of EVERY edge host (plural) -- for a backend that allow-lists caddy as a source.
   # caddy proxies FROM its own box IP (not the VIP, which is a destination), so a backend with
   # two edge boxes must allow both real IPs. this is the plural form of edgeHostIp.
