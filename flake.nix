@@ -90,8 +90,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # fleet deploy. layered over easy-hosts: the colmenaHive output below reuses the
-    # already-built nixosConfigurations + their declared site IPs/tags.
     colmena = {
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -166,16 +164,10 @@
         formatter = inputs'.alejandra.packages.default;
         packages = inputs'.tetra-nurpkgs.packages;
 
-        # `nix develop` for deploys and secret management: colmena to push
-        # configs, sops/age/ssh-to-age for the .sops.yaml workflow. sops lives
-        # here rather than the global profile since it's only used in this repo.
-        # colmena comes from the flake INPUT, not nixpkgs -- nixpkgs ships 0.4.0 (the
-        # old evaluator that chokes on the colmenaHive schema); the input matches the
-        # makeHive output we expose.
         devShells.default = pkgs.mkShell {
           packages = [
             inputs'.colmena.packages.colmena
-            pkgs.nixos-anywhere # install a fresh box; pinned via nixpkgs, no `nix run github:`
+            pkgs.nixos-anywhere
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
