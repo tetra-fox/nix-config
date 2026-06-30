@@ -1,0 +1,60 @@
+# mesa-db-03: third node of the HA postgres cluster (Patroni + etcd + HAProxy + keepalived).
+# see mesa-db-02 for the shared design -- all three db nodes declare the same lab.postgres.ha
+# config and the same roles; this file differs only in hostname + IPs.
+{
+  username,
+  modules,
+  nixosConfigurations,
+  ...
+}: let
+  arrDbs = nixosConfigurations.mesa-svc-01.config.lab.arrStack.databases;
+in {
+  imports = [
+    ./monitoring.nix
+
+    modules.proxmox-vm.system # qemu-guest + virtio initrd
+    modules.disko.proxmox-vm # boot-disk layout (scsi0); single disk
+    modules.profiles.server.system
+
+    modules.postgres-ha.system
+    modules.sops.system
+  ];
+
+  lab.sops.secretsFile = ../../secrets/mesa-db-03.yaml;
+
+  networking.hostName = "mesa-db-03";
+  lab.site.hostIp = "192.168.10.247";
+  lab.site.internalIp = "10.10.0.247"; # isolated internal VLAN (ens19); HA traffic rides this
+
+  lab.postgres = {
+    ha = {
+      enable = true;
+      vip = "10.10.0.240"; # the floating endpoint clients reach
+      # held until the coordinated 3-node cutover: install the stack but don't let this node
+      # form a partial cluster before db-01 joins. flip to false on all members at cutover.
+      bootstrapHold = true;
+    };
+    admin.enable = true;
+
+    extraAllowedCidrs = ["192.168.20.0/24"];
+
+    roles = {
+      arr = {
+        passwordSecret = "arr/pg_pass";
+        owns = arrDbs;
+      };
+      authentik = {
+        passwordSecret = "auth/pg_pass";
+        owns = ["authentik"];
+      };
+    };
+  };
+
+  users.users.${username} = {
+    isNormalUser = true;
+    uid = 1000;
+    extraGroups = ["wheel"];
+  };
+
+  system.stateVersion = "26.11";
+}

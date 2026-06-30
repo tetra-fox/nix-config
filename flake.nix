@@ -424,6 +424,28 @@
             ];
           };
 
+          mesa-db-02 = {
+            path = ./hosts/mesa-db-02;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
+
+          mesa-db-03 = {
+            path = ./hosts/mesa-db-03;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
+
           mesa-auth-01 = {
             path = ./hosts/mesa-auth-01;
             arch = "x86_64";

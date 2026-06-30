@@ -63,6 +63,10 @@
   isMonitoringServer = c: c.lab.monitoring.server.enable or false;
   isDbServer = c: c.lab.postgres.server.enable or false;
   isDbClient = c: c.lab.postgres.client.enable or false;
+  # a node in the HA postgres cluster (Patroni). distinct from isDbServer: an HA node sets
+  # ha.enable, not server.enable, so the single-server derive (ipWhere isDbServer) returns
+  # null when the site is HA -- dbEndpointIp short-circuits to the VIP before that matters.
+  isDbHaNode = c: c.lab.postgres.ha.enable or false;
   isAuthServer = c: c.lab.authentik.enable or false;
   # the media host runs jellyfin (+ nowplaying alongside it). services.jellyfin.enable is
   # an INPUT (set directly in the jellyfin module), so reading it keeps the no-recursion rule.
@@ -75,15 +79,39 @@
   isStorageHost = c: c.services.nfs.server.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
+
+  # the db endpoint derives reference each other (dbEndpointIp picks between dbServerIp and
+  # dbHaVip), so they're let-bindings here rather than sibling attrs in the output set (an
+  # attr can't read a sibling attr by bare name). exposed in the `in` set below.
+  dbServerIp = ipWhere isDbServer;
+  dbHaVip = let
+    vips = lib.unique (lib.filter (v: v != null)
+      (map (name: nixosConfigurations.${name}.config.lab.postgres.ha.vip or null) (hostsWhere isDbHaNode)));
+  in
+    if vips != []
+    then builtins.head vips
+    else null;
+  # the VIP only takes over once the HA cluster is the LIVE authority: an HA node exists AND
+  # no single-server node remains. while db-01 is still server.enable and db-02/03 are stood
+  # up as HA, clients stay on db-01 (dbServerIp); the instant db-01 drops server.enable for
+  # ha.enable, dbServerIp goes null and the VIP takes over.
+  dbEndpointIp =
+    if dbHaVip != null && dbServerIp == null
+    then dbHaVip
+    else dbServerIp;
 in {
   inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere siteServers;
+  # the HA-node predicate, exported so the postgres-ha module can fold the cluster's nodes
+  # (ipsWhere isDbHaNode) into etcd initialCluster / patroni otherNodesIps / haproxy backends.
+  inherit isDbHaNode;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
   # the single monitoring server's IP (null if 0 or >1 -- caller asserts exactly one)
   serverIp = ipWhere isMonitoringServer;
-  # the single postgres server's IP -- what arr/authentik clients point at. today a lone
-  # db-NN; an HA setup swaps the flag's holder (or this derive) for the floating endpoint.
-  dbServerIp = ipWhere isDbServer;
+  # the single postgres server's IP (non-HA), the HA VIP, and the endpoint clients actually
+  # point at (the VIP when HA is the live authority, else the single server). defined as
+  # let-bindings above because they reference each other; see there for the cutover logic.
+  inherit dbServerIp dbHaVip dbEndpointIp;
   # the IPs of every same-site postgres client (lab.postgres.client.enable) -- the inverse
   # of dbServerIp: the db server folds these into its pg_hba allow-list. assumes a client
   # reaches the db FROM its declared hostIp (true for direct LAN clients, and for a netns

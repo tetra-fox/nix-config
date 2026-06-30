@@ -17,6 +17,8 @@ keys:
   - &host_fairlane_svc_01 age14760cr4x8zzd5tuf3w8ff2auyhjxju20mp88w5ackqlsrlal4s9s6m4qyz
   - &host_mesa_mon_01 age17h8yezx0j8sqmpwuxc836pzd386u59x6wfh8m02f48v8ycyrhvxq8v9avd
   - &host_mesa_db_01 age187esnmkpydleuaygxvzze0yaqzypamxrm8a8sx9t0p2vz5dz0uaszcp86m
+  - &host_mesa_db_02 age1ls3v700tkjegmklg95pe4xe9tp3nnm80970ltddezqn3vs58430qynytt3
+  - &host_mesa_db_03 age152g02shenugt7qesepn3d0l4u0nzt5uy5ud5mghngvjl0r3zjp3qjxtyzn
   - &host_mesa_auth_01 age17qpwggy9h6vfwh7dvyltxum5hdce8lmgp9sxnr205pelmh9qpurqdq6wex
   - &host_mesa_edge_01 age1ww87qy6watdrne3r94vzaal9xamu9sdxkfp9awswymkha6y5ruus8396eq
 
@@ -44,6 +46,16 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_mesa_db_01
+  - path_regex: secrets/mesa-db-02\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_mesa_db_02
+  - path_regex: secrets/mesa-db-03\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_mesa_db_03
   - path_regex: secrets/mesa-auth-01\.yaml$
     key_groups:
       - age:

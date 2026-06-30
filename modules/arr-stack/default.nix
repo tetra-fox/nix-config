@@ -17,22 +17,22 @@
   vpnNs = "wg";
   vpn = config.vpnNamespaces.${vpnNs};
 
-  # where the site's postgres server lives (same derive monitoring uses for grafana).
-  # null until some site host sets lab.postgres.server.enable.
-  dbServerIp =
+  # the site's postgres endpoint (same derive monitoring/authentik use): the single server's
+  # IP, or the HA cluster's VIP. null until some site host sets server.enable or ha.enable.
+  dbEndpointIp =
     (import modules.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
-    }).dbServerIp;
+    }).dbEndpointIp;
 
   # the address the arrs (in the wg netns) use to reach postgres. if THIS host runs the
   # db, postgres is local and the netns reaches it over the veth bridge. otherwise it's
-  # the derived db-server IP on the LAN (netnsSnatHosts must include it for the return
-  # path). this flips automatically when server.enable moves off this host in Phase 3.
+  # the derived db endpoint on the LAN (netnsSnatHosts must include it for the return
+  # path). the endpoint is the VIP when the data tier is HA, a single IP otherwise.
   defaultPostgresHost =
     if config.lab.postgres.server.enable
     then vpn.bridgeAddress
-    else dbServerIp;
+    else dbEndpointIp;
 
   arrServices = {
     sonarr = {
@@ -189,9 +189,10 @@ in {
     netnsSnatHosts = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       # auto: when the db is remote, SNAT netns->db so db's replies route back (its address
-      # is the derived dbServerIp). when the db is local there's nothing to SNAT. add more
-      # dests by hand only for other off-box services the netns talks to (e.g. jellyfin).
-      default = lib.optional (!dbIsLocal && dbServerIp != null) dbServerIp;
+      # is the derived dbEndpointIp -- the single server IP or the HA VIP). when the db is
+      # local there's nothing to SNAT. add more dests by hand only for other off-box
+      # services the netns talks to (e.g. jellyfin).
+      default = lib.optional (!dbIsLocal && dbEndpointIp != null) dbEndpointIp;
       description = ''
         LAN IPs whose netns-initiated traffic must be SNAT'd to this host's LAN address
         so they can reply. the accessibleFrom routes already take LAN destinations off

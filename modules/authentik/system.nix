@@ -1,7 +1,8 @@
 # authentik (SSO/identity): server + worker + ldap outpost, as podman containers.
-# the postgres db lives on the site's db server (reached via the site-topology dbServerIp
-# derive); this host just runs the app. caddy finds this host via the authServerIp derive
-# (keyed on lab.authentik.enable below), so nothing hardcodes where authentik runs.
+# the postgres db lives on the site's db server (reached via the site-topology dbEndpointIp
+# derive -- the single server's IP, or the HA cluster's VIP); this host just runs the app.
+# caddy finds this host via the authServerIp derive (keyed on lab.authentik.enable below),
+# so nothing hardcodes where authentik runs.
 {
   config,
   lib,
@@ -17,13 +18,14 @@
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
-  # the site's postgres server (same derive the arr-stack uses). authentik's podman is
-  # not in any netns, so it reaches the db host directly over the LAN.
+  # the site's postgres endpoint (same derive the arr-stack uses): the single server's IP,
+  # or the HA cluster's VIP. authentik's podman is not in any netns, so it reaches the db
+  # host directly over the LAN.
   dbHost =
     (import modules.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
-    }).dbServerIp;
+    }).dbEndpointIp;
 
   authentikBase = {
     image = "ghcr.io/goauthentik/server:${authentikTag}";
