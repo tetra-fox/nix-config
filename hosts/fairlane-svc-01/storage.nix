@@ -32,9 +32,14 @@ in {
     "d ${media}/nzb 2775 admin media -"
   ];
 
-  # gate sabnzbd on the media mount so it doesn't start (and write complete_dir to the
-  # root fs) when the disk is wedged. RequiresMountsFor pulls in the mount unit.
-  systemd.services.sabnzbd.unitConfig.RequiresMountsFor = [media];
+  # gate every media-writing service on the mount so none start (and write into the bare
+  # mountpoint on the root fs, filling root + shadowing the real content on remount) when
+  # the flaky disk is wedged. RequiresMountsFor pulls in the mount unit. (prowlarr is an
+  # indexer proxy, doesn't touch the disk, so it's omitted -- same set as mesa-svc-01.)
+  systemd.services = builtins.listToAttrs (map (name: {
+      inherit name;
+      value.unitConfig.RequiresMountsFor = [media];
+    }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
 
   fileSystems.${media} = {
     device = "/dev/disk/by-uuid/dffc8a76-9a1c-411a-9a53-4f3f720bf9f5";

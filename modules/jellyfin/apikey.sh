@@ -14,13 +14,18 @@
 # lands in argv; rtrim drops the trailing newline sops adds.
 set -euo pipefail
 
-# wait for jellyfin to have created the db at least once
-for _ in $(seq 1 30); do
-  [ -f "$JELLYFIN_DB" ] && break
-  sleep 1
+# wait for jellyfin's first-run migration to create the ApiKeys TABLE, not just the db
+# file. on a fresh box the .db appears early but ApiKeys is created by a later EF
+# migration -- waiting only for the file races that window and the upsert below would hit
+# "no such table" and (set -e) fail the oneshot permanently. poll the table instead.
+for _ in $(seq 1 60); do
+  [ -f "$JELLYFIN_DB" ] \
+    && sqlite3 "$JELLYFIN_DB" "SELECT 1 FROM ApiKeys LIMIT 1;" >/dev/null 2>&1 \
+    && break
+  sleep 2
 done
-if [ ! -f "$JELLYFIN_DB" ]; then
-  echo "ERROR: ${JELLYFIN_DB} never appeared" >&2
+if ! sqlite3 "$JELLYFIN_DB" "SELECT 1 FROM ApiKeys LIMIT 1;" >/dev/null 2>&1; then
+  echo "ERROR: ${JELLYFIN_DB} ApiKeys table never appeared (jellyfin first-run migration?)" >&2
   exit 1
 fi
 
