@@ -271,30 +271,30 @@ in {
       };
 
       # VPN-Confinement drops MTU during wg-quick parsing; set it on the iface ourselves.
-      # also masquerade netns-initiated traffic to each netnsSnatHosts dest so the reply
-      # comes back: accessibleFrom already routes these LAN dests off the tunnel, but
-      # without SNAT the dest sees the private namespaceAddress and can't reply. scoped to
-      # -d <ip>/32 so it never touches the inbound portMappings DNAT flows or tunnel egress.
-      # no -o <iface>: the dest decides the output interface (ens18 for the server VLAN,
-      # ens19 for the isolated internal VLAN), and the -d /32 scope is already tight.
-      systemd.services.${vpnNs}.serviceConfig = {
-        ExecStartPost =
-          [
-            "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
-          ]
-          ++ map (
-            ip: "${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -j MASQUERADE"
-          )
-          cfg.netnsSnatHosts;
+      # this genuinely needs the netns to exist, so it stays an ExecStartPost.
+      systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
+        "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
+      ];
 
-        # tear the masquerade rules down when the netns stops, so a restart doesn't stack
-        # duplicate rules (ExecStartPost re-appends on every start). leading - ignores a
-        # missing rule.
-        ExecStopPost =
-          map (
-            ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -j MASQUERADE"
+      # masquerade netns-initiated traffic to each netnsSnatHosts dest so the reply comes
+      # back: accessibleFrom already routes these LAN dests off the tunnel, but without SNAT
+      # the dest sees the private namespaceAddress and can't reply. declared as a real
+      # nftables table (not an imperative ExecStartPost iptables rule) so it's idempotent
+      # and reconciled by every firewall reload -- an `nft` reload can't silently wipe it
+      # without the wg unit, which was the failure mode of the old ExecStartPost form.
+      # scoped to `ip daddr <ip>` per dest so it never touches the inbound portMappings DNAT
+      # return flows or the tunnel's own egress; no oifname, the dest picks the interface.
+      networking.nftables.tables.arr-netns-snat = lib.mkIf (cfg.netnsSnatHosts != []) {
+        family = "ip";
+        content = ''
+          chain postrouting {
+            type nat hook postrouting priority srcnat; policy accept;
+            ${lib.concatMapStringsSep "\n    " (
+            ip: "ip saddr ${vpn.namespaceAddress}/24 ip daddr ${ip} masquerade"
           )
-          cfg.netnsSnatHosts;
+          cfg.netnsSnatHosts}
+          }
+        '';
       };
     }
 
