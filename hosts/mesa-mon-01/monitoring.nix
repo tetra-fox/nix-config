@@ -14,7 +14,6 @@
   lab.monitoring.server.enable = true;
   lab.monitoring.unifi.enable = true; # mesa has a UniFi network
 
-  # this host ships its own logs to the loki it runs
   lab.logging.enable = true;
 
   sops.secrets."monitoring/grafana_oauth_client_secret" = {

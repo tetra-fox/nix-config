@@ -8,10 +8,6 @@
     modules.logging.system
   ];
 
-  # this host is a monitoring AGENT: it runs the exporters + ships its logs, and the
-  # mesa site's server (mesa-mon-01) scrapes/collects from it. no prometheus/grafana
-  # here -- that lives on mon-01.
-
   lab.logging = {
     # journald + the arr file logs -> shipped to mon-01's loki
     enable = true;

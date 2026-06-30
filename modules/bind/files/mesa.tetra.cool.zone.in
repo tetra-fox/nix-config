@@ -1,0 +1,18 @@
+; the internal split-horizon zone for mesa.tetra.cool. a real zone file with the two derived
+; addresses substituted by nix (replaceVars): @nsIp@ = this resolver's IP, @edgeVip@ = the edge
+; ingress VIP. the wildcard answers every *.mesa.tetra.cool from the edge VIP; unifi is a
+; more-specific record that wins over the wildcard, no special-casing needed. serial is static
+; (1) because this zone is generated, never hand-edited or transferred between servers.
+$TTL 300
+$ORIGIN mesa.tetra.cool.
+@   IN SOA ns.mesa.tetra.cool. hostmaster.mesa.tetra.cool. (
+        1          ; serial
+        3600       ; refresh
+        900        ; retry
+        604800     ; expire
+        300 )      ; negative cache ttl
+    IN NS  ns.mesa.tetra.cool.
+ns    IN A   @nsIp@
+@     IN A   @edgeVip@
+*     IN A   @edgeVip@
+unifi IN A   192.168.1.1

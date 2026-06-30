@@ -230,10 +230,6 @@ in {
       wants = ["caddy.service"];
     };
 
-    environment.etc."fail2ban/filter.d/caddy-status.conf".text = ''
-      [Definition]
-      failregex = ^<HOST>.*"(GET|POST|HEAD|OPTIONS|PUT|DELETE|PATCH).*" 4[0-9][0-9] [0-9]+$
-      ignoreregex =
-    '';
+    environment.etc."fail2ban/filter.d/caddy-status.conf".source = ./files/caddy-status.conf;
   };
 }

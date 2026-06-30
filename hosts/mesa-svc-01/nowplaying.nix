@@ -5,10 +5,6 @@
   nixosConfigurations,
   ...
 }: let
-  # caddy lives on the edge box now, so nowplaying has to bind svc-01's site IP (not
-  # loopback) for the proxy to reach it. open 8090 to the edge host(s) only -- the sole
-  # legitimate clients. derived from site-topology: every edge box's real IP, since caddy
-  # proxies FROM its own box (not the VIP), so with two edge boxes both are valid sources.
   topo = import modules.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
