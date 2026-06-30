@@ -5,7 +5,7 @@
 #           also the HAOS box mounts /mnt/vol_1/homeassistant for its backups.
 #   SMB  -> real people (@users) browse the library, local-account auth.
 #
-# /mnt/vol_1/milkfish        media + torrents + nzb (the shared library)
+# /mnt/vol_1/store           media + torrents + nzb (the shared library)
 # /mnt/vol_1/homeassistant   HA backups (NFS only)
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {
@@ -38,9 +38,9 @@ in {
 
     # setgid so everything created under the library inherits group `media`; the
     # service uids (sonarr/radarr/qbit/sab, all in media) and SMB @users share write.
-    "Z /mnt/vol_1/milkfish/media - admin media 2775"
-    "Z /mnt/vol_1/milkfish/torrents - admin media 2775"
-    "Z /mnt/vol_1/milkfish/nzb - admin media 2775"
+    "Z /mnt/vol_1/store/media - admin media 2775"
+    "Z /mnt/vol_1/store/torrents - admin media 2775"
+    "Z /mnt/vol_1/store/nzb - admin media 2775"
   ];
 
   # mount the media disk by filesystem uuid, never by /dev/sdX or a by-id scsi path:
@@ -55,16 +55,16 @@ in {
   # ---- NFS server ----
   # two fully independent shares, each its own NFSv4 fsid=0 root scoped to a single
   # client. the kernel keys the v4 pseudo-root per-client, so two fsid=0 exports to
-  # different IPs are isolated namespaces -- svc-01 sees only milkfish, the HA box sees
-  # only homeassistant, neither can traverse to the other. each client mounts `:/`.
+  # different IPs are isolated namespaces -- svc-01 sees only the store share, the HA box
+  # sees only homeassistant, neither can traverse to the other. each client mounts `:/`.
   #
-  # milkfish keeps numeric uids (no all_squash) so arr imports stay <svc-uid>:media
+  # the store share keeps numeric uids (no all_squash) so arr imports stay <svc-uid>:media
   # (Phase 0a). homeassistant all_squashes to the homeassistant user (uid 1069) since
   # HAOS connects as root.
   services.nfs.server = {
     enable = true;
     exports = ''
-      /mnt/vol_1/milkfish ${svcIp}(rw,sync,no_subtree_check,fsid=0)
+      /mnt/vol_1/store ${svcIp}(rw,sync,no_subtree_check,fsid=0)
       /mnt/vol_1/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1069,anongid=100)
     '';
   };
@@ -92,8 +92,8 @@ in {
       "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
     };
 
-    milkfish = {
-      path = "/mnt/vol_1/milkfish";
+    store = {
+      path = "/mnt/vol_1/store";
       browseable = "yes";
       "read only" = "no";
       "guest ok" = "yes";

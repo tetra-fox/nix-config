@@ -23,8 +23,8 @@
   ];
 
   lab.arrStack = {
-    torrentsPath = "/mnt/vol_1/milkfish/torrents";
-    nzbPath = "/mnt/vol_1/milkfish/nzb";
+    torrentsPath = "/mnt/store/torrents";
+    nzbPath = "/mnt/store/nzb";
     # netnsSnatHosts defaults to [dbServerIp] (db is remote) -- the arrs' netns traffic to
     # db-01 over the internal VLAN gets SNAT'd so replies route back. no need to set it.
   };
@@ -59,7 +59,7 @@
     extraGroups = [
       "wheel"
       "podman"
-      # admin browses /mnt/vol_1/milkfish often; `media` makes ls/cp/mv work without sudo
+      # admin browses /mnt/store often; `media` makes ls/cp/mv work without sudo
       "media"
     ];
   };

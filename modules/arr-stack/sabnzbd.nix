@@ -120,12 +120,14 @@ in {
             dir = "";
             priority = 0;
           };
+          # no custom dir: downloads land in the default complete_dir and the arrs move
+          # them to the library after post-processing, so a per-category subdir is pointless.
           radarr = {
             name = "radarr";
             order = 6;
             pp = "";
             script = "Default";
-            dir = "radarr";
+            dir = "";
             priority = -100; # sabnzbd "force" priority
           };
           sonarr = {
@@ -133,7 +135,7 @@ in {
             order = 5;
             pp = "";
             script = "Default";
-            dir = "sonarr";
+            dir = "";
             priority = -100;
           };
         };

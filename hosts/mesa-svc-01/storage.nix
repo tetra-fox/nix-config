@@ -3,7 +3,7 @@
 # running the arrs + qbit/sab, which write into it as their pinned uids (Phase 0a) so
 # files land <svc-uid>:media, not nobody.
 #
-# /mnt/vol_1/milkfish        the shared library, now NFS-mounted from store-01
+# /mnt/store                 the shared library, NFS-mounted from store-01
 # /var/lib/mesa/<service>    local state for every native + container service
 # siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {
@@ -32,12 +32,12 @@ in {
     "d ${siteData} 0755 root media -"
   ];
 
-  # mount the library over NFSv4 from store-01. milkfish is its own fsid=0 v4 root
-  # scoped to svc-01, so the client mounts `:/` (svc-01 can't even see store-01's other
-  # shares -- separate per-client namespaces). automount + idle-timeout so the mount
-  # comes up on first access and a store-01 reboot doesn't wedge svc-01; nofail keeps
-  # boot non-blocking. jumbo MTU 9000 is already set site-wide (modules/sites/mesa.nix).
-  fileSystems."/mnt/vol_1/milkfish" = {
+  # mount the library over NFSv4 from store-01 at /mnt/store. the store share is its own
+  # fsid=0 v4 root scoped to svc-01, so the client mounts `:/` (svc-01 can't even see
+  # store-01's other shares -- separate per-client namespaces). automount + idle-timeout
+  # so the mount comes up on first access and a store-01 reboot doesn't wedge svc-01;
+  # nofail keeps boot non-blocking. jumbo MTU 9000 is set site-wide (modules/sites/mesa.nix).
+  fileSystems."/mnt/store" = {
     device = "${storeIp}:/";
     fsType = "nfs";
     options = [
@@ -55,6 +55,6 @@ in {
   # has pulled the share up. listed explicitly: these are the units that touch it.
   systemd.services = builtins.listToAttrs (map (name: {
     inherit name;
-    value.unitConfig.RequiresMountsFor = ["/mnt/vol_1/milkfish"];
+    value.unitConfig.RequiresMountsFor = ["/mnt/store"];
   }) ["sonarr" "radarr" "jellyfin" "qbittorrent" "sabnzbd"]);
 }
