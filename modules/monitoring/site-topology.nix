@@ -33,13 +33,17 @@
     (name: isNixosHost name && sitePrefix (nixosConfigurations.${name}.config.networking.hostName) == mySite)
     (builtins.attrNames nixosConfigurations);
 
+  # the address to REACH a host for east-west traffic: prefer its isolated internal-VLAN
+  # IP (10.10.0.x) when it has one, else its server-VLAN IP. so any VM-to-VM link between
+  # two boxes on the internal VLAN rides the isolated fabric; an off-VLAN target (e.g. an
+  # external appliance with no internalIp) is still reached on the server VLAN. reads the
+  # lab.site.* options directly -- with two NICs, scraping interfaces is ambiguous.
   ipOf = name: let
-    ifaces = nixosConfigurations.${name}.config.networking.interfaces or {};
-    addrs = lib.concatMap (i: i.ipv4.addresses or []) (builtins.attrValues ifaces);
+    site = nixosConfigurations.${name}.config.lab.site or {};
   in
-    if addrs == []
-    then null
-    else (builtins.head addrs).address;
+    if (site.internalIp or null) != null
+    then site.internalIp
+    else (site.hostIp or null);
 
   # generic: same-site hosts whose config satisfies `pred` (pred gets the host's config).
   # every "find the host running X in my site" derive is a call to this with X's flag.

@@ -263,13 +263,15 @@ in {
       # comes back: accessibleFrom already routes these LAN dests off the tunnel, but
       # without SNAT the dest sees the private namespaceAddress and can't reply. scoped to
       # -d <ip>/32 so it never touches the inbound portMappings DNAT flows or tunnel egress.
+      # no -o <iface>: the dest decides the output interface (ens18 for the server VLAN,
+      # ens19 for the isolated internal VLAN), and the -d /32 scope is already tight.
       systemd.services.${vpnNs}.serviceConfig = {
         ExecStartPost =
           [
             "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
           ]
           ++ map (
-            ip: "${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
+            ip: "${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -j MASQUERADE"
           )
           cfg.netnsSnatHosts;
 
@@ -278,7 +280,7 @@ in {
         # missing rule.
         ExecStopPost =
           map (
-            ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -o ens18 -j MASQUERADE"
+            ip: "-${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s ${vpn.namespaceAddress}/24 -d ${ip}/32 -j MASQUERADE"
           )
           cfg.netnsSnatHosts;
       };
