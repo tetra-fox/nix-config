@@ -213,7 +213,7 @@
       # `colmenaHive = colmena.lib.makeHive self.outputs.colmena` (per its own hint).
       flake.colmena = let
         # sitePrefix: mesa-svc-01 -> mesa. shared single source with site-topology.nix.
-        sitePrefix = import ./modules/lib/site-prefix.nix {inherit lib;};
+        sitePrefix = import ./modules/meta/lib/site-prefix.nix {inherit lib;};
 
         cfgs = inputs.self.nixosConfigurations;
         # only NixOS hosts that declared a site IP (the deployable mesa fleet)
