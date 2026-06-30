@@ -18,6 +18,12 @@ in {
       name = "mesa IoT VLAN";
       cidrv4 = "192.168.30.0/24";
     };
+    # isolated east-west fabric for VM-to-VM traffic (postgres, NFS, monitoring). VLAN
+    # 1010, no gateway/WAN/inter-vlan. every mesa VM's ens19 lands here by CIDR match.
+    mesa-internal-vlan = {
+      name = "mesa Internal VLAN (1010, isolated)";
+      cidrv4 = "10.10.0.0/24";
+    };
 
     fairlane-server-vlan = {
       name = "fairlane Server VLAN";
@@ -89,6 +95,13 @@ in {
     interfaces."vmbr0.30" = {
       addresses = [];
       network = "mesa-iot-vlan";
+      virtual = true;
+    };
+    # the isolated internal VLAN bridge; the mesa VMs' ens19 ride this for east-west
+    # traffic. no host address on it (milkfish doesn't participate, it just bridges).
+    interfaces."vmbr0.1010" = {
+      addresses = [];
+      network = "mesa-internal-vlan";
       virtual = true;
     };
   };

@@ -44,15 +44,6 @@
   lab.site.hostIp = "192.168.10.208";
   lab.site.internalIp = "10.10.0.208"; # isolated internal VLAN (ens19)
 
-  # extra topology detail beyond the site default's parent
-  topology.self = {
-    guestType = "vm";
-    interfaces.ens18 = {
-      virtual = true;
-      physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
-    };
-  };
-
   # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;
   lab.podman.cadvisor.enable = true;

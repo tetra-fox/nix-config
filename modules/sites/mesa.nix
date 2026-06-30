@@ -51,7 +51,21 @@
     # tmpfiles rule stays per-host, not here.
     _module.args.siteData = "/var/lib/mesa";
 
-    # mesa proxmox guests parent the milkfish node in the topology
-    topology.self.parent = "milkfish";
+    # mesa proxmox guests parent the milkfish node in the topology, and their NICs bridge
+    # off it: ens18 -> the server VLAN bridge, ens19 -> the internal VLAN bridge (only when
+    # the host is on the internal VLAN). declared once here so every mesa VM renders its
+    # links, instead of each host repeating the wiring.
+    topology.self = {
+      parent = "milkfish";
+      guestType = "vm";
+      interfaces.ens18 = {
+        virtual = true;
+        physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
+      };
+      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+        virtual = true;
+        physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.1010")];
+      };
+    };
   };
 }
