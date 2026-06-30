@@ -1,5 +1,5 @@
 # the storage tier: this box owns the media disk and serves it over NFS + SMB.
-#   NFS  -> the service VMs (svc-01 arrs/downloaders, jelly-01 jellyfin) mount the
+#   NFS  -> the media host (svc-01: arrs/downloaders + jellyfin) mounts the
 #           library; exported without all_squash so the pinned numeric uids pass
 #           through and files stay <svc-uid>:media instead of squashing to nobody.
 #           also the HAOS box mounts /mnt/vol_1/homeassistant for its backups.
@@ -60,7 +60,7 @@ in {
   #
   # milkfish keeps numeric uids (no all_squash) so arr imports stay <svc-uid>:media
   # (Phase 0a). homeassistant all_squashes to the homeassistant user (uid 1069) since
-  # HAOS connects as root. svc-01 is rw; jelly-01 joins read-only in Phase 5.
+  # HAOS connects as root.
   services.nfs.server = {
     enable = true;
     exports = ''

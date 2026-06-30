@@ -1,6 +1,6 @@
 # mesa-store-01: the mesa site's storage tier. owns the media disk and serves it over
-# NFS (to the service VMs) + SMB (to people). the floor of the dependency DAG -- svc-01
-# and jelly-01 mount their library from here -- so it's kept deliberately minimal.
+# NFS (to the media host) + SMB (to people). the floor of the dependency DAG -- svc-01
+# (arrs + jellyfin) mounts its library from here -- so it's kept deliberately minimal.
 {
   username,
   modules,

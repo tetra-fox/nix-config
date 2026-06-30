@@ -17,7 +17,7 @@
     hostName = config.networking.hostName;
   };
   defaultStatsUpstream =
-    if config.lab.monitoring.server.enable
+    if (config.lab.monitoring.server.enable or false)
     then "127.0.0.1:3000"
     else if topo.serverIp != null
     then "${topo.serverIp}:3000"
@@ -122,6 +122,9 @@ in {
     # its logpath is missing, which it is on a fresh box before caddy's first request.
     systemd.tmpfiles.rules = [
       "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
+      # pin the log dir's ownership to caddy before the access.log file rule, so on a fresh
+      # box tmpfiles doesn't create the parent root-owned (leaving caddy unable to rotate)
+      "d /var/log/caddy 0750 caddy caddy -"
       "f /var/log/caddy/access.log 0644 caddy caddy -"
     ];
 

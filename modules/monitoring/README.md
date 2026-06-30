@@ -11,10 +11,10 @@ two roles:
 a "site" is the hostname prefix: `mesa-svc-01`, `mesa-svc-02`, `mesa-mon-01` all share
 site `mesa`. the server derives its scrape list by folding over the flake's
 `nixosConfigurations`, keeping hosts that share its site prefix, and reading each one's
-declared static IPv4 (`networking.interfaces.*.ipv4.addresses`). no hand-maintained
-target list, no DNS dependency. the derivation lives in `site-topology.nix` (shared with
-the logging module). `instance` is labelled with the hostname so grafana legends read
-names, not ip:port.
+declared `lab.site` address (the internal-VLAN IP when it has one, else the server-VLAN
+IP). no hand-maintained target list, no DNS dependency. the derivation lives in
+`modules/lib/site-topology.nix` (shared with logging, postgres, caddy, arr-stack).
+`instance` is labelled with the hostname so grafana legends read names, not ip:port.
 
 ## exporter registry
 
@@ -86,9 +86,9 @@ from the `tetra-nurpkgs` package set) -- list-merged across modules.
   `:9100`/`:9558` to the server only. these `extraInputRules` need the nftables backend
   (silently ignored under iptables); the base profile enables nftables fleet-wide.
 - the scrape derivation reads ONLY sibling INPUT attrs (`networking.hostName`,
-  `networking.interfaces.*.ipv4.addresses`, `lab.monitoring.server.enable`). never read a
-  sibling's monitoring-derived output (scrapeConfigs/firewall) -- that creates an A<->B
-  eval cycle once two servers exist.
+  `lab.site.{hostIp,internalIp}`, `lab.monitoring.server.enable`). never read a sibling's
+  monitoring-derived output (scrapeConfigs/firewall) -- that creates an A<->B eval cycle
+  once two servers exist.
 - grafana 26.05+ wants an explicit `security.secret_key`; this module declares the sops
   secret and wires it via `$__file{...}` so the value doesn't land in the nix store
 - grafana is always reached via caddy (`stats.<site>.tetra.cool`), never directly. on a

@@ -346,4 +346,13 @@ in {
       };
     };
   };
+
+  # recyclarr pushes profiles to sonarr/radarr at the netns veth address, so order it
+  # after the netns + the arrs come up. without this it fires on boot before they're
+  # ready, fails to connect, and self-heals only on the next daily timer. ordering-only
+  # (wants, not requires) -- a missing arr shouldn't permanently block recyclarr.
+  systemd.services.recyclarr = {
+    after = ["wg.service" "sonarr.service" "radarr.service"];
+    wants = ["sonarr.service" "radarr.service"];
+  };
 }
