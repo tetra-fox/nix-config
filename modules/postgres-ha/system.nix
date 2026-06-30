@@ -98,9 +98,9 @@
   # psql -v assignments binding each role's password from its loaded credential. the unit
   # loads every role secret via LoadCredential; here we read each into a psql variable so
   # the SQL above can ALTER ROLE ... PASSWORD :'pw_<name>' without the value hitting argv.
-  roleCredArgs = lib.concatStringsSep " " (lib.mapAttrsToList (name: _:
-    "-v \"pw_${name}=$(cat $CREDENTIALS_DIRECTORY/${name})\"")
-  cfg.roles);
+  roleCredArgs =
+    lib.concatStringsSep " " (lib.mapAttrsToList (name: _: "-v \"pw_${name}=$(cat $CREDENTIALS_DIRECTORY/${name})\"")
+      cfg.roles);
 
   roleLoadCreds =
     lib.mapAttrsToList (name: role: "${name}:${config.sops.secrets.${role.passwordSecret}.path}")
@@ -153,7 +153,7 @@
   selfIndex = lib.lists.findFirstIndex (ip: ip == selfIp) 0 haNodeIps;
   vrrpPriority = 110 - (selfIndex * 5);
 in {
-  imports = [modules.postgres.options];
+  imports = [modules.postgres.options modules.vrrp.system];
 
   config = lib.mkIf ha.enable {
     assertions = [
@@ -263,46 +263,24 @@ in {
     # address) and isn't ready to serve the instant the VIP fails over to them.
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
-    # enableScriptSecurity needs the keepalived_script user to exist (the nixpkgs module writes
-    # enable_script_security but doesn't create the user); without it keepalived silently
-    # ignores the track script, so the VIP wouldn't leave a node whose haproxy died.
-    users.users.keepalived_script = {
-      isSystemUser = true;
-      group = "keepalived_script";
-      description = "runs keepalived track scripts under enableScriptSecurity";
-    };
-    users.groups.keepalived_script = {};
-
-    services.keepalived = {
+    # db HA: float the VIP across the cluster nodes. the keepalived scaffolding is shared via
+    # modules.vrrp.system (edge + dns use it too); this supplies the db-specific values. both the
+    # VRRP heartbeat and the VIP ride ens19 (the isolated internal VLAN) -- db traffic is all
+    # east-west, so unlike dns there's no client-facing VLAN the VIP needs to be on.
+    lab.vrrp = {
       enable = true;
-      enableScriptSecurity = true;
-      vrrpScripts.chk_haproxy = {
+      vip = ha.vip;
+      vrrpInterface = "ens19";
+      vipInterface = "ens19";
+      virtualRouterId = 51; # 52 = edge, 53 = dns; unique per L2 segment
+      priority = vrrpPriority;
+      unicastSrcIp = selfIp;
+      unicastPeers = otherNodeIps;
+      instanceName = "pgvip";
+      healthCheck = {
+        name = "chk_haproxy";
+        # haproxy down -> drop the VIP so it moves to a node whose haproxy can route to the db.
         script = "${pkgs.procps}/bin/pgrep -x haproxy";
-        interval = 2;
-        fall = 2;
-        rise = 2;
-        # weight 0 = weightless: haproxy down -> FAULT -> release the VIP unconditionally, so it
-        # moves to a node whose haproxy is up (a weighted script only nudges priority, which can
-        # leave the VIP on a node that can no longer route to the db).
-        weight = 0;
-      };
-      vrrpInstances.pgvip = {
-        interface = "ens19";
-        virtualRouterId = 51;
-        priority = vrrpPriority;
-        # all BACKUP + noPreempt so a recovered node doesn't steal the VIP back and flap.
-        state = "BACKUP";
-        noPreempt = true;
-        # unicast VRRP -- no reliance on L2 multicast on the SDN bridge.
-        unicastSrcIp = selfIp;
-        unicastPeers = otherNodeIps;
-        virtualIps = [
-          {
-            addr = "${ha.vip}/24";
-            dev = "ens19";
-          }
-        ];
-        trackScripts = ["chk_haproxy"];
       };
     };
 
@@ -404,10 +382,7 @@ in {
       5433
       8008
     ];
-    # VRRP (protocol 112) between the keepalived peers on the internal VLAN.
-    networking.firewall.extraInputRules = ''
-      iifname "ens19" ip protocol vrrp accept
-    '';
+    # the VRRP accept rule on ens19 comes from modules.vrrp.system (lab.vrrp.vrrpInterface).
 
     systemd.tmpfiles.rules = [
       "d ${siteData}/etcd 0700 etcd etcd -"

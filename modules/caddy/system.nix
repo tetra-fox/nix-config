@@ -47,11 +47,16 @@
   # AdGuard wildcard points at it, so it must be reachable from off the internal fabric.
   # peers are the other edge hosts' server-VLAN IPs (hostIp, not the derive's internalIp).
   selfServerIp = config.lab.site.hostIp;
-  otherEdgeServerIps =
-    lib.filter (ip: ip != null && ip != selfServerIp)
-    (map (name: nixosConfigurations.${name}.config.lab.site.hostIp or null)
-      (topo.hostsWhere topo.isEdgeHost));
+  allEdgeServerIps =
+    lib.sort (a: b: a < b)
+    (lib.filter (ip: ip != null)
+      (map (name: nixosConfigurations.${name}.config.lab.site.hostIp or null)
+        (topo.hostsWhere topo.isEdgeHost)));
+  otherEdgeServerIps = lib.filter (ip: ip != selfServerIp) allEdgeServerIps;
+  selfEdgeIdx = lib.lists.findFirstIndex (i: i == selfServerIp) 0 allEdgeServerIps;
 in {
+  imports = [modules.vrrp.system];
+
   options.lab.caddy = {
     caddyfile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
@@ -158,66 +163,28 @@ in {
 
     networking.firewall.allowedTCPPorts = [80 443];
 
-    # edge HA: keepalived floats the VIP across the edge hosts on the server VLAN. caddy
-    # listens on all interfaces :80/:443 (no explicit bind), so traffic to the VIP is caught
-    # automatically -- no ip_nonlocal_bind needed. a chk_caddy track-script drops the VIP from
-    # a node whose caddy died so the other takes 443/80. all BACKUP + noPreempt so a recovered
-    # node doesn't steal the VIP back and flap.
-    # enableScriptSecurity makes keepalived run track-scripts as a non-root user, but the
-    # nixpkgs module writes `enable_script_security` into the config WITHOUT creating the user
-    # keepalived then demands (`keepalived_script`). missing -> keepalived refuses to run the
-    # script and silently ignores the track entirely (the VIP never moves on caddy death).
-    # create the user so the chk_caddy health check actually runs.
-    users.users.keepalived_script = lib.mkIf ha.enable {
-      isSystemUser = true;
-      group = "keepalived_script";
-      description = "runs keepalived track scripts under enableScriptSecurity";
-    };
-    users.groups.keepalived_script = lib.mkIf ha.enable {};
-
-    services.keepalived = lib.mkIf ha.enable {
+    # edge HA: float the VIP across the edge hosts. the keepalived scaffolding is shared via
+    # modules.vrrp.system (db + dns use it too); this only supplies the edge-specific values.
+    # caddy listens on all interfaces :80/:443 (no explicit bind), so traffic to the VIP is
+    # caught automatically -- no ip_nonlocal_bind needed. unlike db/dns, edge runs both the VRRP
+    # heartbeat AND the VIP on ens18 (the server VLAN), since that's where the router forwards
+    # 443/80 and there's no separate isolated path for edge.
+    lab.vrrp = lib.mkIf ha.enable {
       enable = true;
-      enableScriptSecurity = true;
-      vrrpScripts.chk_caddy = {
+      vip = ha.vip;
+      vrrpInterface = "ens18";
+      vipInterface = "ens18";
+      virtualRouterId = 52; # 51 = db, 53 = dns; unique per L2 segment
+      priority = 110 - (selfEdgeIdx * 5); # lowest-IP edge host is the default holder
+      unicastSrcIp = selfServerIp;
+      unicastPeers = otherEdgeServerIps;
+      instanceName = "caddyvip";
+      healthCheck = {
+        name = "chk_caddy";
+        # caddy down -> drop the VIP so the other node takes 443/80. pgrep needs no privileges.
         script = "${pkgs.procps}/bin/pgrep -x caddy";
-        interval = 2;
-        fall = 2;
-        rise = 2;
-        # weight 0 = weightless: a failure puts the instance into FAULT state, which releases
-        # the VIP unconditionally (vs a weighted script that only nudges priority -- which fails
-        # to fail over here because the holder's effective priority can still outrank the peer).
-        weight = 0;
-      };
-      vrrpInstances.caddyvip = {
-        interface = "ens18";
-        virtualRouterId = 52; # 51 is the db cluster's; must be unique per L2 segment
-        # the first edge host (lowest server-VLAN IP) is the default holder. derived from this
-        # host's position in the sorted edge IP list so it's unique without hardcoding.
-        priority = let
-          allEdgeIps = lib.sort (a: b: a < b) (lib.filter (i: i != null)
-            (map (name: nixosConfigurations.${name}.config.lab.site.hostIp or null)
-              (topo.hostsWhere topo.isEdgeHost)));
-          idx = lib.lists.findFirstIndex (i: i == selfServerIp) 0 allEdgeIps;
-        in
-          110 - (idx * 5);
-        state = "BACKUP";
-        noPreempt = true;
-        unicastSrcIp = selfServerIp;
-        unicastPeers = otherEdgeServerIps;
-        virtualIps = [
-          {
-            addr = "${ha.vip}/24";
-            dev = "ens18";
-          }
-        ];
-        trackScripts = ["chk_caddy"];
       };
     };
-
-    # VRRP (protocol 112) between the keepalived peers on the server VLAN.
-    networking.firewall.extraInputRules = lib.mkIf ha.enable ''
-      iifname "ens18" ip protocol vrrp accept
-    '';
 
     assertions = [
       {
