@@ -326,6 +326,10 @@
                 # lives here so every nixos host has it without a per-host import; modules
                 # themselves can't reach `inputs` to pull it in.
                 inputs.sops-nix.nixosModules.sops
+                # lab.site.* option declarations (hostIp/internalIp) for every nixos host,
+                # so site-topology + the deploy output can read them as a fleet-wide
+                # contract regardless of which site a host is in.
+                ./modules/site/options.nix
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
             }
