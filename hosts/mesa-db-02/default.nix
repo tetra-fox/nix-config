@@ -28,13 +28,13 @@ in {
   lab.sops.secretsFile = ../../secrets/mesa-db-02.yaml;
 
   networking.hostName = "mesa-db-02";
-  lab.site.hostIp = "192.168.10.246";
-  lab.site.internalIp = "10.10.0.246"; # isolated internal VLAN (ens19); HA traffic rides this
+  lab.site.hostIp = "192.168.10.111";
+  lab.site.internalIp = "10.10.0.111"; # isolated internal VLAN (ens19); HA traffic rides this
 
   lab.postgres = {
     ha = {
       enable = true;
-      vip = "10.10.0.240"; # the floating endpoint clients reach
+      vip = "10.10.0.115"; # the floating endpoint clients reach
     };
     admin.enable = true; # superuser for dbeaver/psql (reconciled on the leader)
 

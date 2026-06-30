@@ -21,8 +21,8 @@
   lab.sops.secretsFile = ../../secrets/mesa-edge-01.yaml;
 
   networking.hostName = "mesa-edge-01";
-  lab.site.hostIp = "192.168.10.194";
-  lab.site.internalIp = "10.10.0.194"; # isolated internal VLAN (ens19)
+  lab.site.hostIp = "192.168.10.150";
+  lab.site.internalIp = "10.10.0.150"; # isolated internal VLAN (ens19)
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
@@ -30,7 +30,7 @@
   # router forwards 443/80 to it and the AdGuard wildcard points at it. keepalived floats it.
   lab.caddy.ha = {
     enable = true;
-    vip = "192.168.10.193";
+    vip = "192.168.10.155";
   };
 
   users.users.${username} = {

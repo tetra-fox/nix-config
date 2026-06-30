@@ -22,8 +22,8 @@
   # site facts (VLAN/gateway/DNS layout, siteData root, topology parent) come from
   # the `mesa` tag (modules/sites/mesa.nix). this host just declares its own IP.
   networking.hostName = "mesa-mon-01";
-  lab.site.hostIp = "192.168.10.207";
-  lab.site.internalIp = "10.10.0.207"; # isolated internal VLAN (ens19)
+  lab.site.hostIp = "192.168.10.140";
+  lab.site.internalIp = "10.10.0.140"; # isolated internal VLAN (ens19)
 
   # mon-01 is a plain single-disk VM (no media group); create the siteData root itself
   systemd.tmpfiles.rules = ["d /var/lib/mesa 0755 root root -"];

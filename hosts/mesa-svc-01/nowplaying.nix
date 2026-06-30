@@ -26,7 +26,7 @@ in {
     lastfmUser = "tetrafox_";
     # bind the INTERNAL-VLAN IP: caddy's npUpstream derives to this host's internal IP (ipOf
     # prefers internalIp for east-west), so np must listen there. binding the server IP instead
-    # is why np.<site> 502'd -- caddy proxied to 10.10.0.208 with nothing listening on it.
+    # is why np.<site> 502'd -- caddy proxied to the internal IP with nothing listening on it.
     host = config.lab.site.internalIp;
     port = 8090;
     environmentFile = config.sops.templates."nowplaying.env".path;

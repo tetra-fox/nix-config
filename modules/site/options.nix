@@ -9,14 +9,14 @@
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "this host's IPv4 on its site's server VLAN (the rest of the layout is fixed per-site)";
-      example = "192.168.10.208";
+      example = "192.168.10.130";
     };
 
     internalIp = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "this host's IPv4 on the isolated internal VLAN (ens19); null = not on it";
-      example = "10.10.0.208";
+      example = "10.10.0.130";
     };
   };
 }

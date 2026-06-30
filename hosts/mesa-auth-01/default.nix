@@ -20,8 +20,8 @@
   lab.sops.secretsFile = ../../secrets/mesa-auth-01.yaml;
 
   networking.hostName = "mesa-auth-01";
-  lab.site.hostIp = "192.168.10.166";
-  lab.site.internalIp = "10.10.0.166"; # isolated internal VLAN (ens19)
+  lab.site.hostIp = "192.168.10.120";
+  lab.site.internalIp = "10.10.0.120"; # isolated internal VLAN (ens19)
 
   lab.authentik.enable = true;
 

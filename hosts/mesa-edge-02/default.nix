@@ -21,8 +21,8 @@
   lab.sops.secretsFile = ../../secrets/mesa-edge-02.yaml;
 
   networking.hostName = "mesa-edge-02";
-  lab.site.hostIp = "192.168.10.195";
-  lab.site.internalIp = "10.10.0.195"; # isolated internal VLAN (ens19)
+  lab.site.hostIp = "192.168.10.151";
+  lab.site.internalIp = "10.10.0.151"; # isolated internal VLAN (ens19)
 
   # same Caddyfile as edge-01 (every upstream derives from topology, so it's host-agnostic)
   lab.caddy.caddyfile = ../mesa-edge-01/files/caddy/Caddyfile;
@@ -30,7 +30,7 @@
   # join the edge VIP (the other half is on edge-01). the VIP is on the server VLAN.
   lab.caddy.ha = {
     enable = true;
-    vip = "192.168.10.193";
+    vip = "192.168.10.155";
   };
 
   users.users.${username} = {

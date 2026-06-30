@@ -41,8 +41,8 @@
   # site facts (server-VLAN networking, gateway/DNS, siteData root, topology parent)
   # come from the `mesa` tag (modules/sites/mesa.nix). this host declares its own IP.
   networking.hostName = "mesa-svc-01";
-  lab.site.hostIp = "192.168.10.208";
-  lab.site.internalIp = "10.10.0.208"; # isolated internal VLAN (ens19)
+  lab.site.hostIp = "192.168.10.130";
+  lab.site.internalIp = "10.10.0.130"; # isolated internal VLAN (ens19)
 
   # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;
