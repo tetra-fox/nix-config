@@ -8,7 +8,6 @@
     ./storage.nix
     ./asf.nix
     ./nowplaying.nix
-    ./auth.nix
     ./monitoring.nix
 
     modules.proxmox-vm.system

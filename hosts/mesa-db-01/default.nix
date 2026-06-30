@@ -40,6 +40,7 @@ in {
     # from auth-01, plus the trusted admin VLAN for direct psql. scoped, not whole-VLAN.
     allowedCidrs = [
       "192.168.10.208/32" # svc-01 (netns traffic SNAT'd to this source)
+      "192.168.10.166/32" # auth-01 (authentik)
       "192.168.20.0/24" # trusted admin VLAN
     ];
 

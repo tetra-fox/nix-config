@@ -59,6 +59,7 @@
   # each derive keys on (and keeps the no-recursion rule auditable in one place).
   isMonitoringServer = c: c.lab.monitoring.server.enable or false;
   isDbServer = c: c.lab.postgres.server.enable or false;
+  isAuthServer = c: c.lab.authentik.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 in {
@@ -70,4 +71,6 @@ in {
   # the single postgres server's IP -- what arr/authentik clients point at. today a lone
   # db-NN; an HA setup swaps the flag's holder (or this derive) for the floating endpoint.
   dbServerIp = ipWhere isDbServer;
+  # the single authentik host's IP -- what caddy reverse-proxies auth.<site> + forward_auth to.
+  authServerIp = ipWhere isAuthServer;
 }

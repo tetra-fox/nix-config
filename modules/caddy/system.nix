@@ -21,6 +21,15 @@
     else if topo.serverIp != null
     then "${topo.serverIp}:3000"
     else "127.0.0.1:3000"; # bootstrap fallback before a server exists
+
+  # authentik upstream: loopback if authentik runs on this same host, else the derived
+  # auth host IP. exposed as {$AUTH_UPSTREAM} so the Caddyfile doesn't hardcode it.
+  defaultAuthUpstream =
+    if (config.lab.authentik.enable or false)
+    then "127.0.0.1:9000"
+    else if topo.authServerIp != null
+    then "${topo.authServerIp}:9000"
+    else "127.0.0.1:9000"; # bootstrap fallback
 in {
   options.lab.caddy = {
     caddyfile = lib.mkOption {
@@ -35,6 +44,16 @@ in {
         upstream for the stats.<site> vhost (grafana), referenced in the Caddyfile as
         {$STATS_UPSTREAM}. defaults to the site's monitoring server (loopback if this
         host is the server, else the derived <site>-mon-01 IP).
+      '';
+    };
+
+    authUpstream = lib.mkOption {
+      type = lib.types.str;
+      default = defaultAuthUpstream;
+      description = ''
+        upstream for authentik (auth.<site> + the forward_auth outpost), referenced in
+        the Caddyfile as {$AUTH_UPSTREAM}. defaults to the site's authentik host
+        (loopback if local, else the derived auth host IP).
       '';
     };
   };
@@ -67,6 +86,8 @@ in {
     # grafana upstream for the stats.<site> vhost, referenced as {$STATS_UPSTREAM}
     # in the Caddyfile. derived from site-topology (the site's monitoring server).
     systemd.services.caddy.environment.STATS_UPSTREAM = config.lab.caddy.statsUpstream;
+    # authentik upstream ({$AUTH_UPSTREAM}); derived from site-topology (the auth host).
+    systemd.services.caddy.environment.AUTH_UPSTREAM = config.lab.caddy.authUpstream;
 
     # upstream only sets StateDirectory (which creates dataDir) when dataDir is the
     # default /var/lib/caddy; overriding it to siteData means we have to create the

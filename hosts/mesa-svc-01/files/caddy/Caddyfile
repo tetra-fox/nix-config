@@ -14,11 +14,11 @@
 }
 
 (authentik) {
-	reverse_proxy /outpost.goauthentik.io/* localhost:9000 {
+	reverse_proxy /outpost.goauthentik.io/* {$AUTH_UPSTREAM} {
 		header_up Host {http.reverse_proxy.upstream.hostport}
 	}
 
-	forward_auth localhost:9000 {
+	forward_auth {$AUTH_UPSTREAM} {
 		uri /outpost.goauthentik.io/auth/caddy
 		copy_headers Authorization
 	}
@@ -36,7 +36,7 @@ mesa.tetra.cool {
 
 auth.mesa.tetra.cool {
 	import log
-	reverse_proxy localhost:9000
+	reverse_proxy {$AUTH_UPSTREAM}
 }
 
 home.mesa.tetra.cool {
@@ -83,6 +83,6 @@ prowlarr.mesa.tetra.cool,
 sabnzbd.mesa.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy localhost:9000
+		reverse_proxy {$AUTH_UPSTREAM}
 	}
 }
