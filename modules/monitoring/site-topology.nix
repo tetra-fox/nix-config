@@ -68,6 +68,9 @@
   # the media host runs jellyfin (+ nowplaying alongside it). services.jellyfin.enable is
   # an INPUT (set directly in the jellyfin module), so reading it keeps the no-recursion rule.
   isMediaHost = c: c.services.jellyfin.enable or false;
+  # the ingress host runs caddy. a backend whose proxy moved to this box binds its site IP
+  # and opens its port to this IP only. services.caddy.enable is an INPUT signal.
+  isEdgeHost = c: c.services.caddy.enable or false;
 
   siteServers = hostsWhere isMonitoringServer;
 in {
@@ -89,4 +92,7 @@ in {
   # the single media host's IP (jellyfin + nowplaying) -- caddy proxies jellyfin.<site>
   # and np.<site> here. today the same box as the arr stack.
   mediaHostIp = ipWhere isMediaHost;
+  # the single ingress host's IP (caddy). a backend on another box opens its port to this
+  # IP only (the reverse proxy is the sole legitimate client of an off-box backend).
+  edgeHostIp = ipWhere isEdgeHost;
 }
