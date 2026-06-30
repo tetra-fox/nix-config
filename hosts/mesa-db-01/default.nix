@@ -3,17 +3,16 @@
 # site-topology dbServerIp derive (lab.postgres.server.enable below is the flag that
 # derive keys on), so nothing hardcodes this box's address.
 #
-# the role/db list is declared here rather than pulled from the arr-stack/auth modules:
-# db-01 doesn't run those services, it just owns the databases they use. keep this in
-# sync with the arr-stack's arrDbs (sonarr/radarr/prowlarr main+log) and authentik.
+# db-01 owns the databases the arrs + authentik use, but doesn't run those services. the
+# arr db list is read from svc-01's published lab.arrStack.databases (single source in the
+# arr-stack), so it can't drift from the actual arr set. authentik's db is a fixed name.
 {
-  lib,
   username,
   modules,
+  nixosConfigurations,
   ...
 }: let
-  arrs = ["sonarr" "radarr" "prowlarr"];
-  arrDbs = lib.concatMap (n: ["${n}-main" "${n}-log"]) arrs;
+  arrDbs = nixosConfigurations.mesa-svc-01.config.lab.arrStack.databases;
 in {
   imports = [
     ./monitoring.nix

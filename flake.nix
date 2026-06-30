@@ -220,13 +220,8 @@
       # colmena's CLI wants TWO outputs: the raw hive spec as `colmena`, and the evaluated
       # `colmenaHive = colmena.lib.makeHive self.outputs.colmena` (per its own hint).
       flake.colmena = let
-        # sitePrefix: mesa-svc-01 -> mesa (mirrors the monitoring site-topology helper)
-        sitePrefix = name: let
-          m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge)-[0-9]+" name;
-        in
-          if m == null
-          then name
-          else builtins.head m;
+        # sitePrefix: mesa-svc-01 -> mesa. shared single source with site-topology.nix.
+        sitePrefix = import ./modules/lib/site-prefix.nix {inherit lib;};
 
         cfgs = inputs.self.nixosConfigurations;
         # only NixOS hosts that declared a site IP (the deployable mesa fleet)

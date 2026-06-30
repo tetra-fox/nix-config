@@ -152,6 +152,15 @@ in {
       lib.mkEnableOption "DNAT host ports into the vpn netns for LAN access"
       // {default = true;};
 
+    # read-only: the postgres databases the arrs own (<arr>-main/-log per arr). published
+    # so the db server (mesa-db-01) reads THIS as the single source of the arr db list
+    # instead of re-deriving the arr set by hand.
+    databases = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      readOnly = true;
+      default = arrDbs;
+    };
+
     mediaGroup = lib.mkOption {
       type = lib.types.str;
       default = "media";

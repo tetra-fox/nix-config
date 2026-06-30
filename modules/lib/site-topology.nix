@@ -15,16 +15,9 @@
   nixosConfigurations,
   hostName,
 }: let
-  # site = hostname with the trailing -<role>-NN suffix stripped.
-  # mesa-svc-01 -> mesa, mesa-store-01 -> mesa, fairlane-svc-01 -> fairlane, hara -> hara.
-  # the role list must cover every fleet tier or that host lands in a site of its own and
-  # the derive misses it (kept in sync with the same helper in flake.nix).
-  sitePrefix = name: let
-    m = builtins.match "(.+)-(svc|mon|store|db|auth|jelly|edge)-[0-9]+" name;
-  in
-    if m == null
-    then name
-    else builtins.head m;
+  # site = hostname with the trailing -<role>-NN suffix stripped. single source in
+  # site-prefix.nix (shared with flake.nix's colmena deploy tag).
+  sitePrefix = import ./site-prefix.nix {inherit lib;};
 
   mySite = sitePrefix hostName;
 
