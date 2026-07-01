@@ -3,7 +3,6 @@
 {
   config,
   lib,
-  username,
   modules,
   nixosConfigurations,
   ...

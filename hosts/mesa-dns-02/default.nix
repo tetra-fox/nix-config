@@ -1,7 +1,6 @@
 # see mesa-dns-01 for the full rationale; this file differs only in hostname + IPs.
 {
   lib,
-  username,
   modules,
   ...
 }: {

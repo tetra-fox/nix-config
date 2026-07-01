@@ -1,8 +1,4 @@
-{
-  username,
-  modules,
-  ...
-}: {
+{modules, ...}: {
   imports = [
     ./monitoring.nix
 
