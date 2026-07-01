@@ -168,6 +168,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    lab.topology.provides = ["dns"];
+
     services.bind = {
       enable = true;
       configFile = namedConf;

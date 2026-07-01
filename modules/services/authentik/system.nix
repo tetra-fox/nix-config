@@ -45,6 +45,8 @@ in {
     lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
 
   config = lib.mkIf cfg.enable {
+    lab.topology.provides = ["auth-server"];
+
     assertions = [
       {
         assertion = config.virtualisation.podman.enable;

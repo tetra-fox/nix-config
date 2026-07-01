@@ -5,6 +5,8 @@
 }: {
   imports = [./apikey.nix];
 
+  lab.topology.provides = ["media"];
+
   # pin the uid; the NFS share squashes on uid, not name, and upstream auto-allocates it
   users.users.jellyfin.uid = 991;
 

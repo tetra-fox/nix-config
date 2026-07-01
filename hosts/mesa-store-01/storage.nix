@@ -44,6 +44,8 @@ in {
   # so each is an isolated namespace and neither client can traverse to the other. each
   # mounts `:/`. store keeps numeric uids (arr imports stay <svc-uid>:media); homeassistant
   # all_squashes to uid 1069 since HAOS connects as root.
+  lab.topology.provides = ["storage"];
+
   services.nfs.server = {
     enable = true;
     exports = ''

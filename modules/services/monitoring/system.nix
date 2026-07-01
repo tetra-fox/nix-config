@@ -120,6 +120,8 @@ in {
 
     # ---- server: prometheus + grafana, one per site ----
     (lib.mkIf cfg.server.enable {
+      lab.topology.provides = ["monitoring"];
+
       sops.secrets."monitoring/grafana_secret_key" = {
         owner = "grafana";
         group = "grafana";

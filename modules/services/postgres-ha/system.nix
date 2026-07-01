@@ -17,8 +17,8 @@
 
   selfIp = config.lab.site.internalIp;
 
-  haNodeNames = topo.hostsWhere topo.isDbHaNode;
-  haNodeIps = topo.ipsWhere topo.isDbHaNode;
+  haNodeNames = topo.hostsProviding "db-ha-node";
+  haNodeIps = topo.ipsProviding "db-ha-node";
   otherNodeIps = lib.filter (ip: ip != selfIp) haNodeIps;
 
   etcdInitialCluster =

@@ -219,6 +219,8 @@ in {
 
   config = lib.mkMerge [
     {
+      lab.topology.provides = ["arr"];
+
       assertions = let
         netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
         anyArrInNetns = netnsArrs != [];

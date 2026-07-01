@@ -1,10 +1,12 @@
 # given a host's config + the flake's nixosConfigurations, finds same-site hosts (by hostname
-# prefix) and their declared addresses.
+# prefix) and the address at which each advertises a capability.
 #
-# IMPORTANT (no-recursion rule): predicates passed to hostsWhere / ipWhere must only read
-# sibling INPUT attributes (flags a host sets), never a sibling's module-DERIVED output
-# (scrapeConfigs / firewall / bindAddr / the derived db endpoint) -- that creates an A<->B
-# eval cycle once two hosts in a site each derive from the other.
+# services self-register via lab.topology.provides (a plain list a module sets when its own
+# enable flag is on), so this file names no services -- discovery is by capability string.
+#
+# IMPORTANT (no-recursion rule): lab.topology.provides and any attr a predicate reads must be
+# a sibling INPUT (a flag a host sets), never a sibling's module-DERIVED output -- that creates
+# an A<->B eval cycle once two hosts in a site each derive from the other.
 {lib}: {
   nixosConfigurations,
   hostName,
@@ -41,91 +43,77 @@
 
   ipsWhere = pred: lib.filter (ip: ip != null) (map ipOf (hostsWhere pred));
 
-  isMonitoringServer = c: c.lab.monitoring.server.enable or false;
-  isDbServer = c: c.lab.postgres.server.enable or false;
-  isDbClient = c: c.lab.postgres.client.enable or false;
-  # HA nodes set ha.enable, not server.enable, so isDbServer misses them; dbEndpointIp picks
-  # between the two.
-  isDbHaNode = c: c.lab.postgres.ha.enable or false;
-  isAuthServer = c: c.lab.authentik.enable or false;
-  isMediaHost = c: c.services.jellyfin.enable or false;
-  isEdgeHost = c: c.services.caddy.enable or false;
-  isStorageHost = c: c.services.nfs.server.enable or false;
-  isDnsHost = c: c.services.bind.enable or false;
-  # lab.arrStack.databases is readOnly, defaulted from a static attrset, so reading it cross-host
-  # is cycle-safe.
-  isArrHost = c: (c.lab.arrStack.databases or []) != [];
+  provides = c: c.lab.topology.provides or [];
+  hasCap = cap: c: builtins.elem cap (provides c);
 
-  arrHosts = hostsWhere isArrHost;
-  arrDatabases =
-    if arrHosts != []
-    then nixosConfigurations.${builtins.head arrHosts}.config.lab.arrStack.databases
-    else [];
+  # same-site hosts advertising `cap`, its single provider's IP (null if 0 or >1), and all
+  # providers' IPs.
+  hostsProviding = cap: hostsWhere (hasCap cap);
+  ipProviding = cap: ipWhere (hasCap cap);
+  ipsProviding = cap: ipsWhere (hasCap cap);
 
-  siteServers = hostsWhere isMonitoringServer;
-
-  # dbEndpointIp reads dbServerIp/dbHaVip, so these are let-bindings, not sibling output attrs
-  # (an attr can't read a sibling by bare name).
-  dbServerIp = ipWhere isDbServer;
-  dbHaVip = let
+  # the endpoint clients point at for an optionally-HA service: the single provider while one
+  # exists (so a live single server keeps the traffic until it's retired), else the floating
+  # VIP any HA node declares, else null. reads vipPath (a plain option) off the HA providers.
+  endpointFor = {
+    singleCap,
+    haCap,
+    vipPath,
+  }: let
+    single = ipProviding singleCap;
     vips =
       lib.unique (lib.filter (v: v != null)
-        (map (name: nixosConfigurations.${name}.config.lab.postgres.ha.vip or null) (hostsWhere isDbHaNode)));
+        (map (name: lib.attrByPath vipPath null nixosConfigurations.${name}.config) (hostsProviding haCap)));
+    vip =
+      if vips != []
+      then builtins.head vips
+      else null;
   in
-    if vips != []
-    then builtins.head vips
-    else null;
-  # the VIP takes over only once no single-server node remains, so clients stay on the old
-  # db-01 until it drops server.enable for ha.enable.
-  dbEndpointIp =
-    if dbHaVip != null && dbServerIp == null
-    then dbHaVip
-    else dbServerIp;
-
-  edgeHostIp = ipWhere isEdgeHost;
-  edgeHaVip = let
-    vips =
-      lib.unique (lib.filter (v: v != null)
-        (map (name: nixosConfigurations.${name}.config.lab.caddy.ha.vip or null) (hostsWhere isEdgeHost)));
-  in
-    if vips != []
-    then builtins.head vips
-    else null;
-  edgeEndpointIp =
-    if edgeHaVip != null
-    then edgeHaVip
-    else edgeHostIp;
-
-  dnsHostIp = ipWhere isDnsHost;
-  dnsHaVip = let
-    vips =
-      lib.unique (lib.filter (v: v != null)
-        (map (name: nixosConfigurations.${name}.config.lab.bind.ha.vip or null) (hostsWhere isDnsHost)));
-  in
-    if vips != []
-    then builtins.head vips
-    else null;
-  dnsEndpointIp =
-    if dnsHaVip != null
-    then dnsHaVip
-    else dnsHostIp;
+    if single != null
+    then single
+    else vip;
 in {
-  inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere siteServers;
-  inherit isDbHaNode isEdgeHost isDnsHost;
+  inherit sitePrefix mySite hostsInSite ipOf hostsWhere ipWhere ipsWhere;
+  inherit hostsProviding ipProviding ipsProviding;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
-  serverIp = ipWhere isMonitoringServer;
-  inherit dbServerIp dbHaVip dbEndpointIp;
+
+  serverIp = ipProviding "monitoring";
+  # the monitoring-server hosts in this site (consumers assert exactly one)
+  siteServers = hostsProviding "monitoring";
+  authServerIp = ipProviding "auth-server";
+  mediaHostIp = ipProviding "media";
+  storageHostIp = ipProviding "storage";
+
+  dbEndpointIp = endpointFor {
+    singleCap = "db-server";
+    haCap = "db-ha-node";
+    vipPath = ["lab" "postgres" "ha" "vip"];
+  };
+  edgeEndpointIp = endpointFor {
+    singleCap = "edge";
+    haCap = "edge";
+    vipPath = ["lab" "caddy" "ha" "vip"];
+  };
+  dnsEndpointIp = endpointFor {
+    singleCap = "dns";
+    haCap = "dns";
+    vipPath = ["lab" "bind" "ha" "vip"];
+  };
+
   # /32 of each client's hostIp; a netns client's traffic is SNAT'd to its hostIp
   # (lab.arrStack.netnsSnatHosts), so this covers it.
-  dbClientCidrs = map (ip: "${ip}/32") (ipsWhere isDbClient);
-  authServerIp = ipWhere isAuthServer;
-  mediaHostIp = ipWhere isMediaHost;
-  inherit edgeHostIp edgeHaVip edgeEndpointIp;
-  inherit dnsHostIp dnsHaVip dnsEndpointIp;
+  dbClientCidrs = map (ip: "${ip}/32") (ipsProviding "db-client");
   # caddy proxies FROM its own box IP, not the VIP, so a backend must allow every edge box's
   # real IP.
-  edgeHostIps = ipsWhere isEdgeHost;
-  storageHostIp = ipWhere isStorageHost;
-  inherit arrDatabases;
+  edgeHostIps = ipsProviding "edge";
+
+  # the arr db list, read off the single host advertising the arr capability (readOnly,
+  # defaulted from a static attrset, so reading it cross-host is cycle-safe).
+  arrDatabases = let
+    hosts = hostsProviding "arr";
+  in
+    if hosts != []
+    then nixosConfigurations.${builtins.head hosts}.config.lab.arrStack.databases
+    else [];
 }

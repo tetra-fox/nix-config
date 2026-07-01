@@ -21,7 +21,7 @@
     lib.sort (a: b: a < b)
     (lib.filter (i: i != null)
       (map (name: nixosConfigurations.${name}.config.lab.site.internalIp or null)
-        (topo.hostsWhere topo.isDnsHost)));
+        (topo.hostsProviding "dns")));
   otherDnsInternalIps = lib.filter (ip: ip != selfInternalIp) allDnsInternalIps;
   selfIdx = lib.lists.findFirstIndex (i: i == selfInternalIp) 0 allDnsInternalIps;
 in {

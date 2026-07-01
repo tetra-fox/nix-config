@@ -40,7 +40,7 @@
     lib.sort (a: b: a < b)
     (lib.filter (ip: ip != null)
       (map (name: nixosConfigurations.${name}.config.lab.site.hostIp or null)
-        (topo.hostsWhere topo.isEdgeHost)));
+        (topo.hostsProviding "edge")));
   otherEdgeServerIps = lib.filter (ip: ip != selfServerIp) allEdgeServerIps;
   selfEdgeIdx = lib.lists.findFirstIndex (i: i == selfServerIp) 0 allEdgeServerIps;
 in {
@@ -99,6 +99,8 @@ in {
   };
 
   config = {
+    lab.topology.provides = ["edge"];
+
     services.caddy = {
       enable = true;
       dataDir = "${siteData}/caddy";
