@@ -3,19 +3,26 @@
 # resolved by the site-topology dbEndpointIp derive; nothing hardcodes which node is primary.
 #
 # db-01 owns the databases the arrs + authentik use, but doesn't run those services. the
-# arr db list is read from svc-01's published lab.arrStack.databases (single source in the
-# arr-stack), so it can't drift from the actual arr set. authentik's db is a fixed name.
+# arr db list is derived from the site's arr host (site-topology arrDatabases), not read by
+# hostname, so it can't drift from the actual arr set or break on a rename. authentik's db
+# is a fixed name.
 #
 # this was the single-server postgres box before the HA cutover; the old data dir under
 # ${siteData}/postgresql stays on disk untouched as a rollback point (Patroni uses a fresh
 # dir under ${siteData}/patroni). data was migrated by dump/restore at cutover.
 {
+  config,
+  lib,
   username,
   modules,
   nixosConfigurations,
   ...
 }: let
-  arrDbs = nixosConfigurations.mesa-svc-01.config.lab.arrStack.databases;
+  arrDbs =
+    (import modules.meta.lib.site-topology {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).arrDatabases;
 in {
   imports = [
     ./monitoring.nix

@@ -85,6 +85,17 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    # this node's own IP must not appear in its peer list. callers derive priority as
+    # 110 - idx*5 over a sorted node-IP list, so two hosts sharing an IP get the same index
+    # -> the same priority -> a VIP tie both nodes fight over. that's invisible until runtime;
+    # a duplicate IP surfaces here as unicastSrcIp landing in unicastPeers, so assert it at eval.
+    assertions = [
+      {
+        assertion = !(lib.elem cfg.unicastSrcIp cfg.unicastPeers);
+        message = "lab.vrrp: unicastSrcIp (${cfg.unicastSrcIp}) is also in unicastPeers -- two hosts likely share an IP, which would tie their VRRP priority and fight over the VIP.";
+      }
+    ];
+
     # enableScriptSecurity runs track-scripts as a non-root user, but the nixpkgs module writes
     # enable_script_security WITHOUT creating the keepalived_script user it then demands. missing
     # -> keepalived silently ignores the track entirely and the VIP never moves on service death.

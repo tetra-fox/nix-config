@@ -5,14 +5,21 @@
 # dbEndpointIp derive; nothing hardcodes which node is primary.
 #
 # the role set (which databases exist + who owns them) is the same single source db-01 uses:
-# the arr db list comes from svc-01's published lab.arrStack.databases, authentik's is fixed.
+# the arr db list is derived from the site's arr host (site-topology arrDatabases), authentik's
+# is fixed.
 {
+  config,
+  lib,
   username,
   modules,
   nixosConfigurations,
   ...
 }: let
-  arrDbs = nixosConfigurations.mesa-svc-01.config.lab.arrStack.databases;
+  arrDbs =
+    (import modules.meta.lib.site-topology {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).arrDatabases;
 in {
   imports = [
     ./monitoring.nix

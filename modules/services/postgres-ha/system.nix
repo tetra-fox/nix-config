@@ -117,8 +117,10 @@
     ++ map (cidr: "host all all ${cidr} scram-sha-256")
     (lib.unique (topo.dbClientCidrs ++ cfg.extraAllowedCidrs ++ ["10.10.0.0/24"]));
 
-  # HAProxy: VIP:5432 -> the node answering /primary 200 (leader); VIP:5433 -> /replica
-  # (declared, unused). httpchk talks to each backend's Patroni REST on :8008.
+  # HAProxy: VIP:5432 -> the node answering /primary 200 (leader). httpchk talks to each
+  # backend's Patroni REST on :8008. no read-replica pool: the arr/authentik workload doesn't
+  # read-scale, and a split read/write endpoint invites staleness foot-guns. add a
+  # bind ${ha.vip}:5433 / GET /replica listen block here if that ever changes.
   haproxyBackends =
     lib.concatStringsSep "\n"
     (map (name: let
@@ -139,12 +141,6 @@
         option httpchk GET /primary
         http-check expect status 200
         default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
-    ${haproxyBackends}
-    listen postgres-read
-        bind ${ha.vip}:5433
-        option httpchk GET /replica
-        http-check expect status 200
-        default-server inter 3s fall 3 rise 2
     ${haproxyBackends}
   '';
 
@@ -171,9 +167,20 @@ in {
       }
     ];
 
-    # etcd: 3-node static cluster, co-located on the db boxes, on the internal VLAN. no TLS
-    # (the internal VLAN is isolated L2 with only the db nodes on it -- the VLAN's isolation
-    # is the trust boundary; see README). client URL also on localhost for the local Patroni.
+    # etcd: 3-node static cluster, co-located on the db boxes, on the internal VLAN.
+    #
+    # NO TLS. the trust boundary is "nothing but these db nodes ever lands on VLAN 1010" --
+    # an assumption enforced NOWHERE in code (the VLAN's L2 isolation is set up in proxmox +
+    # modules/sites/mesa.nix, not asserted here). if anything else is ever put on 10.10.0.0/24,
+    # this etcd + the Patroni REST API become an open, unauthenticated attack surface. add
+    # peer/client TLS (services.etcd cert options) + Patroni REST auth before that happens.
+    #
+    # initialClusterState = "new" bootstraps a FRESH cluster. it's read only on first start of
+    # an empty data dir, so a rebuild/reboot of a live node is fine (etcd uses its persisted
+    # membership). BUT a replaced/wiped node is NOT "just colmena apply": it would try to
+    # re-bootstrap a new cluster and fail to join. re-adding a node = `etcdctl member add` on a
+    # survivor + `initialClusterState=existing`, or (what we did at renumber) wipe all three +
+    # re-bootstrap together. see project_mesa_ip_scheme memory for the recovery runbook.
     services.etcd = {
       enable = true;
       name = config.networking.hostName;
@@ -379,7 +386,6 @@ in {
       2379
       2380
       5432
-      5433
       8008
     ];
     # the VRRP accept rule on ens19 comes from modules.meta.vrrp.system (lab.vrrp.vrrpInterface).

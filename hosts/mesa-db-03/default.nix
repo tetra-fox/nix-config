@@ -2,12 +2,18 @@
 # see mesa-db-02 for the shared design -- all three db nodes declare the same lab.postgres.ha
 # config and the same roles; this file differs only in hostname + IPs.
 {
+  config,
+  lib,
   username,
   modules,
   nixosConfigurations,
   ...
 }: let
-  arrDbs = nixosConfigurations.mesa-svc-01.config.lab.arrStack.databases;
+  arrDbs =
+    (import modules.meta.lib.site-topology {inherit lib;} {
+      inherit nixosConfigurations;
+      hostName = config.networking.hostName;
+    }).arrDatabases;
 in {
   imports = [
     ./monitoring.nix

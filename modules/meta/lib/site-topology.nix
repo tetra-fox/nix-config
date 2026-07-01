@@ -80,6 +80,19 @@
   # the resolver host runs bind. services.bind.enable is an INPUT signal, set in the bind
   # module. the keepalived module folds over these to build its VIP peer list.
   isDnsHost = c: c.services.bind.enable or false;
+  # the arr host runs the arr-stack. lab.arrStack.databases is its published db list (a
+  # readOnly option, defaulted from the module's static arrServices attrset -- depends on
+  # nothing cross-host, so reading it from another host is cycle-safe). non-empty = arr host.
+  isArrHost = c: (c.lab.arrStack.databases or []) != [];
+
+  # the arr databases the site's arr host owns, read from its published list. the db server
+  # folds these into its roles.arr.owns so the db set can't drift from the actual arr set.
+  # replaces a hardcoded nixosConfigurations.<arr-host> reference in the db host configs.
+  arrHosts = hostsWhere isArrHost;
+  arrDatabases =
+    if arrHosts != []
+    then nixosConfigurations.${builtins.head arrHosts}.config.lab.arrStack.databases
+    else [];
 
   siteServers = hostsWhere isMonitoringServer;
 
@@ -176,4 +189,7 @@ in {
   # from. its NFS client is the media host (mediaHostIp), which today is the same box that
   # runs the arrs; store-01 scopes its export + firewall to that client IP.
   storageHostIp = ipWhere isStorageHost;
+  # the arr databases the site's arr host owns (derived from its published list) -- the db
+  # server folds these into roles.arr.owns, so it never hardcodes the arr host by name.
+  inherit arrDatabases;
 }
