@@ -74,6 +74,11 @@
     lib.mapAttrsToList (name: role: "${name}:${config.sops.secrets.${role.passwordSecret}.path}")
     cfg.roles;
 
+  # SITE SEAM: 10.10.0.0/24 is mesa's internal VLAN, baked into this "generic" module. a second
+  # site with a different internal VLAN forks here -- when it does, that's the signal to
+  # parameterize (likely derive from lab.site.internalIp's /24, or a lab.site.internalCidr the
+  # site layer sets). left hardcoded on purpose: the second site's actual CIDR reveals the right
+  # seam, guessing it now would abstract against imagined variation.
   pgHba =
     [
       "local all all trust"

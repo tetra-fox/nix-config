@@ -35,6 +35,11 @@ in {
       description = ''
         VRRP router id, unique per L2 segment. the mesa allocations: 51 = db, 52 = edge, 53 = dns.
         two instances sharing a vrid on the same segment will fight over the VIP.
+
+        SITE SEAM: uniqueness is per SEGMENT, not global. a second site on its own L2 can reuse
+        51/52/53 freely -- callers pass the vrid, so no change needed. only if two sites ever
+        share a segment do the allocations need to diverge (then key the vrid off the site, or
+        offset per-site). the per-cluster literals in the service modules assume separate segments.
       '';
     };
 
