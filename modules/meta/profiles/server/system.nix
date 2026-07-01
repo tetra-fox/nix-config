@@ -7,10 +7,7 @@
 }: {
   imports = [
     modules.meta.profiles.base.system
-    modules.desktop.avahi.system
   ];
-
-  lab.avahi.publish = true;
 
   home-manager.users.${username}.imports = [modules.meta.profiles.server.home];
 

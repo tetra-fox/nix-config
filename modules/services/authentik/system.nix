@@ -37,13 +37,21 @@
   };
 in {
   # postgres.options not the server module: authentik is a pure client, it only needs the
-  # lab.postgres.client flag so the db server allow-lists this host.
-  imports = [modules.services.podman.system modules.services.postgres.options];
+  # lab.postgres.client flag so the db server allow-lists this host. the container backend
+  # (podman) is imported by the host, not here.
+  imports = [modules.services.postgres.options];
 
   options.lab.authentik.enable =
     lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = config.virtualisation.podman.enable;
+        message = "authentik runs oci-containers; the host must import a container backend (modules.services.podman.system).";
+      }
+    ];
+
     lab.postgres.client.enable = true;
 
     sops.secrets = {

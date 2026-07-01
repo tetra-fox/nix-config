@@ -134,7 +134,9 @@ in {
     ./downloadclients.nix
     ./jellyfin-notify.nix
     ./cleanup-profiles.nix
-    modules.services.postgres.system
+    # the client options contract, not the server module: the arrs are a pg client. the host
+    # imports postgres.system itself when it also runs the server (co-located single-box site)
+    modules.services.postgres.options
   ];
 
   options.lab.arrStack = {
@@ -221,6 +223,12 @@ in {
         netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
         anyArrInNetns = netnsArrs != [];
       in [
+        {
+          # the arrs run in a wg netns; the host must wire vpn-confinement (fleet-wide via
+          # perClass.nixos today) or the vpnNamespaces option below doesn't exist
+          assertion = config ? vpnNamespaces;
+          message = "arr-stack needs the vpn-confinement module (vpnNamespaces option) wired on this host.";
+        }
         {
           assertion = anyArrInNetns -> lib.all (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
           message = ''

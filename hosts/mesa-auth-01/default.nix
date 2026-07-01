@@ -10,6 +10,7 @@
     modules.platform.disko.proxmox-vm
     modules.meta.profiles.server.system
 
+    modules.services.podman.system
     modules.services.authentik.system
     modules.platform.sops.system
   ];

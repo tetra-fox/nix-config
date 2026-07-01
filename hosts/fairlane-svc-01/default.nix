@@ -19,7 +19,10 @@
     modules.services.samba.system
     modules.services.podman.system
     modules.services.arr-stack.default
+    modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
   ];
+
+  lab.avahi.publish = true;
 
   lab.arrStack = {
     # the arr DBs have root/download dirs baked in under /mnt/media, so these must match

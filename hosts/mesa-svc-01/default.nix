@@ -16,7 +16,6 @@
 
     modules.platform.sops.system
     modules.services.jellyfin.system
-    modules.services.postgres.system
     modules.services.podman.system
     modules.services.nvidia.system
     modules.services.arr-stack.default
