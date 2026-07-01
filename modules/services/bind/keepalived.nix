@@ -6,12 +6,13 @@
   pkgs,
   nixosConfigurations,
   modules,
+  fleet,
   ...
 }: let
   cfg = config.lab.bind;
   inherit (cfg) ha;
 
-  topo = import modules.meta.lib.site-topology {inherit lib;} {
+  topo = import fleet.topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

@@ -7,10 +7,10 @@
 # its address) one derive here. adding a HOST needs nothing here. the engine names nothing mesa;
 # everything mesa-specific is below.
 {lib}: args: let
-  fleet = import ./fleet.nix {inherit lib;} args;
-  inherit (fleet) ipProviding ipsProviding hostsProviding endpointFor;
+  engine = import ./engine.nix {inherit lib;} args;
+  inherit (engine) ipProviding ipsProviding hostsProviding endpointFor;
 in
-  fleet
+  engine
   // {
     serverIp = ipProviding "monitoring";
     # the monitoring-server hosts in this site (consumers assert exactly one)

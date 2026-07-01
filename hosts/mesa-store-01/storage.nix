@@ -4,13 +4,14 @@
   config,
   lib,
   modules,
+  fleet,
   siteData,
   nixosConfigurations,
   ...
 }: let
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+    (import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).mediaHostIp;

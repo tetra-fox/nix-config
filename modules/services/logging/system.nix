@@ -2,6 +2,7 @@
   config,
   lib,
   modules,
+  fleet,
   siteData,
   nixosConfigurations,
   ...
@@ -12,7 +13,7 @@
   # loki.dataDir wants a full path, unlike prometheus.stateDir which is relative to /var/lib
   lokiStateDir = "${siteData}/loki";
 
-  topo = import modules.meta.lib.site-topology {inherit lib;} {
+  topo = import fleet.topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };

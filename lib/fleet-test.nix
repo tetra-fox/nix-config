@@ -1,15 +1,15 @@
-# generalization test for fleet.nix: a fictional, non-mesa fleet exercising the engine with a
+# generalization test for engine.nix: a fictional, non-mesa fleet exercising the engine with a
 # capability it's never heard of. this is the tell for "real library vs config in a trenchcoat":
-# a new capability TYPE (not just a new host) must need zero edits to fleet.nix. if this file
+# a new capability TYPE (not just a new host) must need zero edits to engine.nix. if this file
 # ever needs an engine change to pass, the engine isn't generic -- it just looked generic
 # because the mesa capability set happened to be complete.
 #
-# run: nix eval --impure --expr 'import ./modules/meta/lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'
+# run: nix eval --impure --expr 'import ./lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'
 # returns the string "ok" on success, or throws with the failing assertion.
 {lib}: let
-  fleet = import ./fleet.nix {inherit lib;};
+  engine = import ./engine.nix {inherit lib;};
 
-  # two sites (acme/beta) whose hosts advertise capabilities that appear nowhere in fleet.nix.
+  # two sites (acme/beta) whose hosts advertise capabilities that appear nowhere in engine.nix.
   cfgs = {
     acme-cache-01 = {
       config = {
@@ -42,7 +42,7 @@
     };
   };
 
-  f = fleet {
+  f = engine {
     nixosConfigurations = cfgs;
     hostName = "acme-web-01";
   };

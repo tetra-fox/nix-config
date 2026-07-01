@@ -5,11 +5,12 @@
   lib,
   pkgs,
   modules,
+  fleet,
   nixosConfigurations,
   ...
 }: let
   inherit
-    ((import modules.meta.lib.site-topology {inherit lib;} {
+    ((import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }))

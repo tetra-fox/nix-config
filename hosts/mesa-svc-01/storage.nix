@@ -4,13 +4,14 @@
   config,
   lib,
   modules,
+  fleet,
   siteData,
   nixosConfigurations,
   ...
 }: let
   # the storage host's internal-VLAN IP (the NFS server).
   storeIp =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+    (import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).storageHostIp;

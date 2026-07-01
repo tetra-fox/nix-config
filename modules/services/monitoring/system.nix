@@ -5,6 +5,7 @@
   siteData,
   nixosConfigurations,
   modules,
+  fleet,
   ...
 }: let
   cfg = config.lab.monitoring;
@@ -14,7 +15,7 @@
   nodePort = 9100;
   systemdPort = 9558;
 
-  topo = import modules.meta.lib.site-topology {inherit lib;} {
+  topo = import fleet.topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };

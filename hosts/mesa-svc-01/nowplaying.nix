@@ -2,10 +2,11 @@
   config,
   lib,
   modules,
+  fleet,
   nixosConfigurations,
   ...
 }: let
-  topo = import modules.meta.lib.site-topology {inherit lib;} {
+  topo = import fleet.topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };

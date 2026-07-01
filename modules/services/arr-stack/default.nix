@@ -3,6 +3,7 @@
   lib,
   pkgs,
   modules,
+  fleet,
   siteData,
   siteEnvFile,
   nixosConfigurations,
@@ -19,7 +20,7 @@
 
   # the single db server's IP, or the HA cluster's VIP. null until a host enables either
   inherit
-    ((import modules.meta.lib.site-topology {inherit lib;} {
+    ((import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }))

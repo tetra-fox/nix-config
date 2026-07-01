@@ -2,6 +2,7 @@
   config,
   lib,
   modules,
+  fleet,
   siteData,
   siteEnvFile,
   nixosConfigurations,
@@ -14,7 +15,7 @@
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
   dbHost =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+    (import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbEndpointIp;

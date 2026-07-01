@@ -134,6 +134,14 @@
           src = ./modules;
           loader = inputs.haumea.lib.loaders.path;
         };
+        # pure helper functions (the fleet discovery engine, the site-prefix), loaded the same
+        # way as modules (paths, imported+applied by callers). separate from `modules` because
+        # these are plain `{lib}: ...` functions, not NixOS modules -- they don't belong under
+        # modules/. exposed as `fleet` so call sites read fleet.engine / fleet.topology.
+        fleet = inputs.haumea.lib.load {
+          src = ./lib;
+          loader = inputs.haumea.lib.loaders.path;
+        };
         shared = {
           wallpapers = ./shared/wallpapers;
           keyring = ./shared/keyring;
@@ -199,7 +207,7 @@
         # colmena wants two outputs: the raw hive spec as `colmena`, and the evaluated
         # `colmenaHive = colmena.lib.makeHive self.outputs.colmena`.
         colmena = let
-          sitePrefix = import ./modules/meta/lib/site-prefix.nix {inherit lib;};
+          sitePrefix = import ./lib/site-prefix.nix {inherit lib;};
 
           cfgs = inputs.self.nixosConfigurations;
           deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;

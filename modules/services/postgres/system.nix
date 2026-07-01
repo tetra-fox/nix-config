@@ -2,6 +2,7 @@
   config,
   lib,
   modules,
+  fleet,
   pkgs,
   siteData,
   nixosConfigurations,
@@ -10,7 +11,7 @@
   cfg = config.lab.postgres;
 
   inherit
-    ((import modules.meta.lib.site-topology {inherit lib;} {
+    ((import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }))
