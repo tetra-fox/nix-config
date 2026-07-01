@@ -4,12 +4,12 @@ nvidia driver bundle (kernel module + userland + xserver video driver). optional
 
 ```nix
 { modules, ... }: {
-  imports = [modules.services.nvidia.system];
+  imports = [modules.hardware.nvidia.system];
   lab.nvidia.exporter.enable = true;
 }
 ```
 
-server hosts (anything importing `modules.meta.profiles.server.system`) flip `hardware.nvidia.powerManagement.enable = false` - servers don't suspend.
+server hosts (anything importing `modules.profiles.server.system`) flip `hardware.nvidia.powerManagement.enable = false` - servers don't suspend.
 
 pascal-and-older GPUs (GTX 10xx, 9xx) need the legacy 580 driver and don't support open kernel modules. override in a host quirk:
 

@@ -6,10 +6,10 @@
   ...
 }: {
   imports = [
-    modules.meta.profiles.base.system
+    modules.profiles.base.system
   ];
 
-  home-manager.users.${username}.imports = [modules.meta.profiles.server.home];
+  home-manager.users.${username}.imports = [modules.profiles.server.home];
 
   environment = {
     systemPackages = with pkgs; [tmux];

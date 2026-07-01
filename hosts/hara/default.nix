@@ -4,13 +4,13 @@
   ...
 }: {
   imports = [
-    modules.meta.profiles.workstation.system
+    modules.profiles.workstation.system
 
     modules.desktop.cosmic.system
     modules.desktop.greetd.system
     modules.desktop.hyprland.system
-    modules.services.nvidia.system
-    # modules.desktop.openrgb.system
+    modules.hardware.nvidia.system
+    # modules.hardware.openrgb.system
     modules.desktop.steam.system
     modules.desktop.stylix.system
   ];

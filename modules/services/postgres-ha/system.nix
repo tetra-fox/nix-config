@@ -114,7 +114,7 @@
   selfIndex = lib.lists.findFirstIndex (ip: ip == selfIp) 0 haNodeIps;
   vrrpPriority = 110 - (selfIndex * 5);
 in {
-  imports = [modules.services.postgres.options modules.meta.vrrp.system];
+  imports = [modules.services.postgres.options modules.services.vrrp.system];
 
   config = lib.mkIf ha.enable {
     assertions = [
@@ -325,6 +325,6 @@ in {
       5432
       8008
     ];
-    # the VRRP accept rule on ens19 comes from modules.meta.vrrp.system.
+    # the VRRP accept rule on ens19 comes from modules.services.vrrp.system.
   };
 }

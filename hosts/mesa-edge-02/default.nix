@@ -5,7 +5,7 @@
 
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
-    modules.meta.profiles.server.system
+    modules.profiles.server.system
 
     modules.services.caddy.system
     modules.platform.sops.system

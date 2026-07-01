@@ -22,7 +22,7 @@ every exporter a host runs (node, systemd, nvidia, cadvisor, ...) registers a
 `{name, port}` into `lab.monitoring.exporters` (declared in the options-only
 `registry.nix`). the server folds over each site host's registry to build the scrape
 jobs -- agents expose exporters, the server discovers them uniformly. a producer module
-(e.g. `modules.services.nvidia.system`) imports `registry.nix`, registers its exporter, and binds
+(e.g. `modules.hardware.nvidia.system`) imports `registry.nix`, registers its exporter, and binds
 `lab.monitoring.bindAddr` for its listen address -- so it works whether the host is a
 server (loopback) or a remote agent (site IP), without depending on the full stack.
 

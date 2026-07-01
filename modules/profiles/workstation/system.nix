@@ -5,15 +5,15 @@
   ...
 }: {
   imports = [
-    modules.meta.profiles.base.system
+    modules.profiles.base.system
 
     modules.desktop.avahi.system
-    modules.desktop.bluetooth.system
+    modules.hardware.bluetooth.system
     modules.services.podman.system
     modules.desktop.obs-studio.system
     modules.desktop.onepassword.system
-    modules.desktop.pipewire.system
-    modules.desktop.pipewire-rnnoise.system
+    modules.hardware.pipewire.system
+    modules.hardware.pipewire-rnnoise.system
     modules.desktop.udiskie.system
     modules.cli.yazi.system
   ];

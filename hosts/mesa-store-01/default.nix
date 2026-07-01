@@ -5,7 +5,7 @@
 
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
-    modules.meta.profiles.server.system
+    modules.profiles.server.system
 
     modules.services.samba.system
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers

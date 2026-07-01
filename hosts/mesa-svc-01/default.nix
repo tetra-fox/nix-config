@@ -11,12 +11,12 @@
 
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
-    modules.meta.profiles.server.system
+    modules.profiles.server.system
 
     modules.platform.sops.system
     modules.services.jellyfin.system
     modules.services.podman.system
-    modules.services.nvidia.system
+    modules.hardware.nvidia.system
     modules.services.arr-stack.default
   ];
 

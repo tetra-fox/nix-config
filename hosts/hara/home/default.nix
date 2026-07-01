@@ -5,14 +5,14 @@
   ...
 }: {
   imports = [
-    modules.meta.profiles.workstation.home
+    modules.profiles.workstation.home
 
     modules.desktop.catppuccin.home
     modules.desktop.cosmic.home
     modules.desktop.dolphin.home
     modules.desktop.hyprland.home
-    modules.services.nvidia.home
-    # modules.desktop.openrgb.home
+    modules.hardware.nvidia.home
+    # modules.hardware.openrgb.home
     modules.desktop.steam.home
     modules.desktop.stylix.home
     modules.desktop.surge-dm.home

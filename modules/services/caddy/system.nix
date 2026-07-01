@@ -45,7 +45,7 @@
   otherEdgeServerIps = lib.filter (ip: ip != selfServerIp) allEdgeServerIps;
   selfEdgeIdx = lib.lists.findFirstIndex (i: i == selfServerIp) 0 allEdgeServerIps;
 in {
-  imports = [modules.meta.vrrp.system];
+  imports = [modules.services.vrrp.system];
 
   options.lab.caddy = {
     caddyfile = lib.mkOption {

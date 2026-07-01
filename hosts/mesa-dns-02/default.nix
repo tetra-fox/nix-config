@@ -9,7 +9,7 @@
 
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
-    modules.meta.profiles.server.system
+    modules.profiles.server.system
 
     modules.sites.mesa-dns
   ];

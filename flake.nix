@@ -296,7 +296,7 @@
                 inputs.sops-nix.nixosModules.sops
                 # lab.site.* declarations fleet-wide: site-topology + the deploy output read
                 # them as a contract regardless of which site a host is in.
-                ./modules/site/options.nix
+                ./modules/sites/_options.nix
                 # fleet-wide so adding arr-stack to a host doesn't silently fail for want of
                 # the `vpnNamespaces` option; inert on hosts that declare no namespace.
                 inputs.vpn-confinement.nixosModules.default

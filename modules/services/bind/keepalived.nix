@@ -1,5 +1,5 @@
 # resolver HA: derive the dns-specific peer list + priority and health check, hand them to
-# lab.vrrp (the shared keepalived scaffolding in modules.meta.vrrp.system).
+# lab.vrrp (the shared keepalived scaffolding in modules.services.vrrp.system).
 {
   config,
   lib,
@@ -26,7 +26,7 @@
   otherDnsInternalIps = lib.filter (ip: ip != selfInternalIp) allDnsInternalIps;
   selfIdx = lib.lists.findFirstIndex (i: i == selfInternalIp) 0 allDnsInternalIps;
 in {
-  imports = [modules.meta.vrrp.system];
+  imports = [modules.services.vrrp.system];
 
   config = lib.mkIf (cfg.enable && ha.enable) {
     lab.vrrp = {

@@ -5,7 +5,7 @@
   ...
 }: {
   imports = [
-    modules.meta.profiles.base.home
+    modules.profiles.base.home
 
     modules.cli.direnv.home
     modules.cli.fastfetch.home
