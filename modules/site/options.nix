@@ -1,8 +1,5 @@
-# lab.site.* option DECLARATIONS, fleet-wide (imported via perClass.nixos) so any host
-# has the options even before a per-site facts module sets them. the site module
-# (modules/sites/<tag>.nix) only SETS these values + does the VLAN wiring; it doesn't
-# declare the options. site-topology + the colmena deploy output read lab.site.* as a
-# fleet-wide contract, so the declaration can't live in one site's facts file.
+# lab.site.* option declarations. fleet-wide (not in a site's facts file) because
+# site-topology + the colmena deploy output read lab.site.* on every host, not just one site's.
 {lib, ...}: {
   options.lab.site = {
     hostIp = lib.mkOption {

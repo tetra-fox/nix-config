@@ -1,7 +1,7 @@
 {username, ...}: {
   stylix.targets = {
     firefox.profileNames = [username];
-    # cosmic/vscode read config.fonts.fontconfig.defaultFonts via lib.head; keep this on so that list stays populated
+    # keep on so fonts.fontconfig.defaultFonts stays populated (cosmic/vscode read it via lib.head)
     fontconfig.enable = true;
     hyprpaper.enable = true;
 

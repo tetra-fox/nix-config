@@ -1,19 +1,10 @@
-# declaratively register qbittorrent + sabnzbd as download clients inside sonarr
-# and radarr. the arrs store download clients as rows in their own db, not in a
-# config file, so a oneshot per arr reconciles the live list against the set declared
-# here via the /downloadclient rest api (reconcile.sh does the work). shared by every
-# host that imports the arr-stack, so all sites get the same clients.
+# register qbittorrent + sabnzbd as download clients in sonarr/radarr. the arrs store
+# download clients as db rows, not config, so a oneshot per arr reconciles the live list
+# against the set declared here via the /downloadclient rest api (reconcile.sh).
 #
-# reachability (all addresses are from the arr's point of view):
-#   - the oneshot runs on the host (like recyclarr) and hits each arr at the
-#     netns-internal address, same as recyclarr does
-#   - qbittorrent lives in the same netns as the arrs, so the arr reaches it at
-#     127.0.0.1:<webuiPort> with no auth (qbit has LocalHostAuth=false)
-#   - sabnzbd lives on the host OUTSIDE the netns, so the arr reaches it at the
-#     host-side bridge address (config.vpnNamespaces.wg.bridgeAddress)
-#
-# reconcile semantics: clients not declared here are deleted, declared clients are
-# created if missing or updated in place. idempotent, safe on every rebuild.
+# addresses are from the arr's point of view: qbit shares the netns so the arr reaches
+# it at 127.0.0.1 with no auth (LocalHostAuth=false); sabnzbd is outside the netns so
+# the arr reaches it at the host-side bridge address.
 {
   config,
   lib,
@@ -32,9 +23,8 @@
   sabKeyCred = "sab-api-key";
   sabKeyFile = arr: "/run/credentials/${arr}-downloadclients.service/${sabKeyCred}";
 
-  # the download-client category field is named differently per arr in the schema:
-  # sonarr calls it tvCategory, radarr calls it movieCategory. the value matches a
-  # category defined in sabnzbd.nix / a qbit label, which we keep == the arr name.
+  # the category field is named per arr in the schema: sonarr tvCategory, radarr
+  # movieCategory. its value must match a sabnzbd category / qbit label, kept == arr name
   categoryField = {
     sonarr = "tvCategory";
     radarr = "movieCategory";
@@ -44,11 +34,9 @@
     {
       name = "qBittorrent";
       schemaName = "qBittorrent";
-      # the /downloadclient/schema template defaults enable=false, so a freshly
-      # created client would be disabled; force it on. (updates preserve the live
-      # value, but a from-scratch host takes the create path.)
+      # the schema template defaults enable=false, so force it on
       top = {enable = true;};
-      # qbit api key not needed: it's reached over netns-localhost with auth off.
+      # no api key: qbit is reached over netns-localhost with auth off
       fields = {
         host = "127.0.0.1";
         port = config.services.qbittorrent.webuiPort;
@@ -59,8 +47,6 @@
       name = "SABnzbd";
       schemaName = "SABnzbd";
       top = {enable = true;};
-      # sab's category must match a category defined in sabnzbd.nix (radarr/sonarr).
-      # the api key is read at runtime from the credential file, never inlined.
       secretField = "apiKey";
       secretFile = sabKeyFile arr;
       fields = {
@@ -103,9 +89,8 @@
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        # the arr's own key authenticates us to it; sab's key gets written into sab's
-        # downloadclient field. both come from sops via credentials, decrypted into
-        # /run/credentials, never in the store.
+        # the arr key authenticates us to the arr; the sab key gets written into sab's
+        # downloadclient field
         LoadCredential = [
           "${arrKeyCred}:${config.sops.secrets.${spec.apiKeySecret}.path}"
           "${sabKeyCred}:${config.sops.secrets."apps/sabnzbd_api_key".path}"

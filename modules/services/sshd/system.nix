@@ -5,7 +5,6 @@
   username,
   ...
 }: {
-  # base key from shared/keyring; hosts append more via the same option (lists merge, no mkForce)
   users.users.${username}.openssh.authorizedKeys.keys = [
     (lib.fileContents (shared.keyring + "/tetra.pub"))
   ];
@@ -37,7 +36,6 @@
       PermitRootLogin = "no";
       AllowUsers = [username];
 
-      # ssh-audit hardening
       KexAlgorithms = [
         "sntrup761x25519-sha512@openssh.com"
         "curve25519-sha256"
@@ -65,7 +63,6 @@
       RequiredRSASize = 3072;
 
       # CVE-2002-20001 mitigation
-      # max 10 pending connections, drop at 30%, hard cap 100
       MaxStartups = "10:30:100";
       PerSourceMaxStartups = 1;
     };

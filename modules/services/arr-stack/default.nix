@@ -17,18 +17,14 @@
   vpnNs = "wg";
   vpn = config.vpnNamespaces.${vpnNs};
 
-  # the site's postgres endpoint (same derive monitoring/authentik use): the single server's
-  # IP, or the HA cluster's VIP. null until some site host sets server.enable or ha.enable.
+  # the single db server's IP, or the HA cluster's VIP. null until a host enables either
   dbEndpointIp =
     (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbEndpointIp;
 
-  # the address the arrs (in the wg netns) use to reach postgres. if THIS host runs the
-  # db, postgres is local and the netns reaches it over the veth bridge. otherwise it's
-  # the derived db endpoint on the LAN (netnsSnatHosts must include it for the return
-  # path). the endpoint is the VIP when the data tier is HA, a single IP otherwise.
+  # local db is reached over the veth bridge, remote db at its LAN endpoint
   defaultPostgresHost =
     if config.lab.postgres.server.enable
     then vpn.bridgeAddress
@@ -40,23 +36,23 @@
       inNetns = true;
       apiKey = {_sops = "apps/sonarr_api_key";};
       hasNixosModule = true;
-      uid = 274; # pinned so the uid is identical across boxes (NFS share)
+      uid = 274; # pin uids: NFS squashes on uid, so they must match across boxes
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
       inNetns = true;
       apiKey = {_sops = "apps/radarr_api_key";};
       hasNixosModule = true;
-      uid = 275; # pinned so the uid is identical across boxes (NFS share)
+      uid = 275;
     };
     prowlarr = {
       port = cfg.lanProxyPorts.prowlarr;
       inNetns = true;
-      # services.prowlarr has no environmentFiles option; we define the unit ourselves
+      # services.prowlarr has no environmentFiles option, so we define the unit ourselves
       apiKey = null;
       hasNixosModule = false;
       user = "prowlarr";
-      uid = 276; # next after radarr (275)
+      uid = 276;
     };
   };
 
@@ -67,8 +63,6 @@
     };
     log.level = "info";
     postgres = {
-      # netns clients reach pg via the bridge's host-side address by default; override
-      # with cfg.postgresHost (+ netnsSnatHosts) when postgres moves to another box
       host = cfg.postgresHost;
       port = 5432;
       user = arrPgUser;
@@ -97,15 +91,13 @@
 
   arrDbs = lib.flatten (lib.mapAttrsToList (n: _: ["${n}-main" "${n}-log"]) arrServices);
 
-  # the password-ownership oneshot only exists where postgres runs. when the db is local
-  # the arrs gate on it (avoids a bad-creds crash-loop during the boot race); when it's
-  # remote that unit lives on the db box, so we don't reference it -- the arrs just retry
-  # the connection until db-01 answers.
+  # gate the arrs on the password oneshot when the db is local, avoiding a bad-creds
+  # crash-loop during the boot race. remote db has no such unit, the arrs just retry
   dbIsLocal = config.lab.postgres.server.enable;
   pgPasswordUnit = lib.optional dbIsLocal config.lab.postgres.passwordUnits.${arrPgUser};
 
-  # vpnConfinement already adds bindsTo+after on the wg unit; the extra
-  # `requires` here is belt-and-suspenders fail-closed
+  # vpnConfinement already binds the arrs to the wg unit; the extra `requires` is a
+  # redundant fail-closed guard, keep it
   arrDeps = svc: {
     after = pgPasswordUnit;
     requires =
@@ -115,11 +107,9 @@
       enable = true;
       vpnNamespace = vpnNs;
     };
-    # the arrs create show/season dirs in the shared media library; the servarr
-    # nixos modules hardcode UMask 0022, which makes those dirs group-unwritable
-    # so a later import by another media-group service (or the same one) hits
-    # UnauthorizedAccessException. mkForce 0002 keeps dirs 0775 and files 0664 so
-    # the whole media group can collaborate on the library
+    # servarr modules hardcode UMask 0022, making library dirs group-unwritable so a
+    # later import by another media-group service hits UnauthorizedAccessException.
+    # 0002 keeps dirs 0775 / files 0664 for the whole media group
     serviceConfig.UMask = lib.mkForce "0002";
   };
 
@@ -152,9 +142,7 @@ in {
       lib.mkEnableOption "DNAT host ports into the vpn netns for LAN access"
       // {default = true;};
 
-    # read-only: the postgres databases the arrs own (<arr>-main/-log per arr). published
-    # so the db server (mesa-db-01) reads THIS as the single source of the arr db list
-    # instead of re-deriving the arr set by hand.
+    # published so the db server reads the arr db list from here instead of re-deriving it
     databases = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       readOnly = true;
@@ -188,10 +176,7 @@ in {
 
     netnsSnatHosts = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      # auto: when the db is remote, SNAT netns->db so db's replies route back (its address
-      # is the derived dbEndpointIp -- the single server IP or the HA VIP). when the db is
-      # local there's nothing to SNAT. add more dests by hand only for other off-box
-      # services the netns talks to (e.g. jellyfin).
+      # a remote db needs SNAT so its replies route back; a local db has nothing to SNAT
       default = lib.optional (!dbIsLocal && dbEndpointIp != null) dbEndpointIp;
       description = ''
         LAN IPs whose netns-initiated traffic must be SNAT'd to this host's LAN address
@@ -271,20 +256,15 @@ in {
         );
       };
 
-      # VPN-Confinement drops MTU during wg-quick parsing; set it on the iface ourselves.
-      # this genuinely needs the netns to exist, so it stays an ExecStartPost.
+      # VPN-Confinement drops MTU during wg-quick parsing, set it on the iface ourselves
       systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
         "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
       ];
 
-      # masquerade netns-initiated traffic to each netnsSnatHosts dest so the reply comes
-      # back: accessibleFrom already routes these LAN dests off the tunnel, but without SNAT
-      # the dest sees the private namespaceAddress and can't reply. declared as a real
-      # nftables table (not an imperative ExecStartPost iptables rule) so it's idempotent
-      # and reconciled by every firewall reload -- an `nft` reload can't silently wipe it
-      # without the wg unit, which was the failure mode of the old ExecStartPost form.
-      # scoped to `ip daddr <ip>` per dest so it never touches the inbound portMappings DNAT
-      # return flows or the tunnel's own egress; no oifname, the dest picks the interface.
+      # masquerade netns-initiated traffic to each dest so replies come back: without
+      # SNAT the dest sees the private namespaceAddress and can't reply. a declarative
+      # nftables table, not an ExecStartPost rule, so an `nft` reload doesn't wipe it.
+      # scoped per-dest so it never touches the inbound portMappings DNAT return flows
       networking.nftables.tables.arr-netns-snat = lib.mkIf (cfg.netnsSnatHosts != []) {
         family = "ip";
         content = ''
@@ -326,14 +306,12 @@ in {
         arrServices;
     }
 
-    # only contribute the arr role/cidr when postgres runs on THIS host. when the db is
-    # remote, the db box (mesa-db-01) declares the arr role + its own allowedCidrs, so
-    # svc-01 must not -- it's a pure client here.
+    # only contribute the arr role/cidr when the db is local; the remote db box declares
+    # them itself and this host is a pure client
     (lib.mkIf dbIsLocal {
       lab.postgres = {
-        # the netns reaches a LOCAL pg over the veth bridge (192.168.15.x), not a fleet
-        # hostIp, so this must be an explicit extra (not derivable from client.enable).
-        # /24 spans both ends of the bridge.
+        # netns reaches local pg over the veth bridge, not a fleet hostIp, so it can't be
+        # derived from client.enable. /24 spans both ends of the bridge
         extraAllowedCidrs = ["${vpn.bridgeAddress}/24"];
         roles.${arrPgUser} = {
           passwordSecret = "arr/pg_pass";
@@ -364,7 +342,6 @@ in {
     {
       users.groups.${cfg.mediaGroup} = {};
       users.users = lib.mkMerge [
-        # services we define ourselves (no upstream nixos module): create the user here.
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {
             isSystemUser = true;
@@ -373,17 +350,15 @@ in {
             home = "${siteData}/${name}";
           }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices))
 
-        # services with an upstream module already create the user; pin only its uid so
-        # it stays identical across boxes (the NFS share squashes on uid, not name).
+        # upstream module already creates the user, pin only its uid
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {uid = svc.uid;})
         (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
       ];
 
-      # every service gets its data dir created here, including the ones with a nixos
-      # module: upstream sonarr/radarr only set StateDirectory (which creates the dir)
-      # when dataDir is left at the default, and we override it to siteData, so the dir
-      # is ours to create or the unit fails on "Cannot create AppFolder".
+      # upstream sets StateDirectory (which creates the dir) only when dataDir is the
+      # default; we override it, so we create the dir or the unit fails "Cannot create
+      # AppFolder"
       systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
         owner = svc.user or name;
       in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -")

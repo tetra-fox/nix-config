@@ -12,10 +12,6 @@
 
   lab.avahi.publish = true;
 
-  # every server gets the server home-manager config (the shared shell setup -- zsh/starship/
-  # etc) so an ssh session looks the same on every box, not bare-zsh ugly. the admin user
-  # itself is declared in base.system; this only attaches its home config. was wired per-host
-  # before (only svc-01 + fairlane did it), now every server profile host gets it.
   home-manager.users.${username}.imports = [modules.meta.profiles.server.home];
 
   environment = {
@@ -78,14 +74,12 @@
     autostart.enable = lib.mkDefault false;
   };
 
-  # pointless on a box that never sleeps; only takes effect when modules.services.nvidia.system is imported
   hardware.nvidia.powerManagement.enable = false;
 
   systemd = {
     # emergency mode hangs waiting for console input we'll never see; let the watchdog reboot instead
     enableEmergencyMode = false;
 
-    # kick every 10s, reboot if no kick for 20s, reboot if shutdown stalls for 30s
     settings.Manager = {
       RuntimeWatchdogSec = lib.mkDefault "20s";
       RebootWatchdogSec = lib.mkDefault "30s";

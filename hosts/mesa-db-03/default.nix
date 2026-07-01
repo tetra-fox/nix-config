@@ -1,6 +1,4 @@
-# mesa-db-03: third node of the HA postgres cluster (Patroni + etcd + HAProxy + keepalived).
-# see mesa-db-02 for the shared design -- all three db nodes declare the same lab.postgres.ha
-# config and the same roles; this file differs only in hostname + IPs.
+# see mesa-db-02 for the shared HA design; this file differs only in hostname + IPs.
 {
   config,
   lib,
@@ -18,8 +16,8 @@ in {
   imports = [
     ./monitoring.nix
 
-    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0); single disk
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
     modules.meta.profiles.server.system
 
     modules.services.postgres-ha.system
@@ -30,12 +28,12 @@ in {
 
   networking.hostName = "mesa-db-03";
   lab.site.hostIp = "192.168.10.112";
-  lab.site.internalIp = "10.10.0.112"; # isolated internal VLAN (ens19); HA traffic rides this
+  lab.site.internalIp = "10.10.0.112";
 
   lab.postgres = {
     ha = {
       enable = true;
-      vip = "10.10.0.115"; # the floating endpoint clients reach
+      vip = "10.10.0.115";
     };
     admin.enable = true;
 

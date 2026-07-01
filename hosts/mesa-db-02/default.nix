@@ -1,12 +1,5 @@
-# mesa-db-02: second node of the HA postgres cluster (Patroni + etcd + HAProxy + keepalived).
-# all three db nodes (db-01/02/03) declare the same lab.postgres.ha config and the same roles
-# -- any node can be the leader, so each must be able to bootstrap/own the databases. clients
-# reach the cluster via the floating VIP (lab.postgres.ha.vip), resolved by the site-topology
-# dbEndpointIp derive; nothing hardcodes which node is primary.
-#
-# the role set (which databases exist + who owns them) is the same single source db-01 uses:
-# the arr db list is derived from the site's arr host (site-topology arrDatabases), authentik's
-# is fixed.
+# all three db nodes declare the same lab.postgres.ha config and roles; any node can be the
+# leader, so each must be able to bootstrap/own the databases.
 {
   config,
   lib,
@@ -24,8 +17,8 @@ in {
   imports = [
     ./monitoring.nix
 
-    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0); single disk
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
     modules.meta.profiles.server.system
 
     modules.services.postgres-ha.system
@@ -36,17 +29,16 @@ in {
 
   networking.hostName = "mesa-db-02";
   lab.site.hostIp = "192.168.10.111";
-  lab.site.internalIp = "10.10.0.111"; # isolated internal VLAN (ens19); HA traffic rides this
+  lab.site.internalIp = "10.10.0.111";
 
   lab.postgres = {
     ha = {
       enable = true;
-      vip = "10.10.0.115"; # the floating endpoint clients reach
+      vip = "10.10.0.115";
     };
-    admin.enable = true; # superuser for dbeaver/psql (reconciled on the leader)
+    admin.enable = true;
 
-    # admin-VLAN direct psql; fleet clients (svc-01 arrs, auth-01) are derived from their
-    # client.enable flag. mirrors db-01 -- every HA node shares the same allow-list.
+    # admin-VLAN direct psql; fleet clients are derived from their client.enable flag.
     extraAllowedCidrs = ["192.168.20.0/24"];
 
     roles = {

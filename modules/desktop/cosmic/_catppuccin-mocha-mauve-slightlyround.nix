@@ -74,7 +74,6 @@ in {
       space_xxxl = 128;
     };
 
-    # `slightlyround`
     corner_radii = {
       radius_0 = c.mkRON "tuple" [
         0.0

@@ -2,9 +2,8 @@
 {config, ...}: let
   inherit (config.lib.topology) mkInternet mkRouter mkSwitch mkConnection;
 in {
-  # mesa and fairlane are separate physical sites that happen to share the same
-  # private vlan layout (192.168.10/20/30). the cidrs collide, so networks are
-  # namespaced per-site to keep the two sites from rendering as one L2 segment.
+  # mesa and fairlane reuse the same cidrs (192.168.10/20/30), so networks are
+  # namespaced per-site or the two sites render as one L2 segment
   networks = {
     mesa-server-vlan = {
       name = "mesa Server VLAN";
@@ -18,8 +17,7 @@ in {
       name = "mesa IoT VLAN";
       cidrv4 = "192.168.30.0/24";
     };
-    # isolated east-west fabric for VM-to-VM traffic (postgres, NFS, monitoring). VLAN
-    # 1010, no gateway/WAN/inter-vlan. every mesa VM's ens19 lands here by CIDR match.
+    # isolated east-west fabric (postgres, NFS, monitoring); no gateway/WAN/inter-vlan
     mesa-internal-vlan = {
       name = "mesa Internal VLAN (1010, isolated)";
       cidrv4 = "10.10.0.0/24";
@@ -97,8 +95,7 @@ in {
       network = "mesa-iot-vlan";
       virtual = true;
     };
-    # the isolated internal VLAN bridge; the mesa VMs' ens19 ride this for east-west
-    # traffic. no host address on it (milkfish doesn't participate, it just bridges).
+    # no host address: milkfish doesn't participate, it just bridges the segment
     interfaces."vmbr0.1010" = {
       addresses = [];
       network = "mesa-internal-vlan";
@@ -134,10 +131,6 @@ in {
       };
     };
   };
-
-  # the mesa resolver is now mesa-dns-01/02 (NixOS), which self-render from their topology.self
-  # like every other mesa VM. the old Technitium LXC node is gone; the .53 they serve is a
-  # floating keepalived VIP, not a host, so it isn't a node here.
 
   # ---- fairlane site ----
 

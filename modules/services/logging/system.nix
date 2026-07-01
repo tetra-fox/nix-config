@@ -9,46 +9,36 @@
   cfg = config.lab.logging;
   hn = config.networking.hostName;
   serverEnabled = config.lab.monitoring.server.enable;
-  # absolute; loki.dataDir wants a full path (unlike prometheus.stateDir which
-  # is relative to /var/lib)
+  # loki.dataDir wants a full path, unlike prometheus.stateDir which is relative to /var/lib
   lokiStateDir = "${siteData}/loki";
 
-  # shared site-topology derivation (same one the monitoring module uses). an agent
-  # ships its logs to its site's server's loki; the server ships to its own loopback.
   topo = import modules.meta.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };
   inherit (topo) hostsInSite siteServers serverIp multiHost myIp;
 
-  # loki must be reachable BOTH by same-box grafana (loopback) AND by remote agents
-  # shipping logs (site IP), so once there's a remote agent it binds all interfaces and
-  # relies on the source-scoped nftables rule (monitoring module) to gate access to just
-  # the site agents -- same pattern prometheus uses. loopback-only while single-host.
+  # reached by both same-box grafana and remote agents, so binds all interfaces; the
+  # source-scoped nftables rule (monitoring module) gates access, not loki
   lokiListen =
     if multiHost
     then "0.0.0.0"
     else "127.0.0.1";
 
-  # where alloy pushes logs: local loki if I'm the server, else my site's server.
   lokiHost =
     if serverEnabled
     then "127.0.0.1"
     else
-      # null until the site has a server (single-host bootstrap); falls back to
-      # loopback so alloy still starts, just buffers/drops until a server exists.
+      # serverIp is null during single-host bootstrap; loopback so alloy still starts
       (
         if serverIp != null
         then serverIp
         else "127.0.0.1"
       );
 
-  # services that write a logfile instead of (or in addition to) stdout aren't
-  # covered by the journald source. generate one file_match + source.file pair
-  # per entry. they route through a shared process stage that lifts the level out
-  # of the *arr "timestamp|Level|component|msg" format into a label, then on to
-  # the loki.write defined in config.alloy. the *arr apps write more detail to
-  # their file than to stdout, so this is additive
+  # services that log to a file instead of stdout aren't covered by the journald source.
+  # one file_match + source.file per entry, routed through a stage that lifts the level
+  # out of the *arr "timestamp|Level|component|msg" format into a label
   fileSourceBlocks =
     lib.concatMapStrings (s: ''
 
@@ -116,8 +106,6 @@ in {
   config = lib.mkMerge [
     # ---- agent: ship logs. runs on every host that opts into logging ----
     (lib.mkIf cfg.enable {
-      # exactly one server per site -- the agents derive their loki target from it.
-      # (skip the assert during single-host bootstrap when no server exists yet.)
       assertions = [
         {
           assertion = (lib.length siteServers) <= 1;
@@ -125,18 +113,13 @@ in {
         }
       ];
 
-      # promtail reached EOL and was removed from nixpkgs; grafana-alloy is the
-      # vendor-pointed successor. the nixos module reads *.alloy from /etc/alloy
-      # (default configPath) and adds the systemd-journal group so it can read the
-      # journal. config lives in config.alloy as a real lintable file; host/port
-      # come from the environment via sys.env() so that file stays pure alloy
+      # alloy is the successor to the EOL'd promtail
       services.alloy.enable = true;
 
       environment.etc."alloy/config.alloy".source = ./config.alloy;
 
-      # alloy reads every *.alloy in the config dir into one namespace, so this
-      # file's blocks can forward to the loki.write defined in config.alloy. only
-      # emitted when there are file sources to tail
+      # alloy merges every *.alloy in the dir into one namespace, so these blocks can
+      # forward to the loki.write defined in config.alloy
       environment.etc."alloy/file-sources.alloy" = lib.mkIf (cfg.fileSources != []) {
         text = fileSourceBlocks + fileProcessBlock;
       };
@@ -144,14 +127,11 @@ in {
       systemd.services.alloy = {
         environment = {
           HOSTNAME = hn;
-          # alloy pushes to <LOKI_HOST>:<LOKI_PORT>. on the server that's loopback;
-          # on an agent it's the site server's IP (derived). port is the server's
-          # loki port (default 3100 everywhere).
           LOKI_HOST = lokiHost;
           LOKI_PORT = toString cfg.lokiPort;
         };
-        # the module sets SupplementaryGroups = ["systemd-journal"]; append, don't
-        # replace, so alloy keeps journal access while gaining file-read access
+        # the module already sets SupplementaryGroups = ["systemd-journal"]; this appends,
+        # so alloy keeps journal access
         serviceConfig.SupplementaryGroups = cfg.extraGroups;
       };
     })
@@ -174,7 +154,6 @@ in {
           common = {
             ring.kvstore.store = "inmemory";
             replication_factor = 1;
-            # filesystem storage; one host, no object store or clustering
             path_prefix = lokiStateDir;
             storage.filesystem = {
               chunks_directory = "${lokiStateDir}/chunks";
@@ -195,7 +174,6 @@ in {
             }
           ];
 
-          # drop logs older than 31 days. single host, finite disk
           limits_config.retention_period = "744h";
           compactor = {
             working_directory = "${lokiStateDir}/compactor";
@@ -214,8 +192,6 @@ in {
         }
       ];
 
-      # Logs + Container Logs dashboards. each picks the loki datasource via a
-      # template variable, so they don't hardcode the auto-assigned datasource uid
       services.grafana-dashboards.extras = [./dashboards];
     })
   ];

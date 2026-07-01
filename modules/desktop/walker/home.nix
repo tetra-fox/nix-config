@@ -3,7 +3,6 @@
   inputs,
   ...
 }: let
-  # stylix palette
   c = config.lib.stylix.colors.withHashtag;
 
   paletteVars = ''

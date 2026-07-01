@@ -34,19 +34,16 @@ in {
   ];
 
   home.sessionVariables = {
-    # electron/ozone
     NIXOS_OZONE_WL = "1";
 
-    # xdg session
     XDG_SESSION_TYPE = "wayland";
     XDG_CURRENT_DESKTOP = "Hyprland";
     XDG_SESSION_DESKTOP = "Hyprland";
 
-    # gtk
     GDK_BACKEND = "wayland,x11,*";
     CLUTTER_BACKEND = "wayland";
 
-    # qt (QT_QPA_PLATFORMTHEME set by stylix)
+    # QT_QPA_PLATFORMTHEME is set by stylix
     QT_QPA_PLATFORM = "wayland;xcb";
     QT_AUTO_SCREEN_SCALE_FACTOR = "1";
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
@@ -63,8 +60,7 @@ in {
     extraLuaFiles = {
       config = ./_lua/config.lua;
       startup = ./_lua/startup.lua;
-      # media stays unsubstituted, the @DEFAULT_AUDIO_SINK@ wpctl targets
-      # would trip replaceVars' leftover-token check
+      # not run through replaceVars: its @DEFAULT_AUDIO_SINK@ tokens would trip the leftover-token check
       media = ./_lua/media.lua;
       bindings.content = pkgs.replaceVars ./_lua/bindings.lua {
         inherit main_mod terminal menu file_manager;

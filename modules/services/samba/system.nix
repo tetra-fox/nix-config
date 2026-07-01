@@ -17,7 +17,6 @@
       # modern macOS needs SMB3 to negotiate fruit/streams_xattr
       "min protocol" = "SMB3";
       "vfs objects" = "catia fruit streams_xattr";
-      # apple metadata in alternate data streams, no AppleDouble files
       "fruit:metadata" = "stream";
       "fruit:posix_rename" = "yes";
       "fruit:veto_appledouble" = "no";

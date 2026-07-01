@@ -170,7 +170,6 @@
           ];
         };
 
-        # `nix run .#update-topology` rebuilds images/topology/{main,network}.svg for the README
         apps.update-topology = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
           type = "app";
           program = "${pkgs.writeShellScript "update-topology" ''
@@ -184,7 +183,6 @@
         };
       };
 
-      # `nix build .#topology.x86_64-linux.config.output` renders the network diagram
       flake.topology = lib.genAttrs ["x86_64-linux"] (system:
         import inputs.nix-topology {
           pkgs = import inputs.nixpkgs {
@@ -197,21 +195,12 @@
           ];
         });
 
-      # `colmena apply --on @mesa` (parallel fleet deploy). layered over easy-hosts:
-      # we don't redefine the hosts, we reuse the already-built nixosConfigurations and
-      # attach deployment metadata derived from data they already declare -- the site IP
-      # (lab.site.hostIp) and the site prefix (the same helper the monitoring derive uses).
-      # only hosts that declare lab.site.hostIp are in the hive (selects the mesa server
-      # fleet; skips hara/myputer/fairlane). `nixos-rebuild --target-host` still works too.
-      #
-      # colmena's CLI wants TWO outputs: the raw hive spec as `colmena`, and the evaluated
-      # `colmenaHive = colmena.lib.makeHive self.outputs.colmena` (per its own hint).
+      # colmena wants two outputs: the raw hive spec as `colmena`, and the evaluated
+      # `colmenaHive = colmena.lib.makeHive self.outputs.colmena`.
       flake.colmena = let
-        # sitePrefix: mesa-svc-01 -> mesa. shared single source with site-topology.nix.
         sitePrefix = import ./modules/meta/lib/site-prefix.nix {inherit lib;};
 
         cfgs = inputs.self.nixosConfigurations;
-        # only NixOS hosts that declared a site IP (the deployable mesa fleet)
         deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
 
         mkNode = name: c: {
@@ -219,19 +208,15 @@
             targetHost = c.config.lab.site.hostIp;
             targetUser = "admin";
             tags = [(sitePrefix name)];
-            buildOnTarget = false; # build on this host, push the closure
+            buildOnTarget = false;
           };
-          # reuse the exact module set easy-hosts assembled for this host. colmena
-          # re-evals nodes via eval-config, so we hand it the host's own imports +
-          # specialArgs rather than reconstructing easy-hosts' assembly logic.
+          # colmena re-evals each node, so hand it the module set easy-hosts already assembled.
           imports = c._module.args.modules or [];
         };
       in
         {
           meta = {
             nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
-            # each node carries the specialArgs easy-hosts gave it (username, modules,
-            # shared, nixosConfigurations, ...) so the reused module set resolves.
             nodeSpecialArgs = lib.mapAttrs (_: c: c._module.specialArgs) deployable;
             nodeNixpkgs = lib.mapAttrs (_: c: c.pkgs) deployable;
           };
@@ -241,9 +226,6 @@
       flake.colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
 
       easy-hosts = {
-        # tag a host with its site (e.g. tags = ["mesa"]) to inherit that site's
-        # shared facts -- VLAN/gateway/DNS layout, siteData root -- instead of
-        # repeating them in every host's default.nix. see modules/sites/.
         perTag = tag: {
           modules = lib.optional (builtins.pathExists (./modules/sites + "/${tag}.nix")) (./modules/sites + "/${tag}.nix");
         };
@@ -251,11 +233,8 @@
         shared = {
           specialArgs = commonSpecialArgs;
           modules = [
-            # expose the flake's nixosConfigurations to every host module so a host
-            # can read sibling hosts' declared config (used by the monitoring module
-            # to auto-derive scrape targets from same-site hosts' static IPs). set via
-            # _module.args (NixOS-only) rather than commonSpecialArgs so `self` doesn't
-            # leak into the home-manager eval.
+            # via _module.args (NixOS-only), not commonSpecialArgs, so `self` doesn't leak
+            # into the home-manager eval.
             {_module.args.nixosConfigurations = inputs.self.nixosConfigurations;}
             {
               nixpkgs.overlays = [
@@ -302,19 +281,14 @@
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-topology.nixosModules.default
                 inputs.tetra-nurpkgs.nixosModules.grafana-dashboards
-                # the `sops` option, needed by any host importing modules that reference
-                # config.sops (monitoring/logging, plus the sops.system host-key module).
-                # lives here so every nixos host has it without a per-host import; modules
-                # themselves can't reach `inputs` to pull it in.
+                # fleet-wide so every nixos host has the `sops` option without a per-host
+                # import; modules can't reach `inputs` to pull it in themselves.
                 inputs.sops-nix.nixosModules.sops
-                # lab.site.* option declarations (hostIp/internalIp) for every nixos host,
-                # so site-topology + the deploy output can read them as a fleet-wide
-                # contract regardless of which site a host is in.
+                # lab.site.* declarations fleet-wide: site-topology + the deploy output read
+                # them as a contract regardless of which site a host is in.
                 ./modules/site/options.nix
-                # the `vpnNamespaces` option, needed by arr-stack. inert on hosts that
-                # declare no namespace, so it's safe fleet-wide; this avoids the trap where
-                # adding arr-stack to a host silently fails unless you also remember this
-                # per-host (same fix as sops -- modules can't reach `inputs` themselves).
+                # fleet-wide so adding arr-stack to a host doesn't silently fail for want of
+                # the `vpnNamespaces` option; inert on hosts that declare no namespace.
                 inputs.vpn-confinement.nixosModules.default
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];
@@ -325,7 +299,6 @@
             ];
         };
 
-        # auto-import ./quirks/<name> when the dir exists, so hosts don't have to wire it themselves
         hosts = lib.mapAttrs (name: cfg:
           cfg
           // {

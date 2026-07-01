@@ -1,18 +1,3 @@
-# monitoring, split into two roles:
-#   agent  (always on, every host): node-exporter + systemd-exporter. produces
-#          metrics about this host. unconditional -- there's no host we'd want
-#          unobserved, so self-observability is an invariant, not a toggle.
-#   server (lab.monitoring.server.enable): prometheus + grafana on top. one per
-#          site (the <site>-mon-01 box). scrapes every agent in its site.
-#
-# a "site" is the hostname prefix: mesa-svc-01, mesa-svc-02, mesa-mon-01 all share
-# site `mesa`. the server auto-derives its scrape list by folding over the other
-# hosts in the flake that share its site prefix and reading their declared static
-# IPs -- no hand-maintained target list, no DNS dependency.
-#
-# today each site has exactly one host and it's the server, so the derived peer set
-# is just [self] and everything binds loopback. the remote-agent machinery (off-loopback
-# binds, source-scoped firewall rules) stays dormant until a site gains a second host.
 {
   config,
   lib,
@@ -29,43 +14,28 @@
   nodePort = 9100;
   systemdPort = 9558;
 
-  # shared site-topology derivation (see modules/lib/site-topology.nix; same logic the
-  # logging module uses to find this host's site peers + server).
   topo = import modules.meta.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = hn;
   };
   inherit (topo) hostsInSite ipOf siteServers multiHost myIp;
 
-  # bind to the site IP only when there's a remote peer to serve; else loopback.
   bindAddr =
     if multiHost && myIp != null
     then myIp
     else "127.0.0.1";
 
-  # the exporters a given site host runs, read from its registry. every exporter
-  # (node, systemd, nvidia, cadvisor, ...) registers a {name, port} here, so the
-  # server discovers them uniformly. reads only this sibling INPUT option -- never a
-  # monitoring-derived value -- so no cross-host eval cycle.
+  # read only this sibling INPUT option, never a monitoring-derived value, or the
+  # cross-host eval cycles
   exportersOf = name: nixosConfigurations.${name}.config.lab.monitoring.exporters or [];
 
-  # the scrape ADDRESS for a host must match where its exporters actually bind: for
-  # myself that's `bindAddr` (loopback when I'm the only host in the site, my site IP
-  # once there are remote peers); for a remote peer it's the peer's site IP.
   scrapeAddr = name:
     if name == hn
     then bindAddr
     else ipOf name;
 
-  # one scrape job per EXPORTER TYPE (node, systemd, ...), not per host -- the prometheus-
-  # native shape where a job is a class of target and the hosts are its members. every host
-  # running an exporter contributes one static_config entry (its own addr + an instance label
-  # = hostname, so grafana legends read names not ip:port). querying up{job="node"} then means
-  # "are all node-exporters healthy" without a job=~"node-.*" regex.
-  #
-  # flatten to (exporter-name, host, addr) tuples first (dropping hosts with no scrape addr),
-  # then group by exporter name. each exporter's {name,port} is the same across hosts (it's a
-  # fleet-wide registry), so the port comes from any member -- read it off the first.
+  # one scrape job per exporter TYPE (node, systemd, ...), not per host: the prometheus-native
+  # shape where a job is a class of target and the hosts are its members
   scrapeTuples =
     lib.concatMap (
       name: let
@@ -93,20 +63,14 @@
     })
     byExporter;
 
-  # union of all exporter ports across this site's agents, to open to the server.
   allExporterPorts = lib.unique (lib.concatMap (name: map (e: e.port) (exportersOf name)) hostsInSite);
 
-  # the site's agents (every host in the site that isn't me/the server). the server
-  # exposes grafana + loki to these so a remote caddy can reach grafana and remote
-  # alloy can ship logs to loki. their IPs feed the server-side firewall allow rules.
   siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
 
   grafanaPort = 3000;
   lokiPort = 3100;
 in {
-  # lab.monitoring.{server.enable, bindAddr, exporters, extraScrapeConfigs} are declared
-  # in the options-only registry module, so exporter producers can register without
-  # pulling in this whole stack.
+  # options-only, so an exporter producer can register without pulling in this whole stack
   imports = [modules.services.monitoring.registry];
 
   config = lib.mkMerge [
@@ -130,8 +94,6 @@ in {
         ];
       };
 
-      # node + systemd register into the exporter registry like any other exporter, so
-      # the server discovers them the same uniform way (no special-casing).
       lab.monitoring.exporters = [
         {
           name = "node";
@@ -143,8 +105,7 @@ in {
         }
       ];
 
-      # open every registered exporter port to this site's server only (source-scoped,
-      # nftables). empty/no-op while single-host (server is self, scraped over loopback).
+      # open every registered exporter port to this site's server only (source-scoped, nftables)
       networking.firewall.extraInputRules = lib.mkIf (multiHost && allExporterPorts != []) (
         lib.concatMapStringsSep "\n" (
           name: let
@@ -187,8 +148,6 @@ in {
 
         settings = {
           server = {
-            # bind the site IP once there's a remote host that needs to reach grafana
-            # (e.g. caddy on a svc box proxying stats.<site>); loopback while single-host.
             http_addr = bindAddr;
             http_port = grafanaPort;
           };
@@ -196,7 +155,6 @@ in {
             reporting_enabled = false;
             check_for_updates = false;
           };
-          # grafana 26.05+ needs an explicit secret_key (cookie signing)
           security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
         };
 
@@ -205,8 +163,8 @@ in {
           grafana-piechart-panel
         ];
 
-        # provider wiring lives in tetra-nurpkgs/modules/grafana-dashboards.nix;
-        # it reads services.grafana-dashboards.{community,extras} and writes the providers list
+        # provider wiring: tetra-nurpkgs/modules/grafana-dashboards.nix reads
+        # services.grafana-dashboards.{community,extras}
         provision = {
           enable = true;
           datasources.settings.prune = true;
@@ -222,10 +180,8 @@ in {
         };
       };
 
-      # expose grafana (for a remote caddy proxying stats.<site>) and loki (for remote
-      # alloy shipping logs) to this site's agents only -- source-scoped, never the whole
-      # VLAN. empty/no-op while single-host. loki itself binds the site IP via the logging
-      # module's bindAddr; grafana binds it above.
+      # expose grafana + loki to this site's agents only (remote caddy proxies stats, remote
+      # alloy ships logs), source-scoped, never the whole VLAN
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
         lib.concatMapStringsSep "\n" (
           ip: "ip saddr ${ip} tcp dport { ${toString grafanaPort}, ${toString lokiPort} } accept"

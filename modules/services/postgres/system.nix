@@ -9,20 +9,15 @@
 }: let
   cfg = config.lab.postgres;
 
-  # same-site postgres clients (lab.postgres.client.enable) as /32s, for pg_hba. the
-  # inverse of the dbServerIp derive clients use to find this server.
   dbClientCidrs =
     (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).dbClientCidrs;
 
-  # full allow-list: derived client /32s + any explicit extras (admin VLAN, external
-  # tooling -- things that aren't fleet hosts and can't be derived).
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
-  # ALTER USER ... PASSWORD, plus ALTER DATABASE OWNER + ALTER SCHEMA public OWNER for each owned db.
-  # pg 15+ needs the schema's owner to be the role that wants to CREATE TABLE in `public`.
+  # pg 15+: public schema owner must be the role or it can't CREATE TABLE, hence ALTER SCHEMA.
   mkRoleUnit = name: role: {
     description = "Set ${name} postgres role password + ownership from sops";
     after = ["postgresql-setup.service"];
@@ -49,13 +44,9 @@
     '';
   };
 in {
-  # option declarations live in options.nix so a pure client can import just those.
   imports = [modules.services.postgres.options];
 
   config = lib.mkMerge [
-    # always: the readonly passwordUnits map + the admin role default. these are option
-    # plumbing, not the server -- they're computed from cfg.roles regardless of where the
-    # server runs (a client host can declare roles that the server-side host materializes).
     {
       lab.postgres = {
         passwordUnits = lib.mapAttrs (name: _: "postgresql-set-${name}-password.service") cfg.roles;
@@ -74,9 +65,6 @@ in {
       };
     }
 
-    # only where this host IS the postgres server: run postgresql, create the roles/dbs,
-    # the per-role password+ownership oneshots, the firewall hole, the secrets. a pure
-    # client (server.enable = false) gets none of this; it points at the derived endpoint.
     (lib.mkIf cfg.server.enable {
       services.postgresql = {
         enable = true;
@@ -98,9 +86,8 @@ in {
         ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
       };
 
-      # dataDir is overridden under siteData. the unit's ReadWritePaths bind-mounts the
-      # versioned dataDir, which must already exist or namespace setup fails (226/NAMESPACE).
-      # create both the parent and the versioned leaf so the mount target is present.
+      # the unit bind-mounts the versioned dataDir, which must already exist or namespace
+      # setup fails (226/NAMESPACE); create both parent and leaf.
       systemd.tmpfiles.rules = [
         "d ${siteData}/postgresql 0700 postgres postgres -"
         "d ${config.services.postgresql.dataDir} 0700 postgres postgres -"

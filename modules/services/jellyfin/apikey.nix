@@ -1,9 +1,6 @@
-# jellyfin api keys are rows in jellyfin.db (the ApiKeys table), not a config value,
-# so there's no startup hook to set one from a secret the way the arrs take their api
-# key from an env var. for a single source of truth -- one secret the arrs and
-# jellyfin all share -- a oneshot ensures a row exists whose AccessToken equals our
-# secret (apikey.sh does the upsert). jellyfin compares the token verbatim, so an
-# injected value authenticates like a dashboard-generated one.
+# jellyfin api keys are rows in jellyfin.db (ApiKeys), not config, so there's no startup
+# hook to set one from a secret. a oneshot upserts a row whose AccessToken equals our
+# secret (apikey.sh); jellyfin compares the token verbatim, so it authenticates normally.
 {
   config,
   lib,
@@ -28,7 +25,7 @@ in {
       wantedBy = ["multi-user.target"];
       environment = {
         JELLYFIN_DB = "${config.services.jellyfin.dataDir}/data/jellyfin.db";
-        KEY_NAME = "arr"; # the ApiKeys.Name the arr notifications authenticate as
+        KEY_NAME = "arr";
         KEY_FILE = "/run/credentials/jellyfin-apikey.service/${cred}";
       };
       serviceConfig = {

@@ -5,12 +5,9 @@
     modules.services.logging.system
   ];
 
-  # this host is the fairlane site's monitoring server. only host in the site today,
-  # so it scrapes itself; future fairlane-svc-NN agents are auto-discovered.
   lab.monitoring.server.enable = true;
-  lab.monitoring.unifi.enable = true; # fairlane has a UniFi network
+  lab.monitoring.unifi.enable = true;
 
-  # journald -> loki -> the grafana provisioned above
   lab.logging.enable = true;
 
   # TODO: fairlane's non-NixOS node-exporter targets (HA, proxmox host) via

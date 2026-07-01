@@ -9,10 +9,8 @@
     modules.services.logging.system
   ];
 
-  # this host is the mesa site's monitoring server (prometheus + grafana + loki).
-  # it auto-discovers + scrapes every mesa-svc-NN agent from the flake.
   lab.monitoring.server.enable = true;
-  lab.monitoring.unifi.enable = true; # mesa has a UniFi network
+  lab.monitoring.unifi.enable = true;
 
   lab.logging.enable = true;
 
@@ -36,7 +34,7 @@
   services.grafana.settings = {
     server.root_url = "https://stats.mesa.tetra.cool/";
 
-    auth.disable_login_form = true; # oauth only
+    auth.disable_login_form = true;
 
     "auth.generic_oauth" = {
       enabled = true;

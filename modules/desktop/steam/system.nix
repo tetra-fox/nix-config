@@ -14,8 +14,7 @@
         export PRESSURE_VESSEL_IMPORT_OPENXR_1_RUNTIMES=1
       '';
     };
-    # currently recommended by the linux vr adventures wiki for vrchat
-    # provided by nix-community/nixpkgs-xr nixpkgs overlay
+    # recommended proton for vrchat
     # https://wiki.vronlinux.org/docs/vrchat/#recommended-proton
     extraCompatPackages = with pkgs; [
       proton-ge-bin
@@ -23,20 +22,15 @@
     ];
   };
 
-  # nix-ld only links the 64-bit loader at /lib64/ld-linux-x86-64.so.2. proton
-  # ships a 32-bit wine (the WoW64 entry point) whose interpreter is
-  # /lib/ld-linux.so.2, which then doesn't exist. anything running that binary
-  # directly on the host (e.g. vrcx shelling out to wine reg, see
-  # modules/steam/home.nix) fails with "cannot execute: required file not
-  # found". link the 32-bit loader too.
+  # nix-ld only links the 64-bit loader; proton's 32-bit wine needs /lib/ld-linux.so.2
+  # or running it directly fails with "cannot execute: required file not found"
   environment.ldso32 = "${pkgs.pkgsi686Linux.glibc}/lib/ld-linux.so.2";
 
-  # use gamemode scheduler
   programs.gamemode.enable = true;
 
   services.monado = {
     enable = true;
-    defaultRuntime = true; # Register as default OpenXR runtime
+    defaultRuntime = true;
     highPriority = true;
   };
 
@@ -45,7 +39,7 @@
     # LH_STANDBY_ON_EXIT = "1";
     XRT_COMPOSITOR_COMPUTE = "1";
     IPC_EXIT_WHEN_IDLE = "1";
-    IPC_EXIT_WHEN_IDLE_DELAY_MS = "30000"; # 30s xr session timeout
+    IPC_EXIT_WHEN_IDLE_DELAY_MS = "30000";
 
     # fixes vkAcquireXlibDisplayEXT: VK_ERROR_UNKNOWN (0x000058b7a0764a80)
     # https://wiki.vronlinux.org/docs/fossvr/monado/#nvidia-specific-vkacquirexlibdisplayext-vk_error_unknown-0x000058b7a0764a80
@@ -61,7 +55,6 @@
     wayvr
   ];
 
-  # steamvr-like base station power management
   systemd.user.services.lighthouse-power-management = {
     description = "Lighthouse Power Management";
 

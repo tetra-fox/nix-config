@@ -9,15 +9,10 @@
   sabnzbdStateDir = "${lib.removePrefix "/var/lib/" siteData}/sabnzbd";
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 
-  # the rendered [servers] ini, generated from the apps/sabnzbd_servers JSON secret
-  # and listed in secretFiles so sabnzbd's config_merge picks it up. it lives under
-  # the sabnzbd state dir (writable by the sabnzbd user that runs preStart).
+  # under the state dir so the sabnzbd user (which runs preStart) can write it
   serversIni = "/var/lib/${sabnzbdStateDir}/.servers-rendered.ini";
 
-  # turn the JSON array of server objects into sabnzbd's [servers] ini section.
-  # each object is a full sabnzbd server config: any key sabnzbd accepts works
-  # (host, port, ssl, ssl_verify, username, password, connections, priority, ...).
-  # section header is [[<host>]]; jq emits "key = value" per field.
+  # turn the JSON array of server objects into sabnzbd's [servers] ini section
   renderServersCmd = ''
     {
       echo "[servers]"
@@ -31,22 +26,13 @@ in {
     sops.secrets = {
       "apps/sabnzbd_api_key" = {};
       "apps/sabnzbd_nzb_key" = {};
-      # one JSON array of full sabnzbd server objects. add/remove/configure a server
-      # by editing this one secret -- no nix change needed. each object mirrors
-      # sabnzbd's server config keys verbatim, e.g.:
-      #   [
-      #     {"host":"newswest.frugalusenet.com","port":563,"ssl":1,"ssl_verify":2,
-      #      "username":"<u>","password":"<p>","connections":100,"priority":0},
-      #     {"host":"news.usenetexpress.com","port":563,"ssl":1,"ssl_verify":2,
-      #      "username":"<u>","password":"<p>","connections":50,"priority":99}
-      #   ]
-      # ssl/ssl_verify/enable use sabnzbd's ints (ssl=1, ssl_verify=2=strict).
-      # priority: lower is preferred; sabnzbd clamps to 0-99 (99 = last/fill).
+      # JSON array of server objects mirroring sabnzbd's server config keys verbatim,
+      # edit this secret to add/remove a server with no nix change. e.g.:
+      #   [{"host":"news.example.com","port":563,"ssl":1,"ssl_verify":2,
+      #     "username":"<u>","password":"<p>","connections":50,"priority":0}]
       "apps/sabnzbd_servers" = {owner = "sabnzbd";};
     };
 
-    # api_key + nzb_key still go via a sops template (simple scalar interpolation).
-    # the servers section is rendered separately at runtime from the JSON secret.
     sops.templates."sabnzbd-secrets.ini" = {
       owner = "sabnzbd";
       content = ''
@@ -56,15 +42,12 @@ in {
       '';
     };
 
-    # render the [servers] ini as the FIRST thing in sabnzbd's own preStart, before
-    # its config_merge.py reads secretFiles (which would fail on a missing file).
-    # doing it in the same script -- rather than a separate ordered service -- means
-    # there's no inter-unit ordering to get wrong: it runs as the sabnzbd user where
-    # the sops secret is already decrypted and readable. mkBefore prepends it.
+    # mkBefore so the servers ini is rendered before config_merge.py reads secretFiles,
+    # which would fail on the missing file. in sabnzbd's own preStart so it runs as the
+    # sabnzbd user, where the sops secret is readable
     systemd.services.sabnzbd.preStart = lib.mkBefore renderServersCmd;
 
-    # pin the uid so it's identical across boxes; the NFS share squashes on uid, not
-    # name. upstream services.sabnzbd creates the user but auto-allocates the uid.
+    # pin the uid: NFS squashes on uid, not name
     users.users.sabnzbd.uid = 992;
 
     services.sabnzbd = {
@@ -72,9 +55,7 @@ in {
       group = cfg.mediaGroup;
       stateDir = sabnzbdStateDir;
       allowConfigWrite = true;
-      openFirewall = true; # opens settings.misc.port (8080)
-      # both files get merged into the live config: the scalar secrets template,
-      # and the runtime-rendered [servers] section.
+      openFirewall = true;
       secretFiles = [
         config.sops.templates."sabnzbd-secrets.ini".path
         serversIni
@@ -97,8 +78,6 @@ in {
           complete_free = "1G";
           log_dir = "logs";
           admin_dir = "admin";
-          # netns clients reach sabnzbd via http://${hostVethIp}:8080; extra entries
-          # (e.g. the public hostname caddy proxies under) come from lab.arrStack.sabnzbdHostWhitelist
           host_whitelist = lib.concatStringsSep "," (
             [config.networking.hostName "${config.networking.hostName}.local" hostVethIp]
             ++ cfg.sabnzbdHostWhitelist
@@ -120,8 +99,8 @@ in {
             dir = "";
             priority = 0;
           };
-          # no custom dir: downloads land in the default complete_dir and the arrs move
-          # them to the library after post-processing, so a per-category subdir is pointless.
+          # empty dir on purpose: downloads land in complete_dir and the arrs move them
+          # to the library, so a per-category subdir buys nothing
           radarr = {
             name = "radarr";
             order = 6;
@@ -139,8 +118,6 @@ in {
             priority = -100;
           };
         };
-        # servers are no longer defined here; they come from the apps/sabnzbd_servers
-        # JSON secret rendered into serversIni above.
       };
     };
   };

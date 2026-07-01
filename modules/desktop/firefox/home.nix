@@ -8,9 +8,7 @@
 in {
   home.sessionVariables = {
     MOZ_LEGACY_PROFILES = "1"; # missing profile fix
-    # force the native wayland backend instead of relying on GDK_BACKEND
-    # ordering. needed so the fractional-scale workaround below takes the
-    # right code path on hyprland.
+    # force the native wayland backend so the fractional-scale workaround below takes effect
     MOZ_ENABLE_WAYLAND = "1";
   };
 
@@ -40,12 +38,8 @@ in {
 
         "devtools.jsonview.enabled" = false;
 
-        # extension toolbar popups (ublock, sponsorblock) render oversized and
-        # blurry on fractional display scale (monitors at 1.67). firefox's
-        # fractional-scale path computes the popup buffer at integer scale 1,
-        # then hyprland upscales it. disabling fractional makes firefox render
-        # at integer scale 2 and downscale to 1.67, which is sharp and correctly
-        # sized. main window was unaffected either way.
+        # firefox's fractional-scale path renders extension popups oversized and blurry
+        # on hyprland; disabling it makes them render at integer scale and downscale sharp
         # https://bugzilla.mozilla.org/show_bug.cgi?id=1849109
         "widget.wayland.fractional-scale.enabled" = false;
 

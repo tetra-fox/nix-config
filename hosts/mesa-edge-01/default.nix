@@ -1,7 +1,3 @@
-# mesa-edge-01: the mesa site's ingress tier. runs caddy (TLS termination, DNS-01 ACME,
-# fail2ban) and reverse-proxies every published service. every upstream is remote and
-# derived from site-topology (auth/stats/jellyfin/np) or an external IP (HAOS, AdGuard,
-# proxmox), so the Caddyfile never hardcodes which box runs what.
 {
   username,
   modules,
@@ -10,8 +6,8 @@
   imports = [
     ./monitoring.nix
 
-    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0)
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
     modules.meta.profiles.server.system
 
     modules.services.caddy.system
@@ -22,12 +18,10 @@
 
   networking.hostName = "mesa-edge-01";
   lab.site.hostIp = "192.168.10.150";
-  lab.site.internalIp = "10.10.0.150"; # isolated internal VLAN (ens19)
+  lab.site.internalIp = "10.10.0.150";
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
-  # join the edge VIP (the other half is on edge-02). the VIP is on the server VLAN; the
-  # router forwards 443/80 to it and the AdGuard wildcard points at it. keepalived floats it.
   lab.caddy.ha = {
     enable = true;
     vip = "192.168.10.155";

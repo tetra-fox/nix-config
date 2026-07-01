@@ -49,8 +49,7 @@ in {
       autosuggestion.enable = true;
       # disable global rc files (nix-generated)
       envExtra = "setopt no_global_rcs";
-      # rebuild the compdump at most once per 24h (~4x faster shell init the rest of the day)
-      # force a rebuild with `rm ~/.cache/zsh/compdump`
+      # rebuild the compdump at most once per 24h; force a rebuild with `rm ~/.cache/zsh/compdump`
       completionInit = ''
         () {
           setopt local_options extendedglob
@@ -62,15 +61,12 @@ in {
         }
       '';
       shellAliases = {
-        # ls/ll/la/lla/lt come from programs.eza (mkDefault), carrying the
-        # global flags set there. nothing custom needed.
         nix-cleanup = "sudo nix-collect-garbage -d && nix-collect-garbage -d && sudo nix store optimise";
       };
       history = {
         ignoreAllDups = true;
       };
       initContent = lib.mkMerge [
-        # profiler
         sudoToggle
         zinput
         zshPatina

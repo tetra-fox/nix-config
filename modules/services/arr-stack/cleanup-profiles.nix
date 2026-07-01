@@ -1,11 +1,7 @@
-# delete quality profiles recyclarr no longer manages. recyclarr never deletes a
-# profile (it's destructive when media is assigned), so a renamed/removed profile
-# lingers. cleanup-profiles.sh reassigns every series/movie/collection on an orphaned
-# profile to a managed default, then deletes it. runs after recyclarr so it sees the
-# current managed set. shared by every host that imports the arr-stack.
-#
-# the managed profile names come from profile-names.nix, the same list recyclarr
-# builds its profiles from -- single source of truth, so the two can't drift.
+# recyclarr never deletes a profile (destructive when media is assigned), so a renamed
+# or removed profile lingers. cleanup-profiles.sh reassigns everything on an orphaned
+# profile to a managed default then deletes it. runs after recyclarr so it sees the
+# current managed set (from profile-names.nix, the same list recyclarr builds from).
 {
   config,
   lib,

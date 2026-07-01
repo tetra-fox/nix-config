@@ -22,9 +22,8 @@
   ];
 
   lab.arrStack = {
-    # the arr DBs (migrated from the old box) have root folders baked in at
-    # /mnt/media/media/{Movies,TV} and download dirs at /mnt/media/torrents/{radarr,sonarr},
-    # so these must match or every item shows as missing. the disk already has that layout.
+    # the arr DBs have root/download dirs baked in under /mnt/media, so these must match
+    # or every item shows as missing.
     torrentsPath = "/mnt/media/torrents";
     nzbPath = "/mnt/media/nzb";
     # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
@@ -34,9 +33,9 @@
   lab.sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
 
   lab.postgres = {
-    server.enable = true; # fairlane runs its own postgres (single-box site)
-    extraAllowedCidrs = ["192.168.20.0/24"]; # trusted VLAN
-    openFirewall = true; # 5432
+    server.enable = true;
+    extraAllowedCidrs = ["192.168.20.0/24"];
+    openFirewall = true;
     admin.enable = true;
   };
 
@@ -54,7 +53,6 @@
     ];
   };
 
-  # proxmox guest; single vNIC on the server vlan
   topology.self = {
     parent = "pooltoy";
     guestType = "vm";
@@ -67,14 +65,10 @@
 
   lab.caddy.caddyfile = ./files/caddy/Caddyfile;
 
-  # servers are unattended, breakage is fixable
   lab.podman.autoUpdate.enable = true;
 
-  # the admin user + its home config come from the server profile (base.system declares the
-  # user, server.system attaches home-manager). only this box's extra groups are added here.
   users.users.${username}.extraGroups = [
     "podman"
-    # admin browses the media volume often; `media` makes ls/cp/mv work without sudo
     "media"
   ];
 

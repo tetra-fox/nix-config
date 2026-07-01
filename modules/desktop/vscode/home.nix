@@ -11,9 +11,7 @@
   # vscodium-devpodcontainers shells out to the devpod cli
   home.packages = [pkgs.devpod];
 
-  # the extension uses vscode proposed apis (off by default). enabling them
-  # requires listing the extension in argv.json, which is separate from
-  # userSettings and not exposed by programs.vscodium.
+  # devpodcontainers needs proposed apis enabled via argv.json, which programs.vscodium doesn't expose
   # https://github.com/3timeslazy/vscodium-devpodcontainers#requirements
   xdg.configFile."VSCodium/argv.json".text = lib.generators.toJSON {} {
     "enable-proposed-api" = ["3timeslazy.vscodium-devpodcontainers"];

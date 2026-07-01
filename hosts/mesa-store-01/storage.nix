@@ -1,13 +1,5 @@
-# the storage tier: this box owns the media disk and serves it over NFS + SMB.
-#   NFS  -> the media host (svc-01: arrs/downloaders + jellyfin) mounts the
-#           library; exported without all_squash so the pinned numeric uids pass
-#           through and files stay <svc-uid>:media instead of squashing to nobody.
-#           also the HAOS box mounts /mnt/vol_1/homeassistant for its backups.
-#   SMB  -> real people (@users) browse the library, local-account auth.
-#
 # /mnt/vol_1/store           media + torrents + nzb (the shared library)
 # /mnt/vol_1/homeassistant   HA backups (NFS only)
-# siteData (/var/lib/mesa) comes from the `mesa` site tag (modules/sites/mesa.nix)
 {
   config,
   lib,
@@ -16,17 +8,14 @@
   nixosConfigurations,
   ...
 }: let
-  # the NFS client that mounts the library = the media host (runs the arrs + jellyfin),
-  # derived to its internal-VLAN IP -- no hardcoded svc-01 IP. the export + firewall scope
-  # to this. (today the media host is svc-01.)
+  # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp =
     (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
     }).mediaHostIp;
-  # the HAOS box mounts the homeassistant share for its backups. it's an external
-  # appliance NOT on the internal VLAN, so it stays on the server VLAN. connects as root
-  # (no shell), so that export all_squashes to the homeassistant user.
+  # the HAOS box is an external appliance not on the internal VLAN, so it stays on the
+  # server VLAN; it connects as root, so its export all_squashes to the homeassistant user.
   haIp = "192.168.10.5";
 in {
   users.groups.media = {
@@ -36,31 +25,25 @@ in {
   systemd.tmpfiles.rules = [
     "d ${siteData} 0755 root media -"
 
-    # setgid so everything created under the library inherits group `media`; the
-    # service uids (sonarr/radarr/qbit/sab, all in media) and SMB @users share write.
+    # setgid so new files inherit group media, letting the service uids and SMB @users share write.
     "Z /mnt/vol_1/store/media - admin media 2775"
     "Z /mnt/vol_1/store/torrents - admin media 2775"
     "Z /mnt/vol_1/store/nzb - admin media 2775"
   ];
 
-  # mount the media disk by filesystem uuid, never by /dev/sdX or a by-id scsi path:
-  # there are two same-size disks on this VM and scsi enumeration can swap on reboot,
-  # so the uuid is the only stable handle. nofail so a missing disk doesn't wedge boot.
+  # mount by uuid, never /dev/sdX or by-id: two same-size disks here, scsi enumeration
+  # can swap on reboot, so the uuid is the only stable handle. nofail so a missing disk
+  # doesn't wedge boot.
   fileSystems."/mnt/vol_1" = {
     device = "/dev/disk/by-uuid/e9bcf2e9-1a1d-4fd8-b2ab-6852302dcb78";
     fsType = "btrfs";
     options = ["defaults" "noatime" "nofail"];
   };
 
-  # ---- NFS server ----
-  # two fully independent shares, each its own NFSv4 fsid=0 root scoped to a single
-  # client. the kernel keys the v4 pseudo-root per-client, so two fsid=0 exports to
-  # different IPs are isolated namespaces -- svc-01 sees only the store share, the HA box
-  # sees only homeassistant, neither can traverse to the other. each client mounts `:/`.
-  #
-  # the store share keeps numeric uids (no all_squash) so arr imports stay <svc-uid>:media
-  # (Phase 0a). homeassistant all_squashes to the homeassistant user (uid 1069) since
-  # HAOS connects as root.
+  # two fsid=0 roots to different client IPs: the kernel keys the v4 pseudo-root per-client,
+  # so each is an isolated namespace and neither client can traverse to the other. each
+  # mounts `:/`. store keeps numeric uids (arr imports stay <svc-uid>:media); homeassistant
+  # all_squashes to uid 1069 since HAOS connects as root.
   services.nfs.server = {
     enable = true;
     exports = ''
@@ -69,16 +52,12 @@ in {
     '';
   };
 
-  # open NFSv4 (2049/tcp) to the specific clients only, not the whole VLAN. source-scoped
-  # extraInputRules need the nftables backend, which the base profile enables fleet-wide.
+  # source-scoped rules need the nftables backend (base profile enables it fleet-wide).
   networking.firewall.extraInputRules = ''
     ip saddr ${svcIp} tcp dport 2049 accept
     ip saddr ${haIp} tcp dport 2049 accept
   '';
 
-  # the identity the homeassistant NFS export squashes every HA-side uid to
-  # (anonuid=1069); also the on-disk owner of the existing backups. not a samba account
-  # anymore -- HAOS reaches its backups over NFS, so there's no homeassistant SMB share.
   users.users.homeassistant = {
     isSystemUser = true;
     uid = 1069;

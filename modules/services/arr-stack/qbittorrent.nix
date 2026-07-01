@@ -19,8 +19,7 @@ in {
       "d ${siteData}/qbittorrent 0750 qbittorrent ${cfg.mediaGroup} -"
     ];
 
-    # pin the uid so it's identical across boxes; the NFS share squashes on uid, not
-    # name. upstream services.qbittorrent creates the user but auto-allocates the uid.
+    # pin the uid: NFS squashes on uid, not name
     users.users.qbittorrent.uid = 993;
 
     services.qbittorrent = {
@@ -40,7 +39,6 @@ in {
           Path = "${siteData}/qbittorrent/qBittorrent/data/logs";
         };
 
-        # auto-unrar on torrent completion
         AutoRun = {
           OnTorrentAdded.Enabled = false;
           OnTorrentAdded.Program = "";

@@ -15,7 +15,6 @@
     modules.desktop.pipewire.system
     modules.desktop.pipewire-rnnoise.system
     modules.desktop.udiskie.system
-    # modules.cli.wireshark.system
     modules.cli.yazi.system
   ];
 
@@ -48,9 +47,6 @@
     usbutils # lsusb
     (writeShellScriptBin "rebuild" (builtins.readFile ./rebuild.sh))
 
-    # the general toolbox -- on the workstation (hara), not the headless servers. servers keep
-    # only a minimal debug set (htop/lsof/mtr/bind) in the base profile and reach for the rest
-    # with `nix shell` on demand.
     git
     jq
     ripgrep

@@ -1,8 +1,3 @@
-# authentik (SSO/identity): server + worker + ldap outpost, as podman containers.
-# the postgres db lives on the site's db server (reached via the site-topology dbEndpointIp
-# derive -- the single server's IP, or the HA cluster's VIP); this host just runs the app.
-# caddy finds this host via the authServerIp derive (keyed on lab.authentik.enable below),
-# so nothing hardcodes where authentik runs.
 {
   config,
   lib,
@@ -18,9 +13,6 @@
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
-  # the site's postgres endpoint (same derive the arr-stack uses): the single server's IP,
-  # or the HA cluster's VIP. authentik's podman is not in any netns, so it reaches the db
-  # host directly over the LAN.
   dbHost =
     (import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
@@ -40,15 +32,12 @@
     environmentFiles = siteEnvFile "authentik.env";
     extraOptions = [
       "--shm-size=512m"
-      # postgres lives on the db box; authentik reaches the LAN directly (not netns), so
-      # point the host alias at the derived db-server IP.
       "--add-host=postgres-host:${dbHost}"
     ];
   };
 in {
-  # postgres.OPTIONS (not the full server module) for the lab.postgres.client flag --
-  # authentik is a pure db client, so it just needs the contract that lets the db server
-  # allow-list this host via the dbClientCidrs derive.
+  # postgres.options not the server module: authentik is a pure client, it only needs the
+  # lab.postgres.client flag so the db server allow-lists this host.
   imports = [modules.services.podman.system modules.services.postgres.options];
 
   options.lab.authentik.enable =

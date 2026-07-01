@@ -1,10 +1,9 @@
 {lib}: rec {
-  # { _sops = "apps/sonarr_api_key" } is a placeholder marker resolved by mkServarrEnv
+  # { _sops = "apps/sonarr_api_key" } marks a value to resolve via placeholderFn
   isSopsRef = v: builtins.isAttrs v && v ? _sops;
 
   # mkServarrEnv "SONARR" { auth.method = "Forms"; postgres.port = 5432; }
   #   => { SONARR__AUTH__METHOD = "Forms"; SONARR__POSTGRES__PORT = "5432"; }
-  # nulls drop out; _sops refs go through placeholderFn
   mkServarrEnv = placeholderFn: prefix: settings: let
     flatten = path: value:
       if value == null

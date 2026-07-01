@@ -1,4 +1,3 @@
-# workstation home: base + workstation-only conveniences
 {
   modules,
   pkgs,
@@ -30,7 +29,6 @@
     signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
   };
 
-  # dark mode in gtk/gnome apps via dconf (gtk-theme handled by stylix)
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [

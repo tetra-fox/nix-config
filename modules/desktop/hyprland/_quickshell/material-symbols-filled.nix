@@ -1,6 +1,4 @@
-# partially instantiate the icon font with FILL=1 baked in
-# Qt's variable font renderer has artifacts with the FILL axis, so we
-# fix that axis and leave the rest (wght, GRAD, opsz) variable.
+# bake FILL=1 into the icon font; Qt's variable-font renderer has artifacts on the FILL axis
 {pkgs}:
 pkgs.runCommand "material-symbols-filled"
 {

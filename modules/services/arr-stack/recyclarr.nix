@@ -1,41 +1,19 @@
 {config, ...}: let
   nsVethIp = config.vpnNamespaces.wg.namespaceAddress;
 
-  # recyclarr config for the *arr quality profiles + custom-format scoring, shared
-  # by every host that imports the arr-stack (so all sites get identical profiles).
+  # arr scores are a single summed integer, so each quality axis lives in its own
+  # magnitude band to keep orthogonal axes from cancelling (great audio +X vs bad
+  # encode -X netting 0). each band's full range is below one step of the band above:
+  #   ban          x -1_000_000
+  #   HDR family   x    100_000  (any HDR beats an SDR remux)
+  #   group tier   x      1_000
+  #   audio        x          1
+  # TRaSH HDR formats stack additively: every HDR release matches base "HDR", DV and
+  # HDR10+ add their own boost, so DV(300000) > HDR10+(200000) > HDR(100000) > SDR(0).
+  # resolution is enforced by each profile's hard quality cap, not scored here.
   #
-  # intent: archival "grab the best available, never miss content". each title is
-  # assigned a per-resolution profile (best-2160p/1080p/720p/sd) so e.g. a viewer
-  # without a 4k screen gets best-1080p. HDR is the dominant preference because the
-  # display is Dolby Vision capable -- this is a deliberate taste choice: HDR (any
-  # kind) is scored ABOVE encode/group quality, so an HDR WEB-DL is preferred over
-  # an SDR bluray remux. flip the HDR band below the tier band if that's not wanted.
-  #
-  # trash_ids below are copied from a local clone of TRaSH-Guides/Guides and can go
-  # stale when the guides update. to re-verify: clone the repo and grep
+  # to re-verify trash_ids: clone TRaSH-Guides/Guides and grep
   # docs/json/{sonarr,radarr}/cf/*.json for the format name -> trash_id.
-  # ---------------------------------------------------------------------------
-  # banded ("bitmask"-style) scoring. arr scores are a single summed integer,
-  # so to make orthogonal quality axes NOT cancel each other (e.g. great audio
-  # +X but bad encode -X netting 0), each axis lives in its own magnitude band:
-  #
-  #   ban          x -1_000_000  (always excluded)
-  #   HDR family   x    100_000  (above group tier: any HDR beats an SDR remux)
-  #   group tier   x      1_000  (max ~12000)
-  #   audio        x          1  (max     16)
-  #
-  # HDR is the dominant preference (DV display). TRaSH's HDR formats are ADDITIVE
-  # and stack: every HDR release matches the base "HDR" format, and DV / HDR10+
-  # add their own boost on top. so the totals come out:
-  #   DV      = HDR base 100000 + DV boost   200000 = 300000   (highest)
-  #   HDR10+  = HDR base 100000 + HDR10+      100000 = 200000
-  #   HDR10   = HDR base 100000                      = 100000
-  #   SDR     = 0
-  # giving DV > HDR10+ > HDR > SDR, all above the group-tier band. each band's
-  # full range is below one step of the band above, so nothing cancels: HDR beats
-  # any tier+audio sum, group tier beats any audio sum, a ban beats any positive.
-  # resolution is enforced by each profile's hard quality cap (not scored here).
-  # ---------------------------------------------------------------------------
 
   profileNames = import ./profile-names.nix;
   mkScore = score: ids: {
@@ -46,16 +24,10 @@
     assign_scores_to = map (name: {inherit name score;}) profileNames;
   };
 
-  # shared custom-format score set, applied identically to every profile in an
-  # app. takes the app's id table so sonarr/radarr can use their own trash_ids.
   mkCustomFormats = ids: [
-    # HDR family band (x100000) -- additive/stacking, all above group tier.
-    # base HDR = 100000 (any HDR beats SDR); DV/HDR10+ add on top so
-    # DV(300000) > HDR10+(200000) > HDR(100000) > SDR(0).
-    (mkScore 100000 ids.hdr) # base: matches any HDR (incl HDR10/HDR10+/DV)
-    (mkScore 100000 ids.hdr10Plus) # +on top of base -> HDR10+ totals 200000
-    (mkScore 200000 ids.dvBoost) # +on top of base -> DV totals 300000
-    # group tier band (x1000) -- ranks encode quality below the HDR preference
+    (mkScore 100000 ids.hdr)
+    (mkScore 100000 ids.hdr10Plus)
+    (mkScore 200000 ids.dvBoost)
     (mkScore 12000 ids.remuxTier01)
     (mkScore 11000 ids.remuxTier02)
     (mkScore 10000 ids.hdBlurayTier01)
@@ -63,7 +35,6 @@
     (mkScore 8000 ids.webTier01)
     (mkScore 7000 ids.webTier02)
     (mkScore 6000 ids.webTier03)
-    # audio band (x1) -- smallest tiebreaker, best codec wins close calls
     (mkScore 16 ids.truehdAtmos)
     (mkScore 15 ids.ddpAtmos)
     (mkScore 14 ids.atmos)
@@ -78,47 +49,32 @@
     (mkScore 5 ids.ddp)
     (mkScore 4 ids.dd)
     (mkScore 3 ids.aac)
-    # repacks (tiny positive, above audio so a repack of an equal release wins)
     (mkScore 30 ids.repack3)
     (mkScore 20 ids.repack2)
     (mkScore 10 ids.repackProper)
-    # demote band (x -20_000) -- "fine content, flagged for cosmetic/format reasons"
-    # (scene, obfuscated naming, missing group tag, dual-audio, hevc). magnitude is
-    # above the +12000 group-tier band so a demoted release ranks below ANY clean
-    # release, but it stays above min_format_score (-50000) so it still SURVIVES as a
-    # candidate. the point: when no clean release exists (or it failed), the arr falls
-    # back to a demoted 1080p rather than dropping to an unscored SDTV. quality-first
-    # sort then keeps the 1080p above SD. true junk stays in `bans` below.
+    # -20000 sits below the tier band but above min_format_score (-50000) so a demoted
+    # release ranks below any clean one yet survives as a fallback
     (mkScore (-20000) ids.demotes)
-    # bans (x -1_000_000) -- never grab these at any resolution; below min_format_score
-    # so they're hard-REJECTED, not just unpreferred. reserved for genuinely-broken or
-    # unwanted content (disc images, av1/x266 playback issues, fake upscales, LQ groups).
+    # below min_format_score so bans are hard-rejected, not just unpreferred
     (mkScore (-1000000) ids.bans)
   ];
 
-  # one resolution-tier profile: hard-capped at `cap`, but every lower tier is
-  # allowed so it can still grab SOMETHING if nothing at the cap exists. the
-  # banded custom formats rank quality WITHIN the allowed resolutions.
+  # hard-capped at `cap` but every lower tier is allowed so it can still grab
+  # something when nothing at the cap exists
   mkProfile = name: cap: qualities: {
     inherit name qualities;
     upgrade = {
       allowed = true;
       until_quality = cap;
-      until_score = 10000000; # never stop upgrading toward the best at this tier
+      until_score = 10000000;
     };
-    # reject anything scoring below this. set below the demote band (-20000, even
-    # double-stacked -40000) so a flagged-but-fine 1080p survives as a fallback, but
-    # above the ban band (-1000000) so genuinely-broken releases are still rejected.
-    # a release stacking 3+ demotes (-60000) also falls below this and is rejected.
+    # below one or two stacked demotes (-40000) so a flagged-but-fine release survives,
+    # above the ban band so broken ones are rejected
     min_format_score = -50000;
-    # zero out scores for any format not in our managed set, so a stale/manual
-    # score in the arr can't linger and skew selection -- this config is authoritative
+    # zero out unmanaged formats so a stale manual score in the arr can't skew selection
     reset_unmatched_scores.enabled = true;
   };
 
-  # ---- sonarr quality ladders (sonarr quality names) ----
-  # full archival ladder, best->worst. each profile slices off everything ABOVE
-  # its cap and keeps everything at-or-below (down to the lowest tier).
   sonarrLadder = {
     "2160p" = [
       {name = "Bluray-2160p Remux";}
@@ -158,8 +114,7 @@
     ];
   };
 
-  # radarr names differ (Remux-1080p vs Bluray-1080p Remux, no HDTV-1080p, has
-  # the theatrical-source tiers WORKPRINT/CAM/TELESYNC/etc for true archival).
+  # radarr uses different quality names than sonarr (Remux-1080p vs Bluray-1080p Remux)
   radarrLadder = {
     "2160p" = [
       {name = "Remux-2160p";}
@@ -206,8 +161,6 @@
     ];
   };
 
-  # build the 4 resolution-tier profiles for an app from its ladder. each profile
-  # = its tier's qualities ++ all lower tiers (so it grabs anything at-or-below).
   mkProfiles = ladder: capName: [
     (mkProfile "best-2160p" capName.r2160 (ladder."2160p" ++ ladder."1080p" ++ ladder."720p" ++ ladder.sd))
     (mkProfile "best-1080p" capName.r1080 (ladder."1080p" ++ ladder."720p" ++ ladder.sd))
@@ -215,8 +168,7 @@
     (mkProfile "best-sd" capName.rsd ladder.sd)
   ];
 
-  # trash_ids per app (verified against TRaSH-Guides/Guides). sonarr and radarr
-  # use different ids for the same-named formats, hence two tables.
+  # sonarr and radarr use different trash_ids for the same formats, hence two tables
   sonarrIds = {
     remuxTier01 = "9965a052eb87b0d10313b1cea89eb451";
     remuxTier02 = "8a1d0c3d7497e741736761a1da866a2e";
@@ -245,9 +197,8 @@
     repack3 = "44e7c4de10ae50265753082e5dc76047";
     repack2 = "eb3d5cc0a2be0db205fb823640db6a3c";
     repackProper = "ec8fa7296b64e8cd390a1600981f3923";
-    # demoted (-20000): fine content, flagged for cosmetic/format reasons. unpreferred
-    # but still grabbed over a lower resolution. x265 demoted (not banned) since modern
-    # jellyfin clients direct-play hevc and lots of animated 1080p is x265-only.
+    # x265 demoted not banned: jellyfin clients direct-play hevc and lots of animated
+    # 1080p is x265-only
     demotes = [
       "47435ece6b99a0b477caf360e79ba0bb" # x265 (HD)
       "e1a997ddb54e3ecbfe06341ad323c458" # Obfuscated
@@ -256,7 +207,6 @@
       "32b367365729d530ca1c124a0b180c64" # Bad Dual Groups
       "82d40da2bc6923f41e14394075dd4b03" # No-RlsGroup
     ];
-    # hard-banned (-1000000, rejected): genuinely broken or unwanted at any resolution.
     bans = [
       "041d90b435ebd773271cea047a457a6a" # x266
       "15a05bc7c1a36e2b57fd628f8977e2fc" # AV1
@@ -347,10 +297,8 @@ in {
     };
   };
 
-  # recyclarr pushes profiles to sonarr/radarr at the netns veth address, so order it
-  # after the netns + the arrs come up. without this it fires on boot before they're
-  # ready, fails to connect, and self-heals only on the next daily timer. ordering-only
-  # (wants, not requires) -- a missing arr shouldn't permanently block recyclarr.
+  # order after the netns + arrs so it doesn't fire on boot before they can accept
+  # connections. wants not requires: a missing arr shouldn't permanently block recyclarr
   systemd.services.recyclarr = {
     after = ["wg.service" "sonarr.service" "radarr.service"];
     wants = ["sonarr.service" "radarr.service"];

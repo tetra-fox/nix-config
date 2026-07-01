@@ -16,8 +16,7 @@
     "homelab_DTW"
   ];
 in {
-  # tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere, raw `ssh` in scripts) need this to talk to 1P
-  # instead of gnome-keyring / cosmic-session
+  # point tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere) at 1P, not gnome-keyring / cosmic-session
   home.sessionVariables.SSH_AUTH_SOCK = opAgent;
 
   programs.ssh = {

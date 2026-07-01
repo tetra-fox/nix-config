@@ -1,15 +1,3 @@
-# mesa-db-01: first node of the mesa site's HA data tier (Patroni + etcd + HAProxy +
-# keepalived). clients reach the cluster via the floating VIP (lab.postgres.ha.vip),
-# resolved by the site-topology dbEndpointIp derive; nothing hardcodes which node is primary.
-#
-# db-01 owns the databases the arrs + authentik use, but doesn't run those services. the
-# arr db list is derived from the site's arr host (site-topology arrDatabases), not read by
-# hostname, so it can't drift from the actual arr set or break on a rename. authentik's db
-# is a fixed name.
-#
-# this was the single-server postgres box before the HA cutover; the old data dir under
-# ${siteData}/postgresql stays on disk untouched as a rollback point (Patroni uses a fresh
-# dir under ${siteData}/patroni). data was migrated by dump/restore at cutover.
 {
   config,
   lib,
@@ -27,8 +15,8 @@ in {
   imports = [
     ./monitoring.nix
 
-    modules.platform.proxmox-vm.system # qemu-guest + virtio initrd
-    modules.platform.disko.proxmox-vm # boot-disk layout (scsi0); single disk
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
     modules.meta.profiles.server.system
 
     modules.services.postgres-ha.system
@@ -39,18 +27,17 @@ in {
 
   networking.hostName = "mesa-db-01";
   lab.site.hostIp = "192.168.10.110";
-  lab.site.internalIp = "10.10.0.110"; # isolated internal VLAN (ens19); HA traffic rides this
+  lab.site.internalIp = "10.10.0.110";
 
   lab.postgres = {
     ha = {
       enable = true;
-      vip = "10.10.0.115"; # the floating endpoint clients reach
+      vip = "10.10.0.115";
     };
-    admin.enable = true; # superuser for dbeaver/psql (reconciled on the leader)
+    admin.enable = true;
 
-    # fleet clients (svc-01's arrs via the netns SNAT, auth-01's authentik) are derived
-    # from their lab.postgres.client.enable flag -> their hostIp. only non-fleet sources
-    # need listing here: the trusted admin VLAN for direct psql.
+    # fleet clients derive from their client.enable flag; only non-fleet sources
+    # (admin VLAN for direct psql) need listing here.
     extraAllowedCidrs = ["192.168.20.0/24"];
 
     roles = {

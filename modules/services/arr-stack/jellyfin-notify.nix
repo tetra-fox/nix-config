@@ -1,13 +1,9 @@
-# declaratively register jellyfin as a "Connect" notification in sonarr/radarr so
-# that on import/upgrade/rename the arr tells jellyfin to rescan the affected library
-# (updateLibrary=true). same reconcile.sh as the download clients, against the
-# /notification endpoint.
-#
-# reachability: jellyfin runs on the host, OUTSIDE the wg netns, so the arr reaches it
-# at the host-side bridge address (same as sabnzbd). the api key is the shared
-# apps/jellyfin_api_key secret -- the same value the jellyfin-apikey unit writes into
-# jellyfin's ApiKeys table, so one secret is the single source of truth for the
-# arr<->jellyfin link.
+# register jellyfin as a "Connect" notification in sonarr/radarr so on import/upgrade/
+# rename the arr tells jellyfin to rescan the library. same reconcile.sh as the download
+# clients, against /notification. the arr reaches jellyfin (outside the netns) at the
+# host-side bridge address. the api key is the shared apps/jellyfin_api_key secret, the
+# same value jellyfin-apikey writes into jellyfin's ApiKeys table, so one secret drives
+# both sides.
 {
   config,
   lib,
@@ -26,9 +22,8 @@
   jfKeyCred = "jellyfin-api-key";
   jfKeyFile = arr: "/run/credentials/${arr}-jellyfin-notify.service/${jfKeyCred}";
 
-  # the arr import event is named differently per arr: sonarr fires onImportComplete,
-  # radarr fires onDownload (its name for a completed import). both also rescan on
-  # upgrade and rename. these are top-level keys on the notification object.
+  # the completed-import toggle is named per arr: sonarr onImportComplete, radarr
+  # onDownload (its name for the same event)
   importToggle = {
     sonarr = "onImportComplete";
     radarr = "onDownload";
@@ -47,8 +42,8 @@
       secretFile = jfKeyFile arr;
       fields = {
         host = vpn.bridgeAddress;
-        port = 8096; # jellyfin default; services.jellyfin has no port option
-        updateLibrary = true; # the toggle that triggers the library rescan
+        port = 8096; # hardcoded: services.jellyfin has no port option
+        updateLibrary = true;
       };
     }
   ];
@@ -95,9 +90,8 @@
   };
 in {
   config = {
-    # also declared by the jellyfin-apikey module on hosts that run jellyfin; declaring
-    # it here too means the arr-side reconcile has it regardless of import order. sops
-    # merges identical secret declarations.
+    # also declared by jellyfin-apikey; sops merges identical decls, so declaring it here
+    # too makes it available regardless of import order
     sops.secrets."apps/jellyfin_api_key" = {};
 
     systemd.services = lib.mapAttrs' mkUnit arrs;

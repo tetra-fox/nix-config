@@ -20,7 +20,7 @@ in {
     };
   };
 
-  # config lives in the read-only nix store, file watcher has nothing useful to do
+  # config lives in the read-only nix store, nothing for the file watcher to do
   systemd.user.services.quickshell.Service.Environment = ["QS_DISABLE_FILE_WATCHER=1"];
 
   home.activation.restartQuickshell = lib.hm.dag.entryAfter ["reloadSystemd"] ''
@@ -40,7 +40,7 @@ in {
   wayland.windowManager.hyprland.extraLuaFiles.quickshell.content =
     pkgs.replaceVars ./hyprland-binds.lua {inherit main_mod;};
 
-  # hide tray applets that duplicate quickshell functionality (networkmanager, from cosmic)
+  # hide nm-applet (from cosmic); quickshell already shows networkmanager
   xdg.configFile."autostart/nm-applet.desktop".text = ''
     [Desktop Entry]
     Hidden=true

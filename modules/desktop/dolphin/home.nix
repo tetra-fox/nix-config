@@ -3,16 +3,16 @@
     [pkgs.kdePackages.dolphin]
     ++ (with pkgs.kdePackages; [
       qtsvg
-      kio # needed since 25.11
+      kio
       kio-fuse
       kio-extras
       ark
       audiocd-kio
-      baloo # file tagging / search index
+      baloo
       dolphin-plugins # git/hg/dropbox/mount integration
       kio-admin
       kio-gdrive
-      kompare # diff
+      kompare
       konsole
       ffmpegthumbs
       kdegraphics-thumbnailers
@@ -22,7 +22,7 @@
     ++ (with pkgs; [
       icoutils # .ico, .cur, embedded .exe icons
       libappimage # embedded .AppImage icons
-      resvg # svg thumbnails
+      resvg
       taglib
     ]);
 

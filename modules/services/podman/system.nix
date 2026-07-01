@@ -8,17 +8,13 @@
 }: let
   cfg = config.lab.podman;
 in {
-  # the exporter registry options so cadvisor can register without depending on the
-  # full monitoring stack being imported on this host.
   imports = [modules.services.monitoring.registry];
 
   options.lab.podman = {
     autoUpdate = {
       enable = lib.mkEnableOption "podman-auto-update timer (nightly pull+recreate of containers labelled io.containers.autoupdate=registry)";
 
-      # read-only: container modules spread this into their `labels` to opt in.
-      # keeps the label string and the on/off gating in one place; deriving the
-      # names here instead would recurse on oci-containers.containers
+      # deriving the container names here instead would recurse on oci-containers.containers
       containerLabels = lib.mkOption {
         type = lib.types.attrsOf lib.types.str;
         readOnly = true;
@@ -41,12 +37,9 @@ in {
     services.cadvisor = lib.mkIf cfg.cadvisor.enable {
       enable = true;
       port = cfg.cadvisor.port;
-      # bind where the monitoring server expects to scrape (loopback single-host, site
-      # IP once there's a remote server); the registry entry below tells it the port.
       listenAddress = config.lab.monitoring.bindAddr;
     };
 
-    # register the exporter so the site's monitoring server auto-discovers + scrapes it
     lab.monitoring.exporters = lib.mkIf cfg.cadvisor.enable [
       {
         name = "cadvisor";
@@ -54,7 +47,6 @@ in {
       }
     ];
 
-    # the dashboard only makes sense where grafana runs (the server)
     services.grafana-dashboards.community = lib.mkIf (cfg.cadvisor.enable && config.lab.monitoring.server.enable) [
       pkgs.grafana-dashboards.cadvisor
     ];
@@ -62,8 +54,8 @@ in {
     virtualisation = {
       podman = {
         enable = true;
-        dockerCompat = true; # `docker` cli maps to podman
-        dockerSocket.enable = true; # docker-API socket for tooling (cadvisor, scripts)
+        dockerCompat = true;
+        dockerSocket.enable = true;
         autoPrune = {
           enable = true;
           dates = "weekly";
@@ -72,17 +64,14 @@ in {
       oci-containers.backend = "podman";
     };
 
-    # podman ships podman-auto-update.{service,timer}; systemd.packages installs
-    # the files but does not symlink the [Install] section, so enable it here
+    # systemd.packages installs the unit files but not the [Install] section, so enable the timer here
     systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
       wantedBy = ["timers.target"];
     };
 
     users.users.${username}.extraGroups = ["podman"];
 
-    # containers reach native host services (e.g. postgres) over the default
-    # bridge without those ports being exposed to the LAN. pg_hba + app auth
-    # still apply
+    # let containers reach native host services over the bridge without exposing those ports to the LAN
     networking.firewall.trustedInterfaces = ["podman0"];
   };
 }

@@ -1,13 +1,3 @@
-# UniFi observability as a self-contained add-on. unpoller is a vendor-specific
-# integration (it polls a UniFi controller), NOT generic observability -- so it lives
-# outside modules/monitoring/system.nix and plugs into it through the public interface:
-# it self-registers its scrape target via lab.monitoring.extraScrapeConfigs and ships
-# its dashboards via services.grafana-dashboards.community.
-#
-# import-based enablement: a host that has a UniFi network to watch imports this module
-# and sets lab.monitoring.unifi.enable = true. it asserts the host is a monitoring
-# server (there's no point polling UniFi without a prometheus to scrape it / grafana to
-# show it).
 {
   config,
   lib,
@@ -54,13 +44,12 @@ in {
           url = cfg.controllerUrl;
           user = "unpoller";
           pass = config.sops.secrets."monitoring/unpoller_password".path;
-          verify_ssl = false; # self-signed
+          verify_ssl = false;
           save_dpi = true;
         }
       ];
     };
 
-    # self-register the scrape target into the monitoring module's public option
     lab.monitoring.extraScrapeConfigs = [
       {
         job_name = "unpoller-${hn}";

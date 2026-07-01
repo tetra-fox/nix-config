@@ -12,8 +12,7 @@
   ];
 
   stylix.targets = {
-    # apps pick their own colors; font targets stay on so fonts.fontconfig.defaultFonts populates
-    # (cosmic/kitty/vscode read it via lib.head)
+    # font targets stay on so fonts.fontconfig.defaultFonts stays populated (cosmic/kitty/vscode read it via lib.head)
     font-packages.enable = true;
     fontconfig.enable = true;
   };
@@ -27,8 +26,8 @@
     base16Scheme = "${inputs.stylix.inputs.tinted-schemes}/base24/catppuccin-mocha.yaml";
     # catppuccin puts blue at base0D (primary accent) and mauve at base0E; swap for mauve-accented ui
     override = {
-      base0D = "cba6f7"; # mauve
-      base0E = "89b4fa"; # blue
+      base0D = "cba6f7";
+      base0E = "89b4fa";
     };
 
     fonts = {
@@ -56,7 +55,7 @@
       size = 38;
     };
 
-    # sizes.terminal * 4/3 = vscode editor font size; 10.5 -> 14pt
+    # vscode editor font size is derived as sizes.terminal * 4/3, so 10.5 -> 14pt
     fonts.sizes.terminal = 10.5;
   };
 }
