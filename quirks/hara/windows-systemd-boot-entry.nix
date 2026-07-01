@@ -1,4 +1,4 @@
-{...}: {
+_: {
   boot.loader.systemd-boot.windows = {
     "windows" = let
       boot-drive = "FS0"; # find with map -c and ls EFI

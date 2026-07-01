@@ -18,11 +18,13 @@
   vpn = config.vpnNamespaces.${vpnNs};
 
   # the single db server's IP, or the HA cluster's VIP. null until a host enables either
-  dbEndpointIp =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+  inherit
+    ((import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
-    }).dbEndpointIp;
+    }))
+    dbEndpointIp
+    ;
 
   # local db is reached over the veth bridge, remote db at its LAN endpoint
   defaultPostgresHost =
@@ -255,7 +257,7 @@ in {
       vpnNamespaces.${vpnNs} = {
         enable = true;
         wireguardConfigFile = config.sops.templates."wg.conf".path;
-        accessibleFrom = cfg.accessibleFrom;
+        inherit (cfg) accessibleFrom;
         portMappings = lib.optionals cfg.lanProxy (
           lib.mapAttrsToList (_: port: {
             from = port;
@@ -355,14 +357,14 @@ in {
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {
             isSystemUser = true;
-            uid = svc.uid;
+            inherit (svc) uid;
             group = cfg.mediaGroup;
             home = "${siteData}/${name}";
           }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices))
 
         # upstream module already creates the user, pin only its uid
         (lib.mapAttrs' (name: svc:
-          lib.nameValuePair (svc.user or name) {uid = svc.uid;})
+          lib.nameValuePair (svc.user or name) {inherit (svc) uid;})
         (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
       ];
 

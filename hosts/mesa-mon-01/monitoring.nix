@@ -9,27 +9,31 @@
     modules.services.logging.system
   ];
 
-  lab.monitoring.server.enable = true;
-  lab.monitoring.unifi.enable = true;
-
-  lab.logging.enable = true;
-
   sops.secrets."monitoring/grafana_oauth_client_secret" = {
     owner = "grafana";
     group = "grafana";
   };
 
-  lab.monitoring.extraScrapeConfigs = [
-    # non-NixOS node-exporter targets (not auto-discovered from the flake)
-    {
-      job_name = "node-haos";
-      static_configs = [{targets = ["192.168.10.5:9100"];}];
-    }
-    {
-      job_name = "node-milkfish";
-      static_configs = [{targets = ["192.168.10.2:9100"];}];
-    }
-  ];
+  lab = {
+    logging.enable = true;
+
+    monitoring = {
+      server.enable = true;
+      unifi.enable = true;
+
+      extraScrapeConfigs = [
+        # non-NixOS node-exporter targets (not auto-discovered from the flake)
+        {
+          job_name = "node-haos";
+          static_configs = [{targets = ["192.168.10.5:9100"];}];
+        }
+        {
+          job_name = "node-milkfish";
+          static_configs = [{targets = ["192.168.10.2:9100"];}];
+        }
+      ];
+    };
+  };
 
   services.grafana.settings = {
     server.root_url = "https://stats.mesa.tetra.cool/";

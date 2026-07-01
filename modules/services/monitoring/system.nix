@@ -127,58 +127,60 @@ in {
         group = "grafana";
       };
 
-      services.grafana-dashboards.community = with pkgs.grafana-dashboards; [
-        node-exporter-full
-        systemd-exporter
-      ];
-
-      services.prometheus = {
-        enable = true;
-        stateDir = promStateDir;
-
-        globalConfig = {
-          scrape_interval = "15s";
-          evaluation_interval = "15s";
-        };
-
-        scrapeConfigs = derivedScrapes ++ cfg.extraScrapeConfigs;
-      };
-
-      services.grafana = {
-        enable = true;
-        dataDir = "${siteData}/grafana";
-
-        settings = {
-          server = {
-            http_addr = bindAddr;
-            http_port = grafanaPort;
-          };
-          analytics = {
-            reporting_enabled = false;
-            check_for_updates = false;
-          };
-          security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
-        };
-
-        declarativePlugins = with pkgs.grafanaPlugins; [
-          grafana-clock-panel
-          grafana-piechart-panel
+      services = {
+        grafana-dashboards.community = with pkgs.grafana-dashboards; [
+          node-exporter-full
+          systemd-exporter
         ];
 
-        # provider wiring: tetra-nurpkgs/modules/grafana-dashboards.nix reads
-        # services.grafana-dashboards.{community,extras}
-        provision = {
+        prometheus = {
           enable = true;
-          datasources.settings.prune = true;
-          datasources.settings.datasources = [
-            {
-              name = "prometheus";
-              type = "prometheus";
-              access = "proxy";
-              url = "http://localhost:${toString config.services.prometheus.port}";
-              isDefault = true;
-            }
+          stateDir = promStateDir;
+
+          globalConfig = {
+            scrape_interval = "15s";
+            evaluation_interval = "15s";
+          };
+
+          scrapeConfigs = derivedScrapes ++ cfg.extraScrapeConfigs;
+        };
+
+        grafana = {
+          enable = true;
+          dataDir = "${siteData}/grafana";
+
+          settings = {
+            server = {
+              http_addr = bindAddr;
+              http_port = grafanaPort;
+            };
+            analytics = {
+              reporting_enabled = false;
+              check_for_updates = false;
+            };
+            security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
+          };
+
+          declarativePlugins = with pkgs.grafanaPlugins; [
+            grafana-clock-panel
+            grafana-piechart-panel
           ];
+
+          # provider wiring: tetra-nurpkgs/modules/grafana-dashboards.nix reads
+          # services.grafana-dashboards.{community,extras}
+          provision = {
+            enable = true;
+            datasources.settings.prune = true;
+            datasources.settings.datasources = [
+              {
+                name = "prometheus";
+                type = "prometheus";
+                access = "proxy";
+                url = "http://localhost:${toString config.services.prometheus.port}";
+                isDefault = true;
+              }
+            ];
+          };
         };
       };
 

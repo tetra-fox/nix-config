@@ -8,7 +8,7 @@
   ...
 }: let
   cfg = config.lab.postgres;
-  ha = cfg.ha;
+  inherit (cfg) ha;
 
   topo = import modules.meta.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
@@ -134,76 +134,150 @@ in {
     # reboots are fine, but a wiped/replaced node re-bootstraps a new cluster and fails to
     # join. re-add via etcdctl member add + initialClusterState=existing, or wipe all three
     # and re-bootstrap together. runbook: project_mesa_ip_scheme memory.
-    services.etcd = {
-      enable = true;
-      name = config.networking.hostName;
-      dataDir = "${siteData}/etcd";
-      initialCluster = etcdInitialCluster;
-      initialClusterState = "new";
-      initialClusterToken = "mesa-pg-etcd";
-      listenPeerUrls = ["http://${selfIp}:2380"];
-      initialAdvertisePeerUrls = ["http://${selfIp}:2380"];
-      listenClientUrls = ["http://${selfIp}:2379" "http://127.0.0.1:2379"];
-      advertiseClientUrls = ["http://${selfIp}:2379"];
-    };
-
-    services.patroni = {
-      enable = true;
-      scope = ha.scope;
-      name = config.networking.hostName;
-      nodeIp = selfIp;
-      otherNodesIps = otherNodeIps;
-      postgresqlPackage = postgresPkg;
-      # overriding postgresqlDataDir disables the module's StateDirectory=patroni, so this
-      # dir is created via tmpfiles below instead.
-      dataDir = "${siteData}/patroni";
-      postgresqlDataDir = "${siteData}/patroni/pgdata/${postgresPkg.psqlSchema}";
-      restApiPort = 8008;
-      softwareWatchdog = true;
-
-      environmentFiles = {
-        PATRONI_SUPERUSER_PASSWORD = config.sops.secrets."postgres/superuser_pass".path;
-        PATRONI_REPLICATION_PASSWORD = config.sops.secrets."postgres/replication_pass".path;
+    services = {
+      etcd = {
+        enable = true;
+        name = config.networking.hostName;
+        dataDir = "${siteData}/etcd";
+        initialCluster = etcdInitialCluster;
+        initialClusterState = "new";
+        initialClusterToken = "mesa-pg-etcd";
+        listenPeerUrls = ["http://${selfIp}:2380"];
+        initialAdvertisePeerUrls = ["http://${selfIp}:2380"];
+        listenClientUrls = ["http://${selfIp}:2379" "http://127.0.0.1:2379"];
+        advertiseClientUrls = ["http://${selfIp}:2379"];
       };
 
-      settings = {
-        etcd3.hosts = map (ip: "${ip}:2379") haNodeIps;
+      patroni = {
+        enable = true;
+        inherit (ha) scope;
+        name = config.networking.hostName;
+        nodeIp = selfIp;
+        otherNodesIps = otherNodeIps;
+        postgresqlPackage = postgresPkg;
+        # overriding postgresqlDataDir disables the module's StateDirectory=patroni, so this
+        # dir is created via tmpfiles below instead.
+        dataDir = "${siteData}/patroni";
+        postgresqlDataDir = "${siteData}/patroni/pgdata/${postgresPkg.psqlSchema}";
+        restApiPort = 8008;
+        softwareWatchdog = true;
 
-        bootstrap = {
-          dcs = {
-            ttl = 30;
-            loop_wait = 10;
-            retry_timeout = 10;
-            maximum_lag_on_failover = 1048576;
-            postgresql = {
-              use_pg_rewind = true;
-              parameters.max_connections = 200;
-              pg_hba = pgHba;
+        environmentFiles = {
+          PATRONI_SUPERUSER_PASSWORD = config.sops.secrets."postgres/superuser_pass".path;
+          PATRONI_REPLICATION_PASSWORD = config.sops.secrets."postgres/replication_pass".path;
+        };
+
+        settings = {
+          etcd3.hosts = map (ip: "${ip}:2379") haNodeIps;
+
+          bootstrap = {
+            dcs = {
+              ttl = 30;
+              loop_wait = 10;
+              retry_timeout = 10;
+              maximum_lag_on_failover = 1048576;
+              postgresql = {
+                use_pg_rewind = true;
+                parameters.max_connections = 200;
+                pg_hba = pgHba;
+              };
+            };
+            initdb = [
+              "encoding=UTF-8"
+              "data-checksums"
+            ];
+          };
+
+          postgresql = {
+            authentication = {
+              replication.username = "replicator";
+              superuser.username = "postgres";
+            };
+            # stable socket path so the reconcile oneshot can reach it (tmpfiles creates the dir).
+            parameters.unix_socket_directories = "/run/postgresql";
+          };
+        };
+      };
+
+      haproxy = {
+        enable = true;
+        config = haproxyConfig;
+      };
+    };
+
+    systemd = {
+      # patroni owns the watchdog; drop systemd's claim so they don't contend for the one VM device.
+      settings.Manager.RuntimeWatchdogSec = lib.mkForce "0";
+
+      services = lib.mkMerge [
+        {
+          # /dev/watchdog pre-exists at boot so the module's udev rule granting it to patroni
+          # never re-applies; without it patroni's mode=required won't become primary. re-trigger
+          # udev (and chown directly, in case that races) before patroni on every node.
+          patroni-watchdog-perms = {
+            description = "Give the patroni user /dev/watchdog (chown + re-apply the udev rule) before patroni";
+            before = ["patroni.service"];
+            wantedBy = ["multi-user.target"];
+            requiredBy = ["patroni.service"];
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = [
+                "${pkgs.systemd}/bin/udevadm trigger --subsystem-match=misc --action=add"
+                "${pkgs.systemd}/bin/udevadm settle"
+                "${pkgs.coreutils}/bin/chown patroni:patroni /dev/watchdog"
+              ];
             };
           };
-          initdb = [
-            "encoding=UTF-8"
-            "data-checksums"
-          ];
-        };
 
-        postgresql = {
-          authentication = {
-            replication.username = "replicator";
-            superuser.username = "postgres";
+          patroni-role-reconcile = {
+            description = "Reconcile postgres roles/passwords/ownership on the Patroni leader";
+            after = ["patroni.service"];
+            wantedBy = ["multi-user.target"];
+            serviceConfig = {
+              Type = "oneshot";
+              # no `postgres` OS user on an HA node; patroni runs the postmaster, and the local
+              # trust line lets this user reach the postgres role over the socket.
+              User = "patroni";
+              RemainAfterExit = true;
+              LoadCredential = roleLoadCreds;
+            };
+            # reconcile once this node is leader; exit 0 if it never is (a replica's work is the
+            # leader's own unit's job, not a failure).
+            script = ''
+              for i in $(seq 1 30); do
+                if ${pkgs.curl}/bin/curl -sf http://${selfIp}:8008/primary >/dev/null 2>&1; then
+                  ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
+              ${roleReconcileSql}
+              EOF
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "not the leader after 60s; reconcile is the leader's job, exiting 0"
+              exit 0
+            '';
           };
-          # stable socket path so the reconcile oneshot can reach it (tmpfiles creates the dir).
-          parameters.unix_socket_directories = "/run/postgresql";
-        };
-      };
-    };
+        }
 
-    # patroni owns the watchdog; drop systemd's claim so they don't contend for the one VM device.
-    systemd.settings.Manager.RuntimeWatchdogSec = lib.mkForce "0";
+        # installed but nothing auto-starts, so no node bootstraps a partial cluster; clear the
+        # hold on all members and deploy together.
+        (lib.mkIf ha.bootstrapHold {
+          etcd.wantedBy = lib.mkForce [];
+          patroni.wantedBy = lib.mkForce [];
+          haproxy.wantedBy = lib.mkForce [];
+          keepalived.wantedBy = lib.mkForce [];
+          patroni-role-reconcile.wantedBy = lib.mkForce [];
+        })
+      ];
 
-    services.haproxy = {
-      enable = true;
-      config = haproxyConfig;
+      tmpfiles.rules = [
+        "d ${siteData}/etcd 0700 etcd etcd -"
+        # parents must exist and be patroni-writable; patroni creates the versioned leaf itself.
+        "d ${siteData}/patroni 0750 patroni patroni -"
+        "d ${siteData}/patroni/pgdata 0750 patroni patroni -"
+        "d /run/postgresql 0755 patroni patroni -"
+      ];
     };
 
     # let haproxy bind the VIP on nodes that don't currently hold it, else it can't start
@@ -212,7 +286,7 @@ in {
 
     lab.vrrp = {
       enable = true;
-      vip = ha.vip;
+      inherit (ha) vip;
       vrrpInterface = "ens19";
       vipInterface = "ens19";
       virtualRouterId = 51; # 52 = edge, 53 = dns; unique per L2 segment
@@ -226,68 +300,6 @@ in {
         script = "${pkgs.procps}/bin/pgrep -x haproxy";
       };
     };
-
-    systemd.services = lib.mkMerge [
-      {
-        # /dev/watchdog pre-exists at boot so the module's udev rule granting it to patroni
-        # never re-applies; without it patroni's mode=required won't become primary. re-trigger
-        # udev (and chown directly, in case that races) before patroni on every node.
-        patroni-watchdog-perms = {
-          description = "Give the patroni user /dev/watchdog (chown + re-apply the udev rule) before patroni";
-          before = ["patroni.service"];
-          wantedBy = ["multi-user.target"];
-          requiredBy = ["patroni.service"];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = [
-              "${pkgs.systemd}/bin/udevadm trigger --subsystem-match=misc --action=add"
-              "${pkgs.systemd}/bin/udevadm settle"
-              "${pkgs.coreutils}/bin/chown patroni:patroni /dev/watchdog"
-            ];
-          };
-        };
-
-        patroni-role-reconcile = {
-          description = "Reconcile postgres roles/passwords/ownership on the Patroni leader";
-          after = ["patroni.service"];
-          wantedBy = ["multi-user.target"];
-          serviceConfig = {
-            Type = "oneshot";
-            # no `postgres` OS user on an HA node; patroni runs the postmaster, and the local
-            # trust line lets this user reach the postgres role over the socket.
-            User = "patroni";
-            RemainAfterExit = true;
-            LoadCredential = roleLoadCreds;
-          };
-          # reconcile once this node is leader; exit 0 if it never is (a replica's work is the
-          # leader's own unit's job, not a failure).
-          script = ''
-            for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -sf http://${selfIp}:8008/primary >/dev/null 2>&1; then
-                ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
-            ${roleReconcileSql}
-            EOF
-                exit 0
-              fi
-              sleep 2
-            done
-            echo "not the leader after 60s; reconcile is the leader's job, exiting 0"
-            exit 0
-          '';
-        };
-      }
-
-      # installed but nothing auto-starts, so no node bootstraps a partial cluster; clear the
-      # hold on all members and deploy together.
-      (lib.mkIf ha.bootstrapHold {
-        etcd.wantedBy = lib.mkForce [];
-        patroni.wantedBy = lib.mkForce [];
-        haproxy.wantedBy = lib.mkForce [];
-        keepalived.wantedBy = lib.mkForce [];
-        patroni-role-reconcile.wantedBy = lib.mkForce [];
-      })
-    ];
 
     # patroni reads these directly (environmentFiles) so they must be patroni-owned; the
     # per-role secrets go through LoadCredential and need no owner override.
@@ -308,13 +320,5 @@ in {
       8008
     ];
     # the VRRP accept rule on ens19 comes from modules.meta.vrrp.system.
-
-    systemd.tmpfiles.rules = [
-      "d ${siteData}/etcd 0700 etcd etcd -"
-      # parents must exist and be patroni-writable; patroni creates the versioned leaf itself.
-      "d ${siteData}/patroni 0750 patroni patroni -"
-      "d ${siteData}/patroni/pgdata 0750 patroni patroni -"
-      "d /run/postgresql 0755 patroni patroni -"
-    ];
   };
 }

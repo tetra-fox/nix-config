@@ -138,61 +138,63 @@ in {
 
     # ---- server: receive + store logs (loki) + show them (grafana). one per site ----
     (lib.mkIf (cfg.enable && serverEnabled) {
-      services.loki = {
-        enable = true;
-        dataDir = lokiStateDir;
-        configuration = {
-          server = {
-            http_listen_address = lokiListen;
-            http_listen_port = cfg.lokiPort;
-            # alloy ships over http on the same port, no separate grpc listener needed
-            grpc_listen_port = 0;
-          };
+      services = {
+        loki = {
+          enable = true;
+          dataDir = lokiStateDir;
+          configuration = {
+            server = {
+              http_listen_address = lokiListen;
+              http_listen_port = cfg.lokiPort;
+              # alloy ships over http on the same port, no separate grpc listener needed
+              grpc_listen_port = 0;
+            };
 
-          auth_enabled = false;
+            auth_enabled = false;
 
-          common = {
-            ring.kvstore.store = "inmemory";
-            replication_factor = 1;
-            path_prefix = lokiStateDir;
-            storage.filesystem = {
-              chunks_directory = "${lokiStateDir}/chunks";
-              rules_directory = "${lokiStateDir}/rules";
+            common = {
+              ring.kvstore.store = "inmemory";
+              replication_factor = 1;
+              path_prefix = lokiStateDir;
+              storage.filesystem = {
+                chunks_directory = "${lokiStateDir}/chunks";
+                rules_directory = "${lokiStateDir}/rules";
+              };
+            };
+
+            schema_config.configs = [
+              {
+                from = "2024-01-01";
+                store = "tsdb";
+                object_store = "filesystem";
+                schema = "v13";
+                index = {
+                  prefix = "index_";
+                  period = "24h";
+                };
+              }
+            ];
+
+            limits_config.retention_period = "744h";
+            compactor = {
+              working_directory = "${lokiStateDir}/compactor";
+              retention_enabled = true;
+              delete_request_store = "filesystem";
             };
           };
-
-          schema_config.configs = [
-            {
-              from = "2024-01-01";
-              store = "tsdb";
-              object_store = "filesystem";
-              schema = "v13";
-              index = {
-                prefix = "index_";
-                period = "24h";
-              };
-            }
-          ];
-
-          limits_config.retention_period = "744h";
-          compactor = {
-            working_directory = "${lokiStateDir}/compactor";
-            retention_enabled = true;
-            delete_request_store = "filesystem";
-          };
         };
+
+        grafana.provision.datasources.settings.datasources = [
+          {
+            name = "loki";
+            type = "loki";
+            access = "proxy";
+            url = "http://127.0.0.1:${toString cfg.lokiPort}";
+          }
+        ];
+
+        grafana-dashboards.extras = [./dashboards];
       };
-
-      services.grafana.provision.datasources.settings.datasources = [
-        {
-          name = "loki";
-          type = "loki";
-          access = "proxy";
-          url = "http://127.0.0.1:${toString cfg.lokiPort}";
-        }
-      ];
-
-      services.grafana-dashboards.extras = [./dashboards];
     })
   ];
 }

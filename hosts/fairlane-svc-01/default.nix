@@ -22,24 +22,30 @@
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
   ];
 
-  lab.avahi.publish = true;
+  lab = {
+    avahi.publish = true;
 
-  lab.arrStack = {
-    # the arr DBs have root/download dirs baked in under /mnt/media, so these must match
-    # or every item shows as missing.
-    torrentsPath = "/mnt/media/torrents";
-    nzbPath = "/mnt/media/nzb";
-    # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
-    sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
-  };
+    arrStack = {
+      # the arr DBs have root/download dirs baked in under /mnt/media, so these must match
+      # or every item shows as missing.
+      torrentsPath = "/mnt/media/torrents";
+      nzbPath = "/mnt/media/nzb";
+      # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
+      sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
+    };
 
-  lab.sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
+    sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
 
-  lab.postgres = {
-    server.enable = true;
-    extraAllowedCidrs = ["192.168.20.0/24"];
-    openFirewall = true;
-    admin.enable = true;
+    postgres = {
+      server.enable = true;
+      extraAllowedCidrs = ["192.168.20.0/24"];
+      openFirewall = true;
+      admin.enable = true;
+    };
+
+    caddy.caddyfile = ./files/caddy/Caddyfile;
+
+    podman.autoUpdate.enable = true;
   };
 
   networking = {
@@ -65,10 +71,6 @@
       physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr0.10")];
     };
   };
-
-  lab.caddy.caddyfile = ./files/caddy/Caddyfile;
-
-  lab.podman.autoUpdate.enable = true;
 
   users.users.${username}.extraGroups = [
     "podman"

@@ -16,18 +16,21 @@
   ];
 
   networking.hostName = "mesa-dns-02";
-  lab.site.hostIp = "192.168.10.161";
-  # VRRP heartbeat rides ens19, .53 VIP stays on ens18. see mesa-dns-01.
-  lab.site.internalIp = "10.10.0.161";
 
   # ask itself, never the router -- see mesa-dns-01 for why (forwarding loop).
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 
-  lab.bind.enable = true;
+  lab = {
+    site.hostIp = "192.168.10.161";
+    # VRRP heartbeat rides ens19, .53 VIP stays on ens18. see mesa-dns-01.
+    site.internalIp = "10.10.0.161";
 
-  lab.bind.ha = {
-    enable = true;
-    vip = "192.168.10.53";
+    bind.enable = true;
+
+    bind.ha = {
+      enable = true;
+      vip = "192.168.10.53";
+    };
   };
 
   systemd.tmpfiles.rules = ["d /var/lib/mesa 0755 root root -"];

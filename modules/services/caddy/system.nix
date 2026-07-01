@@ -121,31 +121,47 @@ in {
       group = "caddy";
     };
 
-    systemd.services.caddy.serviceConfig.EnvironmentFile = [
-      config.sops.templates."caddy.env".path
-    ];
+    systemd = {
+      services = {
+        caddy = {
+          serviceConfig.EnvironmentFile = [
+            config.sops.templates."caddy.env".path
+          ];
 
-    systemd.services.caddy.environment.STATS_UPSTREAM = config.lab.caddy.statsUpstream;
-    systemd.services.caddy.environment.AUTH_UPSTREAM = config.lab.caddy.authUpstream;
-    systemd.services.caddy.environment.JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
-    systemd.services.caddy.environment.NP_UPSTREAM = config.lab.caddy.npUpstream;
+          environment = {
+            STATS_UPSTREAM = config.lab.caddy.statsUpstream;
+            AUTH_UPSTREAM = config.lab.caddy.authUpstream;
+            JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
+            NP_UPSTREAM = config.lab.caddy.npUpstream;
+          };
+        };
 
-    # upstream only creates dataDir when it's the default /var/lib/caddy; overriding to
-    # siteData means we create it ourselves or the ReadWritePaths bind-mount fails 226/NAMESPACE.
-    # pre-create access.log too: fail2ban's caddy-status jail won't start with its logpath missing.
-    systemd.tmpfiles.rules = [
-      "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
-      # own the log dir before the file rule, else tmpfiles creates the parent root-owned and caddy can't rotate
-      "d /var/log/caddy 0750 caddy caddy -"
-      "f /var/log/caddy/access.log 0644 caddy caddy -"
-    ];
+        fail2ban = {
+          # StateDirectory is relative to /var/lib; must resolve to the same dir as the fail2ban dbfile
+          serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
+
+          after = ["caddy.service"];
+          wants = ["caddy.service"];
+        };
+      };
+
+      # upstream only creates dataDir when it's the default /var/lib/caddy; overriding to
+      # siteData means we create it ourselves or the ReadWritePaths bind-mount fails 226/NAMESPACE.
+      # pre-create access.log too: fail2ban's caddy-status jail won't start with its logpath missing.
+      tmpfiles.rules = [
+        "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
+        # own the log dir before the file rule, else tmpfiles creates the parent root-owned and caddy can't rotate
+        "d /var/log/caddy 0750 caddy caddy -"
+        "f /var/log/caddy/access.log 0644 caddy caddy -"
+      ];
+    };
 
     networking.firewall.allowedTCPPorts = [80 443];
 
     # caddy binds :80/:443 on all interfaces, so it catches VIP traffic with no ip_nonlocal_bind.
     lab.vrrp = lib.mkIf ha.enable {
       enable = true;
-      vip = ha.vip;
+      inherit (ha) vip;
       vrrpInterface = "ens18";
       vipInterface = "ens18";
       virtualRouterId = 52; # unique per L2 segment
@@ -191,14 +207,6 @@ in {
         maxretry = 5;
       };
       daemonSettings.Definition.dbfile = "${siteData}/fail2ban/fail2ban.sqlite3";
-    };
-
-    # StateDirectory is relative to /var/lib; must resolve to the same dir as dbfile above
-    systemd.services.fail2ban.serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
-
-    systemd.services.fail2ban = {
-      after = ["caddy.service"];
-      wants = ["caddy.service"];
     };
 
     environment.etc."fail2ban/filter.d/caddy-status.conf".source = ./files/caddy-status.conf;

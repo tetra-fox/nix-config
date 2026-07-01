@@ -9,7 +9,7 @@
   ...
 }: let
   cfg = config.lab.bind;
-  ha = cfg.ha;
+  inherit (cfg) ha;
 
   topo = import modules.meta.lib.site-topology {inherit lib;} {
     inherit nixosConfigurations;
@@ -30,7 +30,7 @@ in {
   config = lib.mkIf (cfg.enable && ha.enable) {
     lab.vrrp = {
       enable = true;
-      vip = ha.vip;
+      inherit (ha) vip;
       vrrpInterface = "ens19"; # heartbeat on the isolated VLAN
       vipInterface = "ens18"; # but the VIP is client-facing, on the server VLAN
       virtualRouterId = 53; # must be unique per L2 segment; 51 = db, also on ens19

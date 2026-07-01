@@ -33,12 +33,18 @@ in {
       };
     };
 
-    services.xserver.videoDrivers = ["nvidia"];
+    services = {
+      xserver.videoDrivers = ["nvidia"];
 
-    services.prometheus.exporters.nvidia-gpu = lib.mkIf cfg.exporter.enable {
-      enable = true;
-      port = cfg.exporter.port;
-      listenAddress = config.lab.monitoring.bindAddr;
+      prometheus.exporters.nvidia-gpu = lib.mkIf cfg.exporter.enable {
+        enable = true;
+        port = cfg.exporter.port;
+        listenAddress = config.lab.monitoring.bindAddr;
+      };
+
+      grafana-dashboards.community = lib.mkIf (cfg.exporter.enable && config.lab.monitoring.server.enable) [
+        pkgs.grafana-dashboards.nvidia-gpu
+      ];
     };
 
     lab.monitoring.exporters = lib.mkIf cfg.exporter.enable [
@@ -46,10 +52,6 @@ in {
         name = "nvidia";
         port = cfg.exporter.port;
       }
-    ];
-
-    services.grafana-dashboards.community = lib.mkIf (cfg.exporter.enable && config.lab.monitoring.server.enable) [
-      pkgs.grafana-dashboards.nvidia-gpu
     ];
   };
 }

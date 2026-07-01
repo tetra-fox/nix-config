@@ -15,17 +15,20 @@
     modules.platform.sops.system
   ];
 
-  lab.sops.secretsFile = ../../secrets/mesa-edge-02.yaml;
-
   networking.hostName = "mesa-edge-02";
-  lab.site.hostIp = "192.168.10.151";
-  lab.site.internalIp = "10.10.0.151";
 
-  lab.caddy.caddyfile = ../mesa-edge-01/files/caddy/Caddyfile;
+  lab = {
+    sops.secretsFile = ../../secrets/mesa-edge-02.yaml;
 
-  lab.caddy.ha = {
-    enable = true;
-    vip = "192.168.10.155";
+    site.hostIp = "192.168.10.151";
+    site.internalIp = "10.10.0.151";
+
+    caddy.caddyfile = ../mesa-edge-01/files/caddy/Caddyfile;
+
+    caddy.ha = {
+      enable = true;
+      vip = "192.168.10.155";
+    };
   };
 
   system.stateVersion = "26.11";

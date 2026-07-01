@@ -23,7 +23,7 @@
 
   rpzZones =
     map (l: {
-      name = l.name;
+      inherit (l) name;
       file = "${rpzDir}/${l.name}";
     })
     cfg.rpzLists;

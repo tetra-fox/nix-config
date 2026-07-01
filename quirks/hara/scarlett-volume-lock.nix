@@ -1,4 +1,4 @@
-{...}: {
+_: {
   services.pipewire.wireplumber.extraConfig."99-scarlett-volume-lock" = {
     "monitor.alsa.rules" = [
       {

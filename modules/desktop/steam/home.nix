@@ -8,8 +8,6 @@
   #   XRIZER_CUSTOM_BINDINGS_DIR=/home/tetra/.local/share/xrizer-bindings/vrchat %command%
   home.file.".local/share/xrizer-bindings".source = ./_xrizer-bindings;
 
-  xdg.configFile."wayvr/openxr_actions.json5".source = ./_wayvr/openxr_actions.json5;
-
   # vrchat dumps screenshots inside the wine prefix; symlink them out to ~/Pictures/VRChat
   systemd.user.tmpfiles.rules = let
     target = "${config.home.homeDirectory}/Pictures/VRChat";
@@ -19,24 +17,28 @@
     "L+ ${link} - - - - ${target}"
   ];
 
-  xdg.configFile."openxr/1/active_runtime.json".source = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
+  xdg.configFile = {
+    "wayvr/openxr_actions.json5".source = ./_wayvr/openxr_actions.json5;
 
-  xdg.configFile."openvr/openvrpaths.vrpath".text = let
-    steam = "${config.xdg.dataHome}/Steam";
-  in
-    builtins.toJSON {
-      version = 1;
-      jsonid = "vrpathreg";
+    "openxr/1/active_runtime.json".source = "${pkgs.monado}/share/openxr/1/openxr_monado.json";
 
-      external_drivers = null;
-      config = ["${steam}/config"];
+    "openvr/openvrpaths.vrpath".text = let
+      steam = "${config.xdg.dataHome}/Steam";
+    in
+      builtins.toJSON {
+        version = 1;
+        jsonid = "vrpathreg";
 
-      log = ["${steam}/logs"];
+        external_drivers = null;
+        config = ["${steam}/config"];
 
-      runtime = [
-        "${pkgs.xrizer}/lib/xrizer"
-        # OR
-        # "${pkgs.opencomposite}/lib/opencomposite"
-      ];
-    };
+        log = ["${steam}/logs"];
+
+        runtime = [
+          "${pkgs.xrizer}/lib/xrizer"
+          # OR
+          # "${pkgs.opencomposite}/lib/opencomposite"
+        ];
+      };
+  };
 }

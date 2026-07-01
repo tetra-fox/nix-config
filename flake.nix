@@ -183,47 +183,49 @@
         };
       };
 
-      flake.topology = lib.genAttrs ["x86_64-linux"] (system:
-        import inputs.nix-topology {
-          pkgs = import inputs.nixpkgs {
-            inherit system;
-            overlays = [inputs.nix-topology.overlays.default];
+      flake = {
+        topology = lib.genAttrs ["x86_64-linux"] (system:
+          import inputs.nix-topology {
+            pkgs = import inputs.nixpkgs {
+              inherit system;
+              overlays = [inputs.nix-topology.overlays.default];
+            };
+            modules = [
+              ./topology.nix
+              {nixosConfigurations = inputs.self.nixosConfigurations;}
+            ];
+          });
+
+        # colmena wants two outputs: the raw hive spec as `colmena`, and the evaluated
+        # `colmenaHive = colmena.lib.makeHive self.outputs.colmena`.
+        colmena = let
+          sitePrefix = import ./modules/meta/lib/site-prefix.nix {inherit lib;};
+
+          cfgs = inputs.self.nixosConfigurations;
+          deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
+
+          mkNode = name: c: {
+            deployment = {
+              targetHost = c.config.lab.site.hostIp;
+              targetUser = "admin";
+              tags = [(sitePrefix name)];
+              buildOnTarget = false;
+            };
+            # colmena re-evals each node, so hand it the module set easy-hosts already assembled.
+            imports = c._module.args.modules or [];
           };
-          modules = [
-            ./topology.nix
-            {nixosConfigurations = inputs.self.nixosConfigurations;}
-          ];
-        });
+        in
+          {
+            meta = {
+              nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
+              nodeSpecialArgs = lib.mapAttrs (_: c: c._module.specialArgs) deployable;
+              nodeNixpkgs = lib.mapAttrs (_: c: c.pkgs) deployable;
+            };
+          }
+          // lib.mapAttrs mkNode deployable;
 
-      # colmena wants two outputs: the raw hive spec as `colmena`, and the evaluated
-      # `colmenaHive = colmena.lib.makeHive self.outputs.colmena`.
-      flake.colmena = let
-        sitePrefix = import ./modules/meta/lib/site-prefix.nix {inherit lib;};
-
-        cfgs = inputs.self.nixosConfigurations;
-        deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
-
-        mkNode = name: c: {
-          deployment = {
-            targetHost = c.config.lab.site.hostIp;
-            targetUser = "admin";
-            tags = [(sitePrefix name)];
-            buildOnTarget = false;
-          };
-          # colmena re-evals each node, so hand it the module set easy-hosts already assembled.
-          imports = c._module.args.modules or [];
-        };
-      in
-        {
-          meta = {
-            nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
-            nodeSpecialArgs = lib.mapAttrs (_: c: c._module.specialArgs) deployable;
-            nodeNixpkgs = lib.mapAttrs (_: c: c.pkgs) deployable;
-          };
-        }
-        // lib.mapAttrs mkNode deployable;
-
-      flake.colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
+        colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
+      };
 
       easy-hosts = {
         perTag = tag: {

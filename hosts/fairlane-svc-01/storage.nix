@@ -4,7 +4,7 @@
 # the media disk is a DRAM-less QLC SATA SSD prone to wedging under sustained writes.
 # ext4 over btrfs for lower write amplification, and the content is re-downloadable so
 # recoverability trumps checksums. NCQ is disabled on the host (libata.force=noncq on pooltoy).
-{...}: let
+_: let
   siteData = "/var/lib/fairlane";
   media = "/mnt/media";
 in {

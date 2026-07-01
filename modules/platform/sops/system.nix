@@ -14,9 +14,11 @@ in {
     _module.args.siteEnvFile = name: [config.sops.templates.${name}.path];
 
     sops = {
-      age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
-      age.keyFile = null;
-      age.generateKey = false;
+      age = {
+        sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
+        keyFile = null;
+        generateKey = false;
+      };
 
       defaultSopsFile = cfg.secretsFile;
     };

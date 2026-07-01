@@ -19,7 +19,7 @@
 
   hostsInSite =
     lib.filter
-    (name: isNixosHost name && sitePrefix (nixosConfigurations.${name}.config.networking.hostName) == mySite)
+    (name: isNixosHost name && sitePrefix nixosConfigurations.${name}.config.networking.hostName == mySite)
     (builtins.attrNames nixosConfigurations);
 
   # prefer a host's internal-VLAN IP so VM-to-VM links ride the isolated fabric; fall back to

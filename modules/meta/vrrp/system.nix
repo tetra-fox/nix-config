@@ -108,14 +108,14 @@ in {
 
       vrrpInstances.${cfg.instanceName} = {
         interface = cfg.vrrpInterface;
-        virtualRouterId = cfg.virtualRouterId;
-        priority = cfg.priority;
+        inherit (cfg) virtualRouterId;
+        inherit (cfg) priority;
         # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back and flap.
         state = "BACKUP";
         noPreempt = true;
         # unicast VRRP -- no reliance on L2 multicast on the SDN bridge.
-        unicastSrcIp = cfg.unicastSrcIp;
-        unicastPeers = cfg.unicastPeers;
+        inherit (cfg) unicastSrcIp;
+        inherit (cfg) unicastPeers;
         virtualIps = [
           {
             addr = "${cfg.vip}/24";

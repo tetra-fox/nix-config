@@ -8,11 +8,13 @@
   nixosConfigurations,
   ...
 }: let
-  edgeEndpointIp =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+  inherit
+    ((import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
-    }).edgeEndpointIp;
+    }))
+    edgeEndpointIp
+    ;
 in {
   imports = [modules.services.bind.system];
 

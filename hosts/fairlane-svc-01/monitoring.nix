@@ -5,10 +5,12 @@
     modules.services.logging.system
   ];
 
-  lab.monitoring.server.enable = true;
-  lab.monitoring.unifi.enable = true;
+  lab = {
+    monitoring.server.enable = true;
+    monitoring.unifi.enable = true;
 
-  lab.logging.enable = true;
+    logging.enable = true;
+  };
 
   # TODO: fairlane's non-NixOS node-exporter targets (HA, proxmox host) via
   # lab.monitoring.extraScrapeConfigs once they exist.

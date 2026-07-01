@@ -106,12 +106,10 @@
           same-on-all = true;
           all = {
             output = "all";
-            source = (
-              cosmicLib.cosmic.mkRON "enum" {
-                value = ["${shared.wallpapers}/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg"];
-                variant = "Path";
-              }
-            );
+            source = cosmicLib.cosmic.mkRON "enum" {
+              value = ["${shared.wallpapers}/andrei-castanha-cCWKt_dHMvQ-unsplash-rotate.jpg"];
+              variant = "Path";
+            };
             filter_by_theme = true;
             rotation_frequency = 300;
             filter_method = cosmicLib.cosmic.mkRON "enum" "Lanczos";

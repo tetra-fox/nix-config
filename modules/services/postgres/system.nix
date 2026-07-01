@@ -9,11 +9,13 @@
 }: let
   cfg = config.lab.postgres;
 
-  dbClientCidrs =
-    (import modules.meta.lib.site-topology {inherit lib;} {
+  inherit
+    ((import modules.meta.lib.site-topology {inherit lib;} {
       inherit nixosConfigurations;
       hostName = config.networking.hostName;
-    }).dbClientCidrs;
+    }))
+    dbClientCidrs
+    ;
 
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
@@ -68,7 +70,7 @@ in {
     (lib.mkIf cfg.server.enable {
       services.postgresql = {
         enable = true;
-        package = cfg.package;
+        inherit (cfg) package;
         dataDir = "${siteData}/postgresql/${cfg.package.psqlSchema}";
         enableTCPIP = true;
         settings.listen_addresses = "*";

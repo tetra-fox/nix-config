@@ -24,29 +24,32 @@ in {
     modules.platform.sops.system
   ];
 
-  lab.sops.secretsFile = ../../secrets/mesa-db-03.yaml;
-
   networking.hostName = "mesa-db-03";
-  lab.site.hostIp = "192.168.10.112";
-  lab.site.internalIp = "10.10.0.112";
 
-  lab.postgres = {
-    ha = {
-      enable = true;
-      vip = "10.10.0.115";
-    };
-    admin.enable = true;
+  lab = {
+    sops.secretsFile = ../../secrets/mesa-db-03.yaml;
 
-    extraAllowedCidrs = ["192.168.20.0/24"];
+    site.hostIp = "192.168.10.112";
+    site.internalIp = "10.10.0.112";
 
-    roles = {
-      arr = {
-        passwordSecret = "arr/pg_pass";
-        owns = arrDbs;
+    postgres = {
+      ha = {
+        enable = true;
+        vip = "10.10.0.115";
       };
-      authentik = {
-        passwordSecret = "auth/pg_pass";
-        owns = ["authentik"];
+      admin.enable = true;
+
+      extraAllowedCidrs = ["192.168.20.0/24"];
+
+      roles = {
+        arr = {
+          passwordSecret = "arr/pg_pass";
+          owns = arrDbs;
+        };
+        authentik = {
+          passwordSecret = "auth/pg_pass";
+          owns = ["authentik"];
+        };
       };
     };
   };
