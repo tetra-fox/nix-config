@@ -25,6 +25,11 @@
     bind.ha = {
       enable = true;
       vip = "192.168.10.53";
+      # fairlane is dual-stack (Comcast), so the resolver floats a v6 VIP too. ULA, not GUA --
+      # the ISP prefix rotates and a GUA VIP would break on rotation. hostV6 is this box's static
+      # ULA on ens18 (the v6 heartbeat source).
+      vip6 = "fd00:10::53";
+      hostV6 = "fd00:10::160";
     };
   };
 

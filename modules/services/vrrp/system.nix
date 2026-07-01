@@ -16,6 +16,34 @@ in {
       description = "the floating virtual IP this node may hold (e.g. 192.168.10.53).";
     };
 
+    # keepalived can't mix v4 and v6 VIPs in one vrrp_instance, so an optional v6 VIP gets its
+    # own second instance (its own vrid, heartbeat over v6 link-local on vipInterface). null =
+    # v4-only, the common case. used by fairlane's dual-stack dns; a ULA is the right choice when
+    # the ISP prefix rotates (a GUA VIP would break on every prefix change).
+    vip6 = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "optional floating IPv6 VIP (e.g. a ULA fd00:10::53); null = v4-only.";
+    };
+
+    virtualRouterId6 = lib.mkOption {
+      type = lib.types.nullOr lib.types.int;
+      default = null;
+      description = "vrid for the v6 instance (required when vip6 is set); distinct from the v4 vrid.";
+    };
+
+    unicastSrcIp6 = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "this node's v6 source for the v6 VRRP heartbeat (the ens18 link-local, fe80::...).";
+    };
+
+    unicastPeers6 = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "the other nodes' v6 heartbeat sources (link-locals) for the v6 instance.";
+    };
+
     # keepalived allows the VRRP heartbeat interface and the VIP's interface to differ (dns runs
     # VRRP on an isolated ens19 but parks its VIP on ens18 where clients reach it).
     vrrpInterface = lib.mkOption {
@@ -86,6 +114,10 @@ in {
         assertion = !(lib.elem cfg.unicastSrcIp cfg.unicastPeers);
         message = "lab.vrrp: unicastSrcIp (${cfg.unicastSrcIp}) is also in unicastPeers -- two hosts likely share an IP, which would tie their VRRP priority and fight over the VIP.";
       }
+      {
+        assertion = cfg.vip6 == null || (cfg.virtualRouterId6 != null && cfg.unicastSrcIp6 != null);
+        message = "lab.vrrp: vip6 requires both virtualRouterId6 and unicastSrcIp6 (the v6 instance needs its own vrid + a v6 heartbeat source).";
+      }
     ];
 
     # nixpkgs writes enable_script_security without creating the keepalived_script user it needs;
@@ -111,28 +143,57 @@ in {
         weight = 0;
       };
 
-      vrrpInstances.${cfg.instanceName} = {
-        interface = cfg.vrrpInterface;
-        inherit (cfg) virtualRouterId;
-        inherit (cfg) priority;
-        # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back and flap.
-        state = "BACKUP";
-        noPreempt = true;
-        # unicast VRRP -- no reliance on L2 multicast on the SDN bridge.
-        inherit (cfg) unicastSrcIp;
-        inherit (cfg) unicastPeers;
-        virtualIps = [
-          {
-            addr = "${cfg.vip}/24";
-            dev = cfg.vipInterface;
-          }
-        ];
-        trackScripts = [cfg.healthCheck.name];
-      };
+      vrrpInstances =
+        {
+          ${cfg.instanceName} = {
+            interface = cfg.vrrpInterface;
+            inherit (cfg) virtualRouterId;
+            inherit (cfg) priority;
+            # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back and flap.
+            state = "BACKUP";
+            noPreempt = true;
+            # unicast VRRP -- no reliance on L2 multicast on the SDN bridge.
+            inherit (cfg) unicastSrcIp;
+            inherit (cfg) unicastPeers;
+            virtualIps = [
+              {
+                addr = "${cfg.vip}/24";
+                dev = cfg.vipInterface;
+              }
+            ];
+            trackScripts = [cfg.healthCheck.name];
+          };
+        }
+        # the v6 VIP as its own instance (keepalived forbids mixing families). heartbeat runs
+        # over v6 on vipInterface (the client-facing NIC that has the v6 addresses), sourced
+        # from the link-local. same track script so a bind failure drops both VIPs together.
+        // lib.optionalAttrs (cfg.vip6 != null) {
+          "${cfg.instanceName}6" = {
+            interface = cfg.vipInterface;
+            virtualRouterId = cfg.virtualRouterId6;
+            inherit (cfg) priority;
+            state = "BACKUP";
+            noPreempt = true;
+            unicastSrcIp = cfg.unicastSrcIp6;
+            unicastPeers = cfg.unicastPeers6;
+            virtualIps = [
+              {
+                addr = "${cfg.vip6}/64";
+                dev = cfg.vipInterface;
+              }
+            ];
+            trackScripts = [cfg.healthCheck.name];
+          };
+        };
     };
 
-    networking.firewall.extraInputRules = ''
-      iifname "${cfg.vrrpInterface}" ip protocol vrrp accept
-    '';
+    networking.firewall.extraInputRules =
+      ''
+        iifname "${cfg.vrrpInterface}" ip protocol vrrp accept
+      ''
+      # the v6 heartbeat rides vipInterface, so accept VRRP there too when a v6 VIP exists.
+      + lib.optionalString (cfg.vip6 != null) ''
+        iifname "${cfg.vipInterface}" ip6 nexthdr vrrp accept
+      '';
   };
 }

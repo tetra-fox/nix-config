@@ -164,6 +164,21 @@ in {
           the router's upstream DNS points here; both resolver hosts declare the same value.
         '';
       };
+      vip6 = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          optional floating IPv6 VIP for dual-stack sites (fairlane). use a ULA (fd00:...) not a
+          GUA -- a residential ISP prefix rotates, and a GUA VIP would break on every rotation.
+          each resolver host also needs a static ULA on ens18 (lab.bind.ha.hostV6) to source the
+          v6 VRRP heartbeat + hold the VIP. null = v4-only (mesa).
+        '';
+      };
+      hostV6 = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "this resolver's own static ULA on ens18 (the v6 heartbeat source); paired with vip6.";
+      };
     };
   };
 

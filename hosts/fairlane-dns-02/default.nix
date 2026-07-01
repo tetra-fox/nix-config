@@ -24,6 +24,8 @@
     bind.ha = {
       enable = true;
       vip = "192.168.10.53";
+      vip6 = "fd00:10::53";
+      hostV6 = "fd00:10::161";
     };
   };
 
