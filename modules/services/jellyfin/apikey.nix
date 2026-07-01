@@ -19,7 +19,7 @@ in {
     sops.secrets."apps/jellyfin_api_key" = {};
 
     systemd.services.jellyfin-apikey = {
-      description = "ensure the shared 'arr' api key row exists in jellyfin.db";
+      description = "Set *arr API key in Jellyfin";
       after = ["jellyfin.service"];
       wants = ["jellyfin.service"];
       wantedBy = ["multi-user.target"];
