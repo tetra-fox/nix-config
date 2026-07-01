@@ -21,6 +21,10 @@ in {
   imports = [modules.services.bind.system];
 
   lab.bind = {
+    # fairlane has a real dual-stack WAN (Comcast), so bind must not force -4 (which would refuse
+    # every v6 socket, including the v6 VIP). mesa is v4-only and leaves this default false.
+    dualStack = true;
+
     zone = {
       name = "fairlane.tetra.cool";
       file = pkgs.replaceVars ./files/fairlane.tetra.cool.zone.in {

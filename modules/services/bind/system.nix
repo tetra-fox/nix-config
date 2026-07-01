@@ -154,6 +154,16 @@ in {
       });
     };
 
+    dualStack = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        the site has a real dual-stack (v6) WAN. default false = mesa (v4-only WAN): bind runs
+        with -4 so it doesn't stall recursion trying v6 upstreams over a non-routable LAN. set
+        true on a dual-stack site (fairlane) so bind will bind v6 sockets, including a v6 VIP.
+      '';
+    };
+
     ha = {
       enable = lib.mkEnableOption "run keepalived and float the resolver VIP on this host";
       vip = lib.mkOption {
@@ -188,9 +198,11 @@ in {
     services.bind = {
       enable = true;
       configFile = namedConf;
-      # -4: the WAN is v4-only, so without it bind tries v6 root/auth servers over the non-routable
-      # LAN ULA, hits "network unreachable", and recursion stalls until the deadline.
-      ipv4Only = true;
+      # -4 (default): a v4-only WAN (mesa) makes bind try v6 root/auth servers over the non-
+      # routable LAN ULA, hit "network unreachable", and stall recursion until the deadline. a
+      # dual-stack site (fairlane) MUST NOT force -4, or bind refuses every v6 socket -- including
+      # the v6 VIP. so this follows lab.bind.dualStack.
+      ipv4Only = !cfg.dualStack;
     };
 
     # run named-checkconf at build so a broken named.conf fails the build, not the box. no -z: it
