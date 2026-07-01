@@ -62,12 +62,6 @@ np.mesa.tetra.cool {
 	reverse_proxy {$NP_UPSTREAM}
 }
 
-# internal
-dns.mesa.tetra.cool {
-	import lan_only
-	reverse_proxy 192.168.10.53:5380
-}
-
 pve.mesa.tetra.cool {
 	route {
 		import lan_only
