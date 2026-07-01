@@ -14,7 +14,6 @@
     }).arrDatabases;
 in {
   imports = [
-    ./monitoring.nix
 
     modules.profiles.server.system
 

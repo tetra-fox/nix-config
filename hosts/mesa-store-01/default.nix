@@ -1,7 +1,6 @@
 {modules, ...}: {
   imports = [
     ./storage.nix
-    ./monitoring.nix
 
     modules.profiles.server.system
 

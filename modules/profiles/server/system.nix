@@ -13,7 +13,16 @@
     # the proxmox-vm + disko trio. a host that's somehow not this can still override.
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
+
+    # the monitoring/logging AGENT (node+systemd exporters, journal shipping to the site's mon
+    # box) is on every server unconditionally -- self-observability is an invariant. the mon
+    # box's own server flag (lab.monitoring.server.enable) is what makes it ALSO scrape; the
+    # agent half is universal, so it lives here instead of a per-host monitoring.nix.
+    modules.services.monitoring.system
+    modules.services.logging.system
   ];
+
+  lab.logging.enable = true;
 
   home-manager.users.${username}.imports = [modules.profiles.server.home];
 

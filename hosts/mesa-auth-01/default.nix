@@ -1,6 +1,5 @@
 {modules, ...}: {
   imports = [
-    ./monitoring.nix
 
     modules.profiles.server.system
 
