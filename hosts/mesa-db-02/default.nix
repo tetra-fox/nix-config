@@ -17,8 +17,6 @@ in {
   imports = [
     ./monitoring.nix
 
-    modules.platform.proxmox-vm.system
-    modules.platform.disko.proxmox-vm
     modules.profiles.server.system
 
     modules.services.postgres-ha.system

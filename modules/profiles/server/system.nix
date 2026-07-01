@@ -7,6 +7,12 @@
 }: {
   imports = [
     modules.profiles.base.system
+
+    # every server in the fleet is a proxmox VM with the standard single-disk layout -- that's
+    # not a per-host choice, it's what "server" means here. folded in so host files don't repeat
+    # the proxmox-vm + disko trio. a host that's somehow not this can still override.
+    modules.platform.proxmox-vm.system
+    modules.platform.disko.proxmox-vm
   ];
 
   home-manager.users.${username}.imports = [modules.profiles.server.home];

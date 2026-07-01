@@ -1,0 +1,52 @@
+(lan_only) {
+	@notlan not remote_ip private_ranges
+	abort @notlan
+}
+
+(log) {
+	log {
+		output file /var/log/caddy/access.log
+		format transform "{common_log}"
+	}
+}
+
+{
+	cert_issuer acme {
+		dns cloudflare {$CF_TOKEN}
+		resolvers 1.1.1.1 8.8.8.8
+	}
+}
+
+# public
+fairlane.tetra.cool {
+	import log
+	respond "my paws hurt :("
+}
+
+home.fairlane.tetra.cool {
+	import log
+	reverse_proxy 192.168.10.215:8123
+}
+
+jellyfin.fairlane.tetra.cool {
+	import log
+	reverse_proxy {$JELLYFIN_UPSTREAM}
+}
+
+stats.fairlane.tetra.cool {
+	import log
+	reverse_proxy {$STATS_UPSTREAM}
+}
+
+# private -- no authentik at fairlane, so the arr UIs are lan-only, no forward_auth.
+# they proxy to svc-01's netns-forwarded ports (the arr-stack DNATs them onto svc-01's host).
+qb.fairlane.tetra.cool,
+sonarr.fairlane.tetra.cool,
+radarr.fairlane.tetra.cool,
+prowlarr.fairlane.tetra.cool,
+sabnzbd.fairlane.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy {$ARR_UPSTREAM}
+	}
+}

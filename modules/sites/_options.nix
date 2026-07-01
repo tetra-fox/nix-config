@@ -25,5 +25,15 @@
       description = "this host's IPv4 on the isolated internal VLAN (ens19); null = not on it";
       example = "10.10.0.130";
     };
+
+    # the proxmox node this VM runs on, for the topology diagram's parent edge. single-node
+    # sites (mesa/milkfish) can ignore it and hardcode the parent; multi-node sites (fairlane:
+    # plush/pooltoy) set it per host so the diagram shows which physical node hosts each VM.
+    proxmoxParent = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "the proxmox node hosting this VM (for topology); set on multi-node sites";
+      example = "pooltoy";
+    };
   };
 }
