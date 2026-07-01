@@ -358,14 +358,76 @@
             ];
           };
 
+          fairlane-store-01 = {
+            path = ./hosts/fairlane-store-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-db-01 = {
+            path = ./hosts/fairlane-db-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
           fairlane-svc-01 = {
             path = ./hosts/fairlane-svc-01;
             arch = "x86_64";
             class = "nixos";
+            tags = ["fairlane"];
             specialArgs = {username = "admin";};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-mon-01 = {
+            path = ./hosts/fairlane-mon-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-edge-01 = {
+            path = ./hosts/fairlane-edge-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-edge-02 = {
+            path = ./hosts/fairlane-edge-02;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-dns-01 = {
+            path = ./hosts/fairlane-dns-01;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
+          };
+
+          fairlane-dns-02 = {
+            path = ./hosts/fairlane-dns-02;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["fairlane"];
+            specialArgs = {username = "admin";};
+            modules = [inputs.disko.nixosModules.disko];
           };
 
           mesa-mon-01 = {

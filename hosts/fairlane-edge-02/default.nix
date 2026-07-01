@@ -2,8 +2,6 @@
 # to the other proxmox node (pooltoy) so a node death leaves one edge alive.
 {modules, ...}: {
   imports = [
-    ./monitoring.nix
-
     modules.profiles.server.system
 
     modules.services.caddy.system

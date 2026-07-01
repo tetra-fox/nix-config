@@ -34,6 +34,21 @@
     then topo.mediaHostIp
     else "127.0.0.1";
 
+  # the arr host's address, for a site (fairlane) that proxies the arr UIs directly instead of
+  # through authentik forward_auth (mesa's pattern). the arr-stack DNATs each arr's port onto its
+  # host, so the Caddyfile uses {$ARR_HOST}:<port>. loopback if the arrs are on this box, else
+  # the derived arr host. null-safe: sites without an arr host just don't reference it.
+  arrIsLocal = config.lab.arrStack.databases or [] != [];
+  arrHostAddr =
+    if arrIsLocal
+    then "127.0.0.1"
+    else let
+      hosts = topo.hostsProviding "arr";
+    in
+      if hosts != []
+      then topo.ipProviding "arr"
+      else "127.0.0.1";
+
   ha = config.lab.caddy.ha;
   # peers are the other edge hosts' server-VLAN IPs (hostIp, not internalIp).
   selfServerIp = config.lab.site.hostIp;
@@ -97,6 +112,15 @@ in {
       default = "${mediaHostAddr}:8090";
       description = "upstream for np.<site> ({$NP_UPSTREAM}); the derived media host (nowplaying)";
     };
+
+    arrHost = lib.mkOption {
+      type = lib.types.str;
+      default = arrHostAddr;
+      description = ''
+        the arr host's address ({$ARR_HOST}), for a Caddyfile that proxies arr UIs directly
+        (fairlane, no authentik) as {$ARR_HOST}:<port>. the derived arr host, loopback if local.
+      '';
+    };
   };
 
   config = {
@@ -134,6 +158,7 @@ in {
             AUTH_UPSTREAM = config.lab.caddy.authUpstream;
             JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
             NP_UPSTREAM = config.lab.caddy.npUpstream;
+            ARR_HOST = config.lab.caddy.arrHost;
           };
         };
 

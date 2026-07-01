@@ -1,73 +1,44 @@
+# fairlane-svc-01: arrs + jellyfin, NFS client of store-01. was the fairlane monolith; postgres
+# moved to db-01, caddy to edge-01/02, samba to store-01, so this is now a pure compute box.
+# networking comes from the fairlane site tag; it advertises media/arr/db-client capabilities.
 {
-  config,
   username,
   modules,
   ...
 }: {
   imports = [
     ./storage.nix
-    ./monitoring.nix
 
     modules.profiles.server.system
 
     modules.platform.sops.system
     modules.services.jellyfin.system
-    modules.services.postgres.system
-    modules.services.caddy.system
-    modules.services.samba.system
     modules.services.podman.system
     modules.services.arr-stack.default
-    modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
   ];
 
+  networking.hostName = "fairlane-svc-01";
+
   lab = {
-    avahi.publish = true;
+    site.hostIp = "192.168.10.130";
+    site.internalIp = "10.10.0.130";
+    site.proxmoxParent = "pooltoy";
 
     arrStack = {
       # the arr DBs have root/download dirs baked in under /mnt/media, so these must match
       # or every item shows as missing.
       torrentsPath = "/mnt/media/torrents";
       nzbPath = "/mnt/media/nzb";
-      # caddy proxies sabnzbd under this hostname; sabnzbd rejects it unless whitelisted
       sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
     };
 
     sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
 
-    postgres = {
-      server.enable = true;
-      extraAllowedCidrs = ["192.168.20.0/24"];
-      openFirewall = true;
-      admin.enable = true;
-    };
-
-    caddy.caddyfile = ./files/caddy/Caddyfile;
+    # pure client now: the arrs reach db-01 via the derived endpoint + the netns SNAT. this flag
+    # gets svc-01's hostIp into db-01's pg_hba.
+    postgres.client.enable = true;
 
     podman.autoUpdate.enable = true;
-  };
-
-  networking = {
-    hostName = "fairlane-svc-01";
-    useDHCP = false;
-    defaultGateway = "192.168.10.1";
-    nameservers = ["192.168.10.1"];
-
-    interfaces.ens18.ipv4.addresses = [
-      {
-        address = "192.168.10.249";
-        prefixLength = 24;
-      }
-    ];
-  };
-
-  topology.self = {
-    parent = "pooltoy";
-    guestType = "vm";
-    interfaces.ens18 = {
-      network = "fairlane-server-vlan";
-      virtual = true;
-      physicalConnections = [(config.lib.topology.mkConnection "pooltoy" "vmbr0.10")];
-    };
   };
 
   users.users.${username}.extraGroups = [

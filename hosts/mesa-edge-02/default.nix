@@ -1,7 +1,6 @@
 # see mesa-edge-01; caddy is stateless so this is a clone with its own ACME certs.
 {modules, ...}: {
   imports = [
-
     modules.profiles.server.system
 
     modules.services.caddy.system

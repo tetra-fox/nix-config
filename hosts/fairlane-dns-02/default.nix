@@ -1,0 +1,33 @@
+# see fairlane-dns-01; stateless bind clone pinned to the other node (pooltoy).
+{
+  lib,
+  modules,
+  ...
+}: {
+  imports = [
+    modules.profiles.server.system
+
+    modules.sites.fairlane-dns
+  ];
+
+  networking.hostName = "fairlane-dns-02";
+
+  networking.nameservers = lib.mkForce ["127.0.0.1"];
+
+  lab = {
+    site.hostIp = "192.168.10.161";
+    site.internalIp = "10.10.0.161";
+    site.proxmoxParent = "pooltoy";
+
+    bind.enable = true;
+
+    bind.ha = {
+      enable = true;
+      vip = "192.168.10.53";
+    };
+  };
+
+  systemd.tmpfiles.rules = ["d /var/lib/fairlane 0755 root root -"];
+
+  system.stateVersion = "26.11";
+}

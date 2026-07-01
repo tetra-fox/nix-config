@@ -1,6 +1,5 @@
 {modules, ...}: {
   imports = [
-
     modules.profiles.server.system
 
     modules.services.podman.system

@@ -37,6 +37,12 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_fairlane_svc_01
+  # the new fairlane split hosts: user-only until their host keys exist post-install, then add
+  # &host_fairlane_* anchors above + here and `sops updatekeys`.
+  - path_regex: secrets/fairlane-(db|mon|edge)-0[0-9]\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
   - path_regex: secrets/mesa-mon-01\.yaml$
     key_groups:
       - age:

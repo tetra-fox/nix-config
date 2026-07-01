@@ -38,15 +38,40 @@ stats.fairlane.tetra.cool {
 	reverse_proxy {$STATS_UPSTREAM}
 }
 
-# private -- no authentik at fairlane, so the arr UIs are lan-only, no forward_auth.
-# they proxy to svc-01's netns-forwarded ports (the arr-stack DNATs them onto svc-01's host).
-qb.fairlane.tetra.cool,
-sonarr.fairlane.tetra.cool,
-radarr.fairlane.tetra.cool,
-prowlarr.fairlane.tetra.cool,
+# private -- no authentik at fairlane, so the arr UIs are lan-only, no forward_auth. each
+# proxies to its own port on the arr host ({$ARR_HOST}); the arr-stack DNATs the netns ports
+# onto that host. sabnzbd is on the arr host too (8080).
+qb.fairlane.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy {$ARR_HOST}:8888
+	}
+}
+
+sonarr.fairlane.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy {$ARR_HOST}:8989
+	}
+}
+
+radarr.fairlane.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy {$ARR_HOST}:7878
+	}
+}
+
+prowlarr.fairlane.tetra.cool {
+	route {
+		import lan_only
+		reverse_proxy {$ARR_HOST}:9696
+	}
+}
+
 sabnzbd.fairlane.tetra.cool {
 	route {
 		import lan_only
-		reverse_proxy {$ARR_UPSTREAM}
+		reverse_proxy {$ARR_HOST}:8080
 	}
 }
