@@ -25,6 +25,16 @@ in {
     # every v6 socket, including the v6 VIP). mesa is v4-only and leaves this default false.
     dualStack = true;
 
+    # v6 clients must be in the internal view or they get REFUSED (the default trustedRanges is
+    # v4-only). add the LAN ULA range + link-local so the ULA VIP and v6 LAN clients resolve.
+    # the default v4 ranges are replaced here, so restate them alongside the v6 ones.
+    trustedRanges = [
+      "192.168.0.0/16"
+      "10.0.0.0/8"
+      "fd00::/8" # LAN ULAs (the resolver VIP + v6 clients)
+      "fe80::/10" # v6 link-local
+    ];
+
     zone = {
       name = "fairlane.tetra.cool";
       file = pkgs.replaceVars ./files/fairlane.tetra.cool.zone.in {
