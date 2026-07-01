@@ -22,6 +22,10 @@ keys:
   - &host_mesa_auth_01 age17qpwggy9h6vfwh7dvyltxum5hdce8lmgp9sxnr205pelmh9qpurqdq6wex
   - &host_mesa_edge_01 age1ww87qy6watdrne3r94vzaal9xamu9sdxkfp9awswymkha6y5ruus8396eq
   - &host_mesa_edge_02 age18ga99v2fzg9826m6kh9q8cekdzjh2pq48js2xm5k8afgkulnvvssu5ajxe
+  - &host_fairlane_db_01 age17hr8clvf0gt0ek4hlhw3j4htw0wxtkknqszkvy7f4rgd5v3fhqhq589v8y
+  - &host_fairlane_mon_01 age1ukcvclrgq92n2va348jrhkklgqzw4mj9slc547pxxrdjahqsfy9s0a2smk
+  - &host_fairlane_edge_01 age1tajr9rgru6qama0cm4nyhguee43sy08edh7da4nsmgfkwxxjreps39zztk
+  - &host_fairlane_edge_02 age10mq5ck0szwfv2hv78ytjnkhvywra2v8nqw8s5hthq9fm3s0z93mst8jtnt
 
 creation_rules:
   # per-host file, encrypted to that host's key only (plus the user). a host must
@@ -37,12 +41,26 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_fairlane_svc_01
-  # the new fairlane split hosts: user-only until their host keys exist post-install, then add
-  # &host_fairlane_* anchors above + here and `sops updatekeys`.
-  - path_regex: secrets/fairlane-(db|mon|edge)-0[0-9]\.yaml$
+  - path_regex: secrets/fairlane-db-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *host_fairlane_db_01
+  - path_regex: secrets/fairlane-mon-01\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_fairlane_mon_01
+  - path_regex: secrets/fairlane-edge-01\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_fairlane_edge_01
+  - path_regex: secrets/fairlane-edge-02\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_fairlane_edge_02
   - path_regex: secrets/mesa-mon-01\.yaml$
     key_groups:
       - age:
