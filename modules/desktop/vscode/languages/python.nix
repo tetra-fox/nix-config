@@ -11,7 +11,7 @@
     userSettings = {
       "python.defaultInterpreterPath" = "${pkgs.python3}/bin/python3";
       # pyrefly is the LSP, suppress ms-python.python's pylance prompt
-      "python.languageServer" = "None";
+      "python.languageServer" = "Default";
       "pyrefly.lspPath" = "${pkgs.pyrefly}/bin/pyrefly";
       "ruff.path" = ["${pkgs.ruff}/bin/ruff"];
       "[python]" = {
