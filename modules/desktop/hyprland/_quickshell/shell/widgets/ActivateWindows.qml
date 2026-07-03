@@ -43,7 +43,6 @@ Variants {
         // and qt resolves a single family name here (not a css comma-list), so name each face
         Column {
             id: column
-            spacing: 3
 
             // white-at-low-opacity rather than a fixed grey, so it reads correctly over
             // any wallpaper the way the real semi-transparent watermark does. both lines
