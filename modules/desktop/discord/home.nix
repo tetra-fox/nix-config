@@ -44,7 +44,7 @@
     };
   };
 
-  home.file."${config.programs.nixcord.discord.configDir}/settings.json".force = true;
+  # home.file."${config.programs.nixcord.discord.configDir}/settings.json".force = true;
 
   systemd.user.services.discord = {
     Unit = {
