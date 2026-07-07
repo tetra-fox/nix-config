@@ -13,6 +13,8 @@
     # modules.hardware.openrgb.system
     modules.desktop.steam.system
     modules.desktop.stylix.system
+
+    modules.services.ollama.system
   ];
 
   networking = {
