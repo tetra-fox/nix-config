@@ -9,9 +9,7 @@
     package = pkgs.ollama-cuda;
     environmentVariables = {
       OLLAMA_KEEP_ALIVE = "30m";
-      # larger context grows the kv cache and spills layers to system RAM.
-      # pin it so a long session can't silently cross the line.
-      OLLAMA_CONTEXT_LENGTH = "32768";
+      OLLAMA_CONTEXT_LENGTH = "65536";
     };
   };
 

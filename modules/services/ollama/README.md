@@ -31,6 +31,5 @@ open the chat UI at <http://localhost:8080>. `WEBUI_AUTH = "False"` skips the lo
 
 ## gotchas
 
-- `OLLAMA_KEEP_ALIVE = "30m"` keeps the last model resident so the first token after an idle gap doesn't pay a reload. drop it if you'd rather reclaim vram between sessions
 - setting `services.open-webui.environment` replaces the module's default env, which includes the three no-telemetry vars; they're re-stated in the module so the analytics stay off
 - 24GB vram fits the ~19GB q4 MoE models above with headroom for context; ollama loads all weights into vram even though only a few billion params activate per token. q8 (32GB) and fp16 (61GB) quants spill to system RAM and slow down hard
