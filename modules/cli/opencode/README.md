@@ -10,7 +10,7 @@ agentic coding tui, wired to the local ollama stack (`modules.services.ollama.sy
 
 ollama isn't a built-in opencode provider, so this defines one pointing at the
 local server's openai-compatible endpoint (`http://127.0.0.1:11434/v1`). default
-model is `ollama/qwen3-coder:30b`; title generation uses `qwen3:8b`.
+model is `ollama/qwen3.6:27b`; title generation uses `gemma4:26b`.
 
 ## models
 
@@ -19,9 +19,8 @@ names must match what you `ollama pull`ed. to add a model: pull it on the host,
 then add an entry to the map in `home.nix`.
 
 ```sh
-ollama pull qwen3-coder:30b   # 19GB, 30B MoE / 3.3B active, strongest local coder
-ollama pull gemma4:26b        # 18GB, 26B MoE / 4B active, multimodal + reasoning
-ollama pull qwen3:8b          # 5GB, small/fast, used for title generation
+ollama pull qwen3.6:27b   # 17GB, 27B dense, best dense open coder + multimodal
+ollama pull gemma4:26b    # 18GB, 26B MoE / 4B active, multimodal, kept for vision
 ```
 
 ## using a hosted provider too
@@ -33,8 +32,8 @@ edits stay local. the ollama default here is what you get with no login.
 
 ## gotchas
 
-- agentic coding leans on tool-calling and long context. qwen3-coder:30b is the
-  strongest local pick that fits (MoE, so fast despite the size); the 8B connects
-  fine but is weaker at multi-step tool use
+- qwen3.6:27b is dense, so every token activates all 27B params. it's slower to
+  generate than an MoE of similar size, but it's the best dense open coder and the
+  quality is worth the slower stream for agentic work
 - the provider `baseURL` must include `/v1` (openai-compatible path), not the bare
   ollama root

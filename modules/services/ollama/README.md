@@ -17,15 +17,15 @@ nothing binds a routable address and no firewall port is opened, so the stack st
 
 ## using it
 
-pull a model once, then it's available in the web UI and the API:
+the two models are pulled declaratively via `services.ollama.loadModels`, so a
+rebuild fetches them. what's in the stack:
 
-```sh
-ollama pull qwen3-coder:30b   # 19GB, 30B MoE / 3.3B active, strongest local coder
-ollama pull gemma4:26b        # 18GB, 26B MoE / 4B active, multimodal + reasoning
-ollama pull qwen3:8b          # 5GB, small/fast
+```
+qwen3.6:27b   # 17GB, 27B dense, best dense open coder + multimodal. primary
+gemma4:26b    # 18GB, 26B MoE / 4B active, multimodal. kept for vision/image work
 ```
 
-or declare models to pull at activation via `services.ollama.loadModels = [ "qwen3-coder:30b" ];`.
+to add another, `ollama pull <name>` by hand or add it to the `loadModels` list.
 
 open the chat UI at <http://localhost:8080>. `WEBUI_AUTH = "False"` skips the login wall (single-user desktop).
 

@@ -11,6 +11,11 @@
       OLLAMA_KEEP_ALIVE = "30m";
       OLLAMA_CONTEXT_LENGTH = "65536";
     };
+    # pulled on rebuild. qwen3.6:27b is the primary coder, gemma4:26b for vision
+    loadModels = [
+      "qwen3.6:27b"
+      "gemma4:26b"
+    ];
   };
 
   services.open-webui = {
