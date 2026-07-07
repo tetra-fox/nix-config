@@ -27,6 +27,12 @@ in {
       name = "fairlane Server VLAN";
       cidrv4 = "192.168.10.0/24";
     };
+
+    # same isolated east-west fabric as mesa's, physically separate. no gateway/WAN/inter-vlan.
+    fairlane-internal-vlan = {
+      name = "fairlane Internal VLAN (1010, isolated)";
+      cidrv4 = "10.10.0.0/24";
+    };
   };
 
   nodes = {
@@ -164,8 +170,32 @@ in {
       connections = {
         # udm uplink lands on sfp port 27
         "port27" = mkConnection "fairlane-udm" "port10";
+        # plush's trunk nic is on rj45 port 17
+        "port17" = mkConnection "plush" "nic0";
         # pooltoy's trunk nic is on rj45 port 20
         "port20" = mkConnection "pooltoy" "enp89s0";
+      };
+    };
+
+    # db-01, dns-01, edge-01 run here; the rest of the fleet is on pooltoy.
+    plush = {
+      name = "plush";
+      deviceType = "server";
+      hardware.info = "Proxmox VE 9";
+      icon = ./images/icons/proxmox.svg;
+      interfaces.nic0 = {
+        addresses = [];
+      };
+      interfaces."vmbr0.10" = {
+        addresses = ["192.168.10.212"];
+        network = "fairlane-server-vlan";
+        virtual = true;
+      };
+      # no host address: plush just bridges the isolated segment for its VMs' ens19
+      interfaces."vmbr0.1010" = {
+        addresses = [];
+        network = "fairlane-internal-vlan";
+        virtual = true;
       };
     };
 
@@ -182,15 +212,21 @@ in {
         network = "fairlane-server-vlan";
         virtual = true;
       };
+      interfaces."vmbr0.1010" = {
+        addresses = [];
+        network = "fairlane-internal-vlan";
+        virtual = true;
+      };
     };
 
-    # fairlane-svc-01 itself comes from the host's topology.self (hosts/fairlane-svc-01),
-    # same as mesa-svc-01. it attaches to pooltoy's vmbr0.10, declared above.
+    # the fairlane-* fleet (store/db/svc/mon/edge/dns) comes from each host's topology.self via
+    # modules/sites/fairlane.nix, which reads lab.site.proxmoxParent to attach the VM to plush or
+    # pooltoy's vmbr0.10 (+ vmbr0.1010 for hosts with an internalIp), same as mesa-svc-01.
 
     fairlane-homeassistant = {
       name = "homeassistant";
       deviceType = "vm";
-      parent = "pooltoy";
+      parent = "plush";
       guestType = "vm";
       icon = ./images/icons/home-assistant.svg;
       hardware.info = "Home Assistant OS";
@@ -198,22 +234,7 @@ in {
         addresses = ["192.168.10.215"];
         network = "fairlane-server-vlan";
         virtual = true;
-        physicalConnections = [(mkConnection "pooltoy" "vmbr0.10")];
-      };
-    };
-
-    fairlane-adguard = {
-      name = "adguard";
-      deviceType = "container";
-      parent = "pooltoy";
-      guestType = "lxc";
-      # TODO: drop an adguard icon in images/icons and reference it here
-      hardware.info = "AdGuard Home";
-      interfaces.eth0 = {
-        addresses = ["192.168.10.53"];
-        network = "fairlane-server-vlan";
-        virtual = true;
-        physicalConnections = [(mkConnection "pooltoy" "vmbr0.10")];
+        physicalConnections = [(mkConnection "plush" "vmbr0.10")];
       };
     };
   };

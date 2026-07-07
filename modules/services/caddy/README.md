@@ -14,5 +14,5 @@ caddy + the cloudflare DNS plugin baked into the package (for DNS-01 ACME on `*.
 ## gotchas
 
 - the cloudflare plugin is baked into the package (`pkgs.caddy.withPlugins`), not loaded at runtime. the `hash` pin needs bumping together with the version
-- the fail2ban filter matches caddy's default JSON log shape (`"remote_ip":"<HOST>".*"status":(401|403|429)`); tune the status codes in `system.nix` if you want to widen the net
+- the fail2ban filter matches apache-style common_log (caddy's `transform-encoder` plugin, baked into the package), failregex `^<HOST>.*"..." (401|403|429)`; it deliberately skips 404 and other 4xx so a reverse-proxied SPA's missing source maps and favicons don't false-positive. tune the status codes in `files/caddy-status.conf` if you want to widen the net
 - the Caddyfile is expected to log access to `/var/log/caddy/access.log` (use the `(log)` snippet)

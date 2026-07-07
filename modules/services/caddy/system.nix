@@ -163,6 +163,7 @@ in {
         };
 
         fail2ban = {
+          # the caddy-status jail bans on 401/403/429 only (see caddy-status.conf), not any 4xx
           # StateDirectory is relative to /var/lib; must resolve to the same dir as the fail2ban dbfile
           serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
 
@@ -232,9 +233,24 @@ in {
         findtime = "10m";
         maxretry = 5;
       };
+      # instaban known-probe paths (wp-login, .env, .git, phpunit, shells). the filter matches on
+      # path, not status, so it fires on the 404s these generate. maxretry=1 because a single hit is
+      # unambiguous; 24h base ban (the jail default is 1h) since there's no legit reason to be here.
+      jails.caddy-probe.settings = {
+        enabled = true;
+        filter = "caddy-probe";
+        logpath = "/var/log/caddy/access.log";
+        backend = "auto";
+        findtime = "10m";
+        maxretry = 1;
+        bantime = "24h";
+      };
       daemonSettings.Definition.dbfile = "${siteData}/fail2ban/fail2ban.sqlite3";
     };
 
-    environment.etc."fail2ban/filter.d/caddy-status.conf".source = ./files/caddy-status.conf;
+    environment.etc = {
+      "fail2ban/filter.d/caddy-status.conf".source = ./files/caddy-status.conf;
+      "fail2ban/filter.d/caddy-probe.conf".source = ./files/caddy-probe.conf;
+    };
   };
 }
