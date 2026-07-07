@@ -3,7 +3,21 @@
   pkgs,
   inputs,
   ...
-}: {
+}: let
+  # obsidian's git plugin shells out to git, which runs the sops clean/smudge
+  # filter for the notes vault. that git subprocess inherits obsidian's PATH,
+  # so sops and age have to be on it. wrap obsidian to prefix them rather than
+  # installing sops globally.
+  obsidian-with-sops = pkgs.symlinkJoin {
+    name = "obsidian-with-sops";
+    paths = [pkgs.obsidian];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/obsidian \
+        --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.sops pkgs.age]}
+    '';
+  };
+in {
   imports = [
     modules.profiles.base.home
 
@@ -42,7 +56,7 @@
     qview
 
     onlyoffice-desktopeditors
-    obsidian
+    obsidian-with-sops
 
     parsec-bin
 
