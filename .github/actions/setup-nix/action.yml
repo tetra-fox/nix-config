@@ -17,6 +17,23 @@ runs:
       with:
         ssh-private-key: ${{ inputs.ssh-private-key }}
 
+    # restore the nix store from a previous run so tool closures (statix, alejandra,
+    # colmena, ...) are a local restore instead of a re-fetch. keyed on flake.lock so
+    # a hit means the inputs are unchanged; a lock bump falls back to the newest prior
+    # store as a base via the prefix. gc-max caps the saved store so it stays under
+    # github's per-repo cache limit and doesn't thrash.
+    - name: Cache the nix store
+      uses: nix-community/cache-nix-action@v7
+      with:
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+        restore-prefixes-first-match: nix-${{ runner.os }}-
+        gc-max-store-size-linux: 2G
+        purge: true
+        purge-prefixes: nix-${{ runner.os }}-
+        purge-created: 0
+        purge-last-accessed: 0
+        purge-primary-key: never
+
     - name: Install Nix
       uses: cachix/install-nix-action@v31
       with:

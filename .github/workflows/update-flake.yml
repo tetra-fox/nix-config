@@ -12,6 +12,7 @@ jobs:
 
     permissions:
       contents: write
+      actions: write # cache-nix-action purges stale nix-store caches
 
     steps:
       - name: Checkout repository
