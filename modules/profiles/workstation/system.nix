@@ -15,6 +15,7 @@
     modules.hardware.pipewire.system
     modules.hardware.pipewire-rnnoise.system
     modules.desktop.udiskie.system
+    modules.desktop.walker.system
     modules.cli.yazi.system
   ];
 

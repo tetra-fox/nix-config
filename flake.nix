@@ -73,7 +73,8 @@
     };
     yazi = {
       url = "github:sxyazi/yazi";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # no nixpkgs.follows: yazi.cachix.org is built against yazi's own pinned
+      # nixpkgs, following ours changes the derivation hash and misses the cache
     };
     nix-yazi-plugins = {
       url = "github:lordkekz/nix-yazi-plugins";
