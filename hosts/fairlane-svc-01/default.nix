@@ -20,9 +20,11 @@
   networking.hostName = "fairlane-svc-01";
 
   lab = {
-    site.hostIp = "192.168.10.130";
-    site.internalIp = "10.10.0.130";
-    site.proxmoxParent = "pooltoy";
+    site = {
+      hostIp = "192.168.10.130";
+      internalIp = "10.10.0.130";
+      proxmoxParent = "pooltoy";
+    };
 
     arrStack = {
       # the arr DBs have root/download dirs baked in under /mnt/media, so these must match

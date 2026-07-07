@@ -12,9 +12,11 @@
   lab = {
     sops.secretsFile = ../../secrets/fairlane-mon-01.yaml;
 
-    site.hostIp = "192.168.10.140";
-    site.internalIp = "10.10.0.140";
-    site.proxmoxParent = "pooltoy";
+    site = {
+      hostIp = "192.168.10.140";
+      internalIp = "10.10.0.140";
+      proxmoxParent = "pooltoy";
+    };
   };
 
   # no storage.nix here, so create the siteData root itself

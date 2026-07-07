@@ -13,15 +13,19 @@
   lab = {
     sops.secretsFile = ../../secrets/fairlane-edge-02.yaml;
 
-    site.hostIp = "192.168.10.151";
-    site.internalIp = "10.10.0.151";
-    site.proxmoxParent = "pooltoy";
+    site = {
+      hostIp = "192.168.10.151";
+      internalIp = "10.10.0.151";
+      proxmoxParent = "pooltoy";
+    };
 
-    caddy.caddyfile = ../fairlane-edge-01/files/caddy/Caddyfile;
+    caddy = {
+      caddyfile = ../fairlane-edge-01/files/caddy/Caddyfile;
 
-    caddy.ha = {
-      enable = true;
-      vip = "192.168.10.155";
+      ha = {
+        enable = true;
+        vip = "192.168.10.155";
+      };
     };
   };
 

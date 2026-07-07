@@ -14,30 +14,38 @@
     acme-cache-01 = {
       config = {
         networking.hostName = "acme-cache-01";
-        lab.site.hostIp = "10.0.0.1";
-        lab.site.internalIp = "10.1.0.1";
-        lab.topology.provides = ["cache-node" "metrics"];
+        lab = {
+          site.hostIp = "10.0.0.1";
+          site.internalIp = "10.1.0.1";
+          topology.provides = ["cache-node" "metrics"];
+        };
       };
     };
     acme-cache-02 = {
       config = {
         networking.hostName = "acme-cache-02";
-        lab.site.hostIp = "10.0.0.2";
-        lab.topology.provides = ["cache-node"];
+        lab = {
+          site.hostIp = "10.0.0.2";
+          topology.provides = ["cache-node"];
+        };
       };
     };
     acme-web-01 = {
       config = {
         networking.hostName = "acme-web-01";
-        lab.site.hostIp = "10.0.0.3";
-        lab.topology.provides = ["web"];
+        lab = {
+          site.hostIp = "10.0.0.3";
+          topology.provides = ["web"];
+        };
       };
     };
     beta-cache-01 = {
       config = {
         networking.hostName = "beta-cache-01";
-        lab.site.hostIp = "10.9.9.1";
-        lab.topology.provides = ["cache-node"];
+        lab = {
+          site.hostIp = "10.9.9.1";
+          topology.provides = ["cache-node"];
+        };
       };
     };
   };

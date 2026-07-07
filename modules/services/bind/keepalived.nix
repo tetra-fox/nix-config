@@ -59,7 +59,7 @@ in {
       # v6 VIP (dual-stack sites only). the v6 instance can't share the v4 one, and its heartbeat
       # rides ens18 (where the v6 addresses live), sourced from this host's static ULA. vrid 63 =
       # the v6 counterpart to the v4 53, distinct so the two instances don't collide.
-      vip6 = ha.vip6;
+      inherit (ha) vip6;
       virtualRouterId6 =
         if ha.vip6 != null
         then 63

@@ -176,6 +176,7 @@
             pkgs.age
             pkgs.ssh-to-age
             inputs'.alejandra.packages.default
+            pkgs.statix
           ];
         };
 

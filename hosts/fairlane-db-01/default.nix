@@ -28,9 +28,11 @@ in {
   lab = {
     sops.secretsFile = ../../secrets/fairlane-db-01.yaml;
 
-    site.hostIp = "192.168.10.110";
-    site.internalIp = "10.10.0.110";
-    site.proxmoxParent = "plush";
+    site = {
+      hostIp = "192.168.10.110";
+      internalIp = "10.10.0.110";
+      proxmoxParent = "plush";
+    };
 
     postgres = {
       server.enable = true;

@@ -13,9 +13,11 @@
   lab = {
     avahi.publish = true;
 
-    site.hostIp = "192.168.10.100";
-    site.internalIp = "10.10.0.100";
-    site.proxmoxParent = "pooltoy"; # the media passthrough disk lives on pooltoy
+    site = {
+      hostIp = "192.168.10.100";
+      internalIp = "10.10.0.100";
+      proxmoxParent = "pooltoy"; # the media passthrough disk lives on pooltoy
+    };
   };
 
   system.stateVersion = "26.11";

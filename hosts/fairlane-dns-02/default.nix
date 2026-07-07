@@ -15,17 +15,21 @@
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 
   lab = {
-    site.hostIp = "192.168.10.161";
-    site.internalIp = "10.10.0.161";
-    site.proxmoxParent = "pooltoy";
+    site = {
+      hostIp = "192.168.10.161";
+      internalIp = "10.10.0.161";
+      proxmoxParent = "pooltoy";
+    };
 
-    bind.enable = true;
-
-    bind.ha = {
+    bind = {
       enable = true;
-      vip = "192.168.10.53";
-      vip6 = "fd00:10::53";
-      hostV6 = "fd00:10::161";
+
+      ha = {
+        enable = true;
+        vip = "192.168.10.53";
+        vip6 = "fd00:10::53";
+        hostV6 = "fd00:10::161";
+      };
     };
   };
 
