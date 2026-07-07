@@ -166,7 +166,10 @@
         ...
       }: {
         formatter = inputs'.alejandra.packages.default;
-        packages = inputs'.tetra-nurpkgs.packages;
+        # statix is exposed so CI can `nix run .#statix` without realising the whole
+        # devshell closure (colmena/nixos-anywhere pull it to ~8G); the linter itself
+        # is ~130M. the devshell still carries statix for interactive use.
+        packages = inputs'.tetra-nurpkgs.packages // {inherit (pkgs) statix;};
 
         devShells.default = pkgs.mkShell {
           packages = [
