@@ -129,6 +129,14 @@
       inherit (inputs.nixpkgs) lib;
       username = "tetra";
 
+      # local overlays live one-per-file in overlays/; each is `inputs: final: prev: {...}`.
+      # loaded as paths (like modules/fleet) so we import and apply inputs ourselves rather
+      # than relying on haumea's argument injection.
+      localOverlays = map (p: import p inputs) (lib.attrValues (inputs.haumea.lib.load {
+        src = ./overlays;
+        loader = inputs.haumea.lib.loaders.path;
+      }));
+
       commonSpecialArgs = {
         inherit username;
         modules = inputs.haumea.lib.load {
@@ -197,47 +205,8 @@
       };
 
       flake = {
-        topology = lib.genAttrs ["x86_64-linux"] (system:
-          import inputs.nix-topology {
-            pkgs = import inputs.nixpkgs {
-              inherit system;
-              overlays = [inputs.nix-topology.overlays.default];
-            };
-            modules = [
-              ./topology.nix
-              {nixosConfigurations = inputs.self.nixosConfigurations;}
-            ];
-          });
-
-        # colmena wants two outputs: the raw hive spec as `colmena`, and the evaluated
-        # `colmenaHive = colmena.lib.makeHive self.outputs.colmena`.
-        colmena = let
-          sitePrefix = import ./lib/site-prefix.nix {inherit lib;};
-
-          cfgs = inputs.self.nixosConfigurations;
-          deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
-
-          mkNode = name: c: {
-            deployment = {
-              targetHost = c.config.lab.site.hostIp;
-              targetUser = "admin";
-              tags = [(sitePrefix name)];
-              buildOnTarget = false;
-            };
-            # colmena re-evals each node, so hand it the module set easy-hosts already assembled.
-            imports = c._module.args.modules or [];
-          };
-        in
-          {
-            meta = {
-              nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
-              nodeSpecialArgs = lib.mapAttrs (_: c: c._module.specialArgs) deployable;
-              nodeNixpkgs = lib.mapAttrs (_: c: c.pkgs) deployable;
-            };
-          }
-          // lib.mapAttrs mkNode deployable;
-
-        colmenaHive = inputs.colmena.lib.makeHive inputs.self.outputs.colmena;
+        topology = import ./flake/topology.nix {inherit lib inputs;};
+        inherit (import ./flake/colmena.nix {inherit lib inputs;}) colmena colmenaHive;
       };
 
       easy-hosts = {
@@ -252,31 +221,14 @@
             # into the home-manager eval.
             {_module.args.nixosConfigurations = inputs.self.nixosConfigurations;}
             {
-              nixpkgs.overlays = [
-                inputs.nix-vscode-extensions.overlays.default
-                inputs.quickshell.overlays.default
-                inputs.nix-yazi-plugins.overlays.default
-                inputs.tetra-nurpkgs.overlays.default
-                (final: _prev: {
-                  claude-code = final.callPackage "${inputs.claude-code-nix}/package.nix" {};
-                })
-                (final: prev: {
-                  kdePackages = prev.kdePackages.overrideScope (_kfinal: kprev: {
-                    dolphin = prev.symlinkJoin {
-                      name = "dolphin-wrapped";
-                      paths = [kprev.dolphin kprev.dolphin.dev];
-                      nativeBuildInputs = [prev.makeWrapper];
-                      postBuild = ''
-                        rm $out/bin/dolphin
-                        makeWrapper ${kprev.dolphin}/bin/dolphin $out/bin/dolphin \
-                          --set XDG_CONFIG_DIRS "${prev.libsForQt5.__internalKF5.kservice}/etc/xdg:$XDG_CONFIG_DIRS" \
-                          --run "${kprev.kservice}/bin/kbuildsycoca6 --noincremental ${prev.libsForQt5.__internalKF5.kservice}/etc/xdg/menus/applications.menu"
-                      '';
-                      passthru = (kprev.dolphin.passthru or {}) // {dev = kprev.dolphin.dev;};
-                    };
-                  });
-                })
-              ];
+              nixpkgs.overlays =
+                [
+                  inputs.nix-vscode-extensions.overlays.default
+                  inputs.quickshell.overlays.default
+                  inputs.nix-yazi-plugins.overlays.default
+                  inputs.tetra-nurpkgs.overlays.default
+                ]
+                ++ localOverlays;
             }
             {
               home-manager = {
