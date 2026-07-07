@@ -27,6 +27,7 @@
 
         albert.tabout
         anthropic.claude-code
+        sst-dev.opencode
         esbenp.prettier-vscode
         jeanp413.open-remote-ssh
         ultram4rine.vscode-choosealicense

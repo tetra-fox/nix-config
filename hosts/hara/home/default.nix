@@ -7,6 +7,7 @@
   imports = [
     modules.profiles.workstation.home
 
+    modules.cli.opencode.home
     modules.desktop.catppuccin.home
     modules.desktop.cosmic.home
     modules.desktop.dolphin.home
