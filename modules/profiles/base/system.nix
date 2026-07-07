@@ -46,7 +46,8 @@
   boot.tmp.cleanOnBoot = true;
 
   environment.systemPackages = with pkgs; [
-    htop
+    btop
+    tmux
     lsof
     mtr
     bind # dig/nslookup for dns debugging
