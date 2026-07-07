@@ -114,6 +114,13 @@
         javaPackages.compiler.temurin-bin.jre-17
         javaPackages.compiler.temurin-bin.jre-8
       ];
+      # waylandcraft needs libxkbcommon two ways at runtime. its bundled native
+      # lib links libxkbcommon.so.0 (LD_LIBRARY_PATH), and it also shells out to
+      # the xkbcli binary to build a keymap (PATH). nixpkgs ships both the .so
+      # and xkbcli in the same libxkbcommon output, hence the same pkg twice.
+      # the default runtimeLibs already carry wayland (client/cursor/egl)+libGL.
+      additionalLibs = [libxkbcommon];
+      additionalPrograms = [libxkbcommon];
     })
     (bottles.override {removeWarningPopup = true;})
 
