@@ -4,6 +4,12 @@
 -- Creates an RNNoise-filtered virtual Audio/Source for every real
 -- alsa_input.* source as it appears, and tears it down when the
 -- real source goes away.
+--
+-- Uses an ObjectManager rather than a node-added SimpleEventHook so that
+-- sources already present when this script loads also get a filter. UCM
+-- profile sources (e.g. the Scarlett's HiFi Mic1/Mic2 nodes) are created by
+-- ACP during wireplumber startup, before a node-added hook is live, so a hook
+-- would never fire for them.
 
 Log                      = Log.open_topic("s-rnnoise-dynamic")
 
@@ -71,56 +77,45 @@ local function build_filter_args(node)
   }
 end
 
-SimpleEventHook {
-  name = "rnnoise-dynamic/create",
-  interests = {
-    EventInterest {
-      Constraint { "event.type", "=", "node-added" },
-      Constraint { "media.class", "=", "Audio/Source", type = "pw-global" },
-      Constraint { "node.name", "#", "alsa_input.*", type = "pw-global" },
-    },
+sources_om = ObjectManager {
+  Interest {
+    type = "node",
+    Constraint { "media.class", "=", "Audio/Source", type = "pw-global" },
+    Constraint { "node.name", "#", "alsa_input.*", type = "pw-global" },
   },
-  execute = function(event)
-    local node = event:get_subject()
-    local id   = node.id
+}
 
-    if filter_modules[id] then
-      return
-    end
+-- fires for sources already present when the OM installs and for later ones
+sources_om:connect("object-added", function(_, node)
+  local id = node.id
 
-    local node_name = node.properties["node.name"]
-    Log:info(node, "creating RNNoise filter for " .. node_name)
+  if filter_modules[id] then
+    return
+  end
 
-    local m = LocalModule(
-      "libpipewire-module-filter-chain",
-      build_filter_args(node):get_data(),
-      {})
+  local node_name = node.properties["node.name"]
+  Log:info(node, "creating RNNoise filter for " .. node_name)
 
-    if m == nil then
-      Log:warning(node, "filter-chain LocalModule returned nil for " .. node_name)
-      return
-    end
+  local m = LocalModule(
+    "libpipewire-module-filter-chain",
+    build_filter_args(node):get_data(),
+    {})
 
-    filter_modules[id] = m
-  end,
-}:register()
+  if m == nil then
+    Log:warning(node, "filter-chain LocalModule returned nil for " .. node_name)
+    return
+  end
 
-SimpleEventHook {
-  name = "rnnoise-dynamic/destroy",
-  interests = {
-    EventInterest {
-      Constraint { "event.type", "=", "node-removed" },
-      Constraint { "media.class", "=", "Audio/Source", type = "pw-global" },
-      Constraint { "node.name", "#", "alsa_input.*", type = "pw-global" },
-    },
-  },
-  execute = function(event)
-    local node = event:get_subject()
-    local id   = node.id
+  filter_modules[id] = m
+end)
 
-    if filter_modules[id] then
-      Log:info(node, "removing RNNoise filter for node id " .. id)
-      filter_modules[id] = nil
-    end
-  end,
-}:register()
+sources_om:connect("object-removed", function(_, node)
+  local id = node.id
+
+  if filter_modules[id] then
+    Log:info(node, "removing RNNoise filter for node id " .. id)
+    filter_modules[id] = nil
+  end
+end)
+
+sources_om:activate()
