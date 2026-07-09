@@ -9,4 +9,11 @@ QtObject {
     function switchWorkspace(id: int): void {
         Hyprland.dispatch(`hl.dsp.event([[workspace ${id}]])`);
     }
+
+    // for dispatch arguments built from untrusted text (dbus fields etc): strip
+    // the lua long-bracket delimiters and newlines so the text cannot close the
+    // [[ ]] early and inject lua
+    function escapeArg(s: string): string {
+        return s.replace(/\]\]|\[\[|[\r\n]/g, "");
+    }
 }

@@ -133,6 +133,9 @@ ShellRoot {
             // true while the notif should be visible in the overlay; the card flips this
             // false on timer expire so the wrapper survives in the center after fade-out
             property bool popup
+            // set by NotifState.dismissLater while the center's collapse animation
+            // plays; lives here so delegate churn cannot reset it
+            property bool dismissing: false
         }
     }
 

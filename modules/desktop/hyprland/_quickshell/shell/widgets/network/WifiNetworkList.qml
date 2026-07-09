@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
+import Quickshell
 import Quickshell.Networking
 import QtQuick
 
@@ -37,7 +38,11 @@ ScrollableList {
 
     Repeater {
         id: repeater
-        model: root.networks
+        // ScriptModel diffs by object identity, so a rebuilt networks array only
+        // touches delegates whose network actually appeared or vanished
+        model: ScriptModel {
+            values: root.networks
+        }
 
         delegate: WifiNetworkDelegate {
             required property WifiNetwork modelData
@@ -50,7 +55,7 @@ ScrollableList {
             onClicked: root.networkClicked(modelData)
             onForgotNetwork: root.networkForgot(modelData)
             onConnectWithPsk: psk => root.networkConnectWithPsk(modelData, psk)
-            onExpandToggled: root.expandRequested(expanded ? null : modelData)
+            onExpandRequested: expand => root.expandRequested(expand ? modelData : null)
         }
     }
 }

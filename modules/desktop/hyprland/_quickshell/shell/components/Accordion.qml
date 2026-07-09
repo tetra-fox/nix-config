@@ -38,11 +38,8 @@ ColumnLayout {
             }
             spacing: 8
 
-            Text {
+            SectionLabel {
                 text: root.label
-                color: Theme.textLabel
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
             }
 
             // empty-but-visible fills the slack between label and chevron when value is ""

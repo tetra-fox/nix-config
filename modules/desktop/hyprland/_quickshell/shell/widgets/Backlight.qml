@@ -75,11 +75,8 @@ Item {
                     Layout.fillWidth: true
                     spacing: 2
 
-                    Text {
+                    SectionLabel {
                         text: deviceEntry.modelData.model
-                        color: Theme.textLabel
-                        font.pixelSize: Theme.fontSm
-                        font.family: Theme.fontFamily
                     }
 
                     BrightnessRow {

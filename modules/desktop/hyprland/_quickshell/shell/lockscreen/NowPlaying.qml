@@ -1,7 +1,6 @@
 import qs.components
 import qs.widgets.media
 import qs.lib
-import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
 
@@ -9,45 +8,15 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // -- player management --
-
-    readonly property var _players: Mpris.players.values // qmllint disable unresolved-type
-    readonly property int _playerCount: _players ? _players.length : 0
-    property int _selectedIndex: 0
-    property int _targetIndex: 0
-    property int _switchDir: 0
-
-    function _switchTo(idx: int) {
-        root._switchDir = idx > root._selectedIndex ? 1 : -1;
-        root._targetIndex = idx;
-        switchAnim.restart();
-    }
-
-    on_PlayerCountChanged: {
-        if (_selectedIndex >= _playerCount)
-            _selectedIndex = Math.max(0, _playerCount - 1);
-        if (_targetIndex >= _playerCount)
-            _targetIndex = Math.max(0, _playerCount - 1);
-    }
-
-    readonly property MprisPlayer _player: { // qmllint disable unresolved-type
-        const ps = root._players;
-        if (!ps || ps.length === 0)
-            return null;
-        return ps[Math.max(0, Math.min(root._selectedIndex, ps.length - 1))];
+    MprisSelector {
+        id: sel
+        pollPosition: mpris.isPlaying
+        onSwitchRequested: switchAnim.restart()
     }
 
     DebouncedMpris { // qmllint disable missing-property
         id: mpris
-        player: root._player
-    }
-
-    // mpris doesn't push position updates, so poll while playing
-    Timer {
-        running: mpris.isPlaying && root._player?.positionSupported === true
-        interval: 1000
-        repeat: true
-        onTriggered: root._player?.positionChanged()
+        player: sel.player
     }
 
     // -- layout --
@@ -150,12 +119,12 @@ Item {
                 }
 
                 PlaybackControls {
-                    player: root._player
+                    player: sel.player
                     onSkipped: direction => art.slideDir = direction
                 }
 
                 SeekBar {
-                    player: root._player
+                    player: sel.player
                 }
 
                 VolumeSlider {}
@@ -177,7 +146,7 @@ Item {
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
-                        to: root._switchDir * -30
+                        to: sel.switchDir * -30
                         duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
@@ -185,8 +154,8 @@ Item {
 
                 ScriptAction {
                     script: {
-                        root._selectedIndex = root._targetIndex;
-                        contentSlide.x = root._switchDir * 30;
+                        sel.commit();
+                        contentSlide.x = sel.switchDir * 30;
                     }
                 }
 
@@ -216,22 +185,22 @@ Item {
                 spacing: 4
 
                 SpeedControl {
-                    player: root._player
+                    player: sel.player
                 }
 
                 MediaButton {
-                    visible: root._playerCount > 1
+                    visible: sel.playerCount > 1
                     icon: Icons.chevronLeft
                     iconSize: Theme.fontMd
                     size: 24
-                    enabled: root._selectedIndex > 0 && !switchAnim.running
-                    onClicked: root._switchTo(root._selectedIndex - 1)
+                    enabled: sel.selectedIndex > 0 && !switchAnim.running
+                    onClicked: sel.switchTo(sel.selectedIndex - 1)
                 }
 
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: root._titleCase(root._player?.identity ?? "")
+                    text: sel.titleCase(sel.player?.identity ?? "")
                     color: Theme.textInactive
                     font.pixelSize: Theme.fontXs
                     font.family: Theme.fontFamily
@@ -239,18 +208,15 @@ Item {
                 }
 
                 MediaButton {
-                    visible: root._playerCount > 1
+                    visible: sel.playerCount > 1
                     icon: Icons.chevronRight
                     iconSize: Theme.fontMd
                     size: 24
-                    enabled: root._selectedIndex < root._playerCount - 1 && !switchAnim.running
-                    onClicked: root._switchTo(root._selectedIndex + 1)
+                    enabled: sel.selectedIndex < sel.playerCount - 1 && !switchAnim.running
+                    onClicked: sel.switchTo(sel.selectedIndex + 1)
                 }
             }
         }
     }
 
-    function _titleCase(s: string): string {
-        return s.replace(/\b\w/g, c => c.toUpperCase());
-    }
 }

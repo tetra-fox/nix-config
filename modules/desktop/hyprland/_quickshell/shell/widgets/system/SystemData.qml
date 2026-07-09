@@ -20,9 +20,6 @@ Item {
 
     // dynamic - polled every 3s while active
     property real uptime: 0
-    property real load1: 0
-    property real load5: 0
-    property real load15: 0
     property string procs: ""
     property real memUsed: 0
     property real memTotal: 0
@@ -126,11 +123,8 @@ Item {
         id: loadavgFile
         path: "/proc/loadavg"
         onLoaded: {
-            const s = text().trim().split(" ");
-            root.load1 = parseFloat(s[0]) || 0;
-            root.load5 = parseFloat(s[1]) || 0;
-            root.load15 = parseFloat(s[2]) || 0;
-            root.procs = s[3] ?? "";
+            // only the running/total process pair (field 4) is displayed
+            root.procs = text().trim().split(" ")[3] ?? "";
         }
     }
 
@@ -239,7 +233,10 @@ Item {
                     }
                 }
             }
-            root.extraDisks = _extraDisks;
+            // keep the array when contents are unchanged, so the extdisk rows
+            // (and their fill animations) are not rebuilt every poll
+            if (JSON.stringify(_extraDisks) !== JSON.stringify(root.extraDisks))
+                root.extraDisks = _extraDisks;
         }
     }
 

@@ -99,4 +99,8 @@ QtObject {
     readonly property int animPopupSlide: 200
     readonly property real popupOpenScale: 0.82
     readonly property int popupSlideOffset: 16
+
+    // shared dialog/switcher open animation: scale pop, snappier than popups
+    readonly property int animDialogIn: 260
+    readonly property real dialogOpenScale: 0.88
 }

@@ -29,7 +29,7 @@ Item {
                 return Theme.openBg;
             if (trayMouse.containsMouse)
                 return Theme.hoverBg;
-            return "transparent";
+            return Theme.idleBg;
         }
         Behavior on color {
             ColorAnimation {
@@ -45,18 +45,20 @@ Item {
             source: root.item.icon
             sourceSize.width: width
             sourceSize.height: height
-            smooth: true
         }
 
         MouseArea {
             id: trayMouse
             anchors.fill: parent
             hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
-                if (mouse.button === Qt.RightButton && root.item.hasMenu)
+                // onlyMenu items make activate() a no-op, so any click opens the menu
+                if (root.item.onlyMenu || (mouse.button === Qt.RightButton && root.item.hasMenu))
                     popup.visible = !popup.visible;
+                else if (mouse.button === Qt.MiddleButton)
+                    root.item.secondaryActivate();
                 else
                     root.item.activate();
             }
@@ -94,8 +96,8 @@ Item {
                     id: menuItem
                     required property var modelData
                     width: menuCol.width
-                    text: menuItem.modelData.text ?? ""
-                    enabled: menuItem.modelData.enabled ?? true
+                    text: menuItem.modelData.text
+                    enabled: menuItem.modelData.enabled
                     isSeparator: menuItem.modelData.isSeparator
                     onClicked: {
                         menuItem.modelData.triggered();

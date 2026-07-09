@@ -89,20 +89,13 @@ WlSessionLockSurface {
 
     // -- clock --
 
-    property string _time: Qt.formatDateTime(new Date(), "HH:mm")
-    property string _date: Qt.formatDateTime(new Date(), "dddd, MMMM d")
+    property var _now: new Date()
 
     Timer {
         interval: 1000
         running: true
         repeat: true
-        onTriggered: root._tick()
-    }
-
-    function _tick() {
-        const now = new Date();
-        _time = Qt.formatDateTime(now, "HH:mm");
-        _date = Qt.formatDateTime(now, "dddd, MMMM d");
+        onTriggered: root._now = new Date()
     }
 
     // -- content --
@@ -132,11 +125,10 @@ WlSessionLockSurface {
         Column {
             id: mainColumn
             anchors.centerIn: parent
-            spacing: 0
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: root._time
+                text: Qt.formatDateTime(root._now, "HH:mm")
                 color: Theme.textActive
                 font.pixelSize: 96
                 font.family: Theme.fontFamily
@@ -146,7 +138,7 @@ WlSessionLockSurface {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 topPadding: 8
-                text: root._date
+                text: Qt.formatDateTime(root._now, "dddd, MMMM d")
                 color: Theme.textInactive
                 font.pixelSize: 18
                 font.family: Theme.fontFamily
@@ -187,7 +179,7 @@ WlSessionLockSurface {
             InputField {
                 id: passwordField
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: 320
+                width: Theme.popupWidth
                 height: 48
                 radius: 8
                 border.width: 2
@@ -198,7 +190,6 @@ WlSessionLockSurface {
 
                 transform: Translate {
                     id: shakeOffset
-                    x: 0
                 }
 
                 onAccepted: {
@@ -263,7 +254,10 @@ WlSessionLockSurface {
 
         PowerOptions {
             anchors.fill: parent
-            onCancelled: passwordField.forceActiveFocus()
+            // refocus on any close of the confirm overlay: cancel, or execute of
+            // an action the session survives (suspend)
+            onConfirmingChanged: if (!confirming)
+                passwordField.forceActiveFocus()
         }
     }
 

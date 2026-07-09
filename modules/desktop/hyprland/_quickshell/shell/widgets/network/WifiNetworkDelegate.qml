@@ -17,7 +17,7 @@ Item {
     signal clicked
     signal forgotNetwork
     signal connectWithPsk(string psk)
-    signal expandToggled
+    signal expandRequested(bool expand)
 
     // 18 = topMargin*3 (6px gap above pskField + 6px gap above pskActions + 6px bottom pad)
     implicitHeight: item.implicitHeight + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
@@ -26,10 +26,11 @@ Item {
     Connections {
         target: root.network
         function onConnectionFailed(reason) {
-            root.psk = "";
-            // collapse psk prompt for unknown networks so user can retry fresh
+            pskField.clear();
+            // reopen a fresh psk prompt for unknown networks so the user can retry
+            // (the connect attempt collapsed it)
             if (!root.network?.known)
-                root.expandToggled();
+                root.expandRequested(true);
         }
     }
 
@@ -88,14 +89,19 @@ Item {
         color: Theme.withAlpha(Theme.black, 0.3)
         placeholderText: "Password"
         password: true
-        text: root.psk
 
+        // the field owns the text (typing would destroy a text binding anyway);
+        // psk mirrors it one way for the connect signal
         onTextChanged: root.psk = text
         onAccepted: root.connectWithPsk(root.psk)
-        onVisibleChanged: if (visible)
-            forceActiveFocus()
+        onVisibleChanged: {
+            if (visible)
+                forceActiveFocus();
+            else
+                clear();
+        }
 
-        Keys.onEscapePressed: root.expandToggled()
+        Keys.onEscapePressed: root.expandRequested(false)
     }
 
     RowLayout {
@@ -111,7 +117,7 @@ Item {
 
         InlineButton {
             text: "Cancel"
-            onClicked: root.expandToggled()
+            onClicked: root.expandRequested(false)
         }
 
         InlineButton {

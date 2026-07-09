@@ -19,10 +19,10 @@ Item {
         if (!root.player)
             return;
         const cur = root.currentRate;
-        for (let i = 0; i < root.rates.length; i++) {
+        for (const r of root.rates) {
             // epsilon avoids float equality issues (e.g. 1.0 stored as 0.999...)
-            if (root.rates[i] > cur + 0.01) {
-                root.player.rate = root.rates[i];
+            if (r > cur + 0.01) {
+                root.player.rate = r;
                 return;
             }
         }

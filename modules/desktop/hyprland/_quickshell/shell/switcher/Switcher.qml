@@ -30,32 +30,22 @@ PanelWindow { // qmllint disable uncreatable-type
     }
 
     function show() {
-        // snapshot the toplevel list, putting the active window first
-        let windows = [];
+        // snapshot the toplevel list: active window first, then the rest in
+        // model order, skipping minimized windows
+        const active = ToplevelManager.activeToplevel;
+        const windows = active && !active.minimized ? [active] : [];
         for (const t of ToplevelManager.toplevels.values) {
-            // skip minimized windows
-            if (t.minimized)
+            if (t.minimized || t === active)
                 continue;
             windows.push(t);
         }
         if (windows.length <= 1)
             return;
 
-        // sort: active window first, then the rest in model order
-        const active = ToplevelManager.activeToplevel;
-        windows.sort((a, b) => {
-            if (a === active)
-                return -1;
-            if (b === active)
-                return 1;
-            return 0;
-        });
-
         windowList = windows;
         // start on the second item (the one we're switching to)
         selectedIndex = 1;
         open = true;
-        visible = true;
     }
 
     function commit() {
@@ -63,7 +53,6 @@ PanelWindow { // qmllint disable uncreatable-type
             return;
         const target = windowList[selectedIndex];
         open = false;
-        visible = false;
         // the toplevel may have been closed while the switcher was open; the deleted
         // C++ object leaves a stale-but-truthy js reference, so re-check it is still live
         if (target && ToplevelManager.toplevels.values.includes(target))
@@ -72,7 +61,6 @@ PanelWindow { // qmllint disable uncreatable-type
 
     function dismiss() {
         open = false;
-        visible = false;
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -83,7 +71,7 @@ PanelWindow { // qmllint disable uncreatable-type
     implicitWidth: panel.width
     implicitHeight: panel.height
 
-    visible: false
+    visible: open
     color: "transparent"
 
     // guard: key-release from the triggering shortcut can dismiss the grab immediately
@@ -92,13 +80,21 @@ PanelWindow { // qmllint disable uncreatable-type
         interval: 150
     }
 
+    // quickshell deactivates the grab after ANY clear, including the guarded
+    // one from the triggering shortcut's key release, so bounce active through
+    // false to re-arm it; writing the property directly would kill the binding
+    property bool _grabRearm: false
+
     HyprlandFocusGrab {
         // qmllint disable unresolved-type
         windows: [root]
-        active: root.open
+        active: root.open && !root._grabRearm
         onCleared: {
-            if (grabGuard.running)
+            if (grabGuard.running) {
+                root._grabRearm = true;
+                Qt.callLater(() => root._grabRearm = false);
                 return;
+            }
             root.commit();
         }
     }
@@ -117,7 +113,7 @@ PanelWindow { // qmllint disable uncreatable-type
             PropertyAction {
                 target: panel
                 property: "scale"
-                value: 0.88
+                value: Theme.dialogOpenScale
             }
             PropertyAction {
                 target: panel
@@ -130,7 +126,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "scale"
                 to: 1.0
-                duration: 260
+                duration: Theme.animDialogIn
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
@@ -149,11 +145,12 @@ PanelWindow { // qmllint disable uncreatable-type
         focus: true
 
         Keys.onPressed: event => {
-            if (event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier)) {
-                root.next();
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier)) {
+            // xkb delivers shift+tab as Key_Backtab, not Key_Tab with a modifier
+            if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))) {
                 root.prev();
+                event.accepted = true;
+            } else if (event.key === Qt.Key_Tab) {
+                root.next();
                 event.accepted = true;
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 root.commit();

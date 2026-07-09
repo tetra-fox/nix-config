@@ -19,9 +19,17 @@ Item {
     readonly property bool powered: adapter?.enabled ?? false
     readonly property bool scanning: adapter?.discovering ?? false
 
-    property var connectedDevices: []
-    property var pairedDevices: []
-    property var availableDevices: []
+    function deviceLabel(d): string {
+        return d.name || d.deviceName || d.address;
+    }
+
+    // live bindings: reading connected/paired/name on each device during
+    // evaluation subscribes to those properties, so the lists re-sort and
+    // re-filter themselves on any device change, not just membership changes
+    readonly property var _sortedDevices: root.adapter?.devices.values.slice().sort((a, b) => root.deviceLabel(a).localeCompare(root.deviceLabel(b))) ?? [] // qmllint disable unresolved-type
+    readonly property var connectedDevices: _sortedDevices.filter(d => d.connected)
+    readonly property var pairedDevices: _sortedDevices.filter(d => d.paired && !d.connected)
+    readonly property var availableDevices: _sortedDevices.filter(d => !d.paired && !d.connected && (d.name || d.deviceName))
 
     readonly property var connectedDevice: connectedDevices.length > 0 ? connectedDevices[0] : null
     readonly property var connectingDevice: {
@@ -30,40 +38,13 @@ Item {
         return adapter.devices.values.find(d => d.state === BluetoothDeviceState.Connecting) ?? null; // qmllint disable unresolved-type
     }
 
-    function refreshDevices() {
-        if (!root.adapter) {
-            root.connectedDevices = [];
-            root.pairedDevices = [];
-            root.availableDevices = [];
-            return;
-        }
-        const all = root.adapter.devices.values.slice(); // qmllint disable unresolved-type
-        const byName = (a, b) => (a.name || a.deviceName || "").localeCompare(b.name || b.deviceName || "");
-        root.connectedDevices = all.filter(d => d.connected).sort(byName);
-        root.pairedDevices = all.filter(d => d.paired && !d.connected).sort(byName);
-        root.availableDevices = all.filter(d => !d.paired && !d.connected && (d.name || d.deviceName)).sort(byName);
+    // discovery is a level derived from popup and accordion state, recomputed on
+    // both edges; edge-only writes left it off when the popup reopened with the
+    // accordion already expanded
+    function _updateDiscovery(): void {
+        if (root.adapter)
+            root.adapter.discovering = availableAccordion.expanded && popup.visible && root.powered;
     }
-
-    Connections {
-        target: root.adapter?.devices ?? null // qmllint disable unresolved-type
-        // devices is an UntypedObjectModel, whose only change signal is valuesChanged
-        function onValuesChanged() {
-            root.refreshDevices();
-        }
-    }
-
-    // dbus doesn't signal individual device property changes during discovery,
-    // so poll while scanning to pick up new/changed devices
-    Timer {
-        interval: 2000
-        running: root.scanning
-        repeat: true
-        onTriggered: root.refreshDevices()
-    }
-
-    onPoweredChanged: refreshDevices()
-
-    Component.onCompleted: refreshDevices()
 
     IconButton {
         id: btn
@@ -90,12 +71,14 @@ Item {
         contentHeight: col.implicitHeight + Theme.pillHPad * 2
 
         onVisibleChanged: {
+            // expansion is set imperatively at open, not bound: Accordion's own
+            // header toggle writes expanded, which would destroy a binding
             if (visible) {
-                root.refreshDevices();
-            } else if (root.adapter) {
-                // stop scanning when popup closes to save power
-                root.adapter.discovering = false;
+                pairedAccordion.expanded = root.connectedDevice === null;
+                availableAccordion.expanded = root.connectedDevice === null && root.pairedDevices.length === 0;
             }
+            // on close this stops scanning to save power
+            root._updateDiscovery();
         }
 
         ColumnLayout {
@@ -111,11 +94,8 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
 
-                Text {
+                SectionLabel {
                     text: "Bluetooth"
-                    color: Theme.textLabel
-                    font.pixelSize: Theme.fontSm
-                    font.family: Theme.fontFamily
                     Layout.fillWidth: true
                 }
 
@@ -162,7 +142,7 @@ Item {
                     return "Disconnected";
                 }
 
-                property var scanFrames: [Icons.bluetoothSearching, Icons.bluetooth]
+                readonly property var scanFrames: [Icons.bluetoothSearching, Icons.bluetooth]
                 property int scanIndex: 0
 
                 Timer {
@@ -196,10 +176,6 @@ Item {
                         dev.forget();
                     }
                 }
-
-                Item {
-                    Layout.fillWidth: true
-                }
             }
 
             Separator {
@@ -207,9 +183,9 @@ Item {
             }
 
             Accordion {
+                id: pairedAccordion
                 visible: root.powered && root.pairedDevices.length > 0
                 label: "Paired devices"
-                expanded: root.connectedDevice === null
                 value: root.pairedDevices.length + ""
 
                 ScrollableList {
@@ -217,14 +193,18 @@ Item {
                     maxItems: 6
 
                     Repeater {
-                        model: root.pairedDevices
+                        // ScriptModel diffs by device identity, so list updates only
+                        // touch rows whose device appeared or vanished
+                        model: ScriptModel {
+                            values: root.pairedDevices
+                        }
 
                         SelectableItem {
                             id: pairedItem
                             required property var modelData
                             required property int index
                             width: parent?.width ?? 0
-                            text: modelData.name || modelData.deviceName || modelData.address
+                            text: root.deviceLabel(modelData)
                             active: modelData.state === BluetoothDeviceState.Connecting
                             showSeparator: index > 0
                             onSelected: modelData.connected = true
@@ -244,26 +224,23 @@ Item {
                 visible: root.powered
                 label: "Available devices"
                 loading: root.scanning
-                expanded: root.connectedDevice === null && root.pairedDevices.length === 0
 
-                onExpandedChanged: {
-                    if (!root.adapter)
-                        return;
-                    root.adapter.discovering = expanded && popup.visible && root.powered;
-                }
+                onExpandedChanged: root._updateDiscovery()
 
                 ScrollableList {
                     width: parent.width
                     maxItems: 6
 
                     Repeater {
-                        model: root.availableDevices
+                        model: ScriptModel {
+                            values: root.availableDevices
+                        }
 
                         SelectableItem {
                             required property var modelData
                             required property int index
                             width: parent?.width ?? 0
-                            text: modelData.name || modelData.deviceName || modelData.address
+                            text: root.deviceLabel(modelData)
                             active: modelData.pairing || modelData.state === BluetoothDeviceState.Connecting
                             showSeparator: index > 0
                             onSelected: {

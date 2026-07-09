@@ -12,25 +12,20 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
 
-    ColumnLayout {
+    MenuItem {
+        text: "Lock"
+        icon: Icons.lock
+        shortcutHint: "Super+Esc"
         Layout.fillWidth: true
-        spacing: 0
+        onClicked: root.lockRequested()
+    }
 
-        MenuItem {
-            text: "Lock"
-            icon: Icons.lock
-            shortcutHint: "Super+Esc"
-            Layout.fillWidth: true
-            onClicked: root.lockRequested()
-        }
-
-        MenuItem {
-            text: "Log out"
-            icon: Icons.logout
-            shortcutHint: "Super+Shift+Esc"
-            Layout.fillWidth: true
-            onClicked: root.confirmRequested("Log out?", "Are you sure you want to log out?", "Log out", Power.logout, Icons.logout)
-        }
+    MenuItem {
+        text: "Log out"
+        icon: Icons.logout
+        shortcutHint: "Super+Shift+Esc"
+        Layout.fillWidth: true
+        onClicked: root.confirmRequested("Log out?", "Are you sure you want to log out?", "Log out", Power.logout, Icons.logout)
     }
 
     Separator {
@@ -38,23 +33,18 @@ ColumnLayout {
         Layout.bottomMargin: 10
     }
 
-    ColumnLayout {
+    MenuItem {
+        text: "Reboot"
+        icon: Icons.restart
         Layout.fillWidth: true
-        spacing: 0
+        onClicked: root.confirmRequested("Reboot?", "Are you sure you want to reboot?", "Reboot", Power.reboot, Icons.restart)
+    }
 
-        MenuItem {
-            text: "Reboot"
-            icon: Icons.restart
-            Layout.fillWidth: true
-            onClicked: root.confirmRequested("Reboot?", "Are you sure you want to reboot?", "Reboot", Power.reboot, Icons.restart)
-        }
-
-        MenuItem {
-            text: "Shut down"
-            icon: Icons.power
-            textColor: Theme.danger
-            Layout.fillWidth: true
-            onClicked: root.confirmRequested("Shut down?", "Are you sure you want to shut down?", "Shut down", Power.shutdown, Icons.power)
-        }
+    MenuItem {
+        text: "Shut down"
+        icon: Icons.power
+        textColor: Theme.danger
+        Layout.fillWidth: true
+        onClicked: root.confirmRequested("Shut down?", "Are you sure you want to shut down?", "Shut down", Power.shutdown, Icons.power)
     }
 }

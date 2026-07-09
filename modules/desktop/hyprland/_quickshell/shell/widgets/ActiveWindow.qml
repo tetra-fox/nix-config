@@ -20,6 +20,15 @@ Text {
         }
     }
 
+    // drop the remembered toplevel when it closes, or the bar keeps showing a
+    // dead window's name until focus next lands on this screen
+    Connections {
+        target: root.lastToplevel
+        function onClosed() {
+            root.lastToplevel = null;
+        }
+    }
+
     readonly property var toplevel: {
         const t = ToplevelManager.activeToplevel;
         if (t?.screens.includes(screen)) // qmllint disable unresolved-type

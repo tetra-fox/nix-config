@@ -18,7 +18,9 @@ Item {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
     }
     PwObjectTracker {
-        objects: [...root.sinks, ...root.sources]
+        // the full device lists only render in the popup; don't keep every
+        // node's properties subscribed while it is closed
+        objects: popup.visible ? [...root.sinks, ...root.sources] : []
     }
 
     readonly property PwNode sink: Pipewire.defaultAudioSink
@@ -26,11 +28,9 @@ Item {
 
     readonly property real volume: sink?.audio?.volume ?? 0
     readonly property bool muted: sink?.audio?.muted ?? false
-    readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
 
     readonly property bool sinkLocked: Audio.locked(sink)
-    readonly property bool sourceLocked: Audio.locked(source)
 
     readonly property list<PwNode> sinks: Pipewire.nodes.values.filter(n => n.isSink && !n.isStream && n.audio !== null)
     readonly property list<PwNode> sources: Pipewire.nodes.values.filter(n => !n.isSink && !n.isStream && n.audio !== null)
@@ -67,7 +67,7 @@ Item {
             AudioSection {
                 label: "Output"
                 devices: root.sinks
-                activeDevice: Pipewire.defaultAudioSink
+                activeDevice: root.sink
                 Layout.fillWidth: true
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSink = d
             }
@@ -78,7 +78,7 @@ Item {
                 label: "Input"
                 icon: root.micMuted ? Icons.micOff : Icons.mic
                 devices: root.sources
-                activeDevice: Pipewire.defaultAudioSource
+                activeDevice: root.source
                 Layout.fillWidth: true
                 onSelectDevice: d => Pipewire.preferredDefaultAudioSource = d
             }

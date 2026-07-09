@@ -9,6 +9,9 @@ Rectangle {
     property string text: ""
     property bool active: false
     property bool pulsing: false
+
+    // ping ring sweep; one value drives the four coordinated animations
+    readonly property int _ringDur: 1200
     property color accentColor: root.active ? Theme.colorGreen : Theme.colorRed
 
     radius: Theme.radiusSm
@@ -76,28 +79,28 @@ Rectangle {
                     target: ring
                     property: "scale"
                     to: 1.32
-                    duration: 1200
+                    duration: root._ringDur
                     easing.type: Easing.OutCubic
                 }
                 NumberAnimation {
                     target: ring
                     property: "opacity"
                     to: 0
-                    duration: 1200
+                    duration: root._ringDur
                     easing.type: Easing.OutCubic
                 }
                 NumberAnimation {
                     target: ring
                     property: "blur"
                     to: 5.0
-                    duration: 1200
+                    duration: root._ringDur
                     easing.type: Easing.OutCubic
                 }
                 NumberAnimation {
                     target: ringSource
                     property: "border.width"
                     to: 3.0
-                    duration: 1200
+                    duration: root._ringDur
                     easing.type: Easing.OutCubic
                 }
             }

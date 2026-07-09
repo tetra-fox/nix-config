@@ -14,11 +14,14 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    required property Notification notif
-    required property real time
+    // the persistent wrapper from shell.qml; notif, time, and the pending
+    // dismiss flag all live on it so they survive delegate rebuilds
+    required property var wrapper
+    readonly property Notification notif: wrapper.notif
+    readonly property real time: wrapper.time
 
     property bool expanded: false
-    property bool _dismissing: false
+    readonly property bool _dismissing: wrapper.dismissing
 
     readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
     readonly property string title: NotifState.title(notif)
@@ -39,7 +42,7 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: 200
+            duration: Theme.animSlow
             easing.type: Easing.OutQuad
         }
     }
@@ -61,17 +64,14 @@ Item {
         x: root._dismissing ? 80 : 0
         Behavior on x {
             NumberAnimation {
-                duration: 200
+                duration: Theme.animSlow
                 easing.type: Easing.OutBack
             }
         }
     }
 
     function dismiss(): void {
-        if (_dismissing)
-            return;
-        _dismissing = true;
-        dismissTimer.restart();
+        NotifState.dismissLater(root.wrapper);
     }
 
     function copyBody(): void {
@@ -80,11 +80,9 @@ Item {
     }
 
     function focusWindow(): bool {
-        const raw = root.notif.desktopEntry || root.notif.appName;
-        // desktopEntry/appName are untrusted dbus Notify fields interpolated into a lua
-        // long-bracket string that hyprland evaluates. strip the [[ ]] delimiters and
-        // newlines so a hostile appName can't close the bracket early and inject lua.
-        const cls = raw.replace(/\]\]|\[\[|[\r\n]/g, "");
+        // desktopEntry/appName are untrusted dbus Notify fields interpolated
+        // into a lua long-bracket string that hyprland evaluates
+        const cls = Hypr.escapeArg(root.notif.desktopEntry || root.notif.appName);
         if (!cls)
             return false;
         Hyprland.dispatch(`hl.dsp.event([[focuswindow class:${cls}]])`);    // qmllint disable unresolved-type
@@ -97,12 +95,6 @@ Item {
     function activate(): void {
         if (NotifState.activate(root.notif) || root.focusWindow())
             root.dismiss();
-    }
-
-    Timer {
-        id: dismissTimer
-        interval: 220
-        onTriggered: root.notif.dismiss()
     }
 
     Rectangle {
@@ -280,7 +272,7 @@ Item {
 
                 GlyphButton {
                     icon: Icons.send
-                    iconSize: Theme.fontIcon
+
                     baseColor: replyInput.text === "" ? Theme.textInactive : Theme.accent
                     hoverColor: replyInput.text === "" ? Theme.textInactive : Theme.textActive
                     onClicked: replyInput.submit()

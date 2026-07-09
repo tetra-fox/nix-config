@@ -11,6 +11,8 @@ Item {
 
     property int _nextNote: 0
 
+    readonly property var noteColors: [Theme.colorPink, Theme.colorPurple, Theme.colorBlue, Theme.colorGreen, Theme.colorYellow, Theme.colorRed]
+
     Timer {
         running: root.active
         interval: 800
@@ -35,8 +37,6 @@ Item {
     component FloatingNote: Item {
         id: fn
 
-        readonly property var noteColors: [Theme.colorPink, Theme.colorPurple, Theme.colorBlue, Theme.colorGreen, Theme.colorYellow, Theme.colorRed]
-
         required property real containerWidth
         required property real containerHeight
         property real angle: 0
@@ -58,7 +58,7 @@ Item {
         function launch() {
             fn.angle = Math.random() * 2 * Math.PI;
             fnLabel.font.pixelSize = 10 + Math.round(Math.random() * 3);
-            fnLabel.color = fn.noteColors[Math.floor(Math.random() * fn.noteColors.length)];
+            fnLabel.color = root.noteColors[Math.floor(Math.random() * root.noteColors.length)];
             fnDrift.restart();
         }
 
@@ -66,6 +66,7 @@ Item {
             id: fnLabel
             text: Icons.musicNote
             font.family: Theme.fontIconFamily
+            // size and color are seeds; every launch() rerolls both
             font.pixelSize: 10
             font.variableAxes: Theme.fontIconAxes
             color: Theme.colorPink

@@ -122,11 +122,16 @@ Item {
             return;
         const nets = root.wifiDevice?.networks.values ?? [];
         // filter out dangling entries that can appear mid-AP-removal before the sequence updates
-        root.sortedNetworks = nets.slice().filter(n => n && (n.connected || n.signalStrength > 0)).sort((a, b) => {
+        const next = nets.slice().filter(n => n && (n.connected || n.signalStrength > 0)).sort((a, b) => {
             if (a.connected !== b.connected)
                 return a.connected ? -1 : 1;
             return b.signalStrength - a.signalStrength;
         });
+        // keep the array identity when membership and order are unchanged, so
+        // dependent filters and models are not republished every poll
+        if (next.length === root.sortedNetworks.length && next.every((n, i) => n === root.sortedNetworks[i]))
+            return;
+        root.sortedNetworks = next;
     }
 
     function handleNetworkClicked(network) {
@@ -188,11 +193,8 @@ Item {
         RowLayout {
             Layout.fillWidth: true
 
-            Text {
+            SectionLabel {
                 text: "WiFi"
-                color: Theme.textLabel
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
                 Layout.fillWidth: true
             }
 
@@ -243,11 +245,13 @@ Item {
                 return "";
             }
 
-            property var scanFrames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
+            readonly property var scanFrames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
             property int scanIndex: 0
 
             Timer {
-                running: Networking.wifiEnabled && !root.activeNetwork
+                // scannerEnabled gates on the popup being open; no point animating
+                // an icon nobody can see
+                running: root.scannerEnabled && Networking.wifiEnabled && !root.activeNetwork
                 interval: 400
                 repeat: true
                 onRunningChanged: if (!running)
@@ -276,10 +280,6 @@ Item {
                     net.disconnect();
                     net.forget();
                 }
-            }
-
-            Item {
-                Layout.fillWidth: true
             }
         }
 

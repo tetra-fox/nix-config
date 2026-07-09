@@ -55,10 +55,16 @@ Item {
         return `${(m >>> 24) & 0xFF}.${(m >>> 16) & 0xFF}.${(m >>> 8) & 0xFF}.${m & 0xFF}`;
     }
 
+    // handlers drop results that land after the interface cleared: a running
+    // process keeps its old argv, so its output would repopulate the fields of
+    // a dead interface with no poll left to correct them. results from an
+    // interface-to-interface switch self-heal on the next 2s poll
     BufferedProcess {
         id: routeProc
         command: ["ip", "-j", "-4", "route", "show", "default", "dev", root.ifname]
         onFinished: output => {
+            if (root.ifname === "")
+                return;
             try {
                 root.gateway = JSON.parse(output)?.[0]?.gateway ?? "";
             } catch (_) {
@@ -71,6 +77,8 @@ Item {
         id: addrProc
         command: ["ip", "-j", "-4", "addr", "show", root.ifname]
         onFinished: output => {
+            if (root.ifname === "")
+                return;
             try {
                 const r = JSON.parse(output)?.[0];
                 root.ip = r?.addr_info?.[0]?.local ?? "";
@@ -86,6 +94,8 @@ Item {
         id: addr6Proc
         command: ["ip", "-j", "-6", "addr", "show", root.ifname]
         onFinished: output => {
+            if (root.ifname === "")
+                return;
             try {
                 const addrs = JSON.parse(output)?.[0]?.addr_info ?? [];
                 const global = addrs.find(a => a.scope === "global");
@@ -100,6 +110,8 @@ Item {
         id: dnsProc
         command: ["resolvectl", "dns", root.ifname]
         onFinished: output => {
+            if (root.ifname === "")
+                return;
             const match = output.match(/:\s*(.+)/);
             root.dns = match ? match[1].trim() : "";
         }
@@ -126,11 +138,8 @@ Item {
             spacing: 5
             visible: root.hasIpv4
 
-            Text {
+            SectionLabel {
                 text: "IPv4"
-                color: Theme.textLabel
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
             }
             InfoRow {
                 label: "Address"
@@ -139,7 +148,7 @@ Item {
             }
             InfoRow {
                 label: "Subnet"
-                value: root.prefix > 0 ? root.prefixToMask(root.prefix) : "-"
+                value: root.prefixToMask(root.prefix)
             }
             InfoRow {
                 label: "Gateway"
@@ -162,11 +171,8 @@ Item {
             spacing: 5
             visible: root.hasIpv6
 
-            Text {
+            SectionLabel {
                 text: "IPv6"
-                color: Theme.textLabel
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
             }
             InfoRow {
                 label: "Address"

@@ -33,11 +33,8 @@ ColumnLayout {
             font.variableAxes: Theme.fontIconAxes
         }
 
-        Text {
+        SectionLabel {
             text: _ir.label
-            color: Theme.textLabel
-            font.pixelSize: Theme.fontSm
-            font.family: Theme.fontFamily
         }
 
         Item {

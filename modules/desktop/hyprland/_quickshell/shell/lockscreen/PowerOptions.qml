@@ -8,8 +8,9 @@ import QtQuick
 Item {
     id: root
 
+    // watched by LockSurface to restore password-field focus when the overlay
+    // closes by either path (cancel, or execute when the session survives)
     readonly property bool confirming: _confirming
-    signal cancelled
 
     property bool _confirming: false
     property string _confirmLabel: ""
@@ -29,15 +30,17 @@ Item {
 
     function _cancelConfirm(): void {
         _confirming = false;
-        root.cancelled();
     }
 
     function _executeConfirm(): void {
-        // clear here, not just in the timer branch: suspend doesn't tear down the
-        // session, so a still-running timer would re-fire the action every second
+        // re-entry guard: the overlay stays visible and clickable during its
+        // fade-out, and suspend doesn't tear down the session, so a second
+        // Return press or button click would fire the action again. clearing
+        // _confirming here also stops the countdown timer from re-firing
+        if (!root._confirming)
+            return;
         root._confirming = false;
-        if (root._confirmAction)
-            root._confirmAction();
+        root._confirmAction();
     }
 
     Timer {
@@ -151,6 +154,13 @@ Item {
             opacity: 0.5
         }
 
+        // the backdrop dims everything beneath, so also block clicks from
+        // reaching it; clicking outside the card cancels
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root._cancelConfirm()
+        }
+
         Rectangle {
             anchors.centerIn: parent
             width: 300
@@ -159,11 +169,11 @@ Item {
             color: Theme.panelBg
             border.width: 1
             border.color: Theme.panelBorder
-            scale: root._confirming ? 1 : 0.88
+            scale: root._confirming ? 1 : Theme.dialogOpenScale
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: 260
+                    duration: Theme.animDialogIn
                     easing.type: Easing.OutExpo
                 }
             }
@@ -177,7 +187,6 @@ Item {
                     leftMargin: Theme.pillHPad * 2
                     rightMargin: Theme.pillHPad * 2
                 }
-                spacing: 0
 
                 Row {
                     spacing: 8

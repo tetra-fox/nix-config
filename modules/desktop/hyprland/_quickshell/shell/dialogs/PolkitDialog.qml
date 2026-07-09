@@ -62,7 +62,7 @@ PanelWindow { // qmllint disable uncreatable-type
             PropertyAction {
                 target: panel
                 property: "scale"
-                value: 0.88
+                value: Theme.dialogOpenScale
             }
             PropertyAction {
                 target: panel
@@ -75,7 +75,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "scale"
                 to: 1.0
-                duration: 260
+                duration: Theme.animDialogIn
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
@@ -141,7 +141,6 @@ PanelWindow { // qmllint disable uncreatable-type
             }
 
             Text {
-                id: identityLabel
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.iconPadV
                 text: "Authenticating as " + (root.agent.flow?.selectedIdentity?.displayName ?? "")
@@ -169,7 +168,6 @@ PanelWindow { // qmllint disable uncreatable-type
             }
 
             Text {
-                id: errorText
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.iconPadV
                 text: (root.agent.flow?.supplementaryIsError && root.agent.flow?.supplementaryMessage) ? root.agent.flow.supplementaryMessage : "Incorrect password, try again"

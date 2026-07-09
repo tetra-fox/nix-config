@@ -41,6 +41,8 @@ Item {
             "LC_ALL": "C"
         })
 
+    readonly property var enumerateCmd: ["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"]
+
     // -- parsers --
 
     // nmcli -t (terse) escapes the field separator ':' as '\:' and a literal backslash
@@ -116,8 +118,7 @@ Item {
         return {
             "ifname": map["connection.interface-name"] ?? "",
             "address": map["IP4.ADDRESS[1]"] ?? "",
-            "endpoint": endpoints[0] ?? "",
-            "peerCount": endpoints.length
+            "endpoint": endpoints[0] ?? ""
         };
     }
 
@@ -191,13 +192,21 @@ Item {
     BufferedProcess {
         id: listProc
         environment: root.cLocale
-        command: ["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"]
+        command: root.enumerateCmd
         onFinished: output => {
             const rows = root._parseTunnels(output);
             // a failed/empty poll emits finished("") (BufferedProcess fires off
             // runningChanged); don't clobber a populated model with that
-            if (!(rows.length === 0 && root.tunnels.length > 0 && output === ""))
-                root.tunnels = rows;
+            if (!(rows.length === 0 && root.tunnels.length > 0 && output === "")) {
+                // keep the array when nothing changed, so the Repeater's rows
+                // are not rebuilt (hover state, color animations) every 2s poll
+                const same = rows.length === root.tunnels.length && rows.every((r, i) => {
+                    const t = root.tunnels[i];
+                    return r.uuid === t.uuid && r.name === t.name && r.device === t.device && r.active === t.active;
+                });
+                if (!same)
+                    root.tunnels = rows;
+            }
             if (root.pendingAction === "reconcile") {
                 root.busyUuid = "";
                 root.pendingAction = "";
@@ -218,7 +227,7 @@ Item {
     BufferedProcess {
         id: dropScanProc
         environment: root.cLocale
-        command: ["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"]
+        command: root.enumerateCmd
         onFinished: output => {
             root._dropQueue = root._parseTunnels(output).filter(t => t.active && t.uuid !== root.busyUuid).map(t => t.uuid);
             root._pumpDropQueue();
@@ -230,7 +239,6 @@ Item {
     Process {
         id: upProc
         environment: root.cLocale
-        stdout: SplitParser {}
         stderr: SplitParser {
             onRead: data => root._opStderr += data + "\n"
         }
@@ -253,7 +261,6 @@ Item {
     Process {
         id: downProc
         environment: root.cLocale
-        stdout: SplitParser {}
         stderr: SplitParser {
             onRead: data => root._opStderr += data + "\n"
         }
@@ -310,11 +317,8 @@ Item {
         RowLayout {
             Layout.fillWidth: true
 
-            Text {
+            SectionLabel {
                 text: "VPN"
-                color: Theme.textLabel
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
                 Layout.fillWidth: true
             }
 

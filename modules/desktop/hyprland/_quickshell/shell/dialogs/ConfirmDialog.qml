@@ -14,7 +14,9 @@ PanelWindow { // qmllint disable uncreatable-type
     property string icon: ""
     property string actionLabel: "Confirm"
     property int countdown: 30
-    property int remaining: countdown
+    // owned by open() and the countdown timer, not bound to countdown: both
+    // write it imperatively, which would destroy a binding on the first open
+    property int remaining: 0
 
     signal confirmed
     signal cancelled
@@ -42,13 +44,21 @@ PanelWindow { // qmllint disable uncreatable-type
         interval: 150
     }
 
+    // quickshell deactivates the grab after ANY clear, including the guarded
+    // one from the triggering shortcut's key release, so bounce active through
+    // false to re-arm it; writing the property directly would kill the binding
+    property bool _grabRearm: false
+
     HyprlandFocusGrab {
         // qmllint disable unresolved-type
         windows: [root]
-        active: root.visible
+        active: root.visible && !root._grabRearm
         onCleared: {
-            if (grabGuard.running)
+            if (grabGuard.running) {
+                root._grabRearm = true;
+                Qt.callLater(() => root._grabRearm = false);
                 return;
+            }
             root.visible = false;
             root.cancelled();
         }
@@ -80,7 +90,7 @@ PanelWindow { // qmllint disable uncreatable-type
             PropertyAction {
                 target: panel
                 property: "scale"
-                value: 0.88
+                value: Theme.dialogOpenScale
             }
             PropertyAction {
                 target: panel
@@ -93,7 +103,7 @@ PanelWindow { // qmllint disable uncreatable-type
                 target: panel
                 property: "scale"
                 to: 1.0
-                duration: 260
+                duration: Theme.animDialogIn
                 easing.type: Easing.OutExpo
             }
             NumberAnimation {
@@ -151,12 +161,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 }
             }
 
-            Item {
-                implicitHeight: Theme.iconPadV
-            }
-
             Text {
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.iconPadV
                 text: root.body
                 color: Theme.textSecondary
                 font.pixelSize: Theme.fontSm
@@ -164,12 +171,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 wrapMode: Text.WordWrap
             }
 
-            Item {
-                implicitHeight: Theme.pillHPad
-            }
-
             RowLayout {
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.pillHPad
                 spacing: Theme.iconPadV
 
                 DialogButton {

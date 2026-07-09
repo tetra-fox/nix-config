@@ -5,6 +5,7 @@ import qs.notifications
 import qs.components
 import qs.lib
 
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
@@ -15,8 +16,24 @@ PopupWindow {
 
     readonly property int count: notifList.length
 
-    // group wrappers by appName, sort newest-first both within and across groups
-    readonly property var groups: {
+    // group wrappers by appName, sorted newest-first within and across groups.
+    // groups are persistent objects cached by appName and updated in place, so
+    // the Repeater keeps its delegates (and their expanded/reply state) when
+    // the list changes; a binding building fresh js objects would rebuild all
+    property var groups: []
+    property var _groupCache: ({})
+    property Component _groupComp: Component {
+        QtObject {
+            property string appName
+            property var notifs: []
+            property real time: 0
+        }
+    }
+
+    onNotifListChanged: _regroup()
+    Component.onCompleted: _regroup()
+
+    function _regroup(): void {
         const map = {};
         for (const w of root.notifList) {
             const key = NotifState.groupKey(w);
@@ -28,14 +45,27 @@ PopupWindow {
         for (const k in map) {
             const arr = map[k];
             arr.sort((a, b) => b.time - a.time);
-            out.push({
-                "appName": k,
-                "notifs": arr,
-                "time": arr[0].time
-            });
+            let g = root._groupCache[k];
+            if (!g) {
+                g = root._groupComp.createObject(root, {
+                    appName: k
+                });
+                root._groupCache[k] = g;
+            }
+            g.notifs = arr;
+            g.time = arr[0].time;
+            out.push(g);
+        }
+        for (const k in root._groupCache) {
+            if (!map[k]) {
+                root._groupCache[k].destroy();
+                delete root._groupCache[k];
+            }
         }
         out.sort((a, b) => b.time - a.time);
-        return out;
+        // publish only real order or membership changes
+        if (out.length !== root.groups.length || out.some((g, i) => g !== root.groups[i]))
+            root.groups = out;
     }
 
     contentWidth: 380
@@ -122,7 +152,9 @@ PopupWindow {
             visible: root.count > 0
 
             Repeater {
-                model: root.groups
+                model: ScriptModel {
+                    values: root.groups
+                }
 
                 NotificationGroup {
                     required property var modelData

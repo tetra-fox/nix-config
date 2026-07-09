@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import qs.components
 import qs.widgets.media
 import qs.lib
-import Quickshell.Services.Mpris
 import QtQuick
 import QtQuick.Layouts
 
@@ -12,53 +11,23 @@ Item {
 
     property var panelWindow
 
-    readonly property var players: Mpris.players.values // qmllint disable unresolved-type
-    readonly property int playerCount: players ? players.length : 0
-    property int selectedIndex: 0
-    // stored separately so the animation can slide out first, then swap
-    property int _targetIndex: 0
-    property int _switchDir: 0
-
-    function switchTo(idx: int) {
-        root._switchDir = idx > root.selectedIndex ? 1 : -1;
-        root._targetIndex = idx;
-        switchAnim.restart();
-    }
-
-    onPlayerCountChanged: {
-        if (selectedIndex >= playerCount)
-            selectedIndex = Math.max(0, playerCount - 1);
-        if (_targetIndex >= playerCount)
-            _targetIndex = Math.max(0, playerCount - 1);
-    }
-
-    readonly property MprisPlayer player: { // qmllint disable unresolved-type
-        const ps = root.players;
-        if (!ps || ps.length === 0)
-            return null;
-        return ps[Math.max(0, Math.min(root.selectedIndex, ps.length - 1))];
-    }
-
-    readonly property bool hasPlayer: player !== null
+    readonly property bool hasPlayer: sel.player !== null
     readonly property bool isPlaying: mpris.isPlaying
+
+    MprisSelector {
+        id: sel
+        pollPosition: root.isPlaying && popup.visible
+        onSwitchRequested: switchAnim.restart()
+    }
 
     DebouncedMpris { // qmllint disable missing-property
         id: mpris
-        player: root.player
+        player: sel.player
     }
 
     visible: hasPlayer
     implicitWidth: btn.implicitWidth
     implicitHeight: btn.implicitHeight
-
-    // mpris doesn't push position updates, so poll once per second while
-    // playing and visible to keep the seek bar moving
-    Timer {
-        running: root.isPlaying && root.player?.positionSupported === true && popup.visible
-        interval: 1000
-        repeat: true
-        onTriggered: root.player?.positionChanged()
-    }
 
     IconButton {
         id: btn
@@ -150,11 +119,11 @@ Item {
                 }
 
                 SeekBar {
-                    player: root.player
+                    player: sel.player
                 }
 
                 PlaybackControls {
-                    player: root.player
+                    player: sel.player
                     onSkipped: direction => art.slideDir = direction
                 }
 
@@ -175,7 +144,7 @@ Item {
                     NumberAnimation {
                         target: contentSlide
                         property: "x"
-                        to: root._switchDir * -30
+                        to: sel.switchDir * -30
                         duration: Theme.animNormal
                         easing.type: Easing.InQuad
                     }
@@ -183,8 +152,8 @@ Item {
 
                 ScriptAction {
                     script: {
-                        root.selectedIndex = root._targetIndex;
-                        contentSlide.x = root._switchDir * 30;
+                        sel.commit();
+                        contentSlide.x = sel.switchDir * 30;
                     }
                 }
 
@@ -212,53 +181,50 @@ Item {
                 spacing: 4
 
                 SpeedControl {
-                    player: root.player
+                    player: sel.player
                 }
 
                 MediaButton {
-                    visible: root.playerCount > 1
+                    visible: sel.playerCount > 1
                     icon: Icons.chevronLeft
                     iconSize: Theme.fontMd
                     size: 24
-                    enabled: root.selectedIndex > 0 && !switchAnim.running
-                    onClicked: root.switchTo(root.selectedIndex - 1)
+                    enabled: sel.selectedIndex > 0 && !switchAnim.running
+                    onClicked: sel.switchTo(sel.selectedIndex - 1)
                 }
 
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: root.titleCase(root.player?.identity ?? "")
-                    color: (root.player?.canRaise ?? false) ? (identityArea.containsMouse ? Theme.textPrimary : Theme.textInactive) : Theme.textInactive
+                    text: sel.titleCase(sel.player?.identity ?? "")
+                    color: (sel.player?.canRaise ?? false) ? (identityArea.containsMouse ? Theme.textPrimary : Theme.textInactive) : Theme.textInactive
                     font.pixelSize: Theme.fontXs
                     font.family: Theme.fontFamily
-                    font.underline: identityArea.containsMouse && (root.player?.canRaise ?? false)
+                    font.underline: identityArea.containsMouse && (sel.player?.canRaise ?? false)
                     elide: Text.ElideRight
 
                     MouseArea {
                         id: identityArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        cursorShape: (root.player?.canRaise ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        cursorShape: (sel.player?.canRaise ?? false) ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: {
-                            if (root.player?.canRaise)
-                                root.player.raise();
+                            if (sel.player?.canRaise)
+                                sel.player.raise();
                         }
                     }
                 }
 
                 MediaButton {
-                    visible: root.playerCount > 1
+                    visible: sel.playerCount > 1
                     icon: Icons.chevronRight
                     iconSize: Theme.fontMd
                     size: 24
-                    enabled: root.selectedIndex < root.playerCount - 1 && !switchAnim.running
-                    onClicked: root.switchTo(root.selectedIndex + 1)
+                    enabled: sel.selectedIndex < sel.playerCount - 1 && !switchAnim.running
+                    onClicked: sel.switchTo(sel.selectedIndex + 1)
                 }
             }
         }
     }
 
-    function titleCase(s: string): string {
-        return s.replace(/\b\w/g, c => c.toUpperCase());
-    }
 }

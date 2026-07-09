@@ -13,120 +13,79 @@ Rectangle {
     clip: true
 
     property bool _showingA: true
+    readonly property int _slideDur: 400
 
     Image {
         id: artA
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        smooth: true
         asynchronous: true
         transform: Translate {
             id: slideA
         }
+        onStatusChanged: if (!root._showingA && status === Image.Ready)
+            root._transition()
     }
 
     Image {
         id: artB
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        smooth: true
         asynchronous: true
         opacity: 0
         transform: Translate {
             id: slideB
         }
+        onStatusChanged: if (root._showingA && status === Image.Ready)
+            root._transition()
     }
 
+    // one animation for both directions; _transition() assigns the roles
+    // before restarting, so the flip of _showingA right after cannot retarget
+    // a running animation the way bound targets would
     ParallelAnimation {
-        id: transitionAtoB
+        id: transition
         NumberAnimation {
-            target: artA
+            id: fadeOut
             property: "opacity"
             to: 0
-            duration: 400
+            duration: root._slideDur
             easing.type: Easing.OutExpo
         }
         NumberAnimation {
-            target: slideA
+            id: slideOut
             property: "x"
             from: 0
             to: -root.slideDir * root.width
-            duration: 400
+            duration: root._slideDur
             easing.type: Easing.OutExpo
         }
         NumberAnimation {
-            target: artB
+            id: fadeIn
             property: "opacity"
             to: 1
-            duration: 400
+            duration: root._slideDur
             easing.type: Easing.OutExpo
         }
         NumberAnimation {
-            target: slideB
+            id: slideIn
             property: "x"
             from: root.slideDir * root.width
             to: 0
-            duration: 400
-            easing.type: Easing.OutExpo
-        }
-    }
-
-    ParallelAnimation {
-        id: transitionBtoA
-        NumberAnimation {
-            target: artB
-            property: "opacity"
-            to: 0
-            duration: 400
-            easing.type: Easing.OutExpo
-        }
-        NumberAnimation {
-            target: slideB
-            property: "x"
-            from: 0
-            to: -root.slideDir * root.width
-            duration: 400
-            easing.type: Easing.OutExpo
-        }
-        NumberAnimation {
-            target: artA
-            property: "opacity"
-            to: 1
-            duration: 400
-            easing.type: Easing.OutExpo
-        }
-        NumberAnimation {
-            target: slideA
-            property: "x"
-            from: root.slideDir * root.width
-            to: 0
-            duration: 400
+            duration: root._slideDur
             easing.type: Easing.OutExpo
         }
     }
 
     function _transition() {
-        if (_showingA)
-            transitionAtoB.restart();
-        else
-            transitionBtoA.restart();
+        const out = _showingA ? artA : artB;
+        const inn = _showingA ? artB : artA;
+        fadeOut.target = out;
+        slideOut.target = out === artA ? slideA : slideB;
+        fadeIn.target = inn;
+        slideIn.target = inn === artA ? slideA : slideB;
+        transition.restart();
         _showingA = !_showingA;
-    }
-
-    Connections {
-        target: artA
-        function onStatusChanged() {
-            if (!root._showingA && artA.status === Image.Ready)
-                root._transition();
-        }
-    }
-
-    Connections {
-        target: artB
-        function onStatusChanged() {
-            if (root._showingA && artB.status === Image.Ready)
-                root._transition();
-        }
     }
 
     onSourceChanged: {
@@ -136,9 +95,15 @@ Rectangle {
             artA.source = root.source;
             return;
         }
-        if (root._showingA)
-            artB.source = root.source;
-        else
-            artA.source = root.source;
+        const hidden = root._showingA ? artB : artA;
+        // returning to art the hidden image already holds (track x -> y -> x)
+        // makes the assignment below a no-op, so statusChanged never fires;
+        // transition directly when it is already loaded
+        if (String(hidden.source) === root.source) {
+            if (hidden.status === Image.Ready)
+                root._transition();
+            return;
+        }
+        hidden.source = root.source;
     }
 }

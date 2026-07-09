@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import qs.components
 import qs.lib
 
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
@@ -53,13 +54,16 @@ Item {
         }
 
         Repeater {
-            model: root.notifs
+            // ScriptModel keys delegates on the stable wrapper objects, so a
+            // rebuilt notifs array only touches added or removed items
+            model: ScriptModel {
+                values: root.notifs
+            }
 
             NotificationCenterItem {
                 required property var modelData
                 Layout.fillWidth: true
-                notif: modelData.notif
-                time: modelData.time
+                wrapper: modelData
             }
         }
     }

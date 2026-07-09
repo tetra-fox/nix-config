@@ -49,7 +49,7 @@ Variants {
             // sit at nearly the same faint level, heading only slightly bigger (~3:2)
             Text {
                 text: "Activate Windows"
-                color: "#ffffff"
+                color: Theme.white
                 // heading is a touch more washed-out than the subtext on the real one.
                 // semilight matches the thin segoe ui weight the real heading uses
                 opacity: 0.38
@@ -58,7 +58,7 @@ Variants {
             }
             Text {
                 text: "Go to Settings to activate Windows."
-                color: "#ffffff"
+                color: Theme.white
                 opacity: 0.44
                 font.family: "Selawik"
                 font.pixelSize: 15

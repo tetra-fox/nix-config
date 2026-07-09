@@ -12,9 +12,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     screen: Quickshell.screens[0]
 
-    WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "quickshell-notifications"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
     anchors.top: true
     anchors.right: true

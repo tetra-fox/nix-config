@@ -10,6 +10,10 @@ ColumnLayout {
     // position is only writable when both are true (mpris player.hpp)
     readonly property bool seekable: (root.player?.canSeek ?? false) && (root.player?.positionSupported ?? false)
 
+    // clamped drag position: the grab holds past the track edges, where raw
+    // mouseX goes negative or beyond the width
+    readonly property real dragFraction: Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width))
+
     Layout.fillWidth: true
     spacing: 4
 
@@ -34,7 +38,7 @@ ColumnLayout {
                 id: seekFill
                 width: {
                     if (seekArea.pressed)
-                        return seekArea.mouseX;
+                        return root.dragFraction * seekTrack.width;
                     const len = root.player?.length ?? 0;
                     const pos = root.player?.position ?? 0;
                     if (len <= 0)
@@ -74,17 +78,14 @@ ColumnLayout {
             hoverEnabled: true
             cursorShape: root.seekable ? Qt.PointingHandCursor : Qt.ArrowCursor
             enabled: root.seekable
-            function seekTo(mouseX: real) {
-                const fraction = Math.max(0, Math.min(1, mouseX / seekTrack.width));
+            function seekTo() {
                 const len = root.player?.length ?? 0;
                 if (root.player && len > 0)
-                    root.player.position = fraction * len;
+                    root.player.position = root.dragFraction * len;
             }
-            onClicked: mouse => seekTo(mouse.x)
-            onPositionChanged: mouse => {
-                if (pressed)
-                    seekTo(mouse.x);
-            }
+            onClicked: seekTo()
+            onPositionChanged: if (pressed)
+                seekTo()
         }
     }
 
@@ -93,10 +94,8 @@ ColumnLayout {
 
         Text {
             text: {
-                if (seekArea.pressed) {
-                    const fraction = Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width));
-                    return root.formatTime(fraction * (root.player?.length ?? 0));
-                }
+                if (seekArea.pressed)
+                    return root.formatTime(root.dragFraction * (root.player?.length ?? 0));
                 return root.formatTime(root.player?.position ?? 0);
             }
             color: Theme.textInactive

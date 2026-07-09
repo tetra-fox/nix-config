@@ -22,7 +22,7 @@ QtObject {
     readonly property string cable: "\uEFE6"
     readonly property string vpnKey: "\uE0DA"
     readonly property string vpnKeyOff: "\uEB7A"
-    readonly property string vpnKeyAlert: "\F6CC"
+    readonly property string vpnKeyAlert: "\uF6CC"
 
     // bluetooth
     readonly property string bluetooth: "\uE1A7"

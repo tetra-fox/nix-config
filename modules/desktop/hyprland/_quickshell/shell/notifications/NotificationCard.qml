@@ -121,7 +121,6 @@ Item {
             return 5000;
         }
         running: interval > 0 && !cardHover.hovered && !root._closing
-        repeat: false
         onTriggered: {
             // transient notifs shouldn't persist in the center; others just hide from overlay
             if (root.notif.transient)
@@ -168,7 +167,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            acceptedButtons: Qt.LeftButton
+
             onClicked: {
                 if (bodyText.hoveredLink !== "") {
                     Quickshell.execDetached(["xdg-open", bodyText.hoveredLink]);
@@ -199,7 +198,7 @@ Item {
                 NotificationIcon {
                     notif: root.notif
                     accentColor: root.accentColor
-                    size: Theme.fontIconLg
+
                     Layout.preferredWidth: Theme.fontIconLg
                     Layout.preferredHeight: Theme.fontIconLg
                 }
@@ -218,7 +217,7 @@ Item {
 
                 GlyphButton {
                     icon: Icons.close
-                    iconSize: Theme.fontIcon
+
                     onClicked: root.dismiss()
                 }
             }

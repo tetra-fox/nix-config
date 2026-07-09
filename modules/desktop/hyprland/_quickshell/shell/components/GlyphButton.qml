@@ -16,6 +16,7 @@ Text {
     color: area.containsMouse ? hoverColor : baseColor
     font.family: Theme.fontIconFamily
     font.pixelSize: iconSize
+    font.variableAxes: Theme.fontIconAxes
 
     Behavior on color {
         ColorAnimation {

@@ -1,3 +1,4 @@
+import qs.components
 import qs.lib
 import Quickshell.Io
 import QtQuick
@@ -16,6 +17,7 @@ Item {
     property var samples: []
     property real displayMax: 1
     property real scrollPhase: 0
+    readonly property int maxSamples: 20
     property bool _scaleInited: false
     property real _prevRx: 0
     property real _prevTx: 0
@@ -48,7 +50,6 @@ Item {
         from: 0.0
         to: 1.0
         duration: 250
-        easing.type: Easing.Linear
     }
 
     function reset() {
@@ -56,6 +57,13 @@ Item {
         root.samples = [];
         root.displayMax = 1;
         root._scaleInited = false;
+        // clear the readouts and the last-painted curve too, or the old
+        // interface's numbers linger until the first tick of the new one
+        root.rxRate = -1;
+        root.txRate = -1;
+        root.rxBytes = 0;
+        root.txBytes = 0;
+        root.graphRepaintNeeded();
     }
 
     function formatBytes(b) {
@@ -107,9 +115,15 @@ Item {
 
     // waits for both rx and tx file reads to finish before computing rates
     function _settle() {
+        // a path change (interface switch) auto-loads and fires its own loaded
+        // events; accept exactly the pair the timer seeded and drop the rest,
+        // which would otherwise compute a rate from a mismatched rx/tx pair over
+        // a near-zero dt. preload stays on: reload() only reads the file when it
+        // is (FileView::updatePath)
+        if (_pendingReloads === 0)
+            return;
         if (--_pendingReloads > 0)
             return;
-        _pendingReloads = 0;
 
         // a failed read leaves no usable byte count; skip this tick rather than freeze
         // the barrier (the timer reseeds _pendingReloads on the next tick)
@@ -132,8 +146,8 @@ Item {
                 rx: Math.max(0, root.rxRate),
                 tx: Math.max(0, root.txRate)
             });
-            // 21 = maxSamples(20) + 1 extra for scroll interpolation
-            while (s.length > 21)
+            // one extra sample beyond the window for scroll interpolation
+            while (s.length > root.maxSamples + 1)
                 s.shift();
             root.samples = s;
 
@@ -174,11 +188,8 @@ Item {
         }
         spacing: 5
 
-        Text {
+        SectionLabel {
             text: "Traffic"
-            color: Theme.textLabel
-            font.pixelSize: Theme.fontSm
-            font.family: Theme.fontFamily
         }
 
         Rectangle {
@@ -216,7 +227,7 @@ Item {
                         return;
                     }
 
-                    const maxSamples = 20;
+                    const maxSamples = root.maxSamples;
                     const step = width / (maxSamples - 1);
                     const availH = height - pad * 2;
                     const maxVal = Math.max(1, root.displayMax);

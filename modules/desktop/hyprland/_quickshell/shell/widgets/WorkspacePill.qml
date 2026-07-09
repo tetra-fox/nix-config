@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import qs.lib
 
-import Quickshell.Hyprland
 import QtQuick
 
 Rectangle {
@@ -9,8 +8,10 @@ Rectangle {
 
     required property var workspace
 
-    readonly property bool focused: Hyprland.focusedWorkspace?.id === workspace.id
-    readonly property bool urgent: workspace.lastIpcObject?.urgent ?? false
+    // native live properties; lastIpcObject has no urgent key and only updates
+    // when the workspace is re-fetched
+    readonly property bool focused: workspace.focused
+    readonly property bool urgent: workspace.urgent
     // cap at 3 so a hoarder workspace doesn't blow out the bar width
     readonly property int windowCount: Math.min(workspace.toplevels?.values?.length ?? 0, 3)
 

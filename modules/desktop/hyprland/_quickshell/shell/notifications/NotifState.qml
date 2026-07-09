@@ -69,6 +69,34 @@ QtObject {
             w.notif.dismiss();
     }
 
+    // delegate-independent delayed dismiss for the center: list changes rebuild
+    // the group model and can destroy item delegates, so a delegate-local timer
+    // would be cancelled mid-collapse and the notification would resurrect. the
+    // pending flag lives on the wrapper and the timer here, both of which
+    // survive delegate churn
+    property var _pendingDismiss: []
+    function dismissLater(wrapper): void {
+        if (wrapper.dismissing)
+            return;
+        wrapper.dismissing = true;
+        root._pendingDismiss.push(wrapper);
+        _dismissDelay.restart();
+    }
+
+    property Timer _dismissDelay: Timer {
+        // slightly past the collapse animation, same derivation as NotificationCard
+        interval: Theme.animSlow + 30
+        onTriggered: {
+            for (const w of root._pendingDismiss) {
+                // a wrapper destroyed inside the window (notif closed externally)
+                // reads as null
+                if (w && w.notif)
+                    w.notif.dismiss();
+            }
+            root._pendingDismiss = [];
+        }
+    }
+
     // group key for the center's per-app grouping; "" appName collapses to Unknown
     function groupKey(wrapper): string {
         return (wrapper.notif?.appName ?? "") || "Unknown";
