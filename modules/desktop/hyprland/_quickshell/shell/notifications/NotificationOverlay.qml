@@ -18,7 +18,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     anchors.top: true
     anchors.right: true
-    margins.right: Theme.pillMargin    // qmllint disable missing-property unqualified
+    margins.right: Theme.pillMargin    // qmllint disable unqualified unresolved-type
     // don't push other surfaces aside, just overlay on top
     exclusiveZone: 0
 

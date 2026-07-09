@@ -24,7 +24,7 @@ Variants {
         anchors.bottom: true
         anchors.right: true
         // the real watermark sits inset from the bottom-right, roughly this far at 1080p
-        margins.bottom: 72    // qmllint disable missing-property unqualified
+        margins.bottom: 72    // qmllint disable unqualified unresolved-type
         margins.right: 72
 
         exclusiveZone: 0

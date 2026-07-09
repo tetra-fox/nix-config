@@ -1,5 +1,10 @@
 pragma ComponentBehavior: Bound
 
+// quickshell omits qml module DEPENDENCIES on purpose (upstream cmake/util.cmake),
+// so base types like GlobalShortcut's PostReloadHook resolve at runtime but not for
+// qmllint, which reports the miss at a bogus line (the qmltypes-internal header line
+// number). suppress import warnings file-wide; a broken import still fails at load
+// qmllint disable import
 import qs.dialogs
 import qs.lockscreen
 import qs.notifications

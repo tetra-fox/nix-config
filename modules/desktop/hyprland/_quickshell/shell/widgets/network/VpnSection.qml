@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import qs.components
 import qs.lib
-import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
@@ -36,6 +35,11 @@ Item {
     readonly property bool busy: root.busyUuid !== ""
     readonly property var activeTunnel: root.tunnels.find(t => t && t.active) ?? null
     readonly property bool anyActive: root.activeTunnel !== null
+
+    // every nmcli invocation parses output or stderr, so force the C locale
+    readonly property var cLocale: ({
+            "LC_ALL": "C"
+        })
 
     // -- parsers --
 
@@ -186,10 +190,7 @@ Item {
     // enumerate (read): drives the model and the return to idle
     BufferedProcess {
         id: listProc
-        // LC_ALL=C keeps state tokens and any stderr locale-stable
-        environment: ({
-                "LC_ALL": "C"
-            })
+        environment: root.cLocale
         command: ["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"]
         onFinished: output => {
             const rows = root._parseTunnels(output);
@@ -209,18 +210,14 @@ Item {
     // active-tunnel detail (read): feeds the accordion
     BufferedProcess {
         id: detailProc
-        environment: ({
-                "LC_ALL": "C"
-            })
+        environment: root.cLocale
         onFinished: output => root.detail = root._parseDetail(output)
     }
 
     // fresh enumerate after a successful up, to compute which tunnels to drop
     BufferedProcess {
         id: dropScanProc
-        environment: ({
-                "LC_ALL": "C"
-            })
+        environment: root.cLocale
         command: ["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"]
         onFinished: output => {
             root._dropQueue = root._parseTunnels(output).filter(t => t.active && t.uuid !== root.busyUuid).map(t => t.uuid);
@@ -232,14 +229,12 @@ Item {
     // stderr is accumulated so multi-line nmcli/polkit errors survive for opError.
     Process {
         id: upProc
-        environment: ({
-                "LC_ALL": "C"
-            })
+        environment: root.cLocale
         stdout: SplitParser {}
         stderr: SplitParser {
             onRead: data => root._opStderr += data + "\n"
         }
-        onExited: (exitCode, exitStatus) => {
+        onExited: (exitCode, exitStatus) => { // qmllint disable signal-handler-parameters
             if (root.pendingAction !== "up") // a watchdog kill already moved on
                 return;
             // QProcess.ExitStatus isn't registered as a quickshell enum, so compare the
@@ -257,14 +252,12 @@ Item {
 
     Process {
         id: downProc
-        environment: ({
-                "LC_ALL": "C"
-            })
+        environment: root.cLocale
         stdout: SplitParser {}
         stderr: SplitParser {
             onRead: data => root._opStderr += data + "\n"
         }
-        onExited: (exitCode, exitStatus) => {
+        onExited: (exitCode, exitStatus) => { // qmllint disable signal-handler-parameters
             // a down failure is non-fatal (tunnel may already be gone); reconcile to truth.
             // while draining the drop queue keep pumping it
             if (root._dropQueue.length > 0) {

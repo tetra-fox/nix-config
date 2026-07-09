@@ -94,8 +94,9 @@ QtObject {
                         max: max,
                         value: cur / max
                     });
-                    // keep the running average current as any device moves
-                    dev.valueChanged.connect(root._recomputeAverage);
+                    // keep the running average current as any device moves.
+                    // the linter types createObject results as plain QObject
+                    dev.valueChanged.connect(root._recomputeAverage); // qmllint disable missing-property
                     root.devices = [...root.devices, dev];
                 }
             }

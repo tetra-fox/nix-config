@@ -1,4 +1,7 @@
 pragma ComponentBehavior: Bound
+// own-module import: NotifState's singleton flag lives in the generated qmldir,
+// which tooling only reads through a module import, not same-directory lookup
+import qs.notifications
 import qs.components
 import qs.lib
 

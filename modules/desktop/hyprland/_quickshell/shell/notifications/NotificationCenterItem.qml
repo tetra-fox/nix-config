@@ -1,4 +1,7 @@
 pragma ComponentBehavior: Bound
+// own-module import: NotifState's singleton flag lives in the generated qmldir,
+// which tooling only reads through a module import, not same-directory lookup
+import qs.notifications
 import qs.components
 import qs.lib
 
@@ -22,7 +25,9 @@ Item {
 
     // whether a left-click can jump to the source (default action, or a window to raise)
     readonly property bool canActivate: {
-        const hasDefault = (notif.actions ?? []).some(a => a.identifier === "default");
+        // quickshell's qmltypes reference the QList<NotificationAction*> property
+        // type without exposing it declaratively
+        const hasDefault = (notif.actions ?? []).some(a => a.identifier === "default"); // qmllint disable unresolved-type
         return hasDefault || (notif.desktopEntry || notif.appName) !== "";
     }
 

@@ -25,7 +25,7 @@ PanelWindow { // qmllint disable uncreatable-type
     screen: panelWindow?.screen
     anchors.top: true
     anchors.left: true
-    margins.left: _margin    // qmllint disable missing-property unqualified
+    margins.left: _margin    // qmllint disable unqualified unresolved-type
     exclusiveZone: 0
 
     implicitWidth: contentWidth

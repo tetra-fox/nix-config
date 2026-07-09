@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import qs.components
-import qs.lib
 import qs.widgets.media
 
 import Quickshell.Services.Pipewire

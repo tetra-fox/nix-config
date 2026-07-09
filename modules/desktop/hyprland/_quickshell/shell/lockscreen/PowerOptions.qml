@@ -54,6 +54,8 @@ Item {
     // -- buttons --
 
     component PowerButton: Column {
+        id: btn
+
         property string icon
         property string label
         property var action
@@ -74,7 +76,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                text: icon
+                text: btn.icon
                 color: Theme.textInactive
                 font.pixelSize: 20
                 font.family: Theme.fontIconFamily
@@ -86,13 +88,13 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root._requestConfirm(label, icon, action)
+                onClicked: root._requestConfirm(btn.label, btn.icon, btn.action)
             }
         }
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: label
+            text: btn.label
             color: Theme.textInactive
             font.pixelSize: Theme.fontSm
             font.family: Theme.fontFamily
