@@ -78,6 +78,9 @@ in {
     nodejs
     python3
 
+    alcom
+    unityhub
+
     davinci-resolve
 
     sqlite
