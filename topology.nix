@@ -183,19 +183,21 @@ in {
       deviceType = "server";
       hardware.info = "Proxmox VE 9";
       icon = ./images/icons/proxmox.svg;
-      interfaces.nic0 = {
-        addresses = [];
-      };
-      interfaces."vmbr0.10" = {
-        addresses = ["192.168.10.212"];
-        network = "fairlane-server-vlan";
-        virtual = true;
-      };
-      # no host address: plush just bridges the isolated segment for its VMs' ens19
-      interfaces."vmbr0.1010" = {
-        addresses = [];
-        network = "fairlane-internal-vlan";
-        virtual = true;
+      interfaces = {
+        nic0 = {
+          addresses = [];
+        };
+        "vmbr0.10" = {
+          addresses = ["192.168.10.212"];
+          network = "fairlane-server-vlan";
+          virtual = true;
+        };
+        # no host address: plush just bridges the isolated segment for its VMs' ens19
+        "vmbr0.1010" = {
+          addresses = [];
+          network = "fairlane-internal-vlan";
+          virtual = true;
+        };
       };
     };
 
@@ -204,18 +206,20 @@ in {
       deviceType = "server";
       hardware.info = "Proxmox VE 9";
       icon = ./images/icons/proxmox.svg;
-      interfaces.enp89s0 = {
-        addresses = [];
-      };
-      interfaces."vmbr0.10" = {
-        addresses = ["192.168.10.7"];
-        network = "fairlane-server-vlan";
-        virtual = true;
-      };
-      interfaces."vmbr0.1010" = {
-        addresses = [];
-        network = "fairlane-internal-vlan";
-        virtual = true;
+      interfaces = {
+        enp89s0 = {
+          addresses = [];
+        };
+        "vmbr0.10" = {
+          addresses = ["192.168.10.7"];
+          network = "fairlane-server-vlan";
+          virtual = true;
+        };
+        "vmbr0.1010" = {
+          addresses = [];
+          network = "fairlane-internal-vlan";
+          virtual = true;
+        };
       };
     };
 
