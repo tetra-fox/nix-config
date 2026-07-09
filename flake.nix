@@ -31,8 +31,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    alejandra = {
-      url = "github:kamadorueda/alejandra";
+    tools = {
+      url = "path:./tools";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -173,11 +173,8 @@
         pkgs,
         ...
       }: {
-        formatter = inputs'.alejandra.packages.default;
-        # statix is exposed so CI can `nix run .#statix` without realising the whole
-        # devshell closure (colmena/nixos-anywhere pull it to ~8G); the linter itself
-        # is ~130M. the devshell still carries statix for interactive use.
-        packages = inputs'.tetra-nurpkgs.packages // {inherit (pkgs) statix;};
+        formatter = inputs'.tools.packages.alejandra;
+        packages = inputs'.tetra-nurpkgs.packages;
 
         devShells.default = pkgs.mkShell {
           packages = [
@@ -186,21 +183,8 @@
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
-            inputs'.alejandra.packages.default
-            pkgs.statix
+            inputs'.tools.packages.default
           ];
-        };
-
-        apps.update-topology = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
-          type = "app";
-          program = "${pkgs.writeShellScript "update-topology" ''
-            set -eu
-            out=$(nix build --no-link --print-out-paths .#topology.x86_64-linux.config.output)
-            mkdir -p images/topology
-            install -m 644 "$out"/main.svg     images/topology/main.svg
-            install -m 644 "$out"/network.svg  images/topology/network.svg
-            echo "wrote images/topology/{main,network}.svg"
-          ''}";
         };
       };
 
