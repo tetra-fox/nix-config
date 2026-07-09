@@ -1,5 +1,9 @@
 {lib, ...}: {
   catppuccin = {
+    # stylix does the theming; keep catppuccin/nix ports off. setting autoEnable
+    # explicitly opts out of the upcoming default flip where catppuccin.enable
+    # stops gating auto-enrolled ports, and silences the deprecation warning
+    autoEnable = false;
     flavor = "mocha";
     accent = "mauve";
   };
