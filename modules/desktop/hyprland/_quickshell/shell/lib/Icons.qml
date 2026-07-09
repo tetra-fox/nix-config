@@ -49,6 +49,12 @@ QtObject {
         return volumeMute;
     }
 
+    // brightness. the material brightness_5/6/7 glyphs differ only by their
+    // center detail, which the FILL=1 baked font flattens, so they can't show a
+    // level; use one static sun and let the slider fill + percent convey it
+    readonly property string brightness: "\uE518"
+    readonly property string monitor: "\uEF5B"
+
     // notifications
     readonly property string notifications: "\uE7F4"
     readonly property string notificationsOff: "\uE7F6"

@@ -111,6 +111,9 @@ PanelWindow { // qmllint disable uncreatable-type
                 Network {
                     panelWindow: root
                 }
+                Backlight {
+                    panelWindow: root
+                }
                 Volume {
                     panelWindow: root
                 }
