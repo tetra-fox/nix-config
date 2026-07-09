@@ -21,7 +21,8 @@
 
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = ["networkmanager" "wheel"];
+    # video: write access to backlight brightness nodes (brightnessctl)
+    extraGroups = ["networkmanager" "wheel" "video"];
   };
 
   time.timeZone = "America/Los_Angeles";

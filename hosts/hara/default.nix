@@ -10,12 +10,16 @@
     modules.desktop.greetd.system
     modules.desktop.hyprland.system
     modules.hardware.nvidia.system
+    modules.hardware.ddcci.system
     # modules.hardware.openrgb.system
     modules.desktop.steam.system
     modules.desktop.stylix.system
 
     modules.services.ollama.system
   ];
+
+  # nvidia doesn't hand the DDC/CI bus to ddcci_backlight, so force the attach
+  lab.ddcci.forceProbe = true;
 
   networking = {
     hostName = "hara";
