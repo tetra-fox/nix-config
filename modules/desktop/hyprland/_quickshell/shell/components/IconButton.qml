@@ -22,15 +22,7 @@ Item {
         height: Theme.iconHitHeight
         radius: Theme.radiusMd
 
-        color: {
-            if (area.pressed)
-                return Theme.pressedBg;
-            if (root.isOpen)
-                return Theme.openBg;
-            if (area.containsMouse)
-                return Theme.hoverBg;
-            return Theme.idleBg;
-        }
+        color: Theme.stateBg(area.pressed, root.isOpen, area.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast

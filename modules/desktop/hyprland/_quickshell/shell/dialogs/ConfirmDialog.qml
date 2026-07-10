@@ -1,12 +1,10 @@
 import qs.components
 import qs.lib
-import Quickshell
-import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-PanelWindow { // qmllint disable uncreatable-type
+DialogSurface {
     id: root
 
     property string title: ""
@@ -26,17 +24,6 @@ PanelWindow { // qmllint disable uncreatable-type
         grabGuard.restart();
         visible = true;
     }
-
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "quickshell-popup"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.exclusiveZone: -1
-
-    implicitWidth: panel.width
-    implicitHeight: panel.height
-
-    visible: false
-    color: "transparent"
 
     // guard: key-release from shortcut can dismiss the grab immediately
     Timer {
@@ -79,122 +66,61 @@ PanelWindow { // qmllint disable uncreatable-type
         }
     }
 
-    onVisibleChanged: {
-        if (visible)
-            openAnim.restart();
-    }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-    SequentialAnimation {
-        id: openAnim
-        ParallelAnimation {
-            PropertyAction {
-                target: panel
-                property: "scale"
-                value: Theme.dialogOpenScale
-            }
-            PropertyAction {
-                target: panel
-                property: "opacity"
-                value: 0
-            }
+        Text {
+            visible: root.icon !== ""
+            text: root.icon
+            color: Theme.textActive
+            font.pixelSize: Theme.fontIconLg
+            font.family: Theme.fontIconFamily
+            font.variableAxes: Theme.fontIconAxes
         }
-        ParallelAnimation {
-            NumberAnimation {
-                target: panel
-                property: "scale"
-                to: 1.0
-                duration: Theme.animDialogIn
-                easing.type: Easing.OutExpo
-            }
-            NumberAnimation {
-                target: panel
-                property: "opacity"
-                to: 1.0
-                duration: Theme.animSettle
-                easing.type: Easing.OutQuad
-            }
+
+        Text {
+            Layout.fillWidth: true
+            text: root.title
+            color: Theme.textActive
+            font.pixelSize: Theme.fontBase
+            font.family: Theme.fontFamily
+            font.weight: Font.Medium
         }
     }
 
-    Rectangle {
-        id: panel
-        anchors.centerIn: parent
-        width: 300
-        height: col.implicitHeight + Theme.pillHPad * 4
-        radius: Theme.radiusLg
-        color: Theme.panelBg
-        border.width: 1
-        border.color: Theme.panelBorder
-        transformOrigin: Item.Center
+    Text {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.iconPadV
+        text: root.body
+        color: Theme.textSecondary
+        font.pixelSize: Theme.fontSm
+        font.family: Theme.fontFamily
+        wrapMode: Text.WordWrap
+    }
 
-        ColumnLayout {
-            id: col
-            anchors {
-                left: parent.left
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-                leftMargin: Theme.pillHPad * 2
-                rightMargin: Theme.pillHPad * 2
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.pillHPad
+        spacing: Theme.iconPadV
+
+        DialogButton {
+            Layout.fillWidth: true
+            text: "Cancel"
+            bordered: true
+            onClicked: {
+                root.visible = false;
+                root.cancelled();
             }
-            spacing: 0
+        }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    visible: root.icon !== ""
-                    text: root.icon
-                    color: Theme.textActive
-                    font.pixelSize: Theme.fontIconLg
-                    font.family: Theme.fontIconFamily
-                    font.variableAxes: Theme.fontIconAxes
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: root.title
-                    color: Theme.textActive
-                    font.pixelSize: Theme.fontBase
-                    font.family: Theme.fontFamily
-                    font.weight: Font.Medium
-                }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.iconPadV
-                text: root.body
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
-                wrapMode: Text.WordWrap
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.pillHPad
-                spacing: Theme.iconPadV
-
-                DialogButton {
-                    Layout.fillWidth: true
-                    text: "Cancel"
-                    bordered: true
-                    onClicked: {
-                        root.visible = false;
-                        root.cancelled();
-                    }
-                }
-
-                DialogButton {
-                    Layout.fillWidth: true
-                    text: root.actionLabel + "  (" + root.remaining + ")"
-                    accentColor: Theme.danger
-                    onClicked: {
-                        root.visible = false;
-                        root.confirmed();
-                    }
-                }
+        DialogButton {
+            Layout.fillWidth: true
+            text: root.actionLabel + "  (" + root.remaining + ")"
+            accentColor: Theme.danger
+            onClicked: {
+                root.visible = false;
+                root.confirmed();
             }
         }
     }

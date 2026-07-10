@@ -10,6 +10,8 @@ PanelWindow { // qmllint disable uncreatable-type
 
     required property var notifList
 
+    // deliberately pinned to one monitor; popups following focus was considered
+    // and rejected
     screen: Quickshell.screens[0]
 
     WlrLayershell.namespace: "quickshell-notifications"

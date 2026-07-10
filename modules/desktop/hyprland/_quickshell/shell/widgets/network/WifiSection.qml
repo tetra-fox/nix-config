@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 
+// own-module import: WifiSecurity's singleton flag lives in the generated
+// qmldir, which tooling only reads through a module import
+import qs.widgets.network
 import qs.components
 import qs.lib
 import Quickshell.Networking
@@ -20,8 +23,6 @@ Item {
     onScannerEnabledChanged: {
         if (!scannerEnabled)
             root.showAllNetworks = false;
-        if (scannerEnabled && activeNetwork && !iwLinkProc.running)
-            iwLinkProc.running = true;
     }
 
     // only run hw scans when actually needed: browsing networks or not connected
@@ -43,8 +44,6 @@ Item {
             root.iwSignal = 0;
             root.iwFreq = 0;
             root.iwTxBitrate = "";
-        } else if (scannerEnabled && !iwLinkProc.running) {
-            iwLinkProc.running = true;
         }
     }
 
@@ -91,8 +90,9 @@ Item {
         }
     }
 
-    BufferedProcess {
+    PolledProcess {
         id: iwLinkProc
+        polling: root.scannerEnabled && root.activeNetwork !== null
         command: ["iw", "dev", root.ifname, "link"]
         onFinished: output => {
             const freqMatch = output.match(/freq:\s*(\d+)/);
@@ -102,14 +102,6 @@ Item {
             const txMatch = output.match(/tx bitrate:\s*([\d.]+\s*\S+)/);
             root.iwTxBitrate = txMatch ? txMatch[1].replace("MBit/s", "Mbps") : "";
         }
-    }
-
-    Timer {
-        interval: 2000
-        running: root.scannerEnabled && root.activeNetwork !== null
-        repeat: true
-        onTriggered: if (!iwLinkProc.running)
-            iwLinkProc.running = true
     }
 
     property var sortedNetworks: []
@@ -139,13 +131,10 @@ Item {
             network.disconnect();
         } else if (network.known) {
             network.connect();
+        } else if (WifiSecurity.isOpen(network.security)) {
+            network.connect();
         } else {
-            const open = network.security === WifiSecurityType.Open || network.security === WifiSecurityType.Unknown;
-            if (open) {
-                network.connect();
-            } else {
-                root.expandedNetwork = root.expandedNetwork === network ? null : network;
-            }
+            root.expandedNetwork = root.expandedNetwork === network ? null : network;
         }
     }
 
@@ -210,7 +199,7 @@ Item {
                     return Icons.wifiOff;
                 if (root.activeNetwork)
                     return Icons.wifi;
-                return scanFrames[scanIndex];
+                return scanCycle.frame;
             }
             iconColor: root.activeNetwork ? Theme.textPrimary : Theme.textInactive
             title: {
@@ -245,18 +234,13 @@ Item {
                 return "";
             }
 
-            readonly property var scanFrames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
-            property int scanIndex: 0
-
-            Timer {
+            IconCycle {
+                id: scanCycle
+                frames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
+                interval: 400
                 // scannerEnabled gates on the popup being open; no point animating
                 // an icon nobody can see
                 running: root.scannerEnabled && Networking.wifiEnabled && !root.activeNetwork
-                interval: 400
-                repeat: true
-                onRunningChanged: if (!running)
-                    parent.scanIndex = 0
-                onTriggered: parent.scanIndex = (parent.scanIndex + 1) % parent.scanFrames.length
             }
         }
 
@@ -311,10 +295,13 @@ Item {
             }
         }
 
-        // flat list when disconnected, accordion when connected
-        ConfiguredNetworkList {
+        // flat list when disconnected, accordion when connected. Loader-gated
+        // so each network carries one live delegate, not two
+        Loader {
             Layout.fillWidth: true
-            visible: !root.activeNetwork
+            active: !root.activeNetwork
+            visible: active
+            sourceComponent: ConfiguredNetworkList {}
         }
 
         Accordion {
@@ -323,8 +310,11 @@ Item {
             label: "More networks"
             loading: root.wifiDevice?.scannerEnabled ?? false
 
-            ConfiguredNetworkList {
+            Loader {
                 width: parent.width
+                active: root.activeNetwork !== null
+                visible: active
+                sourceComponent: ConfiguredNetworkList {}
             }
         }
     }

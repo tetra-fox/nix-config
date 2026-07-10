@@ -19,20 +19,21 @@ Item {
     readonly property bool hasIpv6: ip6 !== ""
     readonly property bool hasAny: hasIpv4 || hasIpv6
 
+    // shared poll gate for all four fetchers
+    readonly property bool _live: polling && ifname !== ""
+
     implicitHeight: col.implicitHeight
     visible: root.hasAny
 
+    // immediate refetch for changes the poll gate can't see (interface switch
+    // while the popup stays open)
     function fetch() {
         if (root.ifname === "")
             return;
-        if (!routeProc.running)
-            routeProc.running = true;
-        if (!addrProc.running)
-            addrProc.running = true;
-        if (!addr6Proc.running)
-            addr6Proc.running = true;
-        if (!dnsProc.running)
-            dnsProc.running = true;
+        routeProc.trigger();
+        addrProc.trigger();
+        addr6Proc.trigger();
+        dnsProc.trigger();
     }
 
     function clear() {
@@ -59,8 +60,9 @@ Item {
     // process keeps its old argv, so its output would repopulate the fields of
     // a dead interface with no poll left to correct them. results from an
     // interface-to-interface switch self-heal on the next 2s poll
-    BufferedProcess {
+    PolledProcess {
         id: routeProc
+        polling: root._live
         command: ["ip", "-j", "-4", "route", "show", "default", "dev", root.ifname]
         onFinished: output => {
             if (root.ifname === "")
@@ -73,8 +75,9 @@ Item {
         }
     }
 
-    BufferedProcess {
+    PolledProcess {
         id: addrProc
+        polling: root._live
         command: ["ip", "-j", "-4", "addr", "show", root.ifname]
         onFinished: output => {
             if (root.ifname === "")
@@ -90,8 +93,9 @@ Item {
         }
     }
 
-    BufferedProcess {
+    PolledProcess {
         id: addr6Proc
+        polling: root._live
         command: ["ip", "-j", "-6", "addr", "show", root.ifname]
         onFinished: output => {
             if (root.ifname === "")
@@ -106,8 +110,9 @@ Item {
         }
     }
 
-    BufferedProcess {
+    PolledProcess {
         id: dnsProc
+        polling: root._live
         command: ["resolvectl", "dns", root.ifname]
         onFinished: output => {
             if (root.ifname === "")
@@ -115,13 +120,6 @@ Item {
             const match = output.match(/:\s*(.+)/);
             root.dns = match ? match[1].trim() : "";
         }
-    }
-
-    Timer {
-        interval: 2000
-        running: root.polling && root.ifname !== ""
-        repeat: true
-        onTriggered: root.fetch()
     }
 
     ColumnLayout {

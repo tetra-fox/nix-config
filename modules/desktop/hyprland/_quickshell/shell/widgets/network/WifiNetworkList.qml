@@ -16,28 +16,7 @@ ScrollableList {
     signal networkConnectWithPsk(WifiNetwork network, string psk)
     signal expandRequested(var network)
 
-    onExpandedNetworkChanged: {
-        if (expandedNetwork)
-            scrollTimer.restart();
-    }
-
-    // defer scroll until delegate geometry has settled after expand
-    Timer {
-        id: scrollTimer
-        interval: 50
-        onTriggered: {
-            for (let i = 0; i < repeater.count; i++) {
-                const item = repeater.itemAt(i);
-                if (item && item.network === root.expandedNetwork) { // qmllint disable missing-property
-                    root.ensureVisible(item);
-                    break;
-                }
-            }
-        }
-    }
-
     Repeater {
-        id: repeater
         // ScriptModel diffs by object identity, so a rebuilt networks array only
         // touches delegates whose network actually appeared or vanished
         model: ScriptModel {
@@ -45,12 +24,20 @@ ScrollableList {
         }
 
         delegate: WifiNetworkDelegate {
+            id: delegateItem
             required property WifiNetwork modelData
             required property int index
             width: root.width
             network: modelData
             expanded: root.expandedNetwork === modelData
             showSeparator: index > 0
+
+            // scroll when the expansion has actually landed in geometry; keying
+            // off the expandedNetwork property edge would measure the old height
+            onImplicitHeightChanged: {
+                if (expanded)
+                    root.ensureVisible(delegateItem);
+            }
 
             onClicked: root.networkClicked(modelData)
             onForgotNetwork: root.networkForgot(modelData)

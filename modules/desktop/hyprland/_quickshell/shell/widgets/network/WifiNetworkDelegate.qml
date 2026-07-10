@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 
+// own-module import: WifiSecurity's singleton flag lives in the generated
+// qmldir, which tooling only reads through a module import
+import qs.widgets.network
 import qs.components
 import qs.lib
 import Quickshell.Networking
@@ -45,7 +48,7 @@ Item {
             // guard against transient null: delegate briefly outlives its WifiNetwork during AP removal
             if (!root.network)
                 return Icons.wifiSignal0;
-            const secured = root.network.security !== WifiSecurityType.Open && root.network.security !== WifiSecurityType.Unknown; // qmllint disable unresolved-type
+            const secured = !WifiSecurity.isOpen(root.network.security);
             const sig = root.network.signalStrength;
             const lock = secured ? "Locked" : "";
             if (sig >= 0.75)

@@ -20,7 +20,7 @@ ColumnLayout {
         implicitHeight: headerRow.implicitHeight + 14
         radius: Theme.radiusMd
         visible: root.label !== ""
-        color: headerHover.containsMouse ? Theme.hoverBg : Theme.idleBg
+        color: Theme.stateBg(false, false, headerHover.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast
@@ -52,23 +52,8 @@ ColumnLayout {
                 elide: Text.ElideRight
             }
 
-            Text {
-                id: spinner
-                text: Icons.progressActivity
-                color: Theme.textInactive
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontIconFamily
-                font.variableAxes: Theme.fontIconAxes
+            Spinner {
                 visible: root.loading
-
-                RotationAnimator {
-                    target: spinner
-                    from: 0
-                    to: 360
-                    duration: Theme.animSpin
-                    loops: Animation.Infinite
-                    running: spinner.visible
-                }
             }
 
             Text {

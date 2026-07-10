@@ -148,12 +148,16 @@ Item {
         downProc.running = true;
     }
 
+    // the enumerate run id that is allowed to clear busy: a poll enumerate that
+    // started before the op finished holds pre-op state and must not end the op
+    property int _reconcileRun: 0
+
     // re-enumerate is the only path back to idle; active-ness is set ONLY from STATE here,
     // never optimistically from an op's exit code
     function _reconcile(): void {
         root.pendingAction = "reconcile";
-        if (!listProc.running)
-            listProc.running = true;
+        root._reconcileRun = listProc.runId + 1;
+        listProc.trigger();
     }
 
     // down each remaining uuid from a fresh enumerate, then reconcile
@@ -185,14 +189,13 @@ Item {
             root.detail = ({});
     }
 
-    onPollingChanged: if (root.polling && !listProc.running)
-        listProc.running = true
-
-    // enumerate (read): drives the model and the return to idle
-    BufferedProcess {
+    // enumerate (read): drives the model and the return to idle.
+    // polling is suppressed during an op so it can't race the reconcile
+    PolledProcess {
         id: listProc
         environment: root.cLocale
         command: root.enumerateCmd
+        polling: root.polling && !root.busy
         onFinished: output => {
             const rows = root._parseTunnels(output);
             // a failed/empty poll emits finished("") (BufferedProcess fires off
@@ -208,8 +211,15 @@ Item {
                     root.tunnels = rows;
             }
             if (root.pendingAction === "reconcile") {
-                root.busyUuid = "";
-                root.pendingAction = "";
+                if (listProc.runId < root._reconcileRun) {
+                    // this run started before the op finished; its rows are pre-op
+                    // truth (harmless to adopt, polls were suppressed during the op)
+                    // but it must not clear busy. run a fresh enumerate instead
+                    listProc.trigger();
+                } else {
+                    root.busyUuid = "";
+                    root.pendingAction = "";
+                }
             }
             if (root.activeTunnel)
                 root._fetchDetail();
@@ -290,15 +300,6 @@ Item {
             root._dropQueue = [];
             root._reconcile();
         }
-    }
-
-    // periodic poll, suppressed during an op so it can't race the reconcile
-    Timer {
-        interval: 2000
-        running: root.polling && !root.busy
-        repeat: true
-        onTriggered: if (!listProc.running)
-            listProc.running = true
     }
 
     implicitHeight: visible ? col.implicitHeight : 0

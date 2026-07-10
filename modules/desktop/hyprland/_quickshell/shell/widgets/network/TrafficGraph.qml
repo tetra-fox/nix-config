@@ -66,26 +66,6 @@ Item {
         root.graphRepaintNeeded();
     }
 
-    function formatBytes(b) {
-        if (b >= 1073741824)
-            return (b / 1073741824).toFixed(2) + " GB";
-        if (b >= 1048576)
-            return (b / 1048576).toFixed(2) + " MB";
-        if (b >= 1024)
-            return (b / 1024).toFixed(1) + " KB";
-        return Math.round(b) + " B";
-    }
-
-    function formatRate(bps) {
-        if (bps < 0)
-            return "";
-        if (bps >= 1048576)
-            return (bps / 1048576).toFixed(2) + " MB/s";
-        if (bps >= 1024)
-            return (bps / 1024).toFixed(1) + " KB/s";
-        return Math.round(bps) + " B/s";
-    }
-
     onIfnameChanged: reset()
 
     property int _pendingReloads: 0
@@ -286,14 +266,14 @@ Item {
                 ColumnLayout {
                     spacing: 1
                     Text {
-                        text: root.formatBytes(root.rxBytes)
+                        text: Format.bytes(root.rxBytes)
                         color: Theme.textPrimary
                         font.pixelSize: Theme.fontSm
                         font.family: Theme.fontFamily
                     }
                     Text {
                         visible: root.rxRate >= 0
-                        text: root.formatRate(root.rxRate)
+                        text: Format.rate(root.rxRate)
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontXs
                         font.family: Theme.fontFamily
@@ -316,14 +296,14 @@ Item {
                 ColumnLayout {
                     spacing: 1
                     Text {
-                        text: root.formatBytes(root.txBytes)
+                        text: Format.bytes(root.txBytes)
                         color: Theme.textPrimary
                         font.pixelSize: Theme.fontSm
                         font.family: Theme.fontFamily
                     }
                     Text {
                         visible: root.txRate >= 0
-                        text: root.formatRate(root.txRate)
+                        text: Format.rate(root.txRate)
                         color: Theme.textSecondary
                         font.pixelSize: Theme.fontXs
                         font.family: Theme.fontFamily

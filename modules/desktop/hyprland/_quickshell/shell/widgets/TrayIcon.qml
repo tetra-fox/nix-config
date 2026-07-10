@@ -22,15 +22,7 @@ Item {
         height: Theme.iconHitHeight
         radius: Theme.radiusMd
 
-        color: {
-            if (trayMouse.pressed)
-                return Theme.pressedBg;
-            if (popup.visible)
-                return Theme.openBg;
-            if (trayMouse.containsMouse)
-                return Theme.hoverBg;
-            return Theme.idleBg;
-        }
+        color: Theme.stateBg(trayMouse.pressed, popup.visible, trayMouse.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast
@@ -90,19 +82,15 @@ Item {
             }
 
             Repeater {
-                model: menuOpener.children
+                // empty while closed so reopening starts with submenus collapsed
+                // and their dbus openers released
+                model: popup.visible ? menuOpener.children : null
 
-                delegate: MenuItem {
-                    id: menuItem
+                delegate: TrayMenuEntry {
                     required property var modelData
                     width: menuCol.width
-                    text: menuItem.modelData.text
-                    enabled: menuItem.modelData.enabled
-                    isSeparator: menuItem.modelData.isSeparator
-                    onClicked: {
-                        menuItem.modelData.triggered();
-                        popup.visible = false;
-                    }
+                    entry: modelData
+                    onActivated: popup.visible = false
                 }
             }
         }

@@ -34,7 +34,7 @@ Item {
         width: label.implicitWidth + 12
         height: label.implicitHeight + 6
         radius: Theme.radiusMd
-        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg
+        color: Theme.stateBg(area.pressed, false, area.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast

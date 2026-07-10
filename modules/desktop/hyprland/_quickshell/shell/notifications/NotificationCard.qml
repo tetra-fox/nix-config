@@ -79,12 +79,16 @@ Item {
         }
     }
 
+    // whether the pending close dismisses the notif or only hides the popup
+    property bool _dismissOnClose: false
+
     function dismiss() {
         if (_closing)
             return;
         _closing = true;
         _hiding = true;
-        dismissTimer.start();
+        _dismissOnClose = true;
+        closeTimer.start();
     }
 
     function hideAsPopup() {
@@ -92,21 +96,21 @@ Item {
             return;
         _closing = true;
         _hiding = true;
-        hideTimer.start();
+        _dismissOnClose = false;
+        closeTimer.start();
     }
 
     // wait for the collapse Behavior to finish before mutating state, otherwise the
     // delegate is destroyed mid-animation and the column snaps shut
     Timer {
-        id: dismissTimer
+        id: closeTimer
         interval: Theme.animSlow + 30
-        onTriggered: root.notif.dismiss()
-    }
-
-    Timer {
-        id: hideTimer
-        interval: Theme.animSlow + 30
-        onTriggered: root.wrapper.popup = false
+        onTriggered: {
+            if (root._dismissOnClose)
+                root.notif.dismiss();
+            else
+                root.wrapper.popup = false;
+        }
     }
 
     Timer {

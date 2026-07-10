@@ -26,15 +26,7 @@ Item {
         id: bg
         anchors.fill: parent
         radius: Theme.radiusMd
-        color: {
-            if (area.pressed)
-                return Theme.pressedBg;
-            if (popup.visible)
-                return Theme.openBg;
-            if (area.containsMouse)
-                return Theme.hoverBg;
-            return Theme.idleBg;
-        }
+        color: Theme.stateBg(area.pressed, popup.visible, area.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast

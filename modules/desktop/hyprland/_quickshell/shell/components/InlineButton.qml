@@ -13,7 +13,7 @@ Rectangle {
     implicitWidth: label.implicitWidth + 12
     implicitHeight: label.implicitHeight + 6
     radius: Theme.radiusSm
-    color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.fillFaint
+    color: Theme.stateBg(area.pressed, false, area.containsMouse, Theme.fillFaint)
     border.width: 1
     border.color: area.containsMouse ? Theme.withAlpha(root.accentColor, 0.3) : Theme.fillFaint
     Behavior on color {

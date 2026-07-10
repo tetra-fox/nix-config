@@ -46,7 +46,7 @@ ColumnLayout {
         icon: Icons.memory
         label: "Memory"
         value: root.sysData.memTotal > 0 ? root.sysData.memUsed / root.sysData.memTotal : 0
-        detail: root.sysData.memTotal > 0 ? root.sysData.formatBytesCompact(root.sysData.memUsed, root.sysData.memTotal) : "..."
+        detail: root.sysData.memTotal > 0 ? Format.pair(root.sysData.memUsed, root.sysData.memTotal) : "..."
     }
 
     UsageBar {
@@ -54,7 +54,7 @@ ColumnLayout {
         icon: Icons.swapHoriz
         label: "Swap"
         value: root.sysData.swapTotal > 0 ? root.sysData.swapUsed / root.sysData.swapTotal : 0
-        detail: root.sysData.formatBytesCompact(root.sysData.swapUsed, root.sysData.swapTotal)
+        detail: Format.pair(root.sysData.swapUsed, root.sysData.swapTotal)
     }
 
     ColumnLayout {
@@ -93,14 +93,14 @@ ColumnLayout {
         icon: Icons.memory
         label: "VRAM"
         value: root.sysData.vramTotal > 0 ? root.sysData.vramUsed / root.sysData.vramTotal : 0
-        detail: root.sysData.formatBytesCompact(root.sysData.vramUsed, root.sysData.vramTotal)
+        detail: Format.pair(root.sysData.vramUsed, root.sysData.vramTotal)
     }
 
     UsageBar {
         icon: Icons.hardDrive
         label: "Disk /"
         value: root.sysData.diskTotal > 0 ? root.sysData.diskUsed / root.sysData.diskTotal : 0
-        detail: root.sysData.diskTotal > 0 ? root.sysData.formatBytesCompact(root.sysData.diskUsed, root.sysData.diskTotal) : "..."
+        detail: root.sysData.diskTotal > 0 ? Format.pair(root.sysData.diskUsed, root.sysData.diskTotal) : "..."
     }
 
     Accordion {
@@ -121,7 +121,7 @@ ColumnLayout {
                     icon: Icons.hardDrive
                     label: "Disk " + modelData.mount
                     value: modelData.total > 0 ? modelData.used / modelData.total : 0
-                    detail: modelData.total > 0 ? root.sysData.formatBytesCompact(modelData.used, modelData.total) : "..."
+                    detail: modelData.total > 0 ? Format.pair(modelData.used, modelData.total) : "..."
                 }
             }
         }

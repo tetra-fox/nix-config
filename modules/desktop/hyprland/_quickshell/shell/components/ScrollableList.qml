@@ -14,6 +14,9 @@ Item {
     implicitHeight: Math.min(contentCol.implicitHeight, maxHeight > 0 ? maxHeight : maxItems * Theme.popupItemHeight)
 
     function ensureVisible(item) {
+        // Column defers relayout to a polish pass; flush it so positions and
+        // contentHeight are current before measuring
+        contentCol.forceLayout();
         const mapped = item.mapToItem(contentCol, 0, 0);
         const itemBottom = mapped.y + item.height;
         const viewBottom = flick.scrollTarget + flick.height;

@@ -1,27 +1,16 @@
 import qs.components
 import qs.lib
-import Quickshell
-import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-PanelWindow { // qmllint disable uncreatable-type
+DialogSurface {
     id: root
 
     required property var agent
 
     visible: agent.isActive
-
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.namespace: "quickshell-popup"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.exclusiveZone: -1
-
-    implicitWidth: panel.width
-    implicitHeight: panel.height
-
-    color: "transparent"
+    cardWidth: 340
 
     HyprlandFocusGrab {
         // qmllint disable unresolved-type
@@ -35,7 +24,6 @@ PanelWindow { // qmllint disable uncreatable-type
 
     onVisibleChanged: {
         if (visible) {
-            openAnim.restart();
             passwordInput.clear();
             passwordInput.forceActiveFocus();
         }
@@ -56,147 +44,91 @@ PanelWindow { // qmllint disable uncreatable-type
         }
     }
 
-    SequentialAnimation {
-        id: openAnim
-        ParallelAnimation {
-            PropertyAction {
-                target: panel
-                property: "scale"
-                value: Theme.dialogOpenScale
-            }
-            PropertyAction {
-                target: panel
-                property: "opacity"
-                value: 0
-            }
+    RowLayout {
+        spacing: Theme.iconPadV
+
+        Text {
+            text: Icons.lock
+            color: Theme.accent
+            font.family: Theme.fontIconFamily
+            font.pixelSize: Theme.fontIconLg
+            font.variableAxes: Theme.fontIconAxes
         }
-        ParallelAnimation {
-            NumberAnimation {
-                target: panel
-                property: "scale"
-                to: 1.0
-                duration: Theme.animDialogIn
-                easing.type: Easing.OutExpo
-            }
-            NumberAnimation {
-                target: panel
-                property: "opacity"
-                to: 1.0
-                duration: Theme.animSettle
-                easing.type: Easing.OutQuad
-            }
+
+        Text {
+            text: "Authentication Required"
+            color: Theme.textActive
+            font.pixelSize: Theme.fontBase
+            font.family: Theme.fontFamily
+            font.weight: Font.Medium
         }
     }
 
-    Rectangle {
-        id: panel
-        anchors.centerIn: parent
-        width: 340
-        height: col.implicitHeight + Theme.pillHPad * 4
-        radius: Theme.radiusLg
-        color: Theme.panelBg
-        border.width: 1
-        border.color: Theme.panelBorder
-        transformOrigin: Item.Center
+    Text {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.iconPadV
+        text: root.agent.flow?.message ?? ""
+        color: Theme.textSecondary
+        font.pixelSize: Theme.fontSm
+        font.family: Theme.fontFamily
+        wrapMode: Text.WordWrap
+    }
 
-        ColumnLayout {
-            id: col
-            anchors {
-                left: parent.left
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-                leftMargin: Theme.pillHPad * 2
-                rightMargin: Theme.pillHPad * 2
+    Text {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.iconPadV
+        text: "Authenticating as " + (root.agent.flow?.selectedIdentity?.displayName ?? "")
+        color: Theme.textInactive
+        font.pixelSize: Theme.fontSm
+        font.family: Theme.fontFamily
+        visible: root.agent.flow?.selectedIdentity != null
+    }
+
+    InputField {
+        id: passwordInput
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.pillHPad
+        placeholderText: "Password"
+        password: !(root.agent.flow?.responseVisible ?? false)
+
+        function submit(): void {
+            if (text.length > 0 && root.agent.flow) {
+                root.agent.flow.submit(text);
+                clear();
             }
-            spacing: 0
+        }
 
-            RowLayout {
-                spacing: Theme.iconPadV
+        onAccepted: submit()
+    }
 
-                Text {
-                    text: Icons.lock
-                    color: Theme.accent
-                    font.family: Theme.fontIconFamily
-                    font.pixelSize: Theme.fontIconLg
-                    font.variableAxes: Theme.fontIconAxes
-                }
+    Text {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.iconPadV
+        text: (root.agent.flow?.supplementaryIsError && root.agent.flow?.supplementaryMessage) ? root.agent.flow.supplementaryMessage : "Incorrect password, try again"
+        color: Theme.danger
+        font.pixelSize: Theme.fontSm
+        font.family: Theme.fontFamily
+        visible: root.agent.flow?.failed ?? false
+        wrapMode: Text.WordWrap
+    }
 
-                Text {
-                    text: "Authentication Required"
-                    color: Theme.textActive
-                    font.pixelSize: Theme.fontBase
-                    font.family: Theme.fontFamily
-                    font.weight: Font.Medium
-                }
-            }
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: Theme.pillHPad
+        spacing: Theme.iconPadV
 
-            Text {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.iconPadV
-                text: root.agent.flow?.message ?? ""
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
-                wrapMode: Text.WordWrap
-            }
+        DialogButton {
+            Layout.fillWidth: true
+            text: "Cancel"
+            bordered: true
+            onClicked: root.agent.flow?.cancelAuthenticationRequest()
+        }
 
-            Text {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.iconPadV
-                text: "Authenticating as " + (root.agent.flow?.selectedIdentity?.displayName ?? "")
-                color: Theme.textInactive
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
-                visible: root.agent.flow?.selectedIdentity != null
-            }
-
-            InputField {
-                id: passwordInput
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.pillHPad
-                placeholderText: "Password"
-                password: !(root.agent.flow?.responseVisible ?? false)
-
-                function submit(): void {
-                    if (text.length > 0 && root.agent.flow) {
-                        root.agent.flow.submit(text);
-                        clear();
-                    }
-                }
-
-                onAccepted: submit()
-            }
-
-            Text {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.iconPadV
-                text: (root.agent.flow?.supplementaryIsError && root.agent.flow?.supplementaryMessage) ? root.agent.flow.supplementaryMessage : "Incorrect password, try again"
-                color: Theme.danger
-                font.pixelSize: Theme.fontSm
-                font.family: Theme.fontFamily
-                visible: root.agent.flow?.failed ?? false
-                wrapMode: Text.WordWrap
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Theme.pillHPad
-                spacing: Theme.iconPadV
-
-                DialogButton {
-                    Layout.fillWidth: true
-                    text: "Cancel"
-                    bordered: true
-                    onClicked: root.agent.flow?.cancelAuthenticationRequest()
-                }
-
-                DialogButton {
-                    Layout.fillWidth: true
-                    text: "Authenticate"
-                    accentColor: Theme.accent
-                    onClicked: passwordInput.submit()
-                }
-            }
+        DialogButton {
+            Layout.fillWidth: true
+            text: "Authenticate"
+            accentColor: Theme.accent
+            onClicked: passwordInput.submit()
         }
     }
 }

@@ -96,6 +96,13 @@ QtObject {
     readonly property string shuffle: "\uE043"
     readonly property string speed: "\uEBE6"
 
+    // menu check/radio states (tray dbus menus)
+    readonly property string checkBox: "\uE834"
+    readonly property string checkBoxBlank: "\uE835"
+    readonly property string indeterminateCheckBox: "\uE909"
+    readonly property string radioChecked: "\uE837"
+    readonly property string radioUnchecked: "\uE836"
+
     // actions
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"

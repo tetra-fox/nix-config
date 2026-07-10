@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import qs.components
 import qs.lib
 import QtQuick
+import QtQuick.Layouts
 
 // power buttons + inline confirm overlay for the lock screen
 Item {
@@ -69,7 +70,7 @@ Item {
             height: 48
             radius: 24
             anchors.horizontalCenter: parent.horizontalCenter
-            color: powerArea.pressed ? Theme.pressedBg : powerArea.containsMouse ? Theme.hoverBg : Theme.idleBg
+            color: Theme.stateBg(powerArea.pressed, false, powerArea.containsMouse)
 
             Behavior on color {
                 ColorAnimation {
@@ -161,14 +162,8 @@ Item {
             onClicked: root._cancelConfirm()
         }
 
-        Rectangle {
+        DialogCard {
             anchors.centerIn: parent
-            width: 300
-            height: confirmCol.implicitHeight + Theme.pillHPad * 4
-            radius: Theme.radiusLg
-            color: Theme.panelBg
-            border.width: 1
-            border.color: Theme.panelBorder
             scale: root._confirming ? 1 : Theme.dialogOpenScale
 
             Behavior on scale {
@@ -178,74 +173,55 @@ Item {
                 }
             }
 
-            Column {
-                id: confirmCol
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    verticalCenter: parent.verticalCenter
-                    leftMargin: Theme.pillHPad * 2
-                    rightMargin: Theme.pillHPad * 2
-                }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
 
-                Row {
-                    spacing: 8
-
-                    Text {
-                        text: root._confirmIcon
-                        color: Theme.textActive
-                        font.pixelSize: Theme.fontIconLg
-                        font.family: Theme.fontIconFamily
-                        font.variableAxes: Theme.fontIconAxes
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        text: root._confirmLabel + "?"
-                        color: Theme.textActive
-                        font.pixelSize: Theme.fontBase
-                        font.family: Theme.fontFamily
-                        font.weight: Font.Medium
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                Item {
-                    width: 1
-                    height: Theme.iconPadV
+                Text {
+                    text: root._confirmIcon
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontIconLg
+                    font.family: Theme.fontIconFamily
+                    font.variableAxes: Theme.fontIconAxes
                 }
 
                 Text {
-                    width: parent.width
-                    text: "Are you sure you want to " + root._confirmLabel.toLowerCase() + "?"
-                    color: Theme.textSecondary
-                    font.pixelSize: Theme.fontSm
+                    Layout.fillWidth: true
+                    text: root._confirmLabel + "?"
+                    color: Theme.textActive
+                    font.pixelSize: Theme.fontBase
                     font.family: Theme.fontFamily
-                    wrapMode: Text.WordWrap
+                    font.weight: Font.Medium
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.iconPadV
+                text: "Are you sure you want to " + root._confirmLabel.toLowerCase() + "?"
+                color: Theme.textSecondary
+                font.pixelSize: Theme.fontSm
+                font.family: Theme.fontFamily
+                wrapMode: Text.WordWrap
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.pillHPad
+                spacing: Theme.iconPadV
+
+                DialogButton {
+                    Layout.fillWidth: true
+                    text: "Cancel"
+                    bordered: true
+                    onClicked: root._cancelConfirm()
                 }
 
-                Item {
-                    width: 1
-                    height: Theme.pillHPad
-                }
-
-                Row {
-                    width: parent.width
-                    spacing: Theme.iconPadV
-
-                    DialogButton {
-                        width: (parent.width - parent.spacing) / 2
-                        text: "Cancel"
-                        bordered: true
-                        onClicked: root._cancelConfirm()
-                    }
-
-                    DialogButton {
-                        width: (parent.width - parent.spacing) / 2
-                        text: root._confirmLabel + "  (" + root._confirmRemaining + ")"
-                        accentColor: Theme.danger
-                        onClicked: root._executeConfirm()
-                    }
+                DialogButton {
+                    Layout.fillWidth: true
+                    text: root._confirmLabel + "  (" + root._confirmRemaining + ")"
+                    accentColor: Theme.danger
+                    onClicked: root._executeConfirm()
                 }
             }
         }

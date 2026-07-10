@@ -44,6 +44,18 @@ QtObject {
     function withAlpha(color, alpha) {
         return Qt.rgba(color.r, color.g, color.b, alpha);
     }
+
+    // shared background ladder for clickable surfaces; pass an idle override
+    // for controls whose resting fill isn't idleBg (e.g. InlineButton)
+    function stateBg(pressed, open, hovered, idle) {
+        if (pressed)
+            return pressedBg;
+        if (open)
+            return openBg;
+        if (hovered)
+            return hoverBg;
+        return idle === undefined ? idleBg : idle;
+    }
     readonly property color black: "#000000"
     readonly property color white: "#ffffff"
 

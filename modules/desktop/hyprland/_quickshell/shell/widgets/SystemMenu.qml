@@ -5,25 +5,16 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-Item {
+BarPopupButton {
     id: root
 
-    property var panelWindow
     required property var lockSession
 
-    implicitWidth: btn.implicitWidth
-    implicitHeight: btn.implicitHeight
+    icon: Icons.systemMenu
 
     SystemData {
         id: sysData
-        active: popup.visible
-    }
-
-    IconButton {
-        id: btn
-        icon: Icons.systemMenu
-        isOpen: popup.visible
-        onClicked: popup.visible = !popup.visible
+        active: root.popupVisible
     }
 
     ConfirmDialog {
@@ -33,7 +24,7 @@ Item {
     }
 
     function confirm(title, body, actionLabel, cmd, icon) {
-        popup.visible = false;
+        root.popupVisible = false;
         dialog.title = title;
         dialog.body = body;
         dialog.actionLabel = actionLabel;
@@ -42,43 +33,23 @@ Item {
         dialog.open();
     }
 
-    PopupWindow {
-        id: popup
-        anchorItem: btn
-        panelWindow: root.panelWindow
+    SystemInfoSection {
+        sysData: sysData
+    }
 
-        contentWidth: Theme.popupWidth
-        contentHeight: col.implicitHeight + Theme.pillHPad * 2
+    Separator {}
 
-        ColumnLayout {
-            id: col
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                margins: Theme.pillHPad
-            }
-            spacing: 10
+    HardwareSection {
+        sysData: sysData
+    }
 
-            SystemInfoSection {
-                sysData: sysData
-            }
+    Separator {}
 
-            Separator {}
-
-            HardwareSection {
-                sysData: sysData
-            }
-
-            Separator {}
-
-            SessionActions {
-                onLockRequested: {
-                    popup.visible = false;
-                    root.lockSession(); // qmllint disable use-proper-function
-                }
-                onConfirmRequested: (title, body, actionLabel, cmd, icon) => root.confirm(title, body, actionLabel, cmd, icon)
-            }
+    SessionActions {
+        onLockRequested: {
+            root.popupVisible = false;
+            root.lockSession(); // qmllint disable use-proper-function
         }
+        onConfirmRequested: (title, body, actionLabel, cmd, icon) => root.confirm(title, body, actionLabel, cmd, icon)
     }
 }

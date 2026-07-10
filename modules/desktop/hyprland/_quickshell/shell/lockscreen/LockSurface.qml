@@ -210,24 +210,12 @@ WlSessionLockSurface {
                     }
                 }
 
-                Text {
-                    id: spinnerIcon
-                    text: Icons.progressActivity
-                    color: Theme.textInactive
+                Spinner {
                     font.pixelSize: 14
-                    font.family: Theme.fontIconFamily
-                    font.variableAxes: Theme.fontIconAxes
+                    // opacity, not visible: holds the layout slot so the status
+                    // text doesn't shift when authentication starts
                     opacity: root.pam.authenticating ? 1 : 0
                     anchors.verticalCenter: parent.verticalCenter
-
-                    RotationAnimator {
-                        target: spinnerIcon
-                        from: 0
-                        to: 360
-                        duration: Theme.animSpin
-                        loops: Animation.Infinite
-                        running: root.pam.authenticating
-                    }
                 }
 
                 Text {

@@ -8,6 +8,7 @@ Item {
 
     property string text: ""
     property string icon: ""
+    property string rightIcon: ""
     property string shortcutHint: ""
     property color textColor: root.enabled ? Theme.textPrimary : Theme.textInactive
     property bool isSeparator: false
@@ -32,7 +33,7 @@ Item {
             rightMargin: 4
         }
         radius: Theme.radiusMd
-        color: area.pressed ? Theme.pressedBg : area.containsMouse ? Theme.hoverBg : Theme.idleBg
+        color: Theme.stateBg(area.pressed, false, area.containsMouse)
         Behavior on color {
             ColorAnimation {
                 duration: Theme.animFast
@@ -74,6 +75,15 @@ Item {
                 color: Theme.textInactive
                 font.pixelSize: Theme.fontSm
                 font.family: Theme.fontFamily
+            }
+
+            Text {
+                visible: root.rightIcon !== ""
+                text: root.rightIcon
+                color: Theme.textInactive
+                font.pixelSize: Theme.fontIcon
+                font.family: Theme.fontIconFamily
+                font.variableAxes: Theme.fontIconAxes
             }
         }
 

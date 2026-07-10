@@ -102,7 +102,7 @@ Item {
         width: parent.width
         height: content.implicitHeight + Theme.pillHPad
         radius: Theme.radiusMd
-        color: hoverArea.containsMouse ? Theme.hoverBg : Theme.withAlpha(Theme.white, 0.04)
+        color: Theme.stateBg(false, false, hoverArea.containsMouse, Theme.withAlpha(Theme.white, 0.04))
         border.width: 1
         border.color: Theme.panelBorder
         clip: true

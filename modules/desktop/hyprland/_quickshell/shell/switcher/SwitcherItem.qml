@@ -22,7 +22,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusMd
-        color: root.selected ? Theme.openBg : mouseArea.containsMouse ? Theme.hoverBg : "transparent"
+        color: Theme.stateBg(false, root.selected, mouseArea.containsMouse, "transparent")
 
         Behavior on color {
             ColorAnimation {

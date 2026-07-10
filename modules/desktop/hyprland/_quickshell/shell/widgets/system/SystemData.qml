@@ -57,14 +57,6 @@ Item {
         return parts.join(" ");
     }
 
-    function formatBytesCompact(used, total) {
-        if (total >= 1073741824)
-            return (used / 1073741824).toFixed(1) + " / " + (total / 1073741824).toFixed(1) + " GiB";
-        if (total >= 1048576)
-            return (used / 1048576).toFixed(0) + " / " + (total / 1048576).toFixed(0) + " MiB";
-        return (used / 1024).toFixed(0) + " / " + (total / 1024).toFixed(0) + " KiB";
-    }
-
     readonly property string _scriptsDir: Qt.resolvedUrl("../../scripts").toString().replace("file://", "")
 
     BufferedProcess {
