@@ -1,4 +1,4 @@
-# render: `nix run .#update-topology`
+# render: `just update-topology`
 {config, ...}: let
   inherit (config.lib.topology) mkInternet mkRouter mkSwitch mkConnection;
 in {

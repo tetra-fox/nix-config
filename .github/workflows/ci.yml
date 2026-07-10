@@ -22,7 +22,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix shell ./tools -c just fmt-check
+      # tool set matches the devshell in flake.nix; --inputs-from resolves `nixpkgs`
+      # to the root flake.lock's pinned rev without evaluating the flake, so this job
+      # fetches one input instead of all of them (and never realises the ~8G devshell
+      # closure)
+      - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#statix nixpkgs#just -c just fmt-check
 
   lint:
     runs-on: ubuntu-latest
@@ -32,7 +36,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix shell ./tools -c just lint
+      - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#statix nixpkgs#just -c just lint
 
   # ensure fleet discovery remains generic
   fleet-lib:

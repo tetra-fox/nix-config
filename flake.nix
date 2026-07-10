@@ -31,11 +31,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    tools = {
-      url = "path:./tools";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     betterfox-nix = {
       url = "github:HeitorAugustoLN/betterfox-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -173,7 +168,7 @@
         pkgs,
         ...
       }: {
-        formatter = inputs'.tools.packages.alejandra;
+        formatter = pkgs.alejandra;
         packages = inputs'.tetra-nurpkgs.packages;
 
         devShells.default = pkgs.mkShell {
@@ -183,7 +178,11 @@
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
-            inputs'.tools.packages.default
+            # fmt/lint/task tools; ci pulls the same three from the flake.lock
+            # nixpkgs pin via --inputs-from, without evaluating this flake (see ci.yml)
+            pkgs.just
+            pkgs.statix
+            pkgs.alejandra
           ];
         };
       };

@@ -4,5 +4,3 @@ result
 result-*
 
 .direnv/
-
-tools/flake.lock
