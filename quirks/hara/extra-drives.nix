@@ -13,14 +13,14 @@ _: let
     baseOptions
     ++ [
       "ro"
-      "x-systemd.idle-timeout=60"
+      # "x-systemd.idle-timeout=60"
     ];
   rwOptions =
     baseOptions
     ++ [
       "rw"
       "windows_names"
-      "x-systemd.idle-timeout=0"
+      # "x-systemd.idle-timeout=0"
     ];
 in {
   # declaring fsType = "ntfs" mounts makes nixos add pkgs.ntfs3g to system.fsPackages
@@ -52,13 +52,13 @@ in {
     "/mnt/wd-black" = {
       device = "/dev/disk/by-uuid/10AAA832AAA8166E";
       fsType = "ntfs";
-      options = roOptions;
+      options = rwOptions;
     };
 
     "/mnt/vault" = {
       device = "/dev/disk/by-uuid/D6A03453A0343BF5";
       fsType = "ntfs";
-      options = roOptions;
+      options = rwOptions;
     };
 
     "/mnt/windows" = {
