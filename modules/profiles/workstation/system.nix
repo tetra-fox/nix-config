@@ -7,6 +7,11 @@
   imports = [
     modules.profiles.base.system
 
+    modules.toolsets.archive.system
+    modules.toolsets.disk.system
+    modules.toolsets.general.system
+    modules.toolsets.net.system
+
     modules.desktop.avahi.system
     modules.hardware.bluetooth.system
     modules.services.podman.system
@@ -50,15 +55,5 @@
     (writeShellScriptBin "rebuild" (builtins.readFile ./rebuild.sh))
 
     git
-    jq
-    ripgrep
-    tree
-    pv
-    smartmontools
-    wget
-    nmap
-    unzip
-    p7zip
-    unrar
   ];
 }

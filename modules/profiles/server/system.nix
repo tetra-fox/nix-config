@@ -1,7 +1,6 @@
 {
   lib,
   modules,
-  pkgs,
   username,
   ...
 }: {
@@ -26,10 +25,7 @@
 
   home-manager.users.${username}.imports = [modules.profiles.server.home];
 
-  environment = {
-    systemPackages = with pkgs; [tmux];
-    variables.BROWSER = "echo";
-  };
+  environment.variables.BROWSER = "echo";
 
   # safe only because servers are ssh-key only with no physical access
   security.sudo.wheelNeedsPassword = lib.mkDefault false;

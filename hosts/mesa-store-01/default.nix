@@ -6,6 +6,7 @@
 
     modules.services.samba.system
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
+    modules.toolsets.disk.system # smartctl etc for the passthrough drives
   ];
 
   networking.hostName = "mesa-store-01";
