@@ -3,6 +3,7 @@
     ./storage.nix
 
     modules.profiles.server.system
+    modules.platform.zfs.system # pool over the four passthrough drives
 
     modules.services.samba.system
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers

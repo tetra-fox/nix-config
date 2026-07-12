@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  lib,
+  pkgs,
+  ...
+}: {
   boot = {
     loader = {
       efi.canTouchEfiVariables = true;
@@ -13,6 +17,7 @@
         };
       };
     };
-    kernelPackages = pkgs.linuxPackages_latest;
+    # default so modules with a kernel constraint (zfs) can pick something older
+    kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
   };
 }
