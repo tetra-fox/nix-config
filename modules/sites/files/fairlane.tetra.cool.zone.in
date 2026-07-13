@@ -1,7 +1,9 @@
-; the internal split-horizon zone for fairlane.tetra.cool. mirrors the mesa zone: @nsIp@ = this
-; resolver's IP, @edgeVip@ = the edge ingress VIP (both substituted by nix replaceVars). the
-; wildcard answers every *.fairlane.tetra.cool from the edge VIP. serial is static (1) because
-; this zone is generated, never hand-edited or transferred.
+; the internal split-horizon zone for fairlane.tetra.cool. mirrors the mesa zone: this resolver's
+; own IP, the edge ingress VIP, and a block of one A record per fleet host at its own hostIp
+; (all substituted by nix replaceVars, see mesa.tetra.cool.zone.in for the per-host-record
+; rationale and the placeholder-in-comments gotcha). the wildcard answers every other name under
+; this zone from the edge VIP. serial is static (1) because this zone is generated, never
+; hand-edited or transferred.
 $TTL 300
 $ORIGIN fairlane.tetra.cool.
 @   IN SOA ns.fairlane.tetra.cool. hostmaster.fairlane.tetra.cool. (
@@ -14,3 +16,4 @@ $ORIGIN fairlane.tetra.cool.
 ns  IN A   @nsIp@
 @   IN A   @edgeVip@
 *   IN A   @edgeVip@
+@hostRecords@

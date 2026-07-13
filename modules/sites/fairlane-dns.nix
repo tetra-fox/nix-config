@@ -16,6 +16,7 @@
       hostName = config.networking.hostName;
     }))
     edgeEndpointIp
+    hostRecords
     ;
 in {
   imports = [modules.services.bind.system ./_dns-common.nix];
@@ -40,6 +41,7 @@ in {
       file = pkgs.replaceVars ./files/fairlane.tetra.cool.zone.in {
         nsIp = config.lab.site.hostIp;
         edgeVip = edgeEndpointIp;
+        inherit hostRecords;
       };
     };
   };

@@ -1,8 +1,14 @@
-; the internal split-horizon zone for mesa.tetra.cool. a real zone file with the two derived
-; addresses substituted by nix (replaceVars): @nsIp@ = this resolver's IP, @edgeVip@ = the edge
-; ingress VIP. the wildcard answers every *.mesa.tetra.cool from the edge VIP; unifi is a
-; more-specific record that wins over the wildcard, no special-casing needed. serial is static
-; (1) because this zone is generated, never hand-edited or transferred between servers.
+; the internal split-horizon zone for mesa.tetra.cool. a real zone file with derived addresses
+; substituted by nix (replaceVars, see mesa-dns.nix): this resolver's own IP, the edge ingress
+; VIP, and a block of one A record per fleet host at its own hostIp (fleet.topology's
+; hostRecords). NOTE: replaceVars substitutes every literal occurrence of a placeholder token
+; in this file, comments included -- don't write a placeholder's own at-sign-delimited name
+; anywhere in prose, or it gets replaced too.
+; the wildcard answers every other name under this zone from the edge VIP (fine for HTTP(S)
+; vhosts); unifi and the per-host records are more-specific and win over it, no special-casing
+; needed -- a direct-protocol hostname (SSH, Samba, NFS) needs its own record or it silently
+; falls through to the edge VIP, which doesn't speak that protocol. serial is static (1) because
+; this zone is generated, never hand-edited or transferred between servers.
 $TTL 300
 $ORIGIN mesa.tetra.cool.
 @   IN SOA ns.mesa.tetra.cool. hostmaster.mesa.tetra.cool. (
@@ -16,3 +22,4 @@ ns    IN A   @nsIp@
 @     IN A   @edgeVip@
 *     IN A   @edgeVip@
 unifi IN A   192.168.1.1
+@hostRecords@

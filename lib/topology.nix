@@ -8,10 +8,23 @@
 # everything mesa-specific is below.
 {lib}: args: let
   engine = import ./engine.nix {inherit lib;} args;
-  inherit (engine) ipProviding ipsProviding hostsProviding endpointFor publicUrlProviding;
+  inherit (engine) ipProviding ipsProviding hostsProviding hostsInSite endpointFor publicUrlProviding;
 in
   engine
   // {
+    # one DNS A record per same-site host, at its own hostIp (the server-VLAN address, not
+    # ipOf's internal-VLAN preference -- these answer clients reaching a host directly, e.g. a
+    # Mac doing SSH/Samba/NFS, which live on the server VLAN, not the isolated internal fabric).
+    # consumed by the site dns zone files, whose wildcard-to-edge-VIP record only covers HTTP(S);
+    # without a specific record here a direct-protocol hostname silently falls through to it.
+    hostRecords =
+      lib.concatMapStrings
+      (name: let
+        hostIp = args.nixosConfigurations.${name}.config.lab.site.hostIp or null;
+      in
+        lib.optionalString (hostIp != null) "${name} IN A ${hostIp}\n")
+      hostsInSite;
+
     serverIp = ipProviding "monitoring";
     # the monitoring-server hosts in this site (consumers assert exactly one)
     siteServers = hostsProviding "monitoring";
