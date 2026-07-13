@@ -43,9 +43,10 @@ if [ -n "$SUDO_USER" ]; then
 else
   user_home=$HOME
 fi
-flake="$user_home/Documents/git/nix-config"
+# checkout location convention, overridable for a differently-placed clone
+flake="${NIX_CONFIG_FLAKE:-$user_home/Documents/git/nix-config}"
 if [ ! -f "$flake/flake.nix" ]; then
-  echo "rebuild: no flake.nix at $flake - clone the nix-config repo there first" >&2
+  echo "rebuild: no flake.nix at $flake - clone the nix-config repo there, or set NIX_CONFIG_FLAKE" >&2
   exit 1
 fi
 
@@ -94,7 +95,7 @@ action="${action:-switch}"
 if [ -n "$target_host" ]; then
   case "$target_host" in
     *@*) ;;
-    *)   target_host="admin@$target_host" ;;
+    *)   target_host="@deployUser@@$target_host" ;;
   esac
 
   # the remote deploy ssh's to the target as the invoking user, so it needs our

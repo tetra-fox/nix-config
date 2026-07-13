@@ -19,6 +19,15 @@
     modules.desktop.surge-dm.home
   ];
 
+  # session autostart, rendered into hyprland's startup lua by the module
+  my.hyprland.autostart = [
+    "app2unit -- firefox"
+    "app2unit -- Telegram -startintray"
+    "app2unit -- discord --start-minimized"
+    "app2unit -- vrcx --no-sandbox --startup"
+    "app2unit -- steam -silent"
+  ];
+
   xdg.mimeApps = {
     enable = true;
     defaultApplications =

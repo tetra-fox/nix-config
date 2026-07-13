@@ -123,6 +123,17 @@
     flake-parts.lib.mkFlake {inherit inputs;} (let
       inherit (inputs.nixpkgs) lib;
       username = "tetra";
+      # the unix user servers run as; per-host specialArgs reference this so the fact
+      # is stated once (rebuild.sh's remote-deploy user is substituted from it too)
+      serverUsername = "admin";
+      # the operator's identity, shared by every machine the user drives (hara now, the
+      # mac later). the signing key is the 1password ssh signing key, a different key
+      # from shared/keyring/tetra.pub (fleet shell access).
+      identity = {
+        name = "tetra";
+        email = "me@tetra.cool";
+        signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
+      };
 
       # local overlays live one-per-file in overlays/; each is `inputs: final: prev: {...}`.
       # loaded as paths (like modules/fleet) so we import and apply inputs ourselves rather
@@ -133,7 +144,7 @@
       }));
 
       commonSpecialArgs = {
-        inherit username;
+        inherit username serverUsername identity;
         modules = inputs.haumea.lib.load {
           src = ./modules;
           loader = inputs.haumea.lib.loaders.path;
@@ -291,7 +302,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
               inputs.nowplaying.nixosModules.default
@@ -303,7 +314,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -314,7 +325,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -323,7 +334,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -332,7 +343,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -341,7 +352,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -350,7 +361,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -359,7 +370,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -368,7 +379,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -377,7 +388,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["fairlane"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [inputs.disko.nixosModules.disko];
           };
 
@@ -386,7 +397,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -397,7 +408,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -408,7 +419,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -419,7 +430,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -430,7 +441,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -441,7 +452,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -452,7 +463,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -463,7 +474,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -474,7 +485,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];
@@ -485,7 +496,7 @@
             arch = "x86_64";
             class = "nixos";
             tags = ["mesa"];
-            specialArgs = {username = "admin";};
+            specialArgs = {username = serverUsername;};
             modules = [
               inputs.disko.nixosModules.disko
             ];

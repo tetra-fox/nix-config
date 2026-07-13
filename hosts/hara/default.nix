@@ -25,6 +25,9 @@
   # cuda build for the rtx 3090; the ollama module leaves package at the cpu default
   services.ollama.package = pkgs.ollama-cuda;
 
+  # this room's valve basestations, powered with monado by the steam module
+  lab.steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
+
   networking = {
     hostName = "hara";
 

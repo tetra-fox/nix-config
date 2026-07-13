@@ -5,7 +5,7 @@
 }: {
   # xrizer reads $XRIZER_CUSTOM_BINDINGS_DIR/<controller_type>.json; set it per-game
   # in Steam -> game -> Properties -> Launch Options, e.g.
-  #   XRIZER_CUSTOM_BINDINGS_DIR=/home/tetra/.local/share/xrizer-bindings/vrchat %command%
+  #   XRIZER_CUSTOM_BINDINGS_DIR=$HOME/.local/share/xrizer-bindings/vrchat %command%
   home.file.".local/share/xrizer-bindings".source = ./_xrizer-bindings;
 
   # vrchat dumps screenshots inside the wine prefix; symlink them out to ~/Pictures/VRChat

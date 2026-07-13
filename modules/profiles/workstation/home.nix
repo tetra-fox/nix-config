@@ -2,6 +2,7 @@
   modules,
   pkgs,
   inputs,
+  identity,
   ...
 }: let
   # obsidian's git plugin shells out to git, which runs the sops clean/smudge
@@ -37,10 +38,16 @@ in {
     modules.desktop.discord.home
   ];
 
-  my.git.identity = {
-    name = "tetra";
-    email = "me@tetra.cool";
-    signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
+  my = {
+    # the operator identity from flake.nix, stated once for every workstation
+    git.identity = identity;
+
+    # personal 1password vaults the ssh agent may serve keys from
+    ssh.opVaults = ["Private" "mesa" "homelab_DTW"];
+
+    # bookmark data lives in the private nix-secrets input; referenced here (the personal
+    # profile) so the firefox module itself works without that input
+    firefox.bookmarks = inputs.nix-secrets.lib.firefox-bookmarks;
   };
 
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
