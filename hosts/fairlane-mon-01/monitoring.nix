@@ -4,6 +4,5 @@
 # controller creds later if you want UniFi metrics here.
 _: {
   lab.monitoring.server.enable = true;
-
-  services.grafana.settings.server.root_url = "https://stats.fairlane.tetra.cool/";
+  # grafana root_url is derived from lab.site.domain in modules/services/monitoring/system.nix
 }

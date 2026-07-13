@@ -8,7 +8,7 @@
 # everything mesa-specific is below.
 {lib}: args: let
   engine = import ./engine.nix {inherit lib;} args;
-  inherit (engine) ipProviding ipsProviding hostsProviding endpointFor;
+  inherit (engine) ipProviding ipsProviding hostsProviding endpointFor publicUrlProviding;
 in
   engine
   // {
@@ -19,6 +19,11 @@ in
     mediaHostIp = ipProviding "media";
     storageHostIp = ipProviding "storage";
     immichHostIp = ipProviding "immich";
+
+    # authentik's public url (https://auth.<site>), derived from its declared route. the consumer
+    # is immich's oauth issuerUrl: immich resolves authentik's url from the registry instead of
+    # restating the fqdn. safe (cross-service, not fed back into authentik's own config).
+    authServerUrl = publicUrlProviding "auth-server";
 
     dbEndpointIp = endpointFor {
       singleCap = "db-server";

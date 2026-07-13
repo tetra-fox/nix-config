@@ -10,6 +10,8 @@
   ...
 }: {
   config = {
+    lab.site.domain = "fairlane.tetra.cool";
+
     networking = {
       useDHCP = false;
       defaultGateway = "192.168.10.1";

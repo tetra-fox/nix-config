@@ -14,6 +14,5 @@
 
   # TODO: fairlane's non-NixOS node-exporter targets (HA, proxmox host) via
   # lab.monitoring.extraScrapeConfigs once they exist.
-
-  services.grafana.settings.server.root_url = "https://stats.fairlane.tetra.cool/";
+  # grafana root_url is derived from the stats route in modules/services/monitoring/system.nix
 }

@@ -36,7 +36,7 @@
   };
 
   services.grafana.settings = {
-    server.root_url = "https://stats.mesa.tetra.cool/";
+    # root_url is derived from the stats route in modules/services/monitoring/system.nix
 
     auth.disable_login_form = true;
 

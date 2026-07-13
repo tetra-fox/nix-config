@@ -21,6 +21,11 @@
   };
   inherit (topo) hostsInSite ipOf siteServers multiHost myIp;
 
+  # grafana's public fqdn. declared once here and used for BOTH the stats route and grafana's
+  # root_url below, so the hostname isn't restated. reads only lab.site.domain (a plain input),
+  # never a topo derive, so it can't cycle.
+  statsFqdn = "stats.${config.lab.site.domain}";
+
   bindAddr =
     if multiHost && myIp != null
     then myIp
@@ -124,7 +129,7 @@ in {
       lab.topology.provides = ["monitoring"];
       lab.topology.routes = [
         {
-          host = "stats.${config.lab.site.domain}";
+          host = statsFqdn;
           port = 3000;
         }
       ];
@@ -160,6 +165,9 @@ in {
             server = {
               http_addr = bindAddr;
               http_port = grafanaPort;
+              # public url grafana generates links/redirects against, from the same statsFqdn the
+              # route uses. trailing slash is what grafana expects.
+              root_url = "https://${statsFqdn}/";
             };
             analytics = {
               reporting_enabled = false;

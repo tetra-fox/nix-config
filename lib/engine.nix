@@ -86,6 +86,26 @@
       else map (r: r // {upstream = "${ip}:${toString r.port}";}) routes)
     hostsInSite;
 
+  # the public https url of the single host advertising `cap`, from that host's declared route
+  # (lab.topology.routes). lets a service resolve a PEER's public url without hardcoding the fqdn
+  # (immich's oauth issuerUrl -> authentik). reads only plain inputs (provides + routes), so no
+  # cycle -- BUT the consumer must not feed the result back into config that reading routes forces
+  # (a service's OWN url is a local derive from lab.site.domain, not this). null when there's no
+  # single unambiguous route; throws only on >1 provider, matching ipProviding.
+  publicUrlProviding = cap: let
+    hosts = hostsProviding cap;
+  in
+    if lib.length hosts == 0
+    then null
+    else if lib.length hosts > 1
+    then throw "fleet: site '${mySite}' has ${toString (lib.length hosts)} hosts providing '${cap}'; publicUrlProviding expects exactly one"
+    else let
+      routes = nixosConfigurations.${builtins.head hosts}.config.lab.topology.routes or [];
+    in
+      if lib.length routes == 1
+      then "https://${(builtins.head routes).host}"
+      else null;
+
   # the endpoint a client points at for an optionally-HA service: the single provider while one
   # exists (a live single server keeps the traffic until it's retired), else the floating VIP any
   # HA node advertises, else null. vipPath is an option path (e.g. ["lab" "caddy" "ha" "vip"]);
@@ -124,7 +144,7 @@
 in {
   inherit sitePrefix mySite hostsInSite ipOf;
   inherit hostsWhere ipWhere ipsWhere;
-  inherit hostsProviding ipProviding ipsProviding endpointFor routesInSite;
+  inherit hostsProviding ipProviding ipsProviding endpointFor routesInSite publicUrlProviding;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
 }
