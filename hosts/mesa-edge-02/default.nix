@@ -15,7 +15,7 @@
     site.hostIp = "192.168.10.151";
     site.internalIp = "10.10.0.151";
 
-    caddy.caddyfile = ../mesa-edge-01/files/caddy/Caddyfile;
+    caddy.staticTail = import ../mesa-edge-01/caddy-tail.nix;
 
     caddy.ha = {
       enable = true;
