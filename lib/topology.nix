@@ -18,6 +18,7 @@ in
     authServerIp = ipProviding "auth-server";
     mediaHostIp = ipProviding "media";
     storageHostIp = ipProviding "storage";
+    immichHostIp = ipProviding "immich";
 
     dbEndpointIp = endpointFor {
       singleCap = "db-server";

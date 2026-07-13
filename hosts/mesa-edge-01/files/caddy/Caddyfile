@@ -52,6 +52,16 @@ jellyfin.mesa.tetra.cool {
 	reverse_proxy {$JELLYFIN_UPSTREAM}
 }
 
+immich.mesa.tetra.cool {
+	import log
+	# immich uploads whole photos/videos in one request; caddy's default request
+	# body cap would reject large originals, so lift it well past any single asset
+	request_body {
+		max_size 50GB
+	}
+	reverse_proxy {$IMMICH_UPSTREAM}
+}
+
 stats.mesa.tetra.cool {
 	import log
 	reverse_proxy {$STATS_UPSTREAM}

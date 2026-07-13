@@ -34,6 +34,13 @@
     then topo.mediaHostIp
     else "127.0.0.1";
 
+  # the immich host's address. immich runs on its own box (mesa-svc-02), never on the
+  # edge, so this is always the derived immich host; loopback if unresolved.
+  immichHostAddr =
+    if topo.immichHostIp != null
+    then topo.immichHostIp
+    else "127.0.0.1";
+
   # the arr host's address, for a site (fairlane) that proxies the arr UIs directly instead of
   # through authentik forward_auth (mesa's pattern). the arr-stack DNATs each arr's port onto its
   # host, so the Caddyfile uses {$ARR_HOST}:<port>. loopback if the arrs are on this box, else
@@ -107,6 +114,12 @@ in {
       description = "upstream for jellyfin.<site> ({$JELLYFIN_UPSTREAM}); the derived media host";
     };
 
+    immichUpstream = lib.mkOption {
+      type = lib.types.str;
+      default = "${immichHostAddr}:2283";
+      description = "upstream for immich.<site> ({$IMMICH_UPSTREAM}); the derived immich host";
+    };
+
     npUpstream = lib.mkOption {
       type = lib.types.str;
       default = "${mediaHostAddr}:8090";
@@ -157,6 +170,7 @@ in {
             STATS_UPSTREAM = config.lab.caddy.statsUpstream;
             AUTH_UPSTREAM = config.lab.caddy.authUpstream;
             JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
+            IMMICH_UPSTREAM = config.lab.caddy.immichUpstream;
             NP_UPSTREAM = config.lab.caddy.npUpstream;
             ARR_HOST = config.lab.caddy.arrHost;
           };

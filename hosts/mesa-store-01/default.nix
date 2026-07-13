@@ -41,6 +41,12 @@
           name = "megamax/backup/timemachine";
           mountpoint = "/mnt/megamax/backup/timemachine";
         }
+        # immich writes library/ + its pg_dumpall backups/ under here, so one snapshot
+        # captures the photos and a consistent db dump together
+        {
+          name = "megamax/immich";
+          mountpoint = "/mnt/megamax/immich";
+        }
         # megamax/backup/postgres added with the pgBackRest/postgres-backup task
       ];
     };

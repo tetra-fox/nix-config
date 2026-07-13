@@ -19,12 +19,16 @@
   nixosConfigurations,
   ...
 }: let
+  topo = import fleet.topology {inherit lib;} {
+    inherit nixosConfigurations;
+    hostName = config.networking.hostName;
+  };
   # the media host's internal-VLAN IP; the export + firewall scope to it.
-  svcIp =
-    (import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }).mediaHostIp;
+  svcIp = topo.mediaHostIp;
+  # the immich host's internal-VLAN IP; it NFS-mounts megamax/immich for the library.
+  # null until a host advertises the immich capability, so the export/firewall/tmpfiles
+  # for immich are all guarded on it being non-null.
+  immichIp = topo.immichHostIp;
   # the HAOS box is an external appliance not on the internal VLAN, so it stays on the
   # server VLAN; it connects as root, so its export all_squashes root to admin:users. the
   # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
@@ -62,6 +66,14 @@ in {
     # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
     # anongid=100), 0700, deliberately not group media and no setgid
     "d /mnt/megamax/backup/homeassistant 0700 admin users -"
+  ]
+  # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
+  # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
+  # a host advertises the immich capability.
+  ++ lib.optionals (immichIp != null) [
+    "d /mnt/megamax/immich 0700 990 990 -"
+    "d /mnt/megamax/immich/library 0700 990 990 -"
+    "d /mnt/megamax/immich/backups 0700 990 990 -"
   ];
 
   # boot-time safety net that re-asserts group ownership + setgid across the whole shared
@@ -98,19 +110,30 @@ in {
   # filesystem (library/torrents/nzb are dirs, not datasets), so a single export per client.
   lab.topology.provides = ["storage"];
 
+  # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no
+  # squash): immich runs as uid 990 on svc-02 and the dirs are owned 990 here, so writes
+  # line up. its own fsid=0 v4 root scoped to the immich host.
   services.nfs.server = {
     enable = true;
-    exports = ''
-      /mnt/megamax/media ${svcIp}(rw,sync,no_subtree_check,fsid=0)
-      /mnt/megamax/backup/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
-    '';
+    exports =
+      ''
+        /mnt/megamax/media ${svcIp}(rw,sync,no_subtree_check,fsid=0)
+        /mnt/megamax/backup/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
+      ''
+      + lib.optionalString (immichIp != null) ''
+        /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
+      '';
   };
 
   # source-scoped rules need the nftables backend (base profile enables it fleet-wide).
-  networking.firewall.extraInputRules = ''
-    ip saddr ${svcIp} tcp dport 2049 accept
-    ip saddr ${haIp} tcp dport 2049 accept
-  '';
+  networking.firewall.extraInputRules =
+    ''
+      ip saddr ${svcIp} tcp dport 2049 accept
+      ip saddr ${haIp} tcp dport 2049 accept
+    ''
+    + lib.optionalString (immichIp != null) ''
+      ip saddr ${immichIp} tcp dport 2049 accept
+    '';
 
   services.samba.settings = {
     global = {

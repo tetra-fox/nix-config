@@ -298,6 +298,17 @@
             ];
           };
 
+          mesa-svc-02 = {
+            path = ./hosts/mesa-svc-02;
+            arch = "x86_64";
+            class = "nixos";
+            tags = ["mesa"];
+            specialArgs = {username = "admin";};
+            modules = [
+              inputs.disko.nixosModules.disko
+            ];
+          };
+
           fairlane-store-01 = {
             path = ./hosts/fairlane-store-01;
             arch = "x86_64";
