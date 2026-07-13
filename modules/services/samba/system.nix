@@ -12,6 +12,7 @@
       settings.global = {
         workgroup = lib.mkDefault "WORKGROUP";
         "netbios name" = lib.mkDefault config.networking.hostName;
+        "server string" = lib.mkDefault config.networking.hostName;
         security = "user";
         "guest account" = "nobody";
         "map to guest" = "Bad User";

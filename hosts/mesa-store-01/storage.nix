@@ -173,18 +173,16 @@ in {
     '';
 
   services.samba.settings = {
-    # everything else (protocol floor, fruit/streams_xattr, AppleDouble policy) comes from
-    # modules/services/samba/system.nix; these two are genuinely this host's own.
     global = {
-      "server string" = "mesa";
       "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
     };
 
+    # no "guest ok": valid users already forecloses the guest fallback, so it was dead config
+    # that misleadingly read as a guest share when it's actually authenticated-only.
     media = {
       path = "/mnt/megamax/media";
       browseable = "yes";
       "read only" = "no";
-      "guest ok" = "yes";
       "valid users" = "@users";
       "write list" = "@users";
       "create mask" = "0664";
@@ -196,7 +194,6 @@ in {
       path = "/mnt/megamax/store";
       browseable = "yes";
       "read only" = "no";
-      "guest ok" = "yes";
       "valid users" = "@users";
       "write list" = "@users";
       "create mask" = "0664";

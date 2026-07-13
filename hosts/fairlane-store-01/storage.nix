@@ -49,12 +49,13 @@ in {
   '';
 
   services.samba.settings = {
-    global."server string" = "fairlane";
+    # no "guest ok": valid users already forecloses the guest fallback, so it was dead config
+    # (see mesa-store-01/storage.nix for the full explanation). server string/netbios name come
+    # from modules/services/samba/system.nix's hostname default.
     store = {
       path = "/mnt/media";
       browseable = "yes";
       "read only" = "no";
-      "guest ok" = "yes";
       "valid users" = "@users";
       "write list" = "@users";
       "create mask" = "0664";
