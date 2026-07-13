@@ -3,6 +3,7 @@
     ./storage.nix
 
     modules.profiles.server.system # base + proxmox-vm + disko (by-id) + monitoring agent
+    modules.platform.sops.system # immich oauth client secret
 
     modules.services.immich.system
   ];
@@ -10,8 +11,8 @@
   networking.hostName = "mesa-svc-02";
 
   lab = {
-    # no sops: immich's postgres runs locally and connects over the unix socket with
-    # peer auth, so there's no db password (or any other secret) to decrypt here.
+    sops.secretsFile = ../../secrets/mesa-svc-02.yaml;
+
     site.hostIp = "192.168.10.131";
     site.internalIp = "10.10.0.131";
   };

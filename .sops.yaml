@@ -23,6 +23,7 @@ keys:
   - &host_mesa_edge_01 age1ww87qy6watdrne3r94vzaal9xamu9sdxkfp9awswymkha6y5ruus8396eq
   - &host_mesa_edge_02 age18ga99v2fzg9826m6kh9q8cekdzjh2pq48js2xm5k8afgkulnvvssu5ajxe
   - &host_mesa_store_01 age1yypk4pczxw55u80twhtahud9r09x3zptdf3v0escse2gzftd5shslawazy
+  - &host_mesa_svc_02 age1klnw0vhrdtz78h3wuuycw8vhf00jqswmp4v24tkrq480k9u98p5ss2wgfa
   - &host_fairlane_db_01 age17hr8clvf0gt0ek4hlhw3j4htw0wxtkknqszkvy7f4rgd5v3fhqhq589v8y
   - &host_fairlane_mon_01 age1ukcvclrgq92n2va348jrhkklgqzw4mj9slc547pxxrdjahqsfy9s0a2smk
   - &host_fairlane_edge_01 age1tajr9rgru6qama0cm4nyhguee43sy08edh7da4nsmgfkwxxjreps39zztk
@@ -37,6 +38,11 @@ creation_rules:
       - age:
           - *user_tetra
           - *host_mesa_svc_01
+  - path_regex: secrets/mesa-svc-02\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *host_mesa_svc_02
   - path_regex: secrets/fairlane-svc-01\.yaml$
     key_groups:
       - age:

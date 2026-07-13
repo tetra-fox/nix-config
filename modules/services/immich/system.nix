@@ -64,6 +64,11 @@ in {
       }
     ];
 
+    sops.secrets."immich/oauth_client_secret" = {
+      owner = config.services.immich.user;
+      group = config.services.immich.group;
+    };
+
     # pin the uid: the NFS export squashes on uid, and the module otherwise
     # auto-allocates it, which would drift from the store box's export owner
     users.users.immich.uid = cfg.uid;
@@ -252,19 +257,22 @@ in {
           };
         };
 
-        # oauth disabled for now. when wiring authentik: set enabled=true, issuerUrl to
-        # the authentik provider, clientId, and clientSecret._secret = <sops path>.
+        # oauth via authentik (mesa-auth-01). issuerUrl: the base auth url is resolved from
+        # authentik's declared route (topo.authServerUrl -> https://auth.mesa.tetra.cool), then
+        # the authentik application path is appended. the client secret comes from sops via
+        # _secret (read from a file at runtime, never in the nix store). password login stays on
+        # as a fallback (passwordLogin.enabled = true), autoRegister on per the design.
         oauth = {
           allowInsecureRequests = false;
           autoLaunch = false;
           autoRegister = true;
-          buttonText = "Login with OAuth";
-          clientId = "";
-          clientSecret = "";
+          buttonText = "Login with Authentik";
+          clientId = "6Yn7cayRUwkkNHXKOWFHpMIjE7dr3RpAIsYLMsK4";
+          clientSecret._secret = config.sops.secrets."immich/oauth_client_secret".path;
           defaultStorageQuota = null;
-          enabled = false;
+          enabled = true;
           endSessionEndpoint = "";
-          issuerUrl = "";
+          issuerUrl = "${topo.authServerUrl}/application/o/immich/";
           mobileOverrideEnabled = false;
           mobileRedirectUri = "";
           profileSigningAlgorithm = "none";
