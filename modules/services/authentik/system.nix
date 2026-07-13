@@ -10,7 +10,7 @@
 }: let
   cfg = config.lab.authentik;
 
-  authentikTag = "2026.2";
+  authentikTag = "2026.5";
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
@@ -114,10 +114,14 @@ in {
           AUTHENTIK_HOST = "http://auth-server:9000";
           AUTHENTIK_INSECURE = "true";
         };
-        ports = ["127.0.0.1:3389:3389"];
+        ports = ["${config.lab.site.internalIp}:3389:3389"];
         environmentFiles = siteEnvFile "authentik-ldap.env";
         extraOptions = ["--add-host=auth-server:host-gateway"];
       };
     };
+
+    # LDAP outpost is reachable from other hosts on the internal VLAN (e.g. jellyfin on
+    # mesa-svc-01); plaintext is acceptable here, same trust model as the postgres cluster.
+    networking.firewall.interfaces.ens19.allowedTCPPorts = [3389];
   };
 }
