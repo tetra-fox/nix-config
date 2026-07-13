@@ -117,12 +117,17 @@ in {
 
     # assert com.sun:auto-snapshot=true on the datasets we want local snapshot history for,
     # so the policy lives in this config next to the datasets instead of being hand-set on the
-    # pool. zfs set is idempotent (no-op if already set). runs after the pool is imported.
+    # pool. zfs set is idempotent (no-op if already set). runs in normal multi-user space after
+    # the pool is mounted -- NOT before zfs-mount, which pulls it into the early-boot ordering
+    # knot (zfs-mount -> local-fs -> sysinit -> basic.target) and creates a cycle that systemd
+    # breaks by dropping random critical units like sshd.socket. it only needs the pool mounted,
+    # which zfs-mount + RequiresMountsFor guarantee, so ordering after that is enough.
     services.megamax-snapshot-policy = {
       description = "assert zfs auto-snapshot property on the megamax datasets";
       wantedBy = ["multi-user.target"];
-      after = ["zfs-import.target"];
-      before = ["zfs-mount.service"];
+      after = ["zfs-mount.service"];
+      before = ["nfs-server.service" "samba-smbd.service"];
+      unitConfig.RequiresMountsFor = ["/mnt/megamax/store"];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
