@@ -15,15 +15,23 @@
         security = "user";
         "guest account" = "nobody";
         "map to guest" = "Bad User";
-        # modern macOS needs SMB3 to negotiate fruit/streams_xattr
-        "min protocol" = "SMB3";
+
+        "server min protocol" = "SMB3_11";
+
         "vfs objects" = "catia fruit streams_xattr";
-        "fruit:metadata" = "stream";
+        "ea support" = "yes";
+        "durable handles" = "yes";
+
+        "load printers" = "no";
+        "disable spoolss" = "yes";
+
+        "fruit:aapl" = "yes";
         "fruit:posix_rename" = "yes";
-        "fruit:veto_appledouble" = "no";
-        "fruit:nfs_aces" = "no";
-        "fruit:wipe_intentionally_left_blank_rfork" = "yes";
+        "fruit:metadata" = "stream";
+        "fruit:resource" = "stream";
+        "fruit:veto_appledouble" = "yes";
         "fruit:delete_empty_adfiles" = "yes";
+        "fruit:wipe_intentionally_left_blank_rfork" = "yes";
       };
     };
 

@@ -173,6 +173,8 @@ in {
     '';
 
   services.samba.settings = {
+    # everything else (protocol floor, fruit/streams_xattr, AppleDouble policy) comes from
+    # modules/services/samba/system.nix; these two are genuinely this host's own.
     global = {
       "server string" = "mesa";
       "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
