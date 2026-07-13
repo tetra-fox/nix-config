@@ -45,14 +45,19 @@
   # invariant above). everything below is a call to this with a capability check.
   hostsWhere = pred: lib.filter (name: pred nixosConfigurations.${name}.config) hostsInSite;
 
-  # the IP of the single same-site host matching `pred`; null if zero or more than one (a caller
-  # that needs exactly one asserts it). this is the seam an HA setup swaps for a VIP.
+  # the IP of the single same-site host matching `pred`. null means "nobody provides this" (a
+  # legitimate absence a caller can guard on); more than one is a config error, not an absence, so
+  # it throws rather than collapsing into the same null -- a consumer that guards on null would
+  # otherwise silently skip the service when two hosts advertise the same cap. this is the seam an
+  # HA setup swaps for a VIP.
   ipWhere = pred: let
     hosts = hostsWhere pred;
   in
-    if lib.length hosts == 1
+    if lib.length hosts == 0
+    then null
+    else if lib.length hosts == 1
     then ipOf (builtins.head hosts)
-    else null;
+    else throw "fleet: site '${mySite}' has ${toString (lib.length hosts)} hosts matching a single-provider capability (${lib.concatStringsSep ", " hosts}); expected at most one";
 
   # the IPs of ALL same-site hosts matching `pred` (the set form of ipWhere).
   ipsWhere = pred: lib.filter (ip: ip != null) (map ipOf (hostsWhere pred));
@@ -79,8 +84,12 @@
     vips =
       lib.unique (lib.filter (v: v != null)
         (map (name: lib.attrByPath vipPath null nixosConfigurations.${name}.config) (hostsProviding haCap)));
+    # every HA node must declare the same VIP; more than one distinct value is a config error, not
+    # a pick-one situation. throw instead of silently taking whichever sorts first.
     vip =
-      if vips != []
+      if lib.length vips > 1
+      then throw "fleet: site '${mySite}' HA cap '${haCap}' has ${toString (lib.length vips)} distinct VIPs at ${lib.concatStringsSep "." vipPath} (${lib.concatStringsSep ", " vips}); every HA node must declare the same one"
+      else if vips != []
       then builtins.head vips
       else null;
   in
