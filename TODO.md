@@ -62,7 +62,8 @@
 
 - full audit of modules: make sure everything is generic and not tied to any of my specific configuration or needlessly intertwined with other modules
   - lots of moving parts that could break and going to be time consuming as fuck
-  - this is the same goal as the repo being fork-it public, so it's worth doing
+  - if we need to create like a generic interface that our boxes consume we will restruture.
+  - ensure clean seams.
 
 - audit service fw rules and generate nftables rules from config
   - dont eagerly listen on all interfaces, just what we need
