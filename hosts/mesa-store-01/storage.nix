@@ -222,19 +222,8 @@ in {
       "force group" = "media";
     };
 
-    # %U expands to the authenticated username per-connection, so each person is served their
-    # own private subdir instead of one shared root. owner-only (0700): this is one person's
-    # folder, not a shared tree, so there's no group to grant -- other @users members and the
-    # media-group services have no business in here. samba doesn't auto-create the subdir on
-    # first connect, so "root preexec" (runs as root, before the tree-connect) mkdir+chowns it
-    # into existence -- ordinary "preexec" runs as the connecting user, who doesn't own the
-    # parent dir and can't create their own top-level folder in it. create/directory mask left
-    # at owner-only too, so samba's mask can't loosen what mkdir already set to 0700.
-    # samba execs this command directly, NOT through a shell (despite the preexec man page's
-    # own "csh -c '...'" example implying otherwise) -- an unwrapped "a && b" gets passed to
-    # the first binary as literal argv tokens, which for mkdir -p means every token becomes a
-    # path to create. confirmed the hard way: it produced a directory literally named "&&".
-    # sh -c '...' is required for any multi-command preexec.
+    # %U -> per-user private subdir (0700, owner-only). root preexec creates it since samba
+    # doesn't; wrapped in sh -c because samba execs preexec directly, no shell.
     store = {
       path = "/mnt/megamax/store/%U";
       browseable = "yes";
@@ -246,11 +235,8 @@ in {
       "root preexec" = "${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/store/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/store/%U'";
     };
 
-    # per-user time machine destinations, same %U mechanism and owner-only model as store.
-    # authenticated (not guest) so %U is a real identity, not the shared guest mapping --
-    # mac-side "Encrypt Backups" is still recommended defense in depth, just no longer
-    # load-bearing for safety. global fruit hints (vfs objects, fruit:metadata) come from
-    # modules/services/samba. see store's comment above for why root preexec needs sh -c.
+    # same %U/root preexec pattern as store. mac-side "Encrypt Backups" is still recommended,
+    # just not load-bearing now that this is authenticated rather than guest.
     timemachine = {
       path = "/mnt/megamax/backup/timemachine/%U";
       browseable = "yes";
