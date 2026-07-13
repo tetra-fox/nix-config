@@ -67,25 +67,26 @@ in {
   # ownership and we don't re-walk the whole library every activation. setgid so new files
   # inherit group media, letting the service uids and SMB @users share write. the arrs
   # hardlink media/torrents -> media/library, which needs them in the same dataset.
-  systemd.tmpfiles.rules = [
-    "d ${siteData} 0755 root media -"
-    "d /mnt/megamax/media/library 2775 admin media -"
-    "d /mnt/megamax/media/torrents 2775 admin media -"
-    "d /mnt/megamax/media/nzb 2775 admin media -"
-    "d /mnt/megamax/store 2775 admin media -"
-    "d /mnt/megamax/backup/timemachine 2775 admin media -"
-    # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
-    # anongid=100), 0700, deliberately not group media and no setgid
-    "d /mnt/megamax/backup/homeassistant 0700 admin users -"
-  ]
-  # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
-  # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
-  # a host advertises the immich capability.
-  ++ lib.optionals (immichIp != null) [
-    "d /mnt/megamax/immich 0700 990 990 -"
-    "d /mnt/megamax/immich/library 0700 990 990 -"
-    "d /mnt/megamax/immich/backups 0700 990 990 -"
-  ];
+  systemd.tmpfiles.rules =
+    [
+      "d ${siteData} 0755 root media -"
+      "d /mnt/megamax/media/library 2775 admin media -"
+      "d /mnt/megamax/media/torrents 2775 admin media -"
+      "d /mnt/megamax/media/nzb 2775 admin media -"
+      "d /mnt/megamax/store 2775 admin media -"
+      "d /mnt/megamax/backup/timemachine 2775 admin media -"
+      # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
+      # anongid=100), 0700, deliberately not group media and no setgid
+      "d /mnt/megamax/backup/homeassistant 0700 admin users -"
+    ]
+    # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
+    # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
+    # a host advertises the immich capability.
+    ++ lib.optionals (immichIp != null) [
+      "d /mnt/megamax/immich 0700 990 990 -"
+      "d /mnt/megamax/immich/library 0700 990 990 -"
+      "d /mnt/megamax/immich/backups 0700 990 990 -"
+    ];
 
   # boot-time safety net that re-asserts group ownership + setgid across the whole shared
   # trees, so a flubbed copy, a wrong-perms import, or a future mistake is fixed by a reboot
