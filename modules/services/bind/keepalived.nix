@@ -45,7 +45,7 @@ in {
 
     # the static ULA that anchors the v6 VIP: it's the v6 heartbeat source and the address the
     # VIP is a sibling of. only on a dual-stack site (ha.hostV6 set); mesa leaves it null.
-    networking.interfaces.ens18.ipv6.addresses = lib.mkIf (ha.hostV6 != null) [
+    networking.interfaces.${config.lab.site.serverInterface}.ipv6.addresses = lib.mkIf (ha.hostV6 != null) [
       {
         address = ha.hostV6;
         prefixLength = 64;
@@ -55,9 +55,9 @@ in {
     lab.vrrp = {
       enable = true;
       inherit (ha) vip;
-      vrrpInterface = "ens19"; # heartbeat on the isolated VLAN
-      vipInterface = "ens18"; # but the VIP is client-facing, on the server VLAN
-      virtualRouterId = 53; # must be unique per L2 segment; 51 = db, also on ens19
+      vrrpInterface = config.lab.site.internalInterface; # heartbeat on the isolated VLAN
+      vipInterface = config.lab.site.serverInterface; # but the VIP is client-facing, on the server VLAN
+      inherit (ha) virtualRouterId;
       priority = 110 - (selfIdx * 5);
       unicastSrcIp = selfInternalIp;
       unicastPeers = otherDnsInternalIps;
@@ -69,7 +69,7 @@ in {
       inherit (ha) vip6;
       virtualRouterId6 =
         if ha.vip6 != null
-        then 63
+        then ha.virtualRouterId6
         else null;
       unicastSrcIp6 = ha.hostV6;
       unicastPeers6 = otherDnsV6;

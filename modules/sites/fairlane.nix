@@ -11,13 +11,14 @@
 }: {
   config = {
     lab.site.domain = "fairlane.tetra.cool";
+    lab.site.internalCidr = "10.10.0.0/24";
 
     networking = {
       useDHCP = false;
       defaultGateway = "192.168.10.1";
       nameservers = ["192.168.10.1"];
 
-      interfaces.ens18 = {
+      interfaces.${config.lab.site.serverInterface} = {
         mtu = 9000;
         ipv4.addresses = [
           {
@@ -27,9 +28,9 @@
         ];
       };
 
-      # ens19 = isolated internal VLAN (10.10.0.0/24, VLAN 1010) for VM east-west traffic, same
+      # the isolated internal VLAN (10.10.0.0/24, VLAN 1010) for VM east-west traffic, same
       # as mesa. no gateway/DNS; no route off itself. only hosts that declare an internalIp.
-      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+      interfaces.${config.lab.site.internalInterface} = lib.mkIf (config.lab.site.internalIp != null) {
         mtu = 9000;
         ipv4.addresses = [
           {
@@ -47,11 +48,11 @@
     topology.self = {
       parent = config.lab.site.proxmoxParent;
       guestType = "vm";
-      interfaces.ens18 = {
+      interfaces.${config.lab.site.serverInterface} = {
         virtual = true;
         physicalConnections = [(config.lib.topology.mkConnection config.lab.site.proxmoxParent "vmbr0.10")];
       };
-      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+      interfaces.${config.lab.site.internalInterface} = lib.mkIf (config.lab.site.internalIp != null) {
         virtual = true;
         physicalConnections = [(config.lib.topology.mkConnection config.lab.site.proxmoxParent "vmbr0.1010")];
       };

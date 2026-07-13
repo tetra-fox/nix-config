@@ -82,18 +82,17 @@
     lib.mapAttrsToList (name: role: "${name}:${config.sops.secrets.${role.passwordSecret}.path}")
     cfg.roles;
 
-  # SITE SEAM: 10.10.0.0/24 is mesa's internal VLAN, baked into this "generic" module. a second
-  # site with a different internal VLAN forks here -- when it does, that's the signal to
-  # parameterize (likely derive from lab.site.internalIp's /24, or a lab.site.internalCidr the
-  # site layer sets). left hardcoded on purpose: the second site's actual CIDR reveals the right
-  # seam, guessing it now would abstract against imagined variation.
+  # replication + node-to-node auth is scoped to the internal VLAN, whose subnet is a site
+  # fact (lab.site.internalCidr, asserted non-null below)
+  internalCidr = config.lab.site.internalCidr;
+
   pgHba =
     [
       "local all all trust"
-      "host replication replicator 10.10.0.0/24 scram-sha-256"
+      "host replication replicator ${internalCidr} scram-sha-256"
     ]
     ++ map (cidr: "host all all ${cidr} scram-sha-256")
-    (lib.unique (topo.dbClientCidrs ++ cfg.extraAllowedCidrs ++ ["10.10.0.0/24"]));
+    (lib.unique (topo.dbClientCidrs ++ cfg.extraAllowedCidrs ++ [internalCidr]));
 
   haproxyBackends =
     lib.concatStringsSep "\n"
@@ -141,11 +140,15 @@ in {
         assertion = haNodesWithoutInternalIp == [];
         message = "lab.postgres.ha: every db-ha-node needs lab.site.internalIp (etcd and haproxy address peers on the internal VLAN); missing on: ${lib.concatStringsSep ", " haNodesWithoutInternalIp}.";
       }
+      {
+        assertion = internalCidr != null;
+        message = "lab.postgres.ha.enable requires lab.site.internalCidr (pg_hba scopes replication and client auth to the internal VLAN's subnet).";
+      }
     ];
 
     # etcd + Patroni REST have no TLS/auth; safe only because nothing but db nodes is on
-    # 10.10.0.0/24 (enforced in proxmox, not here). add peer/client TLS + REST auth before
-    # anything else lands on the VLAN.
+    # the internal VLAN (enforced in proxmox, not here). add peer/client TLS + REST auth
+    # before anything else lands on the VLAN.
     #
     # initialClusterState = "new" is read only on first start of an empty data dir, so
     # reboots are fine, but a wiped/replaced node re-bootstraps a new cluster and fails to
@@ -158,7 +161,7 @@ in {
         dataDir = "${siteData}/etcd";
         initialCluster = etcdInitialCluster;
         initialClusterState = "new";
-        initialClusterToken = "mesa-pg-etcd";
+        initialClusterToken = "${ha.scope}-etcd";
         listenPeerUrls = ["http://${selfIp}:2380"];
         initialAdvertisePeerUrls = ["http://${selfIp}:2380"];
         listenClientUrls = ["http://${selfIp}:2379" "http://127.0.0.1:2379"];
@@ -304,9 +307,10 @@ in {
     lab.vrrp = {
       enable = true;
       inherit (ha) vip;
-      vrrpInterface = "ens19";
-      vipInterface = "ens19";
-      virtualRouterId = 51; # 52 = edge, 53 = dns; unique per L2 segment
+      # heartbeat and VIP both live on the internal VLAN (east-west db traffic only)
+      vrrpInterface = config.lab.site.internalInterface;
+      vipInterface = config.lab.site.internalInterface;
+      inherit (ha) virtualRouterId;
       priority = vrrpPriority;
       unicastSrcIp = selfIp;
       unicastPeers = otherNodeIps;
@@ -330,12 +334,12 @@ in {
       cfg.roles)
     ];
 
-    networking.firewall.interfaces.ens19.allowedTCPPorts = [
+    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [
       2379
       2380
       5432
       8008
     ];
-    # the VRRP accept rule on ens19 comes from modules.services.vrrp.system.
+    # the VRRP accept rule on the internal interface comes from modules.services.vrrp.system.
   };
 }

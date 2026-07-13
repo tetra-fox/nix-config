@@ -59,8 +59,30 @@
       internalIp = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "this host's IPv4 on the isolated internal VLAN (ens19); null = not on it";
+        description = "this host's IPv4 on the isolated internal VLAN; null = not on it";
         example = "10.10.0.130";
+      };
+
+      # NIC names are a proxmox convention (virtio slot order), so they get fleet-wide
+      # defaults here; a site with different naming overrides in its facts file. service
+      # modules read these instead of hardcoding ens18/ens19.
+      serverInterface = lib.mkOption {
+        type = lib.types.str;
+        default = "ens18";
+        description = "the NIC on the site's server VLAN (proxmox slot 0 by convention)";
+      };
+
+      internalInterface = lib.mkOption {
+        type = lib.types.str;
+        default = "ens19";
+        description = "the NIC on the isolated internal VLAN (proxmox slot 1); only meaningful when internalIp is set";
+      };
+
+      internalCidr = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "the internal VLAN's subnet, set in the site facts file; null = site has no internal VLAN";
+        example = "10.10.0.0/24";
       };
 
       # the site's public domain, set in the per-site facts file. service modules build their vhost

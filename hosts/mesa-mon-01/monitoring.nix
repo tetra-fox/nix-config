@@ -20,6 +20,7 @@
     monitoring = {
       server.enable = true;
       unifi.enable = true;
+      unifi.controllerUrl = "https://192.168.10.1";
 
       extraScrapeConfigs = [
         # non-NixOS node-exporter targets (not auto-discovered from the flake)

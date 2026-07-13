@@ -5,8 +5,8 @@
 }: {
   services.ollama = {
     enable = true;
-    # ollama-cuda for the rtx 3090; the default package is cpu-only
-    package = pkgs.ollama-cuda;
+    # package left at the upstream (cpu) default; a gpu host overrides it
+    # (hara sets ollama-cuda for the rtx 3090)
     environmentVariables = {
       OLLAMA_KEEP_ALIVE = "30m";
       OLLAMA_CONTEXT_LENGTH = "65536";

@@ -31,6 +31,8 @@
       # or every item shows as missing.
       torrentsPath = "/mnt/media/torrents";
       nzbPath = "/mnt/media/nzb";
+      # the forwarded port AirVPN assigned to this account (same account as mesa)
+      torrentingPort = 42924;
       sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
     };
 

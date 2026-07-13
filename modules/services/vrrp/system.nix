@@ -16,6 +16,18 @@ in {
       description = "the floating virtual IP this node may hold (e.g. 192.168.10.53).";
     };
 
+    vipPrefixLength = lib.mkOption {
+      type = lib.types.int;
+      default = 24;
+      description = "prefix length for the VIP's on-link route on vipInterface.";
+    };
+
+    vipPrefixLength6 = lib.mkOption {
+      type = lib.types.int;
+      default = 64;
+      description = "prefix length for the v6 VIP's on-link route.";
+    };
+
     # keepalived can't mix v4 and v6 VIPs in one vrrp_instance, so an optional v6 VIP gets its
     # own second instance (its own vrid, heartbeat over v6 link-local on vipInterface). null =
     # v4-only, the common case. used by fairlane's dual-stack dns; a ULA is the right choice when
@@ -157,7 +169,7 @@ in {
             inherit (cfg) unicastPeers;
             virtualIps = [
               {
-                addr = "${cfg.vip}/24";
+                addr = "${cfg.vip}/${toString cfg.vipPrefixLength}";
                 dev = cfg.vipInterface;
               }
             ];
@@ -178,7 +190,7 @@ in {
             unicastPeers = cfg.unicastPeers6;
             virtualIps = [
               {
-                addr = "${cfg.vip6}/64";
+                addr = "${cfg.vip6}/${toString cfg.vipPrefixLength6}";
                 dev = cfg.vipInterface;
               }
             ];

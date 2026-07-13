@@ -50,6 +50,15 @@ in {
         991 to avoid collision.
       '';
     };
+
+    oauth.clientId = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        the oauth client id authentik assigned to the immich application; a deployment
+        fact, set per host. null disables oauth (password login stays on either way).
+      '';
+    };
   };
 
   config = {
@@ -59,8 +68,8 @@ in {
         message = "immich listens on this host's east-west address (lab.site.internalIp, falling back to hostIp); neither is set.";
       }
       {
-        assertion = topo.authServerUrl != null;
-        message = "immich's oauth issuerUrl derives from the same-site auth-server route; no host in this site provides 'auth-server' (deploy authentik, or drop oauth from this module).";
+        assertion = cfg.oauth.clientId == null || topo.authServerUrl != null;
+        message = "lab.immich.oauth.clientId is set but immich's oauth issuerUrl derives from the same-site auth-server route and no host in this site provides 'auth-server'; deploy authentik there or unset the clientId.";
       }
     ];
 
@@ -75,7 +84,7 @@ in {
       }
     ];
 
-    sops.secrets."immich/oauth_client_secret" = {
+    sops.secrets."immich/oauth_client_secret" = lib.mkIf (cfg.oauth.clientId != null) {
       owner = config.services.immich.user;
       group = config.services.immich.group;
     };
@@ -270,22 +279,34 @@ in {
           };
         };
 
-        # oauth via authentik (mesa-auth-01). issuerUrl: the base auth url is resolved from
-        # authentik's declared route (topo.authServerUrl -> https://auth.mesa.tetra.cool), then
-        # the authentik application path is appended. the client secret comes from sops via
-        # _secret (read from a file at runtime, never in the nix store). password login stays on
-        # as a fallback (passwordLogin.enabled = true), autoRegister on per the design.
+        # oauth via the site's authentik, on when a clientId is configured. issuerUrl: the base
+        # auth url is resolved from authentik's declared route (topo.authServerUrl ->
+        # https://auth.<site domain>), then the authentik application path is appended. the
+        # client secret comes from sops via _secret (read from a file at runtime, never in the
+        # nix store). password login stays on as a fallback (passwordLogin.enabled = true),
+        # autoRegister on per the design.
         oauth = {
           allowInsecureRequests = false;
           autoLaunch = false;
           autoRegister = true;
           buttonText = "Login with Authentik";
-          clientId = "6Yn7cayRUwkkNHXKOWFHpMIjE7dr3RpAIsYLMsK4";
-          clientSecret._secret = config.sops.secrets."immich/oauth_client_secret".path;
+          # empty strings when oauth is off: immich ignores them, and the settings export
+          # style here uses "" over null for unset fields
+          clientId =
+            if cfg.oauth.clientId != null
+            then cfg.oauth.clientId
+            else "";
+          clientSecret =
+            if cfg.oauth.clientId != null
+            then {_secret = config.sops.secrets."immich/oauth_client_secret".path;}
+            else "";
           defaultStorageQuota = null;
-          enabled = true;
+          enabled = cfg.oauth.clientId != null;
           endSessionEndpoint = "";
-          issuerUrl = "${topo.authServerUrl}/application/o/immich/";
+          issuerUrl =
+            if cfg.oauth.clientId != null
+            then "${topo.authServerUrl}/application/o/immich/"
+            else "";
           mobileOverrideEnabled = false;
           mobileRedirectUri = "";
           profileSigningAlgorithm = "none";

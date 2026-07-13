@@ -187,7 +187,19 @@ in {
       hostV6 = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "this resolver's own static ULA on ens18 (the v6 heartbeat source); paired with vip6.";
+        description = "this resolver's own static ULA on the server-VLAN NIC (the v6 heartbeat source); paired with vip6.";
+      };
+
+      virtualRouterId = lib.mkOption {
+        type = lib.types.int;
+        default = 53;
+        description = "VRRP router id for the resolver VIP, unique per L2 segment (see lab.vrrp.virtualRouterId).";
+      };
+
+      virtualRouterId6 = lib.mkOption {
+        type = lib.types.int;
+        default = 63;
+        description = "vrid for the v6 VIP instance (only used when vip6 is set); distinct from the v4 one.";
       };
     };
   };

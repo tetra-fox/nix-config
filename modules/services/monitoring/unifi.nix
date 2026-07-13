@@ -17,12 +17,8 @@ in {
 
     controllerUrl = lib.mkOption {
       type = lib.types.str;
-      default = "https://192.168.10.1";
-      description = ''
-        UniFi controller URL to poll. default works for both current sites (their
-        controllers both sit at 192.168.10.1 -- the per-site VLANs reuse the same
-        layout). a site with a controller at a different address overrides this.
-      '';
+      description = "UniFi controller URL to poll; a site fact, set where unifi.enable is set.";
+      example = "https://192.168.10.1";
     };
   };
 

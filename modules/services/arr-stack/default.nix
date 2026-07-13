@@ -208,6 +208,14 @@ in {
       };
     };
 
+    torrentingPort = lib.mkOption {
+      type = lib.types.port;
+      description = ''
+        qbittorrent's incoming (listen) port. the VPN provider assigns this per account
+        when port forwarding is set up, so it's a deployment fact with no sane default.
+      '';
+    };
+
     sabnzbdHostWhitelist = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [];

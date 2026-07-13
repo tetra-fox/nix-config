@@ -83,39 +83,35 @@
   # vhosts here -- the resolvable ones come from renderedRoutes, the site-specific ones from
   # lab.caddy.staticTail. the (authentik) snippet stays env-var-driven ({$AUTH_UPSTREAM}) because
   # the forward_auth path isn't inverted yet (see TODO: caddy route inversion, arr block).
-  preamble = ''
-    (lan_only) {
-    	@notlan not remote_ip private_ranges
-    	abort @notlan
-    }
+  preamble =
+    ''
+      (lan_only) {
+      	@notlan not remote_ip private_ranges
+      	abort @notlan
+      }
 
-    # apache-style access log (transform-encoder plugin), imported by every vhost so fail2ban's
-    # simple-regex filter matches it. caddy's default JSON is harder to write a filter against.
-    (log) {
-    	log {
-    		output file /var/log/caddy/access.log
-    		format transform "{common_log}"
-    	}
-    }
+      # apache-style access log (transform-encoder plugin), imported by every vhost so fail2ban's
+      # simple-regex filter matches it. caddy's default JSON is harder to write a filter against.
+      (log) {
+      	log {
+      		output file /var/log/caddy/access.log
+      		format transform "{common_log}"
+      	}
+      }
 
-    (authentik) {
-    	reverse_proxy /outpost.goauthentik.io/* {$AUTH_UPSTREAM} {
-    		header_up Host {http.reverse_proxy.upstream.hostport}
-    	}
+      (authentik) {
+      	reverse_proxy /outpost.goauthentik.io/* {$AUTH_UPSTREAM} {
+      		header_up Host {http.reverse_proxy.upstream.hostport}
+      	}
 
-    	forward_auth {$AUTH_UPSTREAM} {
-    		uri /outpost.goauthentik.io/auth/caddy
-    		copy_headers Authorization
-    	}
-    }
+      	forward_auth {$AUTH_UPSTREAM} {
+      		uri /outpost.goauthentik.io/auth/caddy
+      		copy_headers Authorization
+      	}
+      }
 
-    {
-    	cert_issuer acme {
-    		dns cloudflare {$CF_TOKEN}
-    		resolvers 1.1.1.1 8.8.8.8
-    	}
-    }
-  '';
+    ''
+    + config.lab.caddy.certIssuer;
   renderedCaddyfile = pkgs.writeText "Caddyfile" (
     preamble + "\n" + renderedRoutes + "\n" + config.lab.caddy.staticTail
   );
@@ -141,6 +137,40 @@ in {
       default = null;
     };
 
+    # the acme issuer, a raw Caddyfile global-options block appended to the preamble. the
+    # default does dns-01 via cloudflare, whose token rides in through environmentSecrets;
+    # a site on another dns provider overrides both (and needs a package built with the
+    # matching dns plugin).
+    certIssuer = lib.mkOption {
+      type = lib.types.lines;
+      default = ''
+        {
+        	cert_issuer acme {
+        		dns cloudflare {$CF_TOKEN}
+        		resolvers 1.1.1.1 8.8.8.8
+        	}
+        }
+      '';
+    };
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.caddy.withPlugins {
+        plugins = [
+          "github.com/caddy-dns/cloudflare@v0.2.4"
+          "github.com/caddyserver/transform-encoder@v0.0.0-20260423033309-ba4124974830"
+        ];
+        hash = "sha256-mF0V4puEMkQKyhx5NytbWB5ygH4Bkun+7yV7lecxhDI=";
+      };
+      description = "the caddy build. the default carries the cloudflare dns plugin (for the default certIssuer) and transform-encoder (fail2ban's log format).";
+    };
+
+    environmentSecrets = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {CF_TOKEN = "net/cf_token";};
+      description = "env var name -> sops secret name, rendered into caddy's EnvironmentFile. the default carries the cloudflare acme token.";
+    };
+
     # site-specific Caddyfile blocks appended after the rendered routes: the root vhost, appliances
     # with no capability publisher (HAOS, proxmox), and the arr forward_auth block until it's
     # inverted. set this (instead of caddyfile) to render the Caddyfile from lab.topology.routes.
@@ -160,6 +190,12 @@ in {
           the floating virtual IP keepalived parks on a live edge host, on the server VLAN
           (the router forwards 443/80 here). every edge host declares the same value.
         '';
+      };
+
+      virtualRouterId = lib.mkOption {
+        type = lib.types.int;
+        default = 52;
+        description = "VRRP router id for the edge VIP, unique per L2 segment (see lab.vrrp.virtualRouterId).";
       };
     };
 
@@ -217,13 +253,7 @@ in {
     services.caddy = {
       enable = true;
       dataDir = "${siteData}/caddy";
-      package = pkgs.caddy.withPlugins {
-        plugins = [
-          "github.com/caddy-dns/cloudflare@v0.2.4"
-          "github.com/caddyserver/transform-encoder@v0.0.0-20260423033309-ba4124974830"
-        ];
-        hash = "sha256-mF0V4puEMkQKyhx5NytbWB5ygH4Bkun+7yV7lecxhDI=";
-      };
+      package = config.lab.caddy.package;
       # an explicit hand-written file wins (fairlane); otherwise render from the route fold.
       configFile =
         if config.lab.caddy.caddyfile != null
@@ -231,9 +261,12 @@ in {
         else renderedCaddyfile;
     };
 
-    sops.secrets."net/cf_token" = {};
+    sops.secrets = lib.mapAttrs' (_: secret: lib.nameValuePair secret {}) config.lab.caddy.environmentSecrets;
     sops.templates."caddy.env" = {
-      content = "CF_TOKEN=${config.sops.placeholder."net/cf_token"}\n";
+      content =
+        lib.concatStrings
+        (lib.mapAttrsToList (var: secret: "${var}=${config.sops.placeholder.${secret}}\n")
+          config.lab.caddy.environmentSecrets);
       owner = "caddy";
       group = "caddy";
     };
@@ -282,9 +315,10 @@ in {
     lab.vrrp = lib.mkIf ha.enable {
       enable = true;
       inherit (ha) vip;
-      vrrpInterface = "ens18";
-      vipInterface = "ens18";
-      virtualRouterId = 52; # unique per L2 segment
+      # heartbeat and VIP both on the server VLAN (clients and the router reach the VIP there)
+      vrrpInterface = config.lab.site.serverInterface;
+      vipInterface = config.lab.site.serverInterface;
+      inherit (ha) virtualRouterId;
       priority = 110 - (selfEdgeIdx * 5);
       unicastSrcIp = selfServerIp;
       unicastPeers = otherEdgeServerIps;

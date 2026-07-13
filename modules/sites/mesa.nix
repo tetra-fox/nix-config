@@ -10,13 +10,14 @@
 }: {
   config = {
     lab.site.domain = "mesa.tetra.cool";
+    lab.site.internalCidr = "10.10.0.0/24";
 
     networking = {
       useDHCP = false;
       defaultGateway = "192.168.10.1";
       nameservers = ["192.168.10.1"];
 
-      interfaces.ens18 = {
+      interfaces.${config.lab.site.serverInterface} = {
         mtu = 9000; # milkfish bridge + switch are 9000 end-to-end
         ipv4.addresses = [
           {
@@ -26,9 +27,9 @@
         ];
       };
 
-      # ens19 = isolated internal VLAN (10.10.0.0/24, VLAN 1010) for VM east-west traffic.
-      # no gateway/DNS here (those stay on ens18); the VLAN has no route off itself by design.
-      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+      # the isolated internal VLAN (10.10.0.0/24, VLAN 1010) for VM east-west traffic.
+      # no gateway/DNS here (those stay on the server VLAN); no route off itself by design.
+      interfaces.${config.lab.site.internalInterface} = lib.mkIf (config.lab.site.internalIp != null) {
         mtu = 9000;
         ipv4.addresses = [
           {
@@ -46,11 +47,11 @@
     topology.self = {
       parent = "milkfish";
       guestType = "vm";
-      interfaces.ens18 = {
+      interfaces.${config.lab.site.serverInterface} = {
         virtual = true;
         physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.10")];
       };
-      interfaces.ens19 = lib.mkIf (config.lab.site.internalIp != null) {
+      interfaces.${config.lab.site.internalInterface} = lib.mkIf (config.lab.site.internalIp != null) {
         virtual = true;
         physicalConnections = [(config.lib.topology.mkConnection "milkfish" "vmbr0.1010")];
       };

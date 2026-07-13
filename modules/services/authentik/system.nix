@@ -128,6 +128,6 @@ in {
 
     # LDAP outpost is reachable from other hosts on the internal VLAN (e.g. jellyfin on
     # mesa-svc-01); plaintext is acceptable here, same trust model as the postgres cluster.
-    networking.firewall.interfaces.ens19.allowedTCPPorts = [3389];
+    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [3389];
   };
 }

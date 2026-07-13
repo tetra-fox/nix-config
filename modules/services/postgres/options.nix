@@ -3,9 +3,11 @@
   config,
   lib,
   pkgs,
+  fleet,
   ...
 }: let
   cfg = config.lab.postgres;
+  sitePrefix = import fleet.site-prefix {inherit lib;};
 in {
   # advertise the db capabilities from the plain enable flags, so site-topology discovers this
   # host without importing the server or HA module. imported by server, HA, and pure clients
@@ -40,8 +42,15 @@ in {
 
       scope = lib.mkOption {
         type = lib.types.str;
-        default = "mesa-pg";
-        description = "Patroni cluster name (scope). shared by every node in the cluster.";
+        # <site>-pg, so a second site gets its own cluster name without setting anything
+        default = "${sitePrefix config.networking.hostName}-pg";
+        description = "Patroni cluster name (scope). shared by every node in the cluster. also names the etcd cluster token (<scope>-etcd).";
+      };
+
+      virtualRouterId = lib.mkOption {
+        type = lib.types.int;
+        default = 51;
+        description = "VRRP router id for the db VIP, unique per L2 segment (see lab.vrrp.virtualRouterId).";
       };
 
       bootstrapHold = lib.mkOption {

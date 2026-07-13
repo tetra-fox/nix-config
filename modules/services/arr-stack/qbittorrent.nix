@@ -27,7 +27,7 @@ in {
       group = cfg.mediaGroup;
       profileDir = "${siteData}/qbittorrent";
       webuiPort = 8888; # 8080 would collide with sabnzbd
-      torrentingPort = 42924;
+      inherit (cfg) torrentingPort;
       serverConfig = {
         Application.FileLogger = {
           Age = 1;

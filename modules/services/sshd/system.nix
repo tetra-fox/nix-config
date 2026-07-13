@@ -5,9 +5,12 @@
   username,
   ...
 }: {
-  users.users.${username}.openssh.authorizedKeys.keys = [
-    (lib.fileContents (shared.keyring + "/tetra.pub"))
-  ];
+  # every .pub in the shared keyring gets shell on every host: the directory is the
+  # contract, so changing who has access means changing the keyring, not this module
+  users.users.${username}.openssh.authorizedKeys.keys =
+    map (f: lib.fileContents (shared.keyring + "/${f}"))
+    (lib.filter (lib.hasSuffix ".pub")
+      (builtins.attrNames (builtins.readDir shared.keyring)));
 
   services.openssh = {
     enable = true;
