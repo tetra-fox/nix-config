@@ -22,7 +22,7 @@
     internalIp), endpointFor+vipPath is the keepalived-VIP seam. don't rebuild either. the old
     :-delimited string syntax idea is dropped (unparseable, unvalidated) in favor of an attrset.
   - the one real item: invert who owns the routes. today caddy's Caddyfile is a hand-written
-    static asset (hosts/*/files/caddy/Caddyfile) with six env-var upstream holes; adding a service
+    static asset (hosts/\*/files/caddy/Caddyfile) with six env-var upstream holes; adding a service
     means editing caddy. want: a host publishes lab.topology.routes = [{host, port, <policy>}],
     caddy folds over the site collecting routes, resolves each publisher's address with ipOf (VIP
     seam where HA), and renders the Caddyfile. adding a service then touches only that module.
@@ -63,3 +63,9 @@
 - full audit of modules: make sure everything is generic and not tied to any of my specific configuration or needlessly intertwined with other modules
   - lots of moving parts that could break and going to be time consuming as fuck
   - this is the same goal as the repo being fork-it public, so it's worth doing
+
+- audit service fw rules and generate nftables rules from config
+  - dont eagerly listen on all interfaces, just what we need
+  - if we can limit to vlan 1010 (10.10.0.0/24) we should for eastwest
+  - so update listening interfaces AND fw rules.
+  - explicitly leave out the \*arrs. still accessed by ip because authentik's proxy is a little Freaked Up. (might just make the arrs `lan_only` To Be Tbh.)
