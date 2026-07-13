@@ -12,34 +12,12 @@
     inherit nixosConfigurations;
     hostName = config.networking.hostName;
   };
-  defaultStatsUpstream =
-    if (config.lab.monitoring.server.enable or false)
-    then "127.0.0.1:3000"
-    else if topo.serverIp != null
-    then "${topo.serverIp}:3000"
-    else "127.0.0.1:3000";
-
   defaultAuthUpstream =
     if (config.lab.authentik.enable or false)
     then "127.0.0.1:9000"
     else if topo.authServerIp != null
     then "${topo.authServerIp}:9000"
     else "127.0.0.1:9000";
-
-  mediaIsLocal = config.services.jellyfin.enable;
-  mediaHostAddr =
-    if mediaIsLocal
-    then "127.0.0.1"
-    else if topo.mediaHostIp != null
-    then topo.mediaHostIp
-    else "127.0.0.1";
-
-  # the immich host's address. immich runs on its own box (mesa-svc-02), never on the
-  # edge, so this is always the derived immich host; loopback if unresolved.
-  immichHostAddr =
-    if topo.immichHostIp != null
-    then topo.immichHostIp
-    else "127.0.0.1";
 
   # the arr host's address, for a site (fairlane) that proxies the arr UIs directly instead of
   # through authentik forward_auth (mesa's pattern). the arr-stack DNATs each arr's port onto its
@@ -130,13 +108,6 @@ in {
   imports = [modules.services.vrrp.system];
 
   options.lab.caddy = {
-    # a fully hand-written Caddyfile. takes precedence over the rendered one; a site not yet
-    # converted to route inversion (fairlane) still points this at its static file.
-    caddyfile = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-    };
-
     # the acme issuer, a raw Caddyfile global-options block appended to the preamble. the
     # default does dns-01 via cloudflare, whose token rides in through environmentSecrets;
     # a site on another dns provider overrides both (and needs a package built with the
@@ -199,16 +170,6 @@ in {
       };
     };
 
-    statsUpstream = lib.mkOption {
-      type = lib.types.str;
-      default = defaultStatsUpstream;
-      description = ''
-        upstream for the stats.<site> vhost (grafana), referenced in the Caddyfile as
-        {$STATS_UPSTREAM}. defaults to the site's monitoring server (loopback if this
-        host is the server, else the derived <site>-mon-01 IP).
-      '';
-    };
-
     authUpstream = lib.mkOption {
       type = lib.types.str;
       default = defaultAuthUpstream;
@@ -217,24 +178,6 @@ in {
         the Caddyfile as {$AUTH_UPSTREAM}. defaults to the site's authentik host
         (loopback if local, else the derived auth host IP).
       '';
-    };
-
-    jellyfinUpstream = lib.mkOption {
-      type = lib.types.str;
-      default = "${mediaHostAddr}:8096";
-      description = "upstream for jellyfin.<site> ({$JELLYFIN_UPSTREAM}); the derived media host";
-    };
-
-    immichUpstream = lib.mkOption {
-      type = lib.types.str;
-      default = "${immichHostAddr}:2283";
-      description = "upstream for immich.<site> ({$IMMICH_UPSTREAM}); the derived immich host";
-    };
-
-    npUpstream = lib.mkOption {
-      type = lib.types.str;
-      default = "${mediaHostAddr}:8090";
-      description = "upstream for np.<site> ({$NP_UPSTREAM}); the derived media host (nowplaying)";
     };
 
     arrHost = lib.mkOption {
@@ -254,11 +197,7 @@ in {
       enable = true;
       dataDir = "${siteData}/caddy";
       package = config.lab.caddy.package;
-      # an explicit hand-written file wins (fairlane); otherwise render from the route fold.
-      configFile =
-        if config.lab.caddy.caddyfile != null
-        then config.lab.caddy.caddyfile
-        else renderedCaddyfile;
+      configFile = renderedCaddyfile;
     };
 
     sops.secrets = lib.mapAttrs' (_: secret: lib.nameValuePair secret {}) config.lab.caddy.environmentSecrets;
@@ -279,11 +218,7 @@ in {
           ];
 
           environment = {
-            STATS_UPSTREAM = config.lab.caddy.statsUpstream;
             AUTH_UPSTREAM = config.lab.caddy.authUpstream;
-            JELLYFIN_UPSTREAM = config.lab.caddy.jellyfinUpstream;
-            IMMICH_UPSTREAM = config.lab.caddy.immichUpstream;
-            NP_UPSTREAM = config.lab.caddy.npUpstream;
             ARR_HOST = config.lab.caddy.arrHost;
           };
         };

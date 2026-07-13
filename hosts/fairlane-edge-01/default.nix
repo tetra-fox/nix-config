@@ -16,10 +16,10 @@
     };
 
     caddy = {
-      caddyfile = ./files/caddy/Caddyfile;
+      staticTail = import ./caddy-tail.nix;
 
       # HA is real on fairlane's 2 nodes for stateless caddy: edge-01 on plush, edge-02 on
-      # pooltoy, VIP flips. VRRP heartbeat rides ens19, the VIP lands on ens18 (server VLAN).
+      # pooltoy, VIP flips. heartbeat and VIP both ride the server VLAN (see the caddy module).
       ha = {
         enable = true;
         vip = "192.168.10.155";

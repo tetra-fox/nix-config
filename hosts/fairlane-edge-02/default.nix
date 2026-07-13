@@ -18,7 +18,7 @@
     };
 
     caddy = {
-      caddyfile = ../fairlane-edge-01/files/caddy/Caddyfile;
+      staticTail = import ../fairlane-edge-01/caddy-tail.nix;
 
       ha = {
         enable = true;

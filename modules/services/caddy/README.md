@@ -1,15 +1,15 @@
 # caddy
 
-caddy + the cloudflare DNS plugin baked into the package (for DNS-01 ACME on `*.<host>.tld`). hosts point `lab.caddy.caddyfile` at their per-site Caddyfile.
+the site edge. the Caddyfile is rendered from `lab.topology.routes`: every same-site host that declares a route gets a vhost proxying to it (the declaring host is the upstream, resolved by the fleet engine). blocks the engine can't derive (the root vhost, appliances with no capability publisher, the arr blocks pending inversion) go in `lab.caddy.staticTail`.
 
 ```nix
 { modules, ... }: {
   imports = [modules.services.caddy.system];
-  lab.caddy.caddyfile = ./files/caddy/Caddyfile;
+  lab.caddy.staticTail = import ./caddy-tail.nix;
 }
 ```
 
-`$CF_TOKEN` is wired in via sops; reference it in the Caddyfile as `{$CF_TOKEN}`. LAN/loopback/RFC1918 are in `ignoreIP`.
+the acme issuer defaults to cloudflare DNS-01 (`lab.caddy.certIssuer`), with the plugin baked into `lab.caddy.package` and the token wired via `lab.caddy.environmentSecrets` (sops name -> `{$CF_TOKEN}`). a site on another dns provider overrides all three. LAN/loopback/RFC1918 are in `ignoreIP`.
 
 two fail2ban jails run against `/var/log/caddy/access.log`:
 
