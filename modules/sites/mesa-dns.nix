@@ -17,7 +17,7 @@
     edgeEndpointIp
     ;
 in {
-  imports = [modules.services.bind.system];
+  imports = [modules.services.bind.system ./_dns-common.nix];
 
   lab.bind = {
     zone = {
@@ -27,18 +27,5 @@ in {
         edgeVip = edgeEndpointIp;
       };
     };
-
-    rpzLists = [
-      {
-        name = "oisd.rpz";
-        url = "https://big.oisd.nl/rpz";
-        format = "rpz";
-      }
-      {
-        name = "vrchat.rpz";
-        url = "https://raw.githubusercontent.com/louisa-uno/VRChatAnalyticsBlocklist/main/hosts.txt";
-        format = "hosts";
-      }
-    ];
   };
 }
