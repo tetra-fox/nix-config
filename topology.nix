@@ -126,6 +126,14 @@ in {
           virtual = true;
           physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
         };
+        # the internal-VLAN leg: inter-VM traffic (NFS backups to store-01, the edge's
+        # home.* vhost, prometheus scrapes) uses this address exclusively
+        enp0s19 = {
+          addresses = ["10.10.0.20"];
+          network = "mesa-internal-vlan";
+          virtual = true;
+          physicalConnections = [(mkConnection "milkfish" "vmbr0.1010")];
+        };
         enp0s20 = {
           addresses = ["192.168.30.5"];
           network = "mesa-iot-vlan";

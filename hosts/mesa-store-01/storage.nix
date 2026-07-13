@@ -29,10 +29,12 @@
   # null until a host advertises the immich capability, so the export/firewall/tmpfiles
   # for immich are all guarded on it being non-null.
   immichIp = topo.immichHostIp;
-  # the HAOS box is an external appliance not on the internal VLAN, so it stays on the
-  # server VLAN; it connects as root, so its export all_squashes root to admin:users. the
-  # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
-  haIp = "192.168.10.5";
+  # HAOS is multihomed; inter-VM traffic rides the internal VLAN exclusively (the server
+  # VLAN is for inter-VLAN routing), so the export and firewall scope to its internal leg.
+  # HAOS must mount this box's internal IP or its NFS source won't match. it connects as
+  # root, so the export all_squashes root to admin:users. the backups are HAOS's private
+  # blobs, deliberately NOT group media (not shared media content).
+  haIp = "10.10.0.20";
 
   # the shared trees the nfs/samba consumers read+write. one list, reused by the tmpfiles
   # rules and the boot-time permission fixup below.

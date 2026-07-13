@@ -25,8 +25,10 @@
       extraScrapeConfigs = [
         # non-NixOS node-exporter targets (not auto-discovered from the flake)
         {
+          # scraped over the internal VLAN (inter-VM traffic policy); HAOS's exporter
+          # binds all interfaces
           job_name = "node-haos";
-          static_configs = [{targets = ["192.168.10.5:9100"];}];
+          static_configs = [{targets = ["10.10.0.20:9100"];}];
         }
         {
           job_name = "node-milkfish";
