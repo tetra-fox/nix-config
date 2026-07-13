@@ -75,7 +75,7 @@ in {
 
     services.immich = {
       enable = true;
-      mediaLocation = cfg.mediaLocation;
+      inherit (cfg) mediaLocation;
       host = config.lab.site.internalIp;
       openFirewall = false;
       # database.enable + redis.enable default true: both run locally on this box.

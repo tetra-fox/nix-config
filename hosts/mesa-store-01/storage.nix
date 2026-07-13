@@ -67,66 +67,68 @@ in {
   # ownership and we don't re-walk the whole library every activation. setgid so new files
   # inherit group media, letting the service uids and SMB @users share write. the arrs
   # hardlink media/torrents -> media/library, which needs them in the same dataset.
-  systemd.tmpfiles.rules =
-    [
-      "d ${siteData} 0755 root media -"
-      "d /mnt/megamax/media/library 2775 admin media -"
-      "d /mnt/megamax/media/torrents 2775 admin media -"
-      "d /mnt/megamax/media/nzb 2775 admin media -"
-      "d /mnt/megamax/store 2775 admin media -"
-      "d /mnt/megamax/backup/timemachine 2775 admin media -"
-      # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
-      # anongid=100), 0700, deliberately not group media and no setgid
-      "d /mnt/megamax/backup/homeassistant 0700 admin users -"
-    ]
-    # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
-    # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
-    # a host advertises the immich capability.
-    ++ lib.optionals (immichIp != null) [
-      "d /mnt/megamax/immich 0700 990 990 -"
-      "d /mnt/megamax/immich/library 0700 990 990 -"
-      "d /mnt/megamax/immich/backups 0700 990 990 -"
-    ];
-
-  # boot-time safety net that re-asserts group ownership + setgid across the whole shared
-  # trees, so a flubbed copy, a wrong-perms import, or a future mistake is fixed by a reboot
-  # instead of nfs/samba throwing cryptic permission errors. deliberately fixes GROUP and
-  # mode only, never the per-file user: the arr services legitimately own their own files
-  # (sonarr writes as sonarr etc), and a chown -R to one user would rip that away every boot.
-  # chgrp+chmod is enough because the share model is group-based (force group media, 2775).
-  # runs after the mount and before the share daemons so they never start on a half-fixed tree.
-  systemd.services.megamax-fix-perms = {
-    description = "reassert group ownership + setgid on the megamax shared trees";
-    wantedBy = ["multi-user.target"];
-    before = ["nfs-server.service" "samba-smbd.service"];
-    after = ["zfs-mount.service"];
-    unitConfig.RequiresMountsFor = sharedTrees;
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      # chgrp to media, set setgid + group rwx on dirs and group rw on files, leave the
-      # per-file user owner untouched. capital X so only dirs (and already-exec files) get +x.
-      ExecStart = [
-        "${pkgs.coreutils}/bin/chgrp -R media ${lib.escapeShellArgs sharedTrees}"
-        "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs sharedTrees}"
-        "${pkgs.findutils}/bin/find ${lib.escapeShellArgs sharedTrees} -type d -exec ${pkgs.coreutils}/bin/chmod g+s {} +"
+  systemd = {
+    tmpfiles.rules =
+      [
+        "d ${siteData} 0755 root media -"
+        "d /mnt/megamax/media/library 2775 admin media -"
+        "d /mnt/megamax/media/torrents 2775 admin media -"
+        "d /mnt/megamax/media/nzb 2775 admin media -"
+        "d /mnt/megamax/store 2775 admin media -"
+        "d /mnt/megamax/backup/timemachine 2775 admin media -"
+        # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
+        # anongid=100), 0700, deliberately not group media and no setgid
+        "d /mnt/megamax/backup/homeassistant 0700 admin users -"
+      ]
+      # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
+      # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
+      # a host advertises the immich capability.
+      ++ lib.optionals (immichIp != null) [
+        "d /mnt/megamax/immich 0700 990 990 -"
+        "d /mnt/megamax/immich/library 0700 990 990 -"
+        "d /mnt/megamax/immich/backups 0700 990 990 -"
       ];
-    };
-  };
 
-  # assert com.sun:auto-snapshot=true on the datasets we want local snapshot history for,
-  # so the policy lives in this config next to the datasets instead of being hand-set on the
-  # pool. zfs set is idempotent (no-op if already set). runs after the pool is imported.
-  systemd.services.megamax-snapshot-policy = {
-    description = "assert zfs auto-snapshot property on the megamax datasets";
-    wantedBy = ["multi-user.target"];
-    after = ["zfs-import.target"];
-    before = ["zfs-mount.service"];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart =
-        map (ds: "${config.boot.zfs.package}/bin/zfs set com.sun:auto-snapshot=true ${ds}") snapshotDatasets;
+    # boot-time safety net that re-asserts group ownership + setgid across the whole shared
+    # trees, so a flubbed copy, a wrong-perms import, or a future mistake is fixed by a reboot
+    # instead of nfs/samba throwing cryptic permission errors. deliberately fixes GROUP and
+    # mode only, never the per-file user: the arr services legitimately own their own files
+    # (sonarr writes as sonarr etc), and a chown -R to one user would rip that away every boot.
+    # chgrp+chmod is enough because the share model is group-based (force group media, 2775).
+    # runs after the mount and before the share daemons so they never start on a half-fixed tree.
+    services.megamax-fix-perms = {
+      description = "reassert group ownership + setgid on the megamax shared trees";
+      wantedBy = ["multi-user.target"];
+      before = ["nfs-server.service" "samba-smbd.service"];
+      after = ["zfs-mount.service"];
+      unitConfig.RequiresMountsFor = sharedTrees;
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        # chgrp to media, set setgid + group rwx on dirs and group rw on files, leave the
+        # per-file user owner untouched. capital X so only dirs (and already-exec files) get +x.
+        ExecStart = [
+          "${pkgs.coreutils}/bin/chgrp -R media ${lib.escapeShellArgs sharedTrees}"
+          "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs sharedTrees}"
+          "${pkgs.findutils}/bin/find ${lib.escapeShellArgs sharedTrees} -type d -exec ${pkgs.coreutils}/bin/chmod g+s {} +"
+        ];
+      };
+    };
+
+    # assert com.sun:auto-snapshot=true on the datasets we want local snapshot history for,
+    # so the policy lives in this config next to the datasets instead of being hand-set on the
+    # pool. zfs set is idempotent (no-op if already set). runs after the pool is imported.
+    services.megamax-snapshot-policy = {
+      description = "assert zfs auto-snapshot property on the megamax datasets";
+      wantedBy = ["multi-user.target"];
+      after = ["zfs-import.target"];
+      before = ["zfs-mount.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart =
+          map (ds: "${config.boot.zfs.package}/bin/zfs set com.sun:auto-snapshot=true ${ds}") snapshotDatasets;
+      };
     };
   };
 

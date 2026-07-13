@@ -46,13 +46,18 @@ in {
     lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
 
   config = lib.mkIf cfg.enable {
-    lab.topology.provides = ["auth-server"];
-    lab.topology.routes = [
-      {
-        host = "auth.${config.lab.site.domain}";
-        port = 9000;
-      }
-    ];
+    lab = {
+      topology = {
+        provides = ["auth-server"];
+        routes = [
+          {
+            host = "auth.${config.lab.site.domain}";
+            port = 9000;
+          }
+        ];
+      };
+      postgres.client.enable = true;
+    };
 
     assertions = [
       {
@@ -60,8 +65,6 @@ in {
         message = "authentik runs oci-containers; the host must import a container backend (modules.services.podman.system).";
       }
     ];
-
-    lab.postgres.client.enable = true;
 
     sops.secrets = {
       "auth/pg_pass" = {};

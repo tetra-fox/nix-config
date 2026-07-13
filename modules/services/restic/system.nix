@@ -119,8 +119,7 @@ in {
 
       paths = (map snapshotPath cfg.datasets) ++ cfg.paths;
 
-      pruneOpts = cfg.pruneOpts;
-      timerConfig = cfg.timerConfig;
+      inherit (cfg) pruneOpts timerConfig;
 
       # snapshot machinery only when there are datasets. a non-zfs host (paths
       # only) never references zfs, so the module stays importable without it.
