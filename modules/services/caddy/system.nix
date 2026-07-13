@@ -4,10 +4,10 @@
   modules,
   fleet,
   pkgs,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   topo = import fleet.topology {inherit lib;} {
     inherit nixosConfigurations;
     hostName = config.networking.hostName;

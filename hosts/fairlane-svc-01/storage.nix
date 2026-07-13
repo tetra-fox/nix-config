@@ -6,10 +6,10 @@
   config,
   lib,
   fleet,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   storeIp =
     (import fleet.topology {inherit lib;} {
       inherit nixosConfigurations;

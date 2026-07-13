@@ -1,5 +1,6 @@
 # see fairlane-dns-01; stateless bind clone pinned to the other node (pooltoy).
 {
+  config,
   lib,
   modules,
   ...
@@ -33,7 +34,7 @@
     };
   };
 
-  systemd.tmpfiles.rules = ["d /var/lib/fairlane 0755 root root -"];
+  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root root -"];
 
   system.stateVersion = "26.11";
 }

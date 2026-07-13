@@ -5,10 +5,10 @@
   lib,
   modules,
   fleet,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   # the storage host's internal-VLAN IP (the NFS server).
   storeIp =
     (import fleet.topology {inherit lib;} {

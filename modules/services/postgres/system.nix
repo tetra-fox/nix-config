@@ -4,10 +4,10 @@
   modules,
   fleet,
   pkgs,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.postgres;
 
   inherit

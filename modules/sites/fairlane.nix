@@ -10,8 +10,13 @@
   ...
 }: {
   config = {
-    lab.site.domain = "fairlane.tetra.cool";
-    lab.site.internalCidr = "10.10.0.0/24";
+    lab.site = {
+      domain = "fairlane.tetra.cool";
+      internalCidr = "10.10.0.0/24";
+      # each host creates+owns this dir itself via tmpfiles (ownership differs per host),
+      # so no tmpfiles rule here
+      dataDir = "/var/lib/fairlane";
+    };
 
     networking = {
       useDHCP = false;
@@ -40,8 +45,6 @@
         ];
       };
     };
-
-    _module.args.siteData = "/var/lib/fairlane";
 
     # the proxmox node this VM runs on -- plush or pooltoy (fairlane is a 2-node cluster). unlike
     # mesa's single milkfish, this varies per host, so the topology parent reads it.

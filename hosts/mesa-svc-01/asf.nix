@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  siteData,
   ...
 }: {
   sops.secrets = {
@@ -17,7 +16,7 @@
 
   services.archisteamfarm = {
     enable = true;
-    dataDir = "${siteData}/asf";
+    dataDir = "${config.lab.site.dataDir}/asf";
     web-ui.enable = true;
 
     settings = {
@@ -55,7 +54,7 @@
       FreePackagesLimit = 30;
       PauseFreePackagesWhilePlaying = true;
     };
-    path = "${siteData}/asf/config/tetra.json";
+    path = "${config.lab.site.dataDir}/asf/config/tetra.json";
     owner = "archisteamfarm";
     group = "archisteamfarm";
     mode = "0400";
@@ -65,7 +64,7 @@
   # pin it under mesa, and widen ReadWritePaths so the pre-start cp of ASF.json into the custom dataDir succeeds.
   systemd.services.archisteamfarm.serviceConfig = {
     StateDirectory = lib.mkForce "mesa/asf";
-    ReadWritePaths = ["${siteData}/asf"];
+    ReadWritePaths = ["${config.lab.site.dataDir}/asf"];
   };
 
   networking.firewall.allowedTCPPorts = [1242]; # asf web ui (KnownNetworks gates auth)

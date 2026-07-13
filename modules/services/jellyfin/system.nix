@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  siteData,
   ...
 }: {
   imports = [./apikey.nix];
@@ -21,9 +20,9 @@
     enable = true;
     group = lib.mkDefault "media";
     openFirewall = true;
-    dataDir = "${siteData}/jellyfin/data";
-    cacheDir = "${siteData}/jellyfin/cache";
-    configDir = "${siteData}/jellyfin/config";
-    logDir = "${siteData}/jellyfin/log";
+    dataDir = "${config.lab.site.dataDir}/jellyfin/data";
+    cacheDir = "${config.lab.site.dataDir}/jellyfin/cache";
+    configDir = "${config.lab.site.dataDir}/jellyfin/config";
+    logDir = "${config.lab.site.dataDir}/jellyfin/log";
   };
 }

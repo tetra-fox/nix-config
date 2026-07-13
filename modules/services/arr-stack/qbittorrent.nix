@@ -1,9 +1,9 @@
 {
   config,
   pkgs,
-  siteData,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
   torrents = cfg.torrentsPath;
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;

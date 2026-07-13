@@ -1,5 +1,6 @@
 # see mesa-dns-01 for the full rationale; this file differs only in hostname + IPs.
 {
+  config,
   lib,
   modules,
   ...
@@ -28,7 +29,7 @@
     };
   };
 
-  systemd.tmpfiles.rules = ["d /var/lib/mesa 0755 root root -"];
+  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root root -"];
 
   system.stateVersion = "26.11";
 }

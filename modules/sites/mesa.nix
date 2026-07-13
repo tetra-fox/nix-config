@@ -9,8 +9,13 @@
   ...
 }: {
   config = {
-    lab.site.domain = "mesa.tetra.cool";
-    lab.site.internalCidr = "10.10.0.0/24";
+    lab.site = {
+      domain = "mesa.tetra.cool";
+      internalCidr = "10.10.0.0/24";
+      # each host creates+owns this dir itself via tmpfiles (ownership differs per host),
+      # so no tmpfiles rule here
+      dataDir = "/var/lib/mesa";
+    };
 
     networking = {
       useDHCP = false;
@@ -39,10 +44,6 @@
         ];
       };
     };
-
-    # each host creates+owns this dir itself via tmpfiles (ownership differs per host), so no
-    # tmpfiles rule here.
-    _module.args.siteData = "/var/lib/mesa";
 
     topology.self = {
       parent = "milkfish";

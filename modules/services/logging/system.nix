@@ -3,10 +3,10 @@
   lib,
   modules,
   fleet,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.logging;
   hn = config.networking.hostName;
   serverEnabled = config.lab.monitoring.server.enable;

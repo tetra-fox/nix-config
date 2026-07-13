@@ -1,6 +1,6 @@
 {
+  config,
   modules,
-  siteData,
   ...
 }: {
   imports = [
@@ -17,15 +17,15 @@
     fileSources = [
       {
         job = "sonarr";
-        path = "${siteData}/sonarr/logs/sonarr.txt";
+        path = "${config.lab.site.dataDir}/sonarr/logs/sonarr.txt";
       }
       {
         job = "radarr";
-        path = "${siteData}/radarr/logs/radarr.txt";
+        path = "${config.lab.site.dataDir}/radarr/logs/radarr.txt";
       }
       {
         job = "prowlarr";
-        path = "${siteData}/prowlarr/logs/prowlarr.txt";
+        path = "${config.lab.site.dataDir}/prowlarr/logs/prowlarr.txt";
       }
     ];
   };

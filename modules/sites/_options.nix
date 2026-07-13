@@ -85,6 +85,17 @@
         example = "10.10.0.0/24";
       };
 
+      dataDir = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          site-scoped state root (service modules put their state under it), set in the
+          site facts file. each host creates and owns the directory itself via tmpfiles
+          (ownership differs per host). null = host belongs to no site.
+        '';
+        example = "/var/lib/mesa";
+      };
+
       # the site's public domain, set in the per-site facts file. service modules build their vhost
       # FQDNs as <service>.<domain> so a route declaration stays site-agnostic.
       domain = lib.mkOption {

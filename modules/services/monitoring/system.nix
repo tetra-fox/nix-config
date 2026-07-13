@@ -2,12 +2,12 @@
   config,
   lib,
   pkgs,
-  siteData,
   nixosConfigurations,
   modules,
   fleet,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.monitoring;
   hn = config.networking.hostName;
   promStateDir = "${lib.removePrefix "/var/lib/" siteData}/prometheus";

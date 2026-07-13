@@ -4,11 +4,10 @@
   pkgs,
   modules,
   fleet,
-  siteData,
-  siteEnvFile,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
   arrLib = import ./lib.nix {inherit lib;};
 
@@ -348,7 +347,7 @@ in {
             enable = true;
             group = cfg.mediaGroup;
             dataDir = "${siteData}/${name}";
-            environmentFiles = siteEnvFile "${name}.env";
+            environmentFiles = [config.sops.templates."${name}.env".path];
             # mirror the env-injected values so the module's defaults don't override them
             settings = {
               auth.method = "Forms";
@@ -401,7 +400,7 @@ in {
                 User = svc.user or name;
                 Group = cfg.mediaGroup;
                 ExecStart = "${pkgs.${name}}/bin/${lib.toSentenceCase name} -nobrowser -data=${siteData}/${name}";
-                EnvironmentFile = siteEnvFile "${name}.env";
+                EnvironmentFile = [config.sops.templates."${name}.env".path];
                 Restart = "on-failure";
               };
             })

@@ -4,10 +4,10 @@
   config,
   lib,
   fleet,
-  siteData,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp =
     (import fleet.topology {inherit lib;} {

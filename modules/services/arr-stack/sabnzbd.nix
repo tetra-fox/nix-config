@@ -2,9 +2,9 @@
   config,
   lib,
   pkgs,
-  siteData,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
   sabnzbdStateDir = "${lib.removePrefix "/var/lib/" siteData}/sabnzbd";
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;

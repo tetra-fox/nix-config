@@ -3,11 +3,10 @@
   lib,
   modules,
   fleet,
-  siteData,
-  siteEnvFile,
   nixosConfigurations,
   ...
 }: let
+  siteData = config.lab.site.dataDir;
   cfg = config.lab.authentik;
 
   authentikTag = "2026.5";
@@ -30,7 +29,7 @@
       AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,10.88.0.0/16";
       AUTHENTIK_WEB__WORKERS = "4";
     };
-    environmentFiles = siteEnvFile "authentik.env";
+    environmentFiles = [config.sops.templates."authentik.env".path];
     extraOptions = [
       "--shm-size=512m"
       "--add-host=postgres-host:${dbHost}"
@@ -121,7 +120,7 @@ in {
           AUTHENTIK_INSECURE = "true";
         };
         ports = ["${config.lab.site.internalIp}:3389:3389"];
-        environmentFiles = siteEnvFile "authentik-ldap.env";
+        environmentFiles = [config.sops.templates."authentik-ldap.env".path];
         extraOptions = ["--add-host=auth-server:host-gateway"];
       };
     };

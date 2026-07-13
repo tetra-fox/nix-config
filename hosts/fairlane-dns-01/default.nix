@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   modules,
   ...
@@ -38,7 +39,7 @@
   };
 
   # no storage.nix here, so create the siteData root itself
-  systemd.tmpfiles.rules = ["d /var/lib/fairlane 0755 root root -"];
+  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root root -"];
 
   system.stateVersion = "26.11";
 }
