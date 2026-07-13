@@ -2,11 +2,16 @@
   config,
   lib,
   pkgs,
+  modules,
   ...
 }: let
   cfg = config.lab.monitoring.unifi;
   hn = config.networking.hostName;
 in {
+  # declares lab.monitoring.{server.enable,extraScrapeConfigs}, which this file reads and
+  # extends; without it the module only evals when the host co-imports monitoring.system
+  imports = [modules.services.monitoring.registry];
+
   options.lab.monitoring.unifi = {
     enable = lib.mkEnableOption "UniFi (unpoller) metrics + dashboards";
 

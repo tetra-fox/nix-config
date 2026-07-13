@@ -53,6 +53,17 @@ in {
   };
 
   config = {
+    assertions = [
+      {
+        assertion = topo.myIp != null;
+        message = "immich listens on this host's east-west address (lab.site.internalIp, falling back to hostIp); neither is set.";
+      }
+      {
+        assertion = topo.authServerUrl != null;
+        message = "immich's oauth issuerUrl derives from the same-site auth-server route; no host in this site provides 'auth-server' (deploy authentik, or drop oauth from this module).";
+      }
+    ];
+
     lab.topology.provides = ["immich"];
     # immich uploads whole photos/videos in one request, so lift the body cap well past any
     # single asset (caddy's default would reject large originals).
@@ -76,7 +87,9 @@ in {
     services.immich = {
       enable = true;
       inherit (cfg) mediaLocation;
-      host = config.lab.site.internalIp;
+      # listen on the same address peers resolve for this host (ipOf: internalIp when
+      # present, hostIp otherwise), so the caddy upstream and the listener can't diverge
+      host = topo.myIp;
       openFirewall = false;
       # database.enable + redis.enable default true: both run locally on this box.
       # vectorchord is enabled automatically by the module.

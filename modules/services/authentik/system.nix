@@ -37,10 +37,16 @@
     ];
   };
 in {
-  # postgres.options not the server module: authentik is a pure client, it only needs the
-  # lab.postgres.client flag so the db server allow-lists this host. the container backend
-  # (podman) is imported by the host, not here.
-  imports = [modules.services.postgres.options];
+  # options contracts, not the server modules: authentik is a pure postgres client (it only
+  # needs the lab.postgres.client flag so the db server allow-lists this host), and it reads
+  # lab.podman.autoUpdate.containerLabels without owning the backend. the container backend
+  # (podman.system) is imported by the host, not here; without the options import, enabling
+  # authentik on a host missing podman would die on the undeclared option before the
+  # virtualisation.podman.enable assertion below could explain the problem.
+  imports = [
+    modules.services.postgres.options
+    modules.services.podman.options
+  ];
 
   options.lab.authentik.enable =
     lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";

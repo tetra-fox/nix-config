@@ -22,6 +22,13 @@
   haNodeIps = topo.ipsProviding "db-ha-node";
   otherNodeIps = lib.filter (ip: ip != selfIp) haNodeIps;
 
+  # etcdInitialCluster and haproxyBackends interpolate each peer's internalIp; a peer
+  # without one would coerce null mid-string. collected here so the assertion below can
+  # name the offending host instead
+  haNodesWithoutInternalIp =
+    lib.filter (name: nixosConfigurations.${name}.config.lab.site.internalIp == null)
+    haNodeNames;
+
   etcdInitialCluster =
     map (
       name: let
@@ -129,6 +136,10 @@ in {
       {
         assertion = selfIp != null;
         message = "lab.postgres.ha.enable requires lab.site.internalIp (HA traffic rides the internal VLAN).";
+      }
+      {
+        assertion = haNodesWithoutInternalIp == [];
+        message = "lab.postgres.ha: every db-ha-node needs lab.site.internalIp (etcd and haproxy address peers on the internal VLAN); missing on: ${lib.concatStringsSep ", " haNodesWithoutInternalIp}.";
       }
     ];
 

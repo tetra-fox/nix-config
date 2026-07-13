@@ -5,4 +5,7 @@
 _: {
   lab.monitoring.server.enable = true;
   # grafana root_url is derived from lab.site.domain in modules/services/monitoring/system.nix
+
+  # TODO: fairlane's non-NixOS node-exporter targets (HA, proxmox hosts) via
+  # lab.monitoring.extraScrapeConfigs once they exist.
 }

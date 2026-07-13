@@ -68,6 +68,10 @@
     }
   '';
 in {
+  # declares lab.monitoring.server.enable, read above; without it this module only evals
+  # on hosts that happen to co-import the monitoring stack (the server profile does today)
+  imports = [modules.services.monitoring.registry];
+
   options.lab.logging = {
     enable = lib.mkEnableOption "loki + alloy; journald ships every unit's logs (native services and podman-<name> containers) into the grafana on this host";
 

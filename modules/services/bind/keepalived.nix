@@ -36,6 +36,13 @@ in {
   imports = [modules.services.vrrp.system];
 
   config = lib.mkIf (cfg.enable && ha.enable) {
+    assertions = [
+      {
+        assertion = selfInternalIp != null;
+        message = "lab.bind.ha.enable requires lab.site.internalIp (the v4 VRRP heartbeat rides the internal VLAN).";
+      }
+    ];
+
     # the static ULA that anchors the v6 VIP: it's the v6 heartbeat source and the address the
     # VIP is a sibling of. only on a dual-stack site (ha.hostV6 set); mesa leaves it null.
     networking.interfaces.ens18.ipv6.addresses = lib.mkIf (ha.hostV6 != null) [
