@@ -11,8 +11,6 @@
     modules.sites.fairlane-dns
   ];
 
-  networking.hostName = "fairlane-dns-02";
-
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 
   lab = {

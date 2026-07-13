@@ -11,8 +11,6 @@
     modules.platform.sops.system
   ];
 
-  networking.hostName = "fairlane-mon-01";
-
   lab = {
     sops.secretsFile = ../../secrets/fairlane-mon-01.yaml;
 

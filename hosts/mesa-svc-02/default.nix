@@ -8,8 +8,6 @@
     modules.services.immich.system
   ];
 
-  networking.hostName = "mesa-svc-02";
-
   lab = {
     sops.secretsFile = ../../secrets/mesa-svc-02.yaml;
 

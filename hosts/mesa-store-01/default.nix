@@ -12,8 +12,6 @@
     modules.toolsets.disk.system # smartctl etc for the passthrough drives
   ];
 
-  networking.hostName = "mesa-store-01";
-
   lab = {
     avahi.publish = true;
 

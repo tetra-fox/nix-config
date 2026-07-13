@@ -17,8 +17,6 @@
     modules.services.arr-stack.default
   ];
 
-  networking.hostName = "fairlane-svc-01";
-
   lab = {
     site = {
       hostIp = "192.168.10.130";

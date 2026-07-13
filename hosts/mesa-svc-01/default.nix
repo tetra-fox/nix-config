@@ -18,8 +18,6 @@
     modules.services.arr-stack.default
   ];
 
-  networking.hostName = "mesa-svc-01";
-
   hardware.nvidia-container-toolkit.enable = true;
 
   lab = {

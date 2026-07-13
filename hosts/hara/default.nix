@@ -29,8 +29,6 @@
   lab.steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
 
   networking = {
-    hostName = "hara";
-
     interfaces.enp11s0f0np0.ipv4.addresses = [
       {
         address = "192.168.20.86";

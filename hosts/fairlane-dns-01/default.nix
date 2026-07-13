@@ -10,8 +10,6 @@
     modules.sites.fairlane-dns
   ];
 
-  networking.hostName = "fairlane-dns-01";
-
   # resolve to self, not the router (routing through the router is a forwarding loop).
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 

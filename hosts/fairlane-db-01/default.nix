@@ -23,8 +23,6 @@ in {
     modules.platform.sops.system
   ];
 
-  networking.hostName = "fairlane-db-01";
-
   lab = {
     sops.secretsFile = ../../secrets/fairlane-db-01.yaml;
 

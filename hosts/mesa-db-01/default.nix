@@ -19,8 +19,6 @@ in {
     modules.platform.sops.system
   ];
 
-  networking.hostName = "mesa-db-01";
-
   lab = {
     sops.secretsFile = ../../secrets/mesa-db-01.yaml;
 

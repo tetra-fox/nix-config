@@ -7,8 +7,6 @@
     modules.platform.sops.system
   ];
 
-  networking.hostName = "mesa-edge-02";
-
   lab = {
     sops.secretsFile = ../../secrets/mesa-edge-02.yaml;
 

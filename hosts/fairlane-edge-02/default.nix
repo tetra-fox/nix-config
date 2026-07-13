@@ -8,8 +8,6 @@
     modules.platform.sops.system
   ];
 
-  networking.hostName = "fairlane-edge-02";
-
   lab = {
     sops.secretsFile = ../../secrets/fairlane-edge-02.yaml;
 

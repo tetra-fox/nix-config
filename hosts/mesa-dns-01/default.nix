@@ -10,8 +10,6 @@
     modules.sites.mesa-dns
   ];
 
-  networking.hostName = "mesa-dns-01";
-
   # resolve to self, not the router -- routing through the router is a forwarding loop.
   # mkForce overrides the mesa site facts, which point every resolver at the router.
   networking.nameservers = lib.mkForce ["127.0.0.1"];

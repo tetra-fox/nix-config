@@ -9,8 +9,6 @@
     modules.toolsets.disk.system # smartctl etc for the passthrough drive
   ];
 
-  networking.hostName = "fairlane-store-01";
-
   lab = {
     avahi.publish = true;
 

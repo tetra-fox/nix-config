@@ -11,8 +11,6 @@
     modules.sites.mesa-dns
   ];
 
-  networking.hostName = "mesa-dns-02";
-
   # ask itself, never the router -- see mesa-dns-01 for why (forwarding loop).
   networking.nameservers = lib.mkForce ["127.0.0.1"];
 

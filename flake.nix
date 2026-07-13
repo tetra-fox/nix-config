@@ -143,6 +143,20 @@
         loader = inputs.haumea.lib.loaders.path;
       }));
 
+      # every server VM has the same shape. the tag (which imports the site facts file)
+      # derives from the hostname prefix, the same rule the discovery engine groups sites
+      # by, so facts-file membership and engine membership can't disagree.
+      sitePrefix = import ./lib/site-prefix.nix {inherit lib;};
+      serverHost = name: extra: {
+        path = ./hosts + "/${name}";
+        arch = "x86_64";
+        class = "nixos";
+        tags = [(sitePrefix name)];
+        specialArgs = {username = serverUsername;};
+        modules = [inputs.disko.nixosModules.disko] ++ extra;
+      };
+      serverHosts = names: lib.genAttrs names (n: serverHost n []);
+
       commonSpecialArgs = {
         inherit username serverUsername identity;
         modules = inputs.haumea.lib.load {
@@ -205,7 +219,9 @@
 
       easy-hosts = {
         perTag = tag: {
-          modules = lib.optional (builtins.pathExists (./modules/sites + "/${tag}.nix")) (./modules/sites + "/${tag}.nix");
+          # no pathExists guard: a tag without a site facts file is a config error and
+          # should fail loudly at eval, not silently import nothing
+          modules = [(./modules/sites + "/${tag}.nix")];
         };
 
         shared = {
@@ -266,242 +282,62 @@
             modules =
               (cfg.modules or [])
               ++ lib.optional (builtins.pathExists (./quirks + "/${name}")) (./quirks + "/${name}");
-          }) {
-          hara = {
-            path = ./hosts/hara;
-            arch = "x86_64";
-            class = "nixos";
-            modules = [
-              inputs.nur.modules.nixos.default
-              inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
-              inputs.stylix.nixosModules.stylix
-              {
-                home-manager.users.${username}.imports = [
-                  ./hosts/hara/home
-                  inputs.cosmic-manager.homeManagerModules.cosmic-manager
-                  inputs.betterfox-nix.homeModules.betterfox
-                  inputs.catppuccin.homeModules.catppuccin
-                  inputs.nixcord.homeModules.default
-                ];
-              }
-            ];
-          };
+          }) ({
+            hara = {
+              path = ./hosts/hara;
+              arch = "x86_64";
+              class = "nixos";
+              modules = [
+                inputs.nur.modules.nixos.default
+                inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
+                inputs.stylix.nixosModules.stylix
+                {
+                  home-manager.users.${username}.imports = [
+                    ./hosts/hara/home
+                    inputs.cosmic-manager.homeManagerModules.cosmic-manager
+                    inputs.betterfox-nix.homeModules.betterfox
+                    inputs.catppuccin.homeModules.catppuccin
+                    inputs.nixcord.homeModules.default
+                  ];
+                }
+              ];
+            };
 
-          myputer = {
-            path = ./hosts/myputer;
-            arch = "x86_64";
-            class = "darwin";
-            nixpkgs = inputs.nixpkgs-darwin;
-            modules = [
-              {nixpkgs.config.allowDeprecatedx86_64Darwin = true;}
-            ];
-          };
-
-          mesa-svc-01 = {
-            path = ./hosts/mesa-svc-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-              inputs.nowplaying.nixosModules.default
-            ];
-          };
-
-          mesa-svc-02 = {
-            path = ./hosts/mesa-svc-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          fairlane-store-01 = {
-            path = ./hosts/fairlane-store-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-db-01 = {
-            path = ./hosts/fairlane-db-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-svc-01 = {
-            path = ./hosts/fairlane-svc-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-mon-01 = {
-            path = ./hosts/fairlane-mon-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-edge-01 = {
-            path = ./hosts/fairlane-edge-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-edge-02 = {
-            path = ./hosts/fairlane-edge-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-dns-01 = {
-            path = ./hosts/fairlane-dns-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          fairlane-dns-02 = {
-            path = ./hosts/fairlane-dns-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["fairlane"];
-            specialArgs = {username = serverUsername;};
-            modules = [inputs.disko.nixosModules.disko];
-          };
-
-          mesa-mon-01 = {
-            path = ./hosts/mesa-mon-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-store-01 = {
-            path = ./hosts/mesa-store-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-db-01 = {
-            path = ./hosts/mesa-db-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-db-02 = {
-            path = ./hosts/mesa-db-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-db-03 = {
-            path = ./hosts/mesa-db-03;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-auth-01 = {
-            path = ./hosts/mesa-auth-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-edge-01 = {
-            path = ./hosts/mesa-edge-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-edge-02 = {
-            path = ./hosts/mesa-edge-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-dns-01 = {
-            path = ./hosts/mesa-dns-01;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-
-          mesa-dns-02 = {
-            path = ./hosts/mesa-dns-02;
-            arch = "x86_64";
-            class = "nixos";
-            tags = ["mesa"];
-            specialArgs = {username = serverUsername;};
-            modules = [
-              inputs.disko.nixosModules.disko
-            ];
-          };
-        };
+            myputer = {
+              path = ./hosts/myputer;
+              arch = "x86_64";
+              class = "darwin";
+              nixpkgs = inputs.nixpkgs-darwin;
+              modules = [
+                {nixpkgs.config.allowDeprecatedx86_64Darwin = true;}
+              ];
+            };
+          }
+          // serverHosts [
+            "mesa-svc-02"
+            "mesa-store-01"
+            "mesa-db-01"
+            "mesa-db-02"
+            "mesa-db-03"
+            "mesa-auth-01"
+            "mesa-mon-01"
+            "mesa-edge-01"
+            "mesa-edge-02"
+            "mesa-dns-01"
+            "mesa-dns-02"
+            "fairlane-store-01"
+            "fairlane-db-01"
+            "fairlane-svc-01"
+            "fairlane-mon-01"
+            "fairlane-edge-01"
+            "fairlane-edge-02"
+            "fairlane-dns-01"
+            "fairlane-dns-02"
+          ]
+          // {
+            # the one server with an extra module (nowplaying)
+            mesa-svc-01 = serverHost "mesa-svc-01" [inputs.nowplaying.nixosModules.default];
+          });
       };
     });
 }

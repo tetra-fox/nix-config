@@ -47,13 +47,23 @@ in {
     modules.services.podman.options
   ];
 
-  options.lab.authentik.enable =
-    lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
+  options.lab.authentik = {
+    enable = lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
+
+    ldapPort = lib.mkOption {
+      type = lib.types.port;
+      default = 3389;
+      description = "host port the LDAP outpost is published on (internal VLAN); the container side stays 3389";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     lab = {
       topology = {
-        provides = ["auth-server"];
+        # auth-ldap: the LDAP outpost endpoint, resolvable as ipProviding "auth-ldap" +
+        # lab.authentik.ldapPort. no nix consumer yet (jellyfin's ldap plugin is configured
+        # by hand), the capability just makes the endpoint discoverable
+        provides = ["auth-server" "auth-ldap"];
         routes = [
           {
             host = "auth.${config.lab.site.domain}";
@@ -119,7 +129,7 @@ in {
           AUTHENTIK_HOST = "http://auth-server:9000";
           AUTHENTIK_INSECURE = "true";
         };
-        ports = ["${config.lab.site.internalIp}:3389:3389"];
+        ports = ["${config.lab.site.internalIp}:${toString cfg.ldapPort}:3389"];
         environmentFiles = [config.sops.templates."authentik-ldap.env".path];
         extraOptions = ["--add-host=auth-server:host-gateway"];
       };
@@ -127,6 +137,6 @@ in {
 
     # LDAP outpost is reachable from other hosts on the internal VLAN (e.g. jellyfin on
     # mesa-svc-01); plaintext is acceptable here, same trust model as the postgres cluster.
-    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [3389];
+    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [cfg.ldapPort];
   };
 }
