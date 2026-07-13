@@ -139,12 +139,21 @@ in {
     };
   };
 
-  # two fsid=0 roots to different client IPs: the kernel keys the v4 pseudo-root per-client,
-  # so each is an isolated namespace and neither client can traverse to the other. each
-  # mounts `:/`. media keeps numeric uids (arr imports stay <svc-uid>:media); homeassistant
-  # all_squashes to admin:users (1000:100) since HAOS connects as root, backups owned by admin
-  # in admin's own group, kept out of group media on purpose. the media dataset is one
-  # filesystem (library/torrents/nzb are dirs, not datasets), so a single export per client.
+  # three fsid=0 roots below, one per client. this is unusual -- nfsd normally has a single
+  # pseudo-root -- but it's safe as long as every fsid=0 export's client specifier is a single
+  # host address with no overlap between them: nfsd resolves a client's `:/` mount against
+  # whichever export line matches its source address, so disjoint single-IP scopes can never
+  # collide. that's structural here, not just true today: mediaHostIp/immichHostIp come from
+  # the capability engine's single-provider lookup, which throws rather than silently returning
+  # an ambiguous IP if two hosts ever advertised the same capability, and haIp is a literal
+  # address, not a range. if this ever grows a CIDR-scoped export instead of a single IP, that
+  # invariant breaks and overlapping clients would see "access denied" or the wrong root -- the
+  # cleaner alternative at that point is one export of the whole /mnt/megamax pseudo-root with
+  # per-client subtree permissions, not more fsid=0 lines.
+  # media keeps numeric uids (arr imports stay <svc-uid>:media); homeassistant all_squashes to
+  # admin:users (1000:100) since HAOS connects as root, backups owned by admin in admin's own
+  # group, kept out of group media on purpose. the media dataset is one filesystem
+  # (library/torrents/nzb are dirs, not datasets), so a single export per client.
   lab.topology.provides = ["storage"];
 
   # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no

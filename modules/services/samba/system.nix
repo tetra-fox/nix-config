@@ -18,6 +18,7 @@
         "map to guest" = "Bad User";
 
         "server min protocol" = "SMB3_11";
+        "server role" = "standalone server";
 
         "vfs objects" = "catia fruit streams_xattr";
         "ea support" = "yes";
