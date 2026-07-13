@@ -90,12 +90,22 @@
   # exists (a live single server keeps the traffic until it's retired), else the floating VIP any
   # HA node advertises, else null. vipPath is an option path (e.g. ["lab" "caddy" "ha" "vip"]);
   # per the invariant it must point at a plain input option, not a derived value.
+  #
+  # the single lookup here does NOT reuse ipProviding: when singleCap == haCap (an HA-only service
+  # like edge/dns, where the same hosts fill both roles), two providers is the normal HA state and
+  # must fall through to the VIP, not throw. so a >1 single-cap match resolves to null (use the
+  # VIP) rather than an error. a distinct singleCap (db-server) can still only have one host, but
+  # that's enforced where it's read as a direct endpoint, not here.
   endpointFor = {
     singleCap,
     haCap,
     vipPath,
   }: let
-    single = ipProviding singleCap;
+    singleHosts = hostsProviding singleCap;
+    single =
+      if lib.length singleHosts == 1
+      then ipOf (builtins.head singleHosts)
+      else null;
     vips =
       lib.unique (lib.filter (v: v != null)
         (map (name: lib.attrByPath vipPath null nixosConfigurations.${name}.config) (hostsProviding haCap)));
