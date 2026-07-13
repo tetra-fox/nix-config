@@ -230,6 +230,11 @@ in {
     # into existence -- ordinary "preexec" runs as the connecting user, who doesn't own the
     # parent dir and can't create their own top-level folder in it. create/directory mask left
     # at owner-only too, so samba's mask can't loosen what mkdir already set to 0700.
+    # samba execs this command directly, NOT through a shell (despite the preexec man page's
+    # own "csh -c '...'" example implying otherwise) -- an unwrapped "a && b" gets passed to
+    # the first binary as literal argv tokens, which for mkdir -p means every token becomes a
+    # path to create. confirmed the hard way: it produced a directory literally named "&&".
+    # sh -c '...' is required for any multi-command preexec.
     store = {
       path = "/mnt/megamax/store/%U";
       browseable = "yes";
@@ -238,21 +243,21 @@ in {
       "write list" = "@users";
       "create mask" = "0600";
       "directory mask" = "0700";
-      "root preexec" = "${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/store/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/store/%U";
+      "root preexec" = "${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/store/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/store/%U'";
     };
 
     # per-user time machine destinations, same %U mechanism and owner-only model as store.
     # authenticated (not guest) so %U is a real identity, not the shared guest mapping --
     # mac-side "Encrypt Backups" is still recommended defense in depth, just no longer
     # load-bearing for safety. global fruit hints (vfs objects, fruit:metadata) come from
-    # modules/services/samba.
+    # modules/services/samba. see store's comment above for why root preexec needs sh -c.
     timemachine = {
       path = "/mnt/megamax/backup/timemachine/%U";
       browseable = "yes";
       "read only" = "no";
       "valid users" = "@users";
       "write list" = "@users";
-      "root preexec" = "${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/backup/timemachine/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/backup/timemachine/%U";
+      "root preexec" = "${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/backup/timemachine/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/backup/timemachine/%U'";
       "create mask" = "0600";
       "directory mask" = "0700";
       "fruit:time machine" = "yes";
