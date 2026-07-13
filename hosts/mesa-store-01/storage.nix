@@ -41,6 +41,17 @@
     "/mnt/megamax/store"
     "/mnt/megamax/backup/timemachine"
   ];
+
+  # datasets that get local zfs auto-snapshots (the zfs module runs zfs-auto-snapshot on
+  # com.sun:auto-snapshot=true, opt-in per dataset). media is excluded on purpose: 808G of
+  # re-acquirable content, not worth the snapshot metadata. the property is asserted at boot
+  # by the oneshot below so it's declared here, not hand-set drift on the pool.
+  snapshotDatasets = [
+    "megamax/store"
+    "megamax/immich" # library + immich's own db dumps; local history for oops-recovery
+    "megamax/backup/homeassistant" # HA backup tarballs
+    "megamax/backup/timemachine" # time machine image
+  ];
 in {
   # the pool has no fileSystems entry (zfs mounts its own datasets), so nothing would
   # import it at boot without this. the pool name is host data, not a zfs-module default.
@@ -99,6 +110,22 @@ in {
         "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs sharedTrees}"
         "${pkgs.findutils}/bin/find ${lib.escapeShellArgs sharedTrees} -type d -exec ${pkgs.coreutils}/bin/chmod g+s {} +"
       ];
+    };
+  };
+
+  # assert com.sun:auto-snapshot=true on the datasets we want local snapshot history for,
+  # so the policy lives in this config next to the datasets instead of being hand-set on the
+  # pool. zfs set is idempotent (no-op if already set). runs after the pool is imported.
+  systemd.services.megamax-snapshot-policy = {
+    description = "assert zfs auto-snapshot property on the megamax datasets";
+    wantedBy = ["multi-user.target"];
+    after = ["zfs-import.target"];
+    before = ["zfs-mount.service"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart =
+        map (ds: "${config.boot.zfs.package}/bin/zfs set com.sun:auto-snapshot=true ${ds}") snapshotDatasets;
     };
   };
 
