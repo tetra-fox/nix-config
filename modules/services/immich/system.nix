@@ -28,9 +28,9 @@
     hostName = config.networking.hostName;
   };
 in {
+  # no enable flag: importing this module IS the switch. a host that doesn't want immich
+  # doesn't import it. only the knobs that actually vary per host live here.
   options.lab.immich = {
-    enable = lib.mkEnableOption "immich photo library";
-
     mediaLocation = lib.mkOption {
       type = lib.types.path;
       default = "/mnt/immich";
@@ -51,8 +51,17 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = {
     lab.topology.provides = ["immich"];
+    # immich uploads whole photos/videos in one request, so lift the body cap well past any
+    # single asset (caddy's default would reject large originals).
+    lab.topology.routes = [
+      {
+        host = "immich.${config.lab.site.domain}";
+        port = 2283;
+        maxBodySize = "50GB";
+      }
+    ];
 
     # pin the uid: the NFS export squashes on uid, and the module otherwise
     # auto-allocates it, which would drift from the store box's export owner

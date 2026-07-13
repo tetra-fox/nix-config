@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   siteData,
   ...
@@ -6,6 +7,12 @@
   imports = [./apikey.nix];
 
   lab.topology.provides = ["media"];
+  lab.topology.routes = [
+    {
+      host = "jellyfin.${config.lab.site.domain}";
+      port = 8096;
+    }
+  ];
 
   # pin the uid; the NFS share squashes on uid, not name, and upstream auto-allocates it
   users.users.jellyfin.uid = 991;

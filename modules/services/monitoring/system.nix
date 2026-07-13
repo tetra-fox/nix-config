@@ -122,6 +122,12 @@ in {
     # ---- server: prometheus + grafana, one per site ----
     (lib.mkIf cfg.server.enable {
       lab.topology.provides = ["monitoring"];
+      lab.topology.routes = [
+        {
+          host = "stats.${config.lab.site.domain}";
+          port = 3000;
+        }
+      ];
 
       sops.secrets."monitoring/grafana_secret_key" = {
         owner = "grafana";

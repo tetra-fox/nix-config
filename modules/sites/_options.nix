@@ -11,6 +11,40 @@
     example = ["db-server" "db-client"];
   };
 
+  # the caddy vhosts this host serves. the edge host folds every same-site host's routes into a
+  # rendered Caddyfile, resolving each publisher's address with ipOf (so a route carries no IP --
+  # the host that declares a route IS the upstream; caddy resolves where). must be a plain input
+  # (each service module appends its own route, gated on a plain flag) so the cross-host fold can't
+  # cycle, same rule as lab.topology.provides.
+  options.lab.topology.routes = lib.mkOption {
+    type = lib.types.listOf (lib.types.submodule {
+      options = {
+        host = lib.mkOption {
+          type = lib.types.str;
+          description = "the vhost FQDN, e.g. immich.mesa.tetra.cool";
+          example = "immich.mesa.tetra.cool";
+        };
+        port = lib.mkOption {
+          type = lib.types.port;
+          description = "the port the service listens on, on the declaring host";
+          example = 2283;
+        };
+        scheme = lib.mkOption {
+          type = lib.types.enum ["http" "https"];
+          default = "http";
+          description = "upstream scheme; https for services caddy must reach over TLS";
+        };
+        maxBodySize = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "request_body max_size for this vhost (e.g. immich's large uploads); null = caddy default";
+          example = "50GB";
+        };
+      };
+    });
+    default = [];
+  };
+
   options.lab.site = {
     hostIp = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -24,6 +58,15 @@
       default = null;
       description = "this host's IPv4 on the isolated internal VLAN (ens19); null = not on it";
       example = "10.10.0.130";
+    };
+
+    # the site's public domain, set in the per-site facts file. service modules build their vhost
+    # FQDNs as <service>.<domain> so a route declaration stays site-agnostic.
+    domain = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "this site's public domain, e.g. mesa.tetra.cool";
+      example = "mesa.tetra.cool";
     };
 
     # the proxmox node this VM runs on, for the topology diagram's parent edge. single-node

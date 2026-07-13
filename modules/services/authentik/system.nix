@@ -47,6 +47,12 @@ in {
 
   config = lib.mkIf cfg.enable {
     lab.topology.provides = ["auth-server"];
+    lab.topology.routes = [
+      {
+        host = "auth.${config.lab.site.domain}";
+        port = 9000;
+      }
+    ];
 
     assertions = [
       {

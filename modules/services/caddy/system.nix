@@ -56,6 +56,70 @@
       then topo.ipProviding "arr"
       else "127.0.0.1";
 
+  # render one reverse-proxy vhost per same-site route. the engine resolved each route's upstream
+  # (ipOf the declaring host + its port), so this only emits Caddy syntax. vhosts sorted by host
+  # for a stable render (no diff churn when a host reorders its routes).
+  renderRoute = r: let
+    bodyBlock =
+      if r.maxBodySize != null
+      then "\n\trequest_body {\n\t\tmax_size ${r.maxBodySize}\n\t}"
+      else "";
+    upstream =
+      if r.scheme == "https"
+      then "https://${r.upstream}"
+      else r.upstream;
+  in ''
+    ${r.host} {
+    	import log${bodyBlock}
+    	reverse_proxy ${upstream}
+    }
+  '';
+  renderedRoutes =
+    lib.concatMapStringsSep "\n"
+    renderRoute
+    (lib.sort (a: b: a.host < b.host) topo.routesInSite);
+
+  # generic edge preamble: the reusable snippets every site imports + the ACME cert issuer. no
+  # vhosts here -- the resolvable ones come from renderedRoutes, the site-specific ones from
+  # lab.caddy.staticTail. the (authentik) snippet stays env-var-driven ({$AUTH_UPSTREAM}) because
+  # the forward_auth path isn't inverted yet (see TODO: caddy route inversion, arr block).
+  preamble = ''
+    (lan_only) {
+    	@notlan not remote_ip private_ranges
+    	abort @notlan
+    }
+
+    # apache-style access log (transform-encoder plugin), imported by every vhost so fail2ban's
+    # simple-regex filter matches it. caddy's default JSON is harder to write a filter against.
+    (log) {
+    	log {
+    		output file /var/log/caddy/access.log
+    		format transform "{common_log}"
+    	}
+    }
+
+    (authentik) {
+    	reverse_proxy /outpost.goauthentik.io/* {$AUTH_UPSTREAM} {
+    		header_up Host {http.reverse_proxy.upstream.hostport}
+    	}
+
+    	forward_auth {$AUTH_UPSTREAM} {
+    		uri /outpost.goauthentik.io/auth/caddy
+    		copy_headers Authorization
+    	}
+    }
+
+    {
+    	cert_issuer acme {
+    		dns cloudflare {$CF_TOKEN}
+    		resolvers 1.1.1.1 8.8.8.8
+    	}
+    }
+  '';
+  renderedCaddyfile = pkgs.writeText "Caddyfile" (
+    preamble + "\n" + renderedRoutes + "\n" + config.lab.caddy.staticTail
+  );
+
   ha = config.lab.caddy.ha;
   # peers are the other edge hosts' server-VLAN IPs (hostIp, not internalIp).
   selfServerIp = config.lab.site.hostIp;
@@ -70,9 +134,20 @@ in {
   imports = [modules.services.vrrp.system];
 
   options.lab.caddy = {
+    # a fully hand-written Caddyfile. takes precedence over the rendered one; a site not yet
+    # converted to route inversion (fairlane) still points this at its static file.
     caddyfile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
+    };
+
+    # site-specific Caddyfile blocks appended after the rendered routes: the root vhost, appliances
+    # with no capability publisher (HAOS, proxmox), and the arr forward_auth block until it's
+    # inverted. set this (instead of caddyfile) to render the Caddyfile from lab.topology.routes.
+    staticTail = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      description = "host-specific Caddyfile blocks appended after the engine-rendered route vhosts";
     };
 
     ha = {
@@ -149,7 +224,11 @@ in {
         ];
         hash = "sha256-mF0V4puEMkQKyhx5NytbWB5ygH4Bkun+7yV7lecxhDI=";
       };
-      configFile = lib.mkIf (config.lab.caddy.caddyfile != null) config.lab.caddy.caddyfile;
+      # an explicit hand-written file wins (fairlane); otherwise render from the route fold.
+      configFile =
+        if config.lab.caddy.caddyfile != null
+        then config.lab.caddy.caddyfile
+        else renderedCaddyfile;
     };
 
     sops.secrets."net/cf_token" = {};

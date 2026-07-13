@@ -71,6 +71,21 @@
   ipProviding = cap: ipWhere (hasCap cap);
   ipsProviding = cap: ipsWhere (hasCap cap);
 
+  # every route declared by a same-site host, each paired with the resolved upstream address of
+  # the host that declared it (ipOf, so the internal-VLAN IP when present). lab.topology.routes is
+  # a plain input, so this fold can't cycle. the edge host renders these into vhosts; the host that
+  # declares a route is the upstream, so no route names an address.
+  routesInSite =
+    lib.concatMap
+    (name: let
+      ip = ipOf name;
+      routes = nixosConfigurations.${name}.config.lab.topology.routes or [];
+    in
+      if routes != [] && ip == null
+      then throw "fleet: host '${name}' declares caddy routes but has no resolvable address (neither lab.site.internalIp nor hostIp is set)"
+      else map (r: r // {upstream = "${ip}:${toString r.port}";}) routes)
+    hostsInSite;
+
   # the endpoint a client points at for an optionally-HA service: the single provider while one
   # exists (a live single server keeps the traffic until it's retired), else the floating VIP any
   # HA node advertises, else null. vipPath is an option path (e.g. ["lab" "caddy" "ha" "vip"]);
@@ -99,7 +114,7 @@
 in {
   inherit sitePrefix mySite hostsInSite ipOf;
   inherit hostsWhere ipWhere ipsWhere;
-  inherit hostsProviding ipProviding ipsProviding endpointFor;
+  inherit hostsProviding ipProviding ipsProviding endpointFor routesInSite;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
 }

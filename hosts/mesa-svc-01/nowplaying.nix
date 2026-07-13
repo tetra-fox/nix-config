@@ -12,6 +12,13 @@
   };
   edgeIps = topo.edgeHostIps;
 in {
+  lab.topology.routes = [
+    {
+      host = "np.${config.lab.site.domain}";
+      port = 8090;
+    }
+  ];
+
   sops.secrets."apps/lastfm_api_key" = {};
 
   sops.templates."nowplaying.env".content = ''

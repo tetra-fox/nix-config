@@ -14,8 +14,6 @@
     # peer auth, so there's no db password (or any other secret) to decrypt here.
     site.hostIp = "192.168.10.131";
     site.internalIp = "10.10.0.131";
-
-    immich.enable = true;
   };
 
   system.stateVersion = "26.11";
