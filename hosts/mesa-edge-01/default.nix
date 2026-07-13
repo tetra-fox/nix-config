@@ -26,10 +26,9 @@
       	respond "my paws hurt :("
       }
 
-      # HAOS appliance, not on the internal VLAN and advertises no capability
       home.mesa.tetra.cool {
       	import log
-      	reverse_proxy 192.168.10.5:8123
+      	reverse_proxy 10.10.0.20:8123
       }
 
       pve.mesa.tetra.cool {
