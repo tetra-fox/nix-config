@@ -4,9 +4,9 @@
 #   megamax/media                  library/ + torrents/ + nzb/ as plain DIRS in one dataset:
 #                                  sonarr/radarr hardlink from torrents to library on import,
 #                                  and hardlinks can't cross a dataset boundary (recordsize=1M)
-#   megamax/store                  general-purpose catch-all (snapshots on)
+#   megamax/store                  general-purpose catch-all, per-user %U subdirs (snapshots on)
 #   megamax/backup/homeassistant   gzipped HA backups pushed over NFS by the HAOS box
-#   megamax/backup/timemachine     mac time machine target (samba, guest + mac-side encryption)
+#   megamax/backup/timemachine     mac time machine target, per-user %U subdirs (samba, authenticated)
 #   megamax/backup/postgres        postgres backups, wired up with the pgBackRest task (later)
 #   megamax/immich                 immich photo library + inline db (immich task, later)
 {
@@ -36,13 +36,18 @@
   # blobs, deliberately NOT group media (not shared media content).
   haIp = "10.10.0.20";
 
-  # the shared trees the nfs/samba consumers read+write. one list, reused by the tmpfiles
-  # rules and the boot-time permission fixup below.
-  sharedTrees = [
+  # media is the one tree that's genuinely group-shared (arr services + every samba user
+  # co-write into it), so it's the only one the boot-time recursive reconciler below touches.
+  # store/timemachine now serve per-user %U subdirs (owner-only, 0700, no group grant), which
+  # a recursive chgrp/chmod would fight every boot -- reconciling those is samba's own
+  # "root preexec" job per connection, not a fleet-wide sweep.
+  groupSharedTrees = [
     "/mnt/megamax/media"
-    "/mnt/megamax/store"
-    "/mnt/megamax/backup/timemachine"
   ];
+
+  # every tree a share serves, mount-ordering only (no group-reconciliation implication) --
+  # samba/nfs must wait for all of these to actually be mounted before starting.
+  servedTrees = groupSharedTrees ++ ["/mnt/megamax/store" "/mnt/megamax/backup/timemachine"];
 
   # datasets that get local zfs auto-snapshots (the zfs module runs zfs-auto-snapshot on
   # com.sun:auto-snapshot=true, opt-in per dataset). media is excluded on purpose: 808G of
@@ -106,28 +111,31 @@ in {
         "d /mnt/megamax/immich/backups 0700 990 990 -"
       ];
 
-    # boot-time safety net that re-asserts group ownership + setgid across the whole shared
-    # trees, so a flubbed copy, a wrong-perms import, or a future mistake is fixed by a reboot
-    # instead of nfs/samba throwing cryptic permission errors. deliberately fixes GROUP and
-    # mode only, never the per-file user: the arr services legitimately own their own files
-    # (sonarr writes as sonarr etc), and a chown -R to one user would rip that away every boot.
-    # chgrp+chmod is enough because the share model is group-based (force group media, 2775).
-    # runs after the mount and before the share daemons so they never start on a half-fixed tree.
+    # boot-time safety net that re-asserts group ownership + setgid across the group-shared
+    # trees (media only -- see groupSharedTrees), so a flubbed copy, a wrong-perms import, or a
+    # future mistake is fixed by a reboot instead of nfs/samba throwing cryptic permission
+    # errors. deliberately fixes GROUP and mode only, never the per-file user: the arr services
+    # legitimately own their own files (sonarr writes as sonarr etc), and a chown -R to one
+    # user would rip that away every boot. chgrp+chmod is enough because the share model is
+    # group-based (force group media, 2775). runs after the mount and before the share daemons
+    # so they never start on a half-fixed tree. RequiresMountsFor covers every served tree
+    # (including store/timemachine), even though this unit only rewrites media's permissions --
+    # it still needs store/timemachine mounted before samba starts.
     services.megamax-fix-perms = {
-      description = "reassert group ownership + setgid on the megamax shared trees";
+      description = "reassert group ownership + setgid on the megamax group-shared trees";
       wantedBy = ["multi-user.target"];
       before = ["nfs-server.service" "samba-smbd.service"];
       after = ["zfs-mount.service"];
-      unitConfig.RequiresMountsFor = sharedTrees;
+      unitConfig.RequiresMountsFor = servedTrees;
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
         # chgrp to media, set setgid + group rwx on dirs and group rw on files, leave the
         # per-file user owner untouched. capital X so only dirs (and already-exec files) get +x.
         ExecStart = [
-          "${pkgs.coreutils}/bin/chgrp -R media ${lib.escapeShellArgs sharedTrees}"
-          "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs sharedTrees}"
-          "${pkgs.findutils}/bin/find ${lib.escapeShellArgs sharedTrees} -type d -exec ${pkgs.coreutils}/bin/chmod g+s {} +"
+          "${pkgs.coreutils}/bin/chgrp -R media ${lib.escapeShellArgs groupSharedTrees}"
+          "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs groupSharedTrees}"
+          "${pkgs.findutils}/bin/find ${lib.escapeShellArgs groupSharedTrees} -type d -exec ${pkgs.coreutils}/bin/chmod g+s {} +"
         ];
       };
     };
@@ -214,32 +222,39 @@ in {
       "force group" = "media";
     };
 
+    # %U expands to the authenticated username per-connection, so each person is served their
+    # own private subdir instead of one shared root. owner-only (0700): this is one person's
+    # folder, not a shared tree, so there's no group to grant -- other @users members and the
+    # media-group services have no business in here. samba doesn't auto-create the subdir on
+    # first connect, so "root preexec" (runs as root, before the tree-connect) mkdir+chowns it
+    # into existence -- ordinary "preexec" runs as the connecting user, who doesn't own the
+    # parent dir and can't create their own top-level folder in it. create/directory mask left
+    # at owner-only too, so samba's mask can't loosen what mkdir already set to 0700.
     store = {
-      path = "/mnt/megamax/store";
+      path = "/mnt/megamax/store/%U";
       browseable = "yes";
       "read only" = "no";
       "valid users" = "@users";
       "write list" = "@users";
-      "create mask" = "0664";
-      "directory mask" = "0775";
-      "force group" = "media";
+      "create mask" = "0600";
+      "directory mask" = "0700";
+      "root preexec" = "${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/store/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/store/%U";
     };
 
-    # time machine target. guest is acceptable ONLY because time machine encrypts the
-    # sparsebundle mac-side before it lands here (tick "Encrypt Backups" on the mac),
-    # so the nas holds ciphertext, same model as restic->b2. that encryption is a
-    # mac-side toggle the nas can't enforce, so it is REQUIRED for guest to be safe.
-    # when the authentik/ldap sso work lands, flip to authenticated (@users), drop guest.
-    # global fruit hints (vfs objects, fruit:metadata) come from modules/services/samba.
+    # per-user time machine destinations, same %U mechanism and owner-only model as store.
+    # authenticated (not guest) so %U is a real identity, not the shared guest mapping --
+    # mac-side "Encrypt Backups" is still recommended defense in depth, just no longer
+    # load-bearing for safety. global fruit hints (vfs objects, fruit:metadata) come from
+    # modules/services/samba.
     timemachine = {
-      path = "/mnt/megamax/backup/timemachine";
+      path = "/mnt/megamax/backup/timemachine/%U";
       browseable = "yes";
       "read only" = "no";
-      "guest ok" = "yes";
-      "force user" = "admin";
-      "force group" = "media";
-      "create mask" = "0664";
-      "directory mask" = "0775";
+      "valid users" = "@users";
+      "write list" = "@users";
+      "root preexec" = "${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/backup/timemachine/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/backup/timemachine/%U";
+      "create mask" = "0600";
+      "directory mask" = "0700";
       "fruit:time machine" = "yes";
       "fruit:time machine max size" = "2T";
     };
