@@ -54,6 +54,14 @@
     "megamax/backup/homeassistant" # HA backup tarballs
     "megamax/backup/timemachine" # time machine image
   ];
+
+  # samba's account registry is Linux users (valid users = @users on the media/store shares):
+  # samba needs a Linux user to exist to map uid/gid, but these people never actually log into
+  # this box, so no password, no shell, no home dir. the samba side (the actual secret) is set
+  # once per person with `smbpasswd -a <user>`, run manually over ssh -- never declared here,
+  # so it's never a plaintext-at-rest secret sitting in the repo or decrypted to disk at every
+  # activation for what amounts to a handful of household accounts.
+  sambaUsers = ["tetra" "melody" "riley"];
 in {
   # the pool has no fileSystems entry (zfs mounts its own datasets), so nothing would
   # import it at boot without this. the pool name is host data, not a zfs-module default.
@@ -62,6 +70,13 @@ in {
   users.groups.media = {
     gid = 1002;
   };
+
+  users.users = lib.genAttrs sambaUsers (name: {
+    isSystemUser = true;
+    group = "media";
+    extraGroups = ["users"];
+    shell = "${pkgs.shadow}/bin/nologin";
+  });
 
   # these run after zfs-mount (zfs-mount is Before=local-fs.target, tmpfiles is After),
   # so the datasets are mounted when these fire. `d` not `Z`: create the dir and set its
