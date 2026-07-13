@@ -25,19 +25,23 @@
     backup.restic = {
       enable = true;
       bucket = "mesa-512e3904";
+      # each child dataset listed explicitly: a zfs snapshot of the parent
+      # megamax/backup does NOT capture child datasets (verified: children appear
+      # as empty dirs in the parent snapshot), so restic must snapshot each one.
       datasets = [
         {
           name = "megamax/store";
           mountpoint = "/mnt/megamax/store";
         }
         {
-          name = "megamax/homeassistant";
-          mountpoint = "/mnt/megamax/homeassistant";
+          name = "megamax/backup/homeassistant";
+          mountpoint = "/mnt/megamax/backup/homeassistant";
         }
         {
-          name = "megamax/timemachine";
-          mountpoint = "/mnt/megamax/timemachine";
+          name = "megamax/backup/timemachine";
+          mountpoint = "/mnt/megamax/backup/timemachine";
         }
+        # megamax/backup/postgres added with the pgBackRest/postgres-backup task
       ];
     };
   };

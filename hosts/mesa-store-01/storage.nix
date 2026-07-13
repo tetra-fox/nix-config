@@ -1,12 +1,14 @@
 # megamax is a raidz1 zpool over the four passthrough drives, created by hand
 # (see modules/platform/zfs). datasets, not fileSystems entries: zfs mounts them
 # itself from the pool, so there's nothing to declare here except the consumers.
-#   megamax/media          library/ + torrents/ + nzb/ as plain DIRS in one dataset:
-#                          sonarr/radarr hardlink from torrents to library on import,
-#                          and hardlinks can't cross a dataset boundary (recordsize=1M)
-#   megamax/store          general-purpose catch-all (snapshots on)
-#   megamax/homeassistant  gzipped HA backups (NFS only)
-#   megamax/timemachine    mac time machine target (samba share added later)
+#   megamax/media                  library/ + torrents/ + nzb/ as plain DIRS in one dataset:
+#                                  sonarr/radarr hardlink from torrents to library on import,
+#                                  and hardlinks can't cross a dataset boundary (recordsize=1M)
+#   megamax/store                  general-purpose catch-all (snapshots on)
+#   megamax/backup/homeassistant   gzipped HA backups pushed over NFS by the HAOS box
+#   megamax/backup/timemachine     mac time machine target (samba, guest + mac-side encryption)
+#   megamax/backup/postgres        postgres backups, wired up with the pgBackRest task (later)
+#   megamax/immich                 immich photo library + inline db (immich task, later)
 {
   config,
   lib,
@@ -33,7 +35,7 @@
   sharedTrees = [
     "/mnt/megamax/media"
     "/mnt/megamax/store"
-    "/mnt/megamax/timemachine"
+    "/mnt/megamax/backup/timemachine"
   ];
 in {
   # the pool has no fileSystems entry (zfs mounts its own datasets), so nothing would
@@ -56,7 +58,10 @@ in {
     "d /mnt/megamax/media/torrents 2775 admin media -"
     "d /mnt/megamax/media/nzb 2775 admin media -"
     "d /mnt/megamax/store 2775 admin media -"
-    "d /mnt/megamax/timemachine 2775 admin media -"
+    "d /mnt/megamax/backup/timemachine 2775 admin media -"
+    # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
+    # anongid=100), 0700, deliberately not group media and no setgid
+    "d /mnt/megamax/backup/homeassistant 0700 admin users -"
   ];
 
   # boot-time safety net that re-asserts group ownership + setgid across the whole shared
@@ -97,7 +102,7 @@ in {
     enable = true;
     exports = ''
       /mnt/megamax/media ${svcIp}(rw,sync,no_subtree_check,fsid=0)
-      /mnt/megamax/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
+      /mnt/megamax/backup/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
     '';
   };
 
@@ -135,6 +140,25 @@ in {
       "create mask" = "0664";
       "directory mask" = "0775";
       "force group" = "media";
+    };
+
+    # time machine target. guest is acceptable ONLY because time machine encrypts the
+    # sparsebundle mac-side before it lands here (tick "Encrypt Backups" on the mac),
+    # so the nas holds ciphertext, same model as restic->b2. that encryption is a
+    # mac-side toggle the nas can't enforce, so it is REQUIRED for guest to be safe.
+    # when the authentik/ldap sso work lands, flip to authenticated (@users), drop guest.
+    # global fruit hints (vfs objects, fruit:metadata) come from modules/services/samba.
+    timemachine = {
+      path = "/mnt/megamax/backup/timemachine";
+      browseable = "yes";
+      "read only" = "no";
+      "guest ok" = "yes";
+      "force user" = "admin";
+      "force group" = "media";
+      "create mask" = "0664";
+      "directory mask" = "0775";
+      "fruit:time machine" = "yes";
+      "fruit:time machine max size" = "2T";
     };
   };
 }
