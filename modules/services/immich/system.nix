@@ -116,26 +116,26 @@ in {
           accelDecode = true;
           acceptedAudioCodecs = ["aac" "mp3" "opus"];
           acceptedContainers = ["mov" "ogg" "webm"];
-          acceptedVideoCodecs = ["h264"];
+          acceptedVideoCodecs = ["h264" "hevc"];
           bframes = -1;
           cqMode = "auto";
-          crf = 23;
+          crf = 31;
           gopSize = 0;
           maxBitrate = "0"; # immich wants this as a string
           preferredHwDevice = "auto";
-          preset = "ultrafast";
+          preset = "faster";
           realtime = {
-            enabled = false;
-            resolutions = [480 720 1080];
-            videoCodecs = ["h264" "hevc"];
+            enabled = true;
+            resolutions = [480 720 1080 1440 2160];
+            videoCodecs = ["h264" "hevc" "av1"];
           };
           refs = 0;
           targetAudioCodec = "aac";
-          targetResolution = "720";
-          targetVideoCodec = "h264";
+          targetResolution = "original";
+          targetVideoCodec = "vp9";
           temporalAQ = false;
           threads = 0;
-          tonemap = "hable";
+          tonemap = "mobius";
           transcode = "required";
           twoPass = false;
         };
