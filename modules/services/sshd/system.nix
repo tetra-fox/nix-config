@@ -28,12 +28,13 @@
       }
     ];
 
-    # remove small diffie-hellman moduli
-    moduliFile = pkgs.runCommand "ssh-moduli-hardened" {} ''
-      awk '$5 >= 3071' ${pkgs.openssh}/etc/ssh/moduli > $out
-    '';
-
     settings = {
+      # remove small diffie-hellman moduli. ModuliFile is types.path, not
+      # types.package, so it won't coerce a derivation; interpolate to a string path
+      ModuliFile = "${pkgs.runCommand "ssh-moduli-hardened" {} ''
+        awk '$5 >= 3071' ${pkgs.openssh}/etc/ssh/moduli > $out
+      ''}";
+
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
