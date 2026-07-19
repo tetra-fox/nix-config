@@ -1662,7 +1662,7 @@
     "zsh-patina": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-darwin"
         ]
       },
       "locked": {

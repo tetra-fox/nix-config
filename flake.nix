@@ -66,7 +66,10 @@
     };
     zsh-patina = {
       url = "github:michel-kraemer/zsh-patina";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # follows the darwin pin: this flake's package is only used where nixpkgs
+      # doesn't carry zsh-patina (26.05-darwin); linux takes it from nixpkgs
+      # unstable, which hard-errors if this flake evals x86_64-darwin against it
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     yazi = {
       url = "github:sxyazi/yazi";

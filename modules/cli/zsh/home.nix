@@ -26,10 +26,12 @@
     zle -N sudo-command-line
     bindkey "\e\e" sudo-command-line
   '';
+  # nixpkgs carries zsh-patina on unstable (linux, hydra-cached); 26.05-darwin
+  # predates its packaging, so the mac builds the flake's package against the
+  # darwin nixpkgs pin instead
+  patina = pkgs.zsh-patina or inputs.zsh-patina.packages.${pkgs.stdenv.hostPlatform.system}.default;
   zshPatina = lib.mkOrder 1000 ''
-    eval "$(${
-      inputs.zsh-patina.packages.${pkgs.stdenv.hostPlatform.system}.default
-    }/bin/zsh-patina activate)"
+    eval "$(${lib.getExe' patina "zsh-patina"} activate)"
   '';
 in {
   home.packages = with pkgs; [
@@ -66,15 +68,11 @@ in {
       history = {
         ignoreAllDups = true;
       };
-      initContent = lib.mkMerge (
-        [
-          sudoToggle
-          zinput
-        ]
-        # patina's flake follows the primary (unstable) nixpkgs, and unstable
-        # hard-errors on x86_64-darwin; the intel mac lives without it
-        ++ lib.optional (pkgs.stdenv.hostPlatform.system != "x86_64-darwin") zshPatina
-      );
+      initContent = lib.mkMerge [
+        sudoToggle
+        zinput
+        zshPatina
+      ];
       plugins = [
         {
           name = "zsh-autocomplete";
