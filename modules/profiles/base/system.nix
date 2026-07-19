@@ -1,16 +1,14 @@
 {
   lib,
   modules,
-  pkgs,
   username,
   ...
 }: {
   imports = [
+    ./common.nix
     modules.platform.fstrim.system
     modules.platform.nix.system
-    modules.platform.nixpkgs.system
     modules.services.sshd.system
-    modules.cli.zsh.system
     modules.platform.systemd-boot.system
   ];
 
@@ -44,13 +42,4 @@
   systemd.oomd.enable = lib.mkForce false;
 
   boot.tmp.cleanOnBoot = true;
-
-  environment.systemPackages = with pkgs; [
-    btop
-    tmux
-    lsof
-    mtr
-    bind # dig/nslookup for dns debugging
-    kitty.terminfo # so ssh-from-kitty renders right
-  ];
 }

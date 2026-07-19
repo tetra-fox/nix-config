@@ -66,11 +66,15 @@ in {
       history = {
         ignoreAllDups = true;
       };
-      initContent = lib.mkMerge [
-        sudoToggle
-        zinput
-        zshPatina
-      ];
+      initContent = lib.mkMerge (
+        [
+          sudoToggle
+          zinput
+        ]
+        # patina's flake follows the primary (unstable) nixpkgs, and unstable
+        # hard-errors on x86_64-darwin; the intel mac lives without it
+        ++ lib.optional (pkgs.stdenv.hostPlatform.system != "x86_64-darwin") zshPatina
+      );
       plugins = [
         {
           name = "zsh-autocomplete";

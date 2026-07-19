@@ -6,7 +6,7 @@ my needlessly complex nix(os) configuration
 
 programs and/or their `home-manager` configuration, auto-discovered from `modules/` by haumea and exposed as `modules.<name>.<file>`
 
-each module contains `system.nix`, `home.nix`, or both
+each module contains `system.nix`, `home.nix`, or both; modules that behave differently on nix-darwin add a `darwin.nix` face (e.g. `modules.platform.nix.darwin`) sharing the platform-agnostic parts via a `common.nix`
 
 files and directories prefixed with `_` are treated as internal (haumea convention)
 
@@ -14,7 +14,7 @@ files and directories prefixed with `_` are treated as internal (haumea conventi
 
 `modules/profiles/` holds opinionated bundles that compose individual modules into ready-to-use roles:
 
-- `base` — universal baseline imported by every host (nix, sshd, zsh, systemd-boot, etc.)
+- `base` — universal baseline imported by every host (nix, sshd, zsh, systemd-boot, etc.); its `darwin.nix` face is the same baseline for macs (myputer), minus what macos owns itself (boot, trim) — sshd is macos' own, hardened to fleet policy via an `sshd_config.d` drop-in
 - `workstation` — extends `base` with desktop / interactive-use modules (hyprland, fonts, dev tools, ...)
 - `server` — extends `base` with headless / unattended-host modules
 

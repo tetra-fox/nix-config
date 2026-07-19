@@ -55,7 +55,11 @@
           };
 
           "gpg \"ssh\"" = {
-            program = "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
+            # darwin runs the brew-cask 1password; the nixpkgs gui package is linux-only
+            program =
+              if pkgs.stdenv.isDarwin
+              then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+              else "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
           };
 
           commit = {
