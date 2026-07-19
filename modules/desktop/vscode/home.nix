@@ -1,9 +1,18 @@
 {
+  config,
   modules,
   pkgs,
   lib,
   ...
-}: {
+}: let
+  # vscode's default fontFamily asks for "Droid Sans Mono" before the generic
+  # monospace. that font isn't installed, but fontconfig substitutes rather than
+  # failing, so vscode gets handed Noto Sans Mono and never falls through to the
+  # generic, losing the nerd font glyphs. name the font instead of relying on
+  # substitution. stylix owns the value; vscode's stylix target stays off so
+  # catppuccin keeps the color theme
+  monospace = lib.head config.fonts.fontconfig.defaultFonts.monospace;
+in {
   imports = [
     modules.desktop.vscode.languages.all
   ];
@@ -38,6 +47,7 @@
         "workbench.iconTheme" = "vscode-icons";
         "workbench.startupEditor" = "none";
 
+        "editor.fontFamily" = "'${monospace}', monospace";
         "editor.fontLigatures" = true;
         "editor.formatOnSave" = true;
         "editor.stickyScroll.enabled" = true;
@@ -47,6 +57,7 @@
         "files.trimFinalNewlines" = true;
         "files.trimTrailingWhitespace" = true;
 
+        "terminal.integrated.fontFamily" = "'${monospace}', monospace";
         "terminal.integrated.fontLigatures.enabled" = true;
 
         "git.autofetch" = true;
