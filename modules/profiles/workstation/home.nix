@@ -2,7 +2,6 @@
   modules,
   pkgs,
   inputs,
-  identity,
   ...
 }: let
   # obsidian's git plugin shells out to git, which runs the sops clean/smudge
@@ -20,28 +19,17 @@
   };
 in {
   imports = [
-    modules.profiles.base.home
+    ./home-common.nix
 
-    modules.cli.direnv.home
-    modules.cli.fastfetch.home
     modules.desktop.firefox.home
-    modules.desktop.fonts.home
-    modules.cli.git.home
-    modules.cli.helix.home
     modules.cli.kitty.home
     modules.desktop.obs-studio.home
-    modules.cli.ssh.home
     modules.desktop.udiskie.home
-    modules.desktop.vscode.home
     modules.desktop.walker.home
-    modules.cli.yazi.home
     modules.desktop.discord.home
   ];
 
   my = {
-    # the operator identity from flake.nix, stated once for every workstation
-    git.identity = identity;
-
     # personal 1password vaults the ssh agent may serve keys from
     ssh.opVaults = ["Private" "mesa" "homelab_DTW"];
 
@@ -71,30 +59,18 @@ in {
     qbittorrent
 
     vulkan-tools
-    iperf3
     ethtool
-    ffmpeg
-    yt-dlp
     imhex
-    ncdu
 
-    rustup
     gcc
     gnumake
-    pnpm
-    nodejs
-    python3
 
     alcom
     unityhub
 
     davinci-resolve
 
-    sqlite
-    gh
     dbeaver-bin
-    claude-code
     lldb
-    alejandra
   ];
 }

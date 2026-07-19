@@ -5,14 +5,7 @@
   ...
 }: {
   imports = [
-    modules.profiles.base.darwin
-
-    modules.toolsets.archive.system
-    modules.toolsets.general.system
-    modules.toolsets.net.system
-
-    modules.cli.rebuild.system
-    modules.cli.yazi.system
+    modules.profiles.workstation.darwin
   ];
 
   networking.applicationFirewall = {
@@ -71,7 +64,6 @@
       "arc"
       "blackhole-2ch"
       "caldigit-thunderbolt-charging"
-      "claude-code"
       "coconutbattery"
       "dbeaver-community"
       "discord"
