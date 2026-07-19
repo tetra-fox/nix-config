@@ -236,9 +236,12 @@
       # verbose boot
       nvram boot-args="-v"
 
-      # power profile, captured from `pmset -g custom`
-      pmset -b displaysleep 2 sleep 1 disksleep 10 powernap 0 proximitywake 0 womp 0
-      pmset -c displaysleep 10 sleep 1 disksleep 10 powernap 1 proximitywake 1 womp 1
+      # power profile, captured from `pmset -g custom`. the sleep values are the
+      # exception: this machine is reachable over ssh, and a sleeping mac drops
+      # the connection and won't wake on an incoming tcp syn, so never sleep on
+      # ac and keep a long idle timeout on battery
+      pmset -b displaysleep 2 sleep 30 disksleep 10 powernap 0 proximitywake 0 womp 0
+      pmset -c displaysleep 10 sleep 0 disksleep 10 powernap 1 proximitywake 1 womp 1
       pmset -a hibernatemode 3 lidwake 1
 
       # ByHost prefs, which CustomUserPreferences can't reach: ctrl<->cmd swap
