@@ -29,13 +29,24 @@
 # works as user (auto-elevates the activation step) AND via `sudo rebuild`
 # for local rebuilds (resolves invoker's home via $SUDO_USER). remote deploys
 # must NOT be run under sudo, see the agent preflight below.
+#
+# on darwin: local actions go to `sudo darwin-rebuild` (its action set is
+# smaller: switch/build/check/activate). remote deploys still use
+# nixos-rebuild, but build on the TARGET instead of localhost since a mac
+# can't build linux derivations; eval stays local so ssh-gated flake inputs
+# keep working.
 set -e
+
+darwin=""
+[ "$(uname -s)" = Darwin ] && darwin=1
 
 usage() {
   # print the header comment block: the contiguous run of #-lines after the
   # shebang, with the leading "# " stripped. keyed off the comment structure
-  # so it stays correct when the header is edited
-  sed -n '2,/^[^#]/p' "$0" | sed -n 's/^#\( \|$\)//p'
+  # so it stays correct when the header is edited. two -e exprs, not \( \|$\):
+  # alternation in basic regex is a GNU extension and bsd sed (macos) matches
+  # nothing
+  sed -n '2,/^[^#]/p' "$0" | sed -n -e 's/^# //p' -e 's/^#$//p'
 }
 
 if [ -n "$SUDO_USER" ]; then
@@ -53,7 +64,7 @@ fi
 # nixos-rebuild's subcommands. the first bare token that matches one is the
 # action; everything else (flags and their values) passes through verbatim so
 # nixos-rebuild's own arg parser handles flag arity
-actions=" switch boot test build dry-build dry-run dry-activate build-vm build-vm-with-bootloader build-image list-generations repl edit "
+actions=" switch boot test build dry-build dry-run dry-activate build-vm build-vm-with-bootloader build-image list-generations repl edit check activate changelog "
 
 action=""
 target_host=""
@@ -136,20 +147,50 @@ if [ -n "$target_host" ]; then
     fi
   fi
 
-  echo "rebuild: remote $action -> $target_host (attr $flake_attr)" >&2
-  # --elevate sudo elevates the activation step on the *remote*. we run locally
-  # as the user (not under sudo) so ssh uses our agent
+  # a mac can't realise linux derivations locally, so the target builds its own
+  # closure (mostly cache downloads for the fleet VMs); eval still runs here
+  build_host=localhost
+  [ -n "$darwin" ] && build_host="$target_host"
+
+  # remote activation runs under sudo. the flag name differs by pin: --elevate
+  # only exists in unstable's nixos-rebuild-ng; the mac's 26.05 build still
+  # spells it --sudo
+  elevate=(--elevate sudo)
+  [ -n "$darwin" ] && elevate=(--sudo)
+
+  echo "rebuild: remote $action -> $target_host (attr $flake_attr, build on $build_host)" >&2
+  # we run locally as the user (not under sudo) so ssh uses our agent
   exec nixos-rebuild "$action" \
     --flake "$flake#$flake_attr" \
     --target-host "$target_host" \
-    --build-host localhost \
-    --elevate sudo \
+    --build-host "$build_host" \
+    "${elevate[@]}" \
     "${passthrough[@]}"
 else
-  echo "rebuild: local $action -> $(hostname)" >&2
+  host=$(hostname)
+  host="${host%%.*}"
+  # flake attrs are lowercase; macos hostnames are commonly mixed-case
+  host="${host,,}"
+  echo "rebuild: local $action -> $host" >&2
+  if [ -n "$darwin" ]; then
+    # darwin-rebuild has no --elevate and must run as root to activate.
+    # pre-build as the user first: eval fetches ssh-gated flake inputs with
+    # our agent (sudo strips it), and root's re-eval then finds everything in
+    # the store without touching the network. read-only actions skip sudo
+    # entirely so they never prompt
+    case "$action" in
+      build | check | changelog)
+        exec darwin-rebuild "$action" --flake "$flake#$host" "${passthrough[@]}"
+        ;;
+      *)
+        nix build --no-link "$flake#darwinConfigurations.$host.system"
+        exec sudo darwin-rebuild "$action" --flake "$flake#$host" "${passthrough[@]}"
+        ;;
+    esac
+  fi
   # local rebuild: --elevate sudo elevates only the activation step, so eval
   # and build run as us and read-only actions (build, dry-run, list-generations)
   # never prompt. running as us also lets nix reach the private nix-secrets
   # input over ssh with our own agent
-  exec nixos-rebuild "$action" --flake "$flake#$(hostname)" --elevate sudo "${passthrough[@]}"
+  exec nixos-rebuild "$action" --flake "$flake#$host" --elevate sudo "${passthrough[@]}"
 fi

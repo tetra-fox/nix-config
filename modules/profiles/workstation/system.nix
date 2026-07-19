@@ -2,11 +2,11 @@
   modules,
   pkgs,
   username,
-  serverUsername,
   ...
 }: {
   imports = [
     modules.profiles.base.system
+    modules.cli.rebuild.system
 
     modules.toolsets.archive.system
     modules.toolsets.disk.system
@@ -53,9 +53,6 @@
   environment.systemPackages = with pkgs; [
     rclone
     usbutils # lsusb
-    # the remote-deploy user comes from the flake's serverUsername, substituted at build
-    # so the script and the per-host specialArgs can't drift
-    (writeShellScriptBin "rebuild" (builtins.replaceStrings ["@deployUser@"] [serverUsername] (builtins.readFile ./rebuild.sh)))
 
     git
   ];

@@ -18,7 +18,7 @@ lint:
 
 # rebuild this host; args pass through to rebuild.sh (e.g. `just rebuild boot`, `just rebuild --target-host mesa-svc-01`)
 rebuild *args:
-    bash modules/profiles/workstation/rebuild.sh {{ args }}
+    bash modules/cli/rebuild/_rebuild.sh {{ args }}
 
 # regenerate topology SVGs under images/topology
 update-topology:
