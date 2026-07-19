@@ -7,7 +7,7 @@
   imports = [
     modules.profiles.workstation.home-common
 
-    # trialing as the fleet terminal; hara still runs kitty
+    # the terminal on this host, replacing iterm2; hara still runs kitty
     modules.cli.ghostty.home
   ];
 

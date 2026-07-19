@@ -73,7 +73,6 @@
       "handbrake-app"
       "hex-fiend"
       "insomnia"
-      "iterm2"
       "keka"
       "macs-fan-control"
       "mp3tag"
@@ -135,7 +134,7 @@
           "/Applications/DaVinci Resolve/DaVinci Resolve.app"
           "/System/Applications/Music.app"
           "/Users/${username}/Applications/Home Manager Apps/VSCodium.app"
-          "/Applications/iTerm.app"
+          "/Users/${username}/Applications/Home Manager Apps/Ghostty.app"
           "/System/Applications/System Settings.app"
         ];
       };
