@@ -9,9 +9,13 @@
   # monospace. that font isn't installed, but fontconfig substitutes rather than
   # failing, so vscode gets handed Noto Sans Mono and never falls through to the
   # generic, losing the nerd font glyphs. name the font instead of relying on
-  # substitution. stylix owns the value; vscode's stylix target stays off so
-  # catppuccin keeps the color theme
-  monospace = lib.head config.fonts.fontconfig.defaultFonts.monospace;
+  # substitution. stylix owns the value where it runs; on darwin there is no
+  # stylix and the fontconfig list is empty, so fall back to the fleet mono
+  # (the fonts module installs it there)
+  monospace =
+    if config.fonts.fontconfig.defaultFonts.monospace != []
+    then lib.head config.fonts.fontconfig.defaultFonts.monospace
+    else "Cascadia Code";
 in {
   imports = [
     modules.desktop.vscode.languages.all
