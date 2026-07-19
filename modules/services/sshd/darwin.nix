@@ -8,11 +8,11 @@
   username,
   ...
 }: let
-  crypto = import ./_common.nix;
+  common = import ./_common.nix;
   # no DH-GEX on darwin: the nixos module pairs it with a hardened moduli
   # file, but macos' stock /etc/ssh/moduli still contains 2048-bit groups,
   # which would undercut the fleet's crypto floor
-  kex = lib.filter (k: k != "diffie-hellman-group-exchange-sha256") crypto.kexAlgorithms;
+  kex = lib.filter (k: k != "diffie-hellman-group-exchange-sha256") common.kexAlgorithms;
 in {
   environment.etc."ssh/sshd_config.d/000-nix-darwin.conf".text = ''
     PasswordAuthentication no
@@ -21,25 +21,26 @@ in {
     AllowUsers ${username}
 
     KexAlgorithms ${lib.concatStringsSep "," kex}
-    Ciphers ${lib.concatStringsSep "," crypto.ciphers}
-    Macs ${lib.concatStringsSep "," crypto.macs}
-    HostKeyAlgorithms ${crypto.hostKeyAlgorithms}
-    PubkeyAcceptedAlgorithms ${crypto.pubkeyAcceptedAlgorithms}
-    CASignatureAlgorithms ${crypto.caSignatureAlgorithms}
-    RequiredRSASize ${toString crypto.requiredRSASize}
+    Ciphers ${lib.concatStringsSep "," common.ciphers}
+    Macs ${lib.concatStringsSep "," common.macs}
+    HostKeyAlgorithms ${common.hostKeyAlgorithms}
+    PubkeyAcceptedAlgorithms ${common.pubkeyAcceptedAlgorithms}
+    CASignatureAlgorithms ${common.caSignatureAlgorithms}
+    RequiredRSASize ${toString common.requiredRSASize}
 
     # CVE-2002-20001 mitigation
     MaxStartups 10:30:100
     PerSourceMaxStartups 1
   '';
 
-  # the same keyring contract as the nixos module: every .pub in the shared
-  # keyring gets shell here. via home-manager since nix-darwin has no
-  # users.users.*.openssh
-  home-manager.users.${username}.home.file.".ssh/authorized_keys".text =
-    lib.concatMapStrings (f: lib.fileContents (shared.keyring + "/${f}") + "\n")
-    (lib.filter (lib.hasSuffix ".pub")
-      (builtins.attrNames (builtins.readDir shared.keyring)));
+  # the same keyring contract as the nixos module. nix-darwin writes these to
+  # /etc/ssh/nix_authorized_keys.d/%u, which its own 101-authorized-keys.conf
+  # drop-in reads back with AuthorizedKeysCommand. writing ~/.ssh/authorized_keys
+  # through home-manager instead does not work: it lands as a symlink into
+  # /nix/store, and the store is group-writable (drwxrwxr-t), so StrictModes
+  # refuses it with "bad ownership or modes for directory /nix/store"
+  users.users.${username}.openssh.authorizedKeys.keys =
+    common.keyringKeys lib shared.keyring;
 
   # keep Remote Login on; launchctl instead of systemsetup so activation
   # doesn't need Full Disk Access

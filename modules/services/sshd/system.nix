@@ -5,14 +5,12 @@
   username,
   ...
 }: let
-  crypto = import ./_common.nix;
+  common = import ./_common.nix;
 in {
-  # every .pub in the shared keyring gets shell on every host: the directory is the
-  # contract, so changing who has access means changing the keyring, not this module
+  # the directory is the contract, so changing who has access means changing
+  # the keyring, not this module
   users.users.${username}.openssh.authorizedKeys.keys =
-    map (f: lib.fileContents (shared.keyring + "/${f}"))
-    (lib.filter (lib.hasSuffix ".pub")
-      (builtins.attrNames (builtins.readDir shared.keyring)));
+    common.keyringKeys lib shared.keyring;
 
   services.openssh = {
     enable = true;
@@ -42,13 +40,13 @@ in {
       PermitRootLogin = "no";
       AllowUsers = [username];
 
-      KexAlgorithms = crypto.kexAlgorithms;
-      Ciphers = crypto.ciphers;
-      Macs = crypto.macs;
-      HostKeyAlgorithms = crypto.hostKeyAlgorithms;
-      PubkeyAcceptedAlgorithms = crypto.pubkeyAcceptedAlgorithms;
-      CASignatureAlgorithms = crypto.caSignatureAlgorithms;
-      RequiredRSASize = crypto.requiredRSASize;
+      KexAlgorithms = common.kexAlgorithms;
+      Ciphers = common.ciphers;
+      Macs = common.macs;
+      HostKeyAlgorithms = common.hostKeyAlgorithms;
+      PubkeyAcceptedAlgorithms = common.pubkeyAcceptedAlgorithms;
+      CASignatureAlgorithms = common.caSignatureAlgorithms;
+      RequiredRSASize = common.requiredRSASize;
 
       # CVE-2002-20001 mitigation
       MaxStartups = "10:30:100";

@@ -1,6 +1,13 @@
-# crypto policy shared by the nixos module (system.nix) and the darwin
+# sshd policy shared by the nixos module (system.nix) and the darwin
 # sshd_config.d drop-in (darwin.nix); plain data, not a module
 {
+  # every .pub in the shared keyring gets shell. both platforms feed this to
+  # sshd, so the directory stays the one place that decides who has access
+  keyringKeys = lib: keyring:
+    map (f: lib.fileContents (keyring + "/${f}"))
+    (lib.filter (lib.hasSuffix ".pub")
+      (builtins.attrNames (builtins.readDir keyring)));
+
   kexAlgorithms = [
     "sntrup761x25519-sha512@openssh.com"
     "curve25519-sha256"
