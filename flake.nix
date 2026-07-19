@@ -1,8 +1,9 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    # separate pin for x86_64-darwin
-    nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    # separate pin for x86_64-darwin: unstable (26.11) dropped the platform
+    # entirely, 26.05 keeps it deprecated-but-working until end of 2026
+    nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixpkgs-26.05-darwin";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
@@ -16,7 +17,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-darwin = {
-      url = "github:nix-darwin/nix-darwin";
+      # release branch matching the nixpkgs-darwin pin; nix-darwin asserts they agree
+      url = "github:nix-darwin/nix-darwin?ref=nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     easy-hosts.url = "github:tgirlcloud/easy-hosts";
@@ -126,8 +128,8 @@
       # the unix user servers run as; per-host specialArgs reference this so the fact
       # is stated once (rebuild.sh's remote-deploy user is substituted from it too)
       serverUsername = "admin";
-      # the operator's identity, shared by every machine the user drives (hara now, the
-      # mac later). the signing key is the 1password ssh signing key, a different key
+      # the operator's identity, shared by every machine the user drives (hara and
+      # myputer). the signing key is the 1password ssh signing key, a different key
       # from shared/keyring/tetra.pub (fleet shell access).
       identity = {
         name = "tetra";
@@ -157,8 +159,35 @@
       };
       serverHosts = names: lib.genAttrs names (n: serverHost n []);
 
+      # every fleet server, stated once: the hosts attrset builds from this
+      # list, and the ssh client module derives its per-site Host blocks from
+      # it (via sitePrefix), so client config follows the fleet automatically
+      serverNames = [
+        "mesa-svc-01"
+        "mesa-svc-02"
+        "mesa-store-01"
+        "mesa-db-01"
+        "mesa-db-02"
+        "mesa-db-03"
+        "mesa-auth-01"
+        "mesa-mon-01"
+        "mesa-edge-01"
+        "mesa-edge-02"
+        "mesa-dns-01"
+        "mesa-dns-02"
+        "fairlane-store-01"
+        "fairlane-db-01"
+        "fairlane-svc-01"
+        "fairlane-mon-01"
+        "fairlane-edge-01"
+        "fairlane-edge-02"
+        "fairlane-dns-01"
+        "fairlane-dns-02"
+      ];
+
       commonSpecialArgs = {
         inherit username serverUsername identity;
+        fleetSites = lib.unique (map sitePrefix serverNames);
         modules = inputs.haumea.lib.load {
           src = ./modules;
           loader = inputs.haumea.lib.loaders.path;
@@ -191,10 +220,14 @@
       perSystem = {
         inputs',
         pkgs,
+        system,
         ...
       }: {
         formatter = pkgs.alejandra;
-        packages = inputs'.tetra-nurpkgs.packages;
+        # `or {}`, not inputs': nurpkgs has no x86_64-darwin output, and the throwing
+        # accessor would break every `nix <cmd> .#...` on the mac (the CLI resolves
+        # attrs through packages.<system> first)
+        packages = inputs.tetra-nurpkgs.packages.${system} or {};
 
         devShells.default = pkgs.mkShell {
           packages = [
@@ -309,31 +342,11 @@
               class = "darwin";
               nixpkgs = inputs.nixpkgs-darwin;
               modules = [
-                {nixpkgs.config.allowDeprecatedx86_64Darwin = true;}
+                {home-manager.users.${username}.imports = [./hosts/myputer/home];}
               ];
             };
           }
-          // serverHosts [
-            "mesa-svc-02"
-            "mesa-store-01"
-            "mesa-db-01"
-            "mesa-db-02"
-            "mesa-db-03"
-            "mesa-auth-01"
-            "mesa-mon-01"
-            "mesa-edge-01"
-            "mesa-edge-02"
-            "mesa-dns-01"
-            "mesa-dns-02"
-            "fairlane-store-01"
-            "fairlane-db-01"
-            "fairlane-svc-01"
-            "fairlane-mon-01"
-            "fairlane-edge-01"
-            "fairlane-edge-02"
-            "fairlane-dns-01"
-            "fairlane-dns-02"
-          ]
+          // serverHosts (lib.remove "mesa-svc-01" serverNames)
           // {
             # the one server with an extra module (nowplaying)
             mesa-svc-01 = serverHost "mesa-svc-01" [inputs.nowplaying.nixosModules.default];
