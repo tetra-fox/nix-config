@@ -14,10 +14,6 @@
     allowSignedApp = true;
   };
 
-  # nix was installed by the upstream installer before nix-darwin; its build
-  # group already exists with this gid and nix-darwin must not fight it
-  ids.gids.nixbld = 350;
-
   # gui apps and mac-only tooling stay in homebrew; generic cli formulae moved
   # to nix (see home/). cleanup "uninstall" removes anything undeclared at each
   # switch but keeps app data, so brew is declarative without nuking settings
