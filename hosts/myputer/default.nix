@@ -138,6 +138,7 @@
           "/Applications/rekordbox 7/rekordbox.app"
           "/Applications/DaVinci Resolve/DaVinci Resolve.app"
           "/System/Applications/Music.app"
+          "/Users/${username}/Applications/Home Manager Apps/VSCodium.app"
           "/Applications/iTerm.app"
           "/System/Applications/System Settings.app"
         ];
