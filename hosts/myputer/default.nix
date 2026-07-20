@@ -63,7 +63,6 @@
       "coconutbattery"
       "dbeaver-community"
       "discord"
-      "docker-desktop"
       "elmedia-player"
       "firefox"
       "focusrite-control"
@@ -143,7 +142,7 @@
         AppleShowAllFiles = true;
         AppleShowAllExtensions = true;
         FXDefaultSearchScope = "SCcf"; # search the current folder, not This Mac
-        FXPreferredViewStyle = "Nlsv"; # list view
+        FXPreferredViewStyle = "clmv"; # column view
         FXRemoveOldTrashItems = true;
         NewWindowTarget = "Home";
         ShowExternalHardDrivesOnDesktop = true;
