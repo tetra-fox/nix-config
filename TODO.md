@@ -17,35 +17,16 @@
 
 ## servers
 
-- caddy route inversion (was: "service discovery for caddy")
-  - the engine half is already done: ipOf derives the internal-vlan IP (lib/engine.nix, prefers
-    internalIp), endpointFor+vipPath is the keepalived-VIP seam. don't rebuild either. the old
-    :-delimited string syntax idea is dropped (unparseable, unvalidated) in favor of an attrset.
-  - the one real item: invert who owns the routes. today caddy's Caddyfile is a hand-written
-    static asset (hosts/\*/files/caddy/Caddyfile) with six env-var upstream holes; adding a service
-    means editing caddy. want: a host publishes lab.topology.routes = [{host, port, <policy>}],
-    caddy folds over the site collecting routes, resolves each publisher's address with ipOf (VIP
-    seam where HA), and renders the Caddyfile. adding a service then touches only that module.
-  - constraints: route submodule is a plain input (or readOnly+static default like arrDatabases)
-    or the fold cycles. a route carries NO ip (publisher declares what, engine resolves where).
-    policy modifiers that recur are typed options (lanOnly, maxBodySize, scheme, tlsInsecure).
-    one vhost per route, no comma-grouping (human ergonomics for a file no human reads now).
-  - appliances with no publisher (home.mesa -> HAOS 192.168.10.5, pve.mesa -> proxmox) stay in a
-    hand-written static tail. do NOT add a literalUpstream escape hatch to the route type -- that
-    reintroduces "route carries its own address" as an option and contaminates every route.
-  - OPEN: the arr vhosts. on mesa they proxy to authentik's outpost ({$AUTH_UPSTREAM}) via
-    forward_auth, NOT to the arr host; on fairlane they proxy the arr UIs directly ({$ARR_HOST}).
-    the route type needs to express "upstream is the site auth outpost" but design that
-    abstraction against BOTH patterns at once, not just mesa's, or it gets reworked when fairlane
-    lands. deferred out of the first slice; arr block stays in the static tail until then.
-  - proof slice: mesa-edge-01 only, fairlane untouched. invert the clean reverse-proxy vhosts
-    (auth, jellyfin, immich w/ 50GB body, stats, np); static tail holds mesa.tetra.cool root,
-    home, pve, the arr block. acceptance test: rendered-vs-current Caddyfile diff empty modulo
-    whitespace and vhost ordering. a non-empty diff is a finding (behavior you didn't know you
-    had), not a failure.
-  - DONE already: engine arity fix. ipWhere now throws on 2+ providers (null only for zero) and
-    endpointFor throws on divergent VIPs, so two hosts advertising the same cap fails at eval
-    instead of silently resolving to null and dropping the route.
+- caddy route inversion: SHIPPED. hosts publish lab.topology.routes = [{host, port, scheme?,
+  maxBodySize?}]; the engine folds them per-site (routesInSite) resolving each publisher's
+  address via ipOf, and caddy renders the Caddyfile from that plus a per-host staticTail
+  (appliances with no publisher: root, home/HAOS, pve). inverted both edge tiers (mesa +
+  fairlane); engine covered by lib/fleet-test.nix.
+  - STILL OPEN: the arr vhosts. mesa proxies them through authentik's outpost ({$AUTH_UPSTREAM})
+    via forward_auth; fairlane proxies the arr UIs directly ({$ARR_HOST}, lan_only). both still
+    hand-written in each edge's caddy-tail.nix. inverting them needs a route type that expresses
+    "upstream is the site auth outpost" -- design it against BOTH patterns at once or it gets
+    reworked when fairlane lands. authUpstream + arrHost options stay until then.
 
 - authentik/LDAP auth for samba shares
   - really fucking finicky i cant get it to work... someday though.
