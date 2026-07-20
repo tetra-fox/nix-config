@@ -239,7 +239,7 @@ in {
     # just not load-bearing now that this is authenticated rather than guest.
     timemachine = {
       path = "/mnt/megamax/backup/timemachine/%U";
-      browseable = "yes";
+      browseable = "no";
       "read only" = "no";
       "valid users" = "@users";
       "write list" = "@users";

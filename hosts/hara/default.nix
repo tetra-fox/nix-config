@@ -2,6 +2,7 @@
   config,
   modules,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
@@ -27,6 +28,32 @@
 
   # this room's valve basestations, powered with monado by the steam module
   lab.steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
+
+  # native wine ableton live; consumed via legacyPackages (not the fleet overlay)
+  # so it builds against nurpkgs' own nixpkgs pin, see the tetra-nurpkgs input
+  # comment in flake.nix. pulls in ableton-wine.
+  environment.systemPackages = [
+    inputs.tetra-nurpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.ableton-live
+  ];
+
+  # the launcher's realtime probe (`chrt -r 10`) needs RLIMIT_RTPRIO, which rtkit
+  # alone doesn't grant; scoped to @realtime (modules/hardware/pipewire/system.nix
+  # already puts the user in that group) so it doesn't touch this machine's
+  # non-audio work.
+  security.pam.loginLimits = [
+    {
+      domain = "@realtime";
+      item = "rtprio";
+      type = "-";
+      value = "99";
+    }
+    {
+      domain = "@realtime";
+      item = "memlock";
+      type = "-";
+      value = "unlimited";
+    }
+  ];
 
   networking = {
     interfaces.enp11s0f0np0.ipv4.addresses = [

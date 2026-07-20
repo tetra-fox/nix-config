@@ -103,10 +103,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    tetra-nurpkgs = {
-      url = "github:tetra-fox/nurpkgs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # no nixpkgs.follows: ableton-wine is a from-source wine build with no binary
+    # cache anywhere, so it should rebuild only when nurpkgs itself bumps its own
+    # nixpkgs pin, not every time this config's nixpkgs moves. same reasoning as
+    # apple-fonts above.
+    tetra-nurpkgs.url = "github:tetra-fox/nurpkgs";
+
     nixcord = {
       url = "github:FlameFlag/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
