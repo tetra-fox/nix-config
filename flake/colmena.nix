@@ -16,7 +16,9 @@
   mkNode = name: c: {
     deployment = {
       targetHost = c.config.lab.site.hostIp;
-      targetUser = "admin";
+      # the deploy user is the same fact as serverUsername; read it off the host's specialArgs
+      # rather than restating "admin" here
+      targetUser = c._module.specialArgs.username;
       tags = [(sitePrefix name)];
       buildOnTarget = false;
     };
