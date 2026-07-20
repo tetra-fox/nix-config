@@ -23,6 +23,10 @@
     backup.restic = {
       enable = true;
       bucket = "mesa-512e3904";
+      timerConfig = {
+        OnCalendar = "10:30"; # servers are UTC. 2:30A PST
+        Persistent = true;
+      };
       # each child dataset listed explicitly: a zfs snapshot of the parent
       # megamax/backup does NOT capture child datasets (verified: children appear
       # as empty dirs in the parent snapshot), so restic must snapshot each one.
