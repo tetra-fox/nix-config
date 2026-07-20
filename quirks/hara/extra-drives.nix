@@ -46,7 +46,10 @@ in {
     "/mnt/music" = {
       device = "/dev/disk/by-uuid/DECAF453CAF42A03";
       fsType = "ntfs";
-      options = roOptions;
+      # rw since 2026-07-19: live's recordings/temp projects live here, and the
+      # library is backed up on the nas. the ro era ended after it wedged live
+      # at startup (temp-project creation loop on a read-only volume)
+      options = rwOptions;
     };
 
     "/mnt/wd-black" = {
