@@ -47,10 +47,16 @@
         lab = {
           site.hostIp = "10.0.0.3";
           topology.provides = ["web"];
+          # two routes on one host: exercises routesInSite folding multiple vhosts from a single
+          # publisher, and makes web a multi-route provider for the publicUrlProviding throw test
           topology.routes = [
             {
               host = "web.acme.example";
               port = 80;
+            }
+            {
+              host = "admin.acme.example";
+              port = 8080;
             }
           ];
         };
@@ -116,9 +122,16 @@
     # (ipOf, so cache-01's internal IP), and excludes other sites (beta's route never appears)
     {
       name = "routesInSite resolves upstreams and scopes to site";
-      ok =
-        map (r: {inherit (r) host upstream;}) f.routesInSite
+      ok = let
+        # sort by host so this tests route membership, not the incidental attrNames fold order
+        got = lib.sort (a: b: a.host < b.host) (map (r: {inherit (r) host upstream;}) f.routesInSite);
+      in
+        got
         == [
+          {
+            host = "admin.acme.example";
+            upstream = "10.0.0.3:8080";
+          }
           {
             host = "cache1.acme.example";
             upstream = "10.1.0.1:9000";
@@ -143,6 +156,12 @@
     {
       name = "publicUrlProviding throws on multiple providers";
       ok = !(builtins.tryEval (f.publicUrlProviding "cache-node")).success;
+    }
+    # a lone provider with more than one route is the same ambiguity: the caller can't pick which
+    # url is public, so it throws rather than silently returning null
+    {
+      name = "publicUrlProviding throws when the provider has multiple routes";
+      ok = !(builtins.tryEval (f.publicUrlProviding "web")).success;
     }
     # the arity fix: a single-provider lookup with two providers is a config error, not a
     # silent null that would drop the service downstream

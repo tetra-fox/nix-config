@@ -90,8 +90,10 @@
   # (lab.topology.routes). lets a service resolve a PEER's public url without hardcoding the fqdn
   # (immich's oauth issuerUrl -> authentik). reads only plain inputs (provides + routes), so no
   # cycle -- BUT the consumer must not feed the result back into config that reading routes forces
-  # (a service's OWN url is a local derive from lab.site.domain, not this). null when there's no
-  # single unambiguous route; throws only on >1 provider, matching ipProviding.
+  # (a service's OWN url is a local derive from lab.site.domain, not this). null when the provider
+  # declares no public route; throws on >1 provider or >1 route, both ambiguities the caller can't
+  # resolve -- a silent null there would drop a consumer's config (e.g. immich's oauth) with no
+  # diagnostic.
   publicUrlProviding = cap: let
     hosts = hostsProviding cap;
   in
@@ -100,11 +102,14 @@
     else if lib.length hosts > 1
     then throw "fleet: site '${mySite}' has ${toString (lib.length hosts)} hosts providing '${cap}'; publicUrlProviding expects exactly one"
     else let
-      routes = nixosConfigurations.${builtins.head hosts}.config.lab.topology.routes or [];
+      host = builtins.head hosts;
+      routes = nixosConfigurations.${host}.config.lab.topology.routes or [];
     in
-      if lib.length routes == 1
+      if lib.length routes == 0
+      then null
+      else if lib.length routes == 1
       then "https://${(builtins.head routes).host}"
-      else null;
+      else throw "fleet: '${cap}' provider '${host}' declares ${toString (lib.length routes)} routes; publicUrlProviding needs exactly one to name a public url";
 
   # the endpoint a client points at for an optionally-HA service: the single provider while one
   # exists (a live single server keeps the traffic until it's retired), else the floating VIP any
