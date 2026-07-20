@@ -162,7 +162,9 @@
         specialArgs = {username = serverUsername;};
         modules = [inputs.disko.nixosModules.disko] ++ extra;
       };
-      serverHosts = names: lib.genAttrs names (n: serverHost n []);
+      # extras maps a host name to the extra modules only that host wants (e.g. nowplaying on
+      # mesa-svc-01); every other host gets []. keeps the one-off out of the call site.
+      serverHosts = names: extras: lib.genAttrs names (n: serverHost n (extras.${n} or []));
 
       # every fleet server, stated once: the hosts attrset builds from this
       # list, and the ssh client module derives its per-site Host blocks from
@@ -351,10 +353,8 @@
               ];
             };
           }
-          // serverHosts (lib.remove "mesa-svc-01" serverNames)
-          // {
-            # the one server with an extra module (nowplaying)
-            mesa-svc-01 = serverHost "mesa-svc-01" [inputs.nowplaying.nixosModules.default];
+          // serverHosts serverNames {
+            mesa-svc-01 = [inputs.nowplaying.nixosModules.default];
           });
       };
     });
