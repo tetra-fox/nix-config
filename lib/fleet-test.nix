@@ -18,6 +18,15 @@
           site.hostIp = "10.0.0.1";
           site.internalIp = "10.1.0.1";
           topology.provides = ["cache-node" "metrics"];
+          topology.routes = [
+            {
+              host = "cache1.acme.example";
+              port = 9000;
+            }
+          ];
+          # cachevip matches its peer (HA fall-through test), badvip diverges (throw test)
+          cachevip.vip = "10.1.0.100";
+          badvip.vip = "10.1.0.1";
         };
       };
     };
@@ -27,6 +36,8 @@
         lab = {
           site.hostIp = "10.0.0.2";
           topology.provides = ["cache-node"];
+          cachevip.vip = "10.1.0.100";
+          badvip.vip = "10.1.0.2";
         };
       };
     };
@@ -36,6 +47,12 @@
         lab = {
           site.hostIp = "10.0.0.3";
           topology.provides = ["web"];
+          topology.routes = [
+            {
+              host = "web.acme.example";
+              port = 80;
+            }
+          ];
         };
       };
     };
@@ -45,6 +62,13 @@
         lab = {
           site.hostIp = "10.9.9.1";
           topology.provides = ["cache-node"];
+          # a route in another site, to prove routesInSite excludes it
+          topology.routes = [
+            {
+              host = "cache.beta.example";
+              port = 9000;
+            }
+          ];
         };
       };
     };
@@ -87,6 +111,68 @@
           vipPath = ["lab" "whatever" "vip"];
         }
         == "10.1.0.1";
+    }
+    # routesInSite folds every same-site host's routes and pairs each with its resolved upstream
+    # (ipOf, so cache-01's internal IP), and excludes other sites (beta's route never appears)
+    {
+      name = "routesInSite resolves upstreams and scopes to site";
+      ok =
+        map (r: {inherit (r) host upstream;}) f.routesInSite
+        == [
+          {
+            host = "cache1.acme.example";
+            upstream = "10.1.0.1:9000";
+          }
+          {
+            host = "web.acme.example";
+            upstream = "10.0.0.3:80";
+          }
+        ];
+    }
+    # publicUrlProviding: the single provider's single route becomes its https url
+    {
+      name = "publicUrlProviding returns the single provider's route url";
+      ok = f.publicUrlProviding "metrics" == "https://cache1.acme.example";
+    }
+    # nobody provides it -> null, not an error
+    {
+      name = "publicUrlProviding is null for an absent capability";
+      ok = f.publicUrlProviding "nonexistent" == null;
+    }
+    # more than one provider is ambiguous -> throws (tryEval catches it)
+    {
+      name = "publicUrlProviding throws on multiple providers";
+      ok = !(builtins.tryEval (f.publicUrlProviding "cache-node")).success;
+    }
+    # the arity fix: a single-provider lookup with two providers is a config error, not a
+    # silent null that would drop the service downstream
+    {
+      name = "ipProviding throws when two hosts claim a single-provider cap";
+      ok = !(builtins.tryEval (f.ipProviding "cache-node")).success;
+    }
+    # singleCap == haCap with two providers is the normal HA state: fall through to the shared
+    # VIP instead of throwing on the two single-cap matches
+    {
+      name = "endpointFor falls through to the VIP when the single cap is the HA cap";
+      ok =
+        f.endpointFor {
+          singleCap = "cache-node";
+          haCap = "cache-node";
+          vipPath = ["lab" "cachevip" "vip"];
+        }
+        == "10.1.0.100";
+    }
+    # HA nodes advertising different VIPs is a config error, not a pick-one
+    {
+      name = "endpointFor throws on divergent VIPs";
+      ok = let
+        r = builtins.tryEval (f.endpointFor {
+          singleCap = "cache-node";
+          haCap = "cache-node";
+          vipPath = ["lab" "badvip" "vip"];
+        });
+      in
+        !r.success;
     }
   ];
 
