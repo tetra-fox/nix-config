@@ -3,11 +3,9 @@
   modules,
   ...
 }: {
-  imports = [
-    modules.services.monitoring.system
-    modules.services.monitoring.unifi
-    modules.services.logging.system
-  ];
+  # the monitoring/logging agent modules come from the server profile; only the
+  # unifi (unpoller) module is an extra here
+  imports = [modules.services.monitoring.unifi];
 
   sops.secrets."monitoring/grafana_oauth_client_secret" = {
     owner = "grafana";
@@ -15,8 +13,6 @@
   };
 
   lab = {
-    logging.enable = true;
-
     monitoring = {
       server.enable = true;
       unifi.enable = true;

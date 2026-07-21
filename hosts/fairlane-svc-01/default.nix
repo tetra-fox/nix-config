@@ -2,6 +2,7 @@
 # moved to db-01, caddy to edge-01/02, samba to store-01, so this is now a pure compute box.
 # networking comes from the fairlane site tag; it advertises media/arr/db-client capabilities.
 {
+  config,
   username,
   modules,
   ...
@@ -31,7 +32,7 @@
       nzbPath = "/mnt/media/nzb";
       # the forwarded port AirVPN assigned to this account (same account as mesa)
       torrentingPort = 42924;
-      sabnzbdHostWhitelist = ["sabnzbd.fairlane.tetra.cool"];
+      sabnzbdHostWhitelist = ["sabnzbd.${config.lab.site.domain}"];
     };
 
     sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
