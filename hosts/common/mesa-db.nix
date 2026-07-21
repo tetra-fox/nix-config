@@ -12,7 +12,6 @@
     modules.profiles.server.system
 
     modules.services.postgres-ha.system
-    modules.platform.sops.system
   ];
 
   lab.postgres = {

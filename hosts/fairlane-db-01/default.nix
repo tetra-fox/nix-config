@@ -13,12 +13,9 @@
     modules.profiles.server.system
 
     modules.services.postgres.system
-    modules.platform.sops.system
   ];
 
   lab = {
-    sops.secretsFile = ../../secrets/fairlane-db-01.yaml;
-
     site = {
       hostIp = "192.168.10.110";
       internalIp = "10.10.0.110";

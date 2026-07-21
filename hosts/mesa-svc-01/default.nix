@@ -11,7 +11,6 @@
 
     modules.profiles.server.system
 
-    modules.platform.sops.system
     modules.services.jellyfin.system
     modules.services.podman.system
     modules.hardware.nvidia.system
@@ -29,8 +28,6 @@
       # netnsSnatHosts defaults to [dbEndpointIp], which SNATs the arrs' netns traffic to
       # the remote db so replies route back; no need to set it.
     };
-
-    sops.secretsFile = ../../secrets/mesa-svc-01.yaml;
 
     # gets svc-01's hostIp into db's pg_hba; the arrs' netns traffic is SNAT'd to this hostIp.
     postgres.client.enable = true;

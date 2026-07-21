@@ -16,7 +16,6 @@ in {
     modules.profiles.server.system
 
     modules.services.caddy.system
-    modules.platform.sops.system
   ];
 
   # the site's Caddyfile tail, templated over the host's lab facts. no pathExists guard,

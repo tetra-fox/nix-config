@@ -12,7 +12,6 @@
 
     modules.profiles.server.system
 
-    modules.platform.sops.system
     modules.services.jellyfin.system
     modules.services.podman.system
     modules.services.arr-stack.default
@@ -34,8 +33,6 @@
       torrentingPort = 42924;
       sabnzbdHostWhitelist = ["sabnzbd.${config.lab.site.domain}"];
     };
-
-    sops.secretsFile = ../../secrets/fairlane-svc-01.yaml;
 
     # pure client now: the arrs reach db-01 via the derived endpoint + the netns SNAT. this flag
     # gets svc-01's hostIp into db-01's pg_hba.

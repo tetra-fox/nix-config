@@ -2,8 +2,6 @@ _: {
   imports = [../common/edge-host.nix];
 
   lab = {
-    sops.secretsFile = ../../secrets/fairlane-edge-01.yaml;
-
     site = {
       hostIp = "192.168.10.150";
       internalIp = "10.10.0.150";

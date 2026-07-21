@@ -4,7 +4,6 @@
 
     modules.profiles.server.system
     modules.platform.zfs.system # pool over the four passthrough drives
-    modules.platform.sops.system # b2 + restic credentials for the offsite backup
 
     modules.services.samba.system
     modules.services.restic.system # offsite backup of the small datasets to backblaze b2
@@ -14,8 +13,6 @@
 
   lab = {
     avahi.publish = true;
-
-    sops.secretsFile = ../../secrets/mesa-store-01.yaml;
 
     site.hostIp = "192.168.10.100";
     site.internalIp = "10.10.0.100";

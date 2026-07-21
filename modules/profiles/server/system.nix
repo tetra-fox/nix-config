@@ -19,6 +19,10 @@
     # agent half is universal, so it lives here instead of a per-host monitoring.nix.
     modules.services.monitoring.system
     modules.services.logging.system
+
+    # sops on every server: the secrets file defaults to secrets/<hostname>.yaml, so a
+    # host needs no per-host wiring (null on the hosts that have no secrets)
+    modules.platform.sops.system
   ];
 
   lab.logging.enable = true;
