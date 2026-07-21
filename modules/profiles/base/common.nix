@@ -14,7 +14,7 @@
   environment.systemPackages = with pkgs;
     [
       btop
-      tmux
+      zellij
       lsof
       mtr
       bind # dig/nslookup for dns debugging

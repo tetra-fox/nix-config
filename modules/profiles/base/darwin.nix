@@ -24,7 +24,7 @@
   # user-scoped system.defaults and homebrew run as this user
   system.primaryUser = username;
 
-  # sudo via touch id; pam_reattach keeps it working inside tmux
+  # sudo via touch id; pam_reattach keeps it working inside zellij
   security.pam.services.sudo_local = {
     touchIdAuth = true;
     reattach = true;

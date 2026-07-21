@@ -64,6 +64,7 @@ in {
       '';
       shellAliases = {
         nix-cleanup = "sudo nix-collect-garbage -d && nix-collect-garbage -d && sudo nix store optimise";
+        zj = lib.getExe pkgs.zellij;
       };
       history = {
         ignoreAllDups = true;
