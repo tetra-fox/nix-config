@@ -52,7 +52,7 @@
     acl internal {
       127.0.0.0/8;
       ::1;
-      ${lib.concatMapStrings (r: r + ";\n      ") cfg.trustedRanges}
+      ${lib.concatMapStrings (r: r + ";\n      ") (cfg.trustedRanges ++ cfg.extraTrustedRanges)}
     };
   '';
 
@@ -132,6 +132,12 @@ in {
       type = lib.types.listOf lib.types.str;
       default = ["192.168.0.0/16" "10.0.0.0/8"];
       description = "client ranges that get the internal view (recursion + the authoritative zone + RPZ)";
+    };
+
+    extraTrustedRanges = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "ranges appended to trustedRanges, so a site can add (e.g. v6) ranges without restating the defaults";
     };
 
     rpzLists = lib.mkOption {

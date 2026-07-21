@@ -10,11 +10,8 @@
     dualStack = true;
 
     # v6 clients must be in the internal view or they get REFUSED (the default trustedRanges is
-    # v4-only). add the LAN ULA range + link-local so the ULA VIP and v6 LAN clients resolve.
-    # the default v4 ranges are replaced here, so restate them alongside the v6 ones.
-    trustedRanges = [
-      "192.168.0.0/16"
-      "10.0.0.0/8"
+    # v4-only). append the LAN ULA range + link-local so the ULA VIP and v6 LAN clients resolve.
+    extraTrustedRanges = [
       "fd00::/8" # LAN ULAs (the resolver VIP + v6 clients)
       "fe80::/10" # v6 link-local
     ];
