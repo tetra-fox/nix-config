@@ -1,10 +1,5 @@
 {modules, ...}: {
-  imports = [
-    modules.profiles.server.system
-
-    modules.services.caddy.system
-    modules.platform.sops.system
-  ];
+  imports = [../common/edge-host.nix];
 
   lab = {
     sops.secretsFile = ../../secrets/fairlane-edge-01.yaml;
@@ -15,17 +10,6 @@
       proxmoxParent = "plush";
     };
 
-    caddy = {
-      staticTail = import ./caddy-tail.nix;
-
-      # HA is real on fairlane's 2 nodes for stateless caddy: edge-01 on plush, edge-02 on
-      # pooltoy, VIP flips. heartbeat and VIP both ride the server VLAN (see the caddy module).
-      ha = {
-        enable = true;
-        vip = "192.168.10.155";
-      };
-    };
+    caddy.staticTail = import ../common/fairlane-caddy-tail.nix;
   };
-
-  system.stateVersion = "26.11";
 }

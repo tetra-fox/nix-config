@@ -1,11 +1,5 @@
-# see mesa-edge-01; caddy is stateless so this is a clone with its own ACME certs.
 {modules, ...}: {
-  imports = [
-    modules.profiles.server.system
-
-    modules.services.caddy.system
-    modules.platform.sops.system
-  ];
+  imports = [../common/edge-host.nix];
 
   lab = {
     sops.secretsFile = ../../secrets/mesa-edge-02.yaml;
@@ -13,13 +7,6 @@
     site.hostIp = "192.168.10.151";
     site.internalIp = "10.10.0.151";
 
-    caddy.staticTail = import ../mesa-edge-01/caddy-tail.nix;
-
-    caddy.ha = {
-      enable = true;
-      vip = "192.168.10.155";
-    };
+    caddy.staticTail = import ../common/mesa-caddy-tail.nix;
   };
-
-  system.stateVersion = "26.11";
 }

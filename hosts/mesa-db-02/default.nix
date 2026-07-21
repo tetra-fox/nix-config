@@ -1,5 +1,5 @@
 {
-  imports = [../mesa-db-common.nix];
+  imports = [../common/mesa-db.nix];
 
   lab = {
     sops.secretsFile = ../../secrets/mesa-db-02.yaml;

@@ -2,18 +2,11 @@
 # and roles on purpose: any node can be the leader, so each must be able to bootstrap
 # and own the databases. host files keep only their IPs and sops yaml.
 {
-  config,
-  lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
   ...
 }: let
-  arrDbs =
-    (import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }).arrDatabases;
+  arrDbs = topo.arrDatabases;
 in {
   imports = [
     modules.profiles.server.system

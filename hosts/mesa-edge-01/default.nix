@@ -1,10 +1,5 @@
 {modules, ...}: {
-  imports = [
-    modules.profiles.server.system
-
-    modules.services.caddy.system
-    modules.platform.sops.system
-  ];
+  imports = [../common/edge-host.nix];
 
   lab = {
     sops.secretsFile = ../../secrets/mesa-edge-01.yaml;
@@ -12,13 +7,6 @@
     site.hostIp = "192.168.10.150";
     site.internalIp = "10.10.0.150";
 
-    caddy.staticTail = import ./caddy-tail.nix;
-
-    caddy.ha = {
-      enable = true;
-      vip = "192.168.10.155";
-    };
+    caddy.staticTail = import ../common/mesa-caddy-tail.nix;
   };
-
-  system.stateVersion = "26.11";
 }
