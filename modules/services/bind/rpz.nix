@@ -11,7 +11,7 @@
   ...
 }: let
   cfg = config.lab.bind;
-  rpzDir = "/var/lib/named/rpz";
+  inherit (import ./_rpz-common.nix) rpzDir rpzStubText;
 
   # fetch to a temp file first so a failed download (curl --fail + set -e aborts before the mv)
   # leaves the previous good file in place.
@@ -21,8 +21,8 @@
       then ''curl --fail --silent --show-error --location --max-time 60 "${l.url}" -o "$tmp/${l.name}"''
       else ''
         {
-          # $TTL is literal RPZ zone-file syntax, not a shell variable; single quotes keep it literal
-          printf '$TTL 30\n@ IN SOA localhost. hostmaster.localhost. 1 3600 900 604800 30\n  IN NS localhost.\n'
+          # the shared seed stub ($TTL etc is zone-file syntax; escapeShellArg keeps it literal)
+          printf '%s' ${lib.escapeShellArg rpzStubText}
           curl --fail --silent --show-error --location --max-time 60 "${l.url}" \
             | awk '$1 == "0.0.0.0" && NF >= 2 { printf "%s CNAME .\n*.%s CNAME .\n", $2, $2 }'
         } > "$tmp/${l.name}"

@@ -12,15 +12,8 @@
 }: let
   cfg = config.lab.bind;
 
-  rpzDir = "/var/lib/named/rpz";
-
-  # named refuses to load a zone whose file is empty or missing, so each RPZ file is seeded with
-  # this SOA+NS stub before the first fetch.
-  rpzStub = pkgs.writeText "rpz-empty.zone" ''
-    $TTL 30
-    @ IN SOA localhost. hostmaster.localhost. 1 3600 900 604800 30
-      IN NS  localhost.
-  '';
+  inherit (import ./_rpz-common.nix) rpzDir rpzStubText;
+  rpzStub = pkgs.writeText "rpz-empty.zone" rpzStubText;
 
   rpzZones =
     map (l: {
