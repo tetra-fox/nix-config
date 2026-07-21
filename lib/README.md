@@ -1,7 +1,7 @@
 # fleet: capability-based cross-host discovery
 
-`fleet.nix` is a stack-agnostic engine for "which host in my site provides service X, and at
-what address" -- without any host naming another by name. `site-topology.nix` is the mesa
+`engine.nix` is a stack-agnostic engine for "which host in my site provides service X, and at
+what address" -- without any host naming another by name. `topology.nix` is the mesa
 *policy* layer on top of it (the named derives mesa modules consume). The split is the point:
 the engine names no services and no sites, so it's the reusable part; the mesa vocabulary is a
 thin consumer.
@@ -19,13 +19,13 @@ Anything resolves providers by capability, scoped to the same site (a site is th
 prefix -- `mesa-db-01` and `mesa-svc-01` share site `mesa`):
 
 ```nix
-fleet = import ./fleet.nix { inherit lib; } { inherit nixosConfigurations; hostName; };
-fleet.ipProviding "db-server"    # the single provider's IP (null if 0 or >1)
-fleet.ipsProviding "db-client"   # every provider's IP
-fleet.hostsProviding "db-ha-node"# the provider host names
-fleet.endpointFor {              # the address for an optionally-HA service:
-  singleCap = "db-server";       #   the single provider while one exists,
-  haCap = "db-ha-node";          #   else the floating VIP the HA nodes advertise
+engine = import ./engine.nix { inherit lib; } { inherit nixosConfigurations; hostName; };
+engine.ipProviding "db-server"      # the single provider's IP (null if 0 or >1)
+engine.ipsProviding "db-client"     # every provider's IP
+engine.hostsProviding "db-ha-node"  # the provider host names
+engine.optionalHaEndpointFor {      # the address for an optionally-HA service:
+  singleCap = "db-server";          #   the single provider while one exists,
+  haCap = "db-ha-node";             #   else the floating VIP the HA nodes advertise
   vipPath = ["lab" "postgres" "ha" "vip"];
 }
 ```
@@ -48,7 +48,7 @@ engine itself only ever touches inputs, so a fleet built on these primitives can
 
 ## Reusing it elsewhere
 
-`fleet.nix` depends only on `lib` + `site-prefix.nix` (both mesa-free). To use it in another
+`engine.nix` depends only on `lib` + `site-prefix.nix` (both mesa-free). To use it in another
 repo: copy those two files, have hosts set `lab.topology.provides` + `lab.site.{hostIp,
 internalIp}` (or adapt `ipOf`/`provides` to your option names), and write your own policy layer
 of named derives. No internal VLAN? Leave `internalIp` null and `ipOf` returns `hostIp`.

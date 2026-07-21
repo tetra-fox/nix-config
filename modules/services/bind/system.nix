@@ -7,6 +7,7 @@
   config,
   lib,
   pkgs,
+  caps,
   ...
 }: let
   cfg = config.lab.bind;
@@ -205,7 +206,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    lab.topology.provides = ["dns"];
+    lab.topology.provides = [caps.dns.name];
 
     services.bind = {
       enable = true;

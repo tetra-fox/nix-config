@@ -6,16 +6,11 @@
   pkgs,
   nixosConfigurations,
   modules,
-  fleet,
+  topo,
   ...
 }: let
   cfg = config.lab.bind;
   inherit (cfg) ha;
-
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
 
   selfInternalIp = config.lab.site.internalIp;
   allDnsInternalIps =

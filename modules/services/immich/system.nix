@@ -18,15 +18,11 @@
 {
   config,
   lib,
-  fleet,
-  nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   cfg = config.lab.immich;
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
   # the public FQDN, declared once. the caddy route and immich's externalDomain (for
   # share links) both derive from it, so the hostname lives in one place.
   fqdn = "immich.${config.lab.site.domain}";
@@ -73,7 +69,7 @@ in {
       }
     ];
 
-    lab.topology.provides = ["immich"];
+    lab.topology.provides = [caps.immich.name];
     # immich uploads whole photos/videos in one request, so lift the body cap well past any
     # single asset (caddy's default would reject large originals).
     lab.topology.routes = [

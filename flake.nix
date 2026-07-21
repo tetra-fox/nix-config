@@ -137,7 +137,7 @@
       # myputer). the signing key is the 1password ssh signing key, a different key
       # from shared/keyring/tetra.pub (fleet shell access).
       identity = {
-        name = "tetra";
+        name = username;
         email = "me@tetra.cool";
         signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
       };
@@ -207,6 +207,9 @@
           src = ./lib;
           loader = inputs.haumea.lib.loaders.path;
         };
+        # the mesa capability vocabulary (lib/caps.nix): one record per capability so provider
+        # modules and the topology consumer both read caps.<x>.name instead of restating the string.
+        caps = import ./lib/caps.nix;
         shared = {
           wallpapers = ./shared/wallpapers;
           keyring = ./shared/keyring;
@@ -301,9 +304,12 @@
                 # fleet-wide so every nixos host has the `sops` option without a per-host
                 # import; modules can't reach `inputs` to pull it in themselves.
                 inputs.sops-nix.nixosModules.sops
-                # lab.site.* declarations fleet-wide: site-topology + the deploy output read
-                # them as a contract regardless of which site a host is in.
+                # lab.site.* declarations fleet-wide: the topology layer + the deploy output
+                # read them as a contract regardless of which site a host is in.
                 ./modules/sites/_options.nix
+                # provides the per-host `topo` module arg (the fleet topology attrset), so
+                # consumers read topo.<derive> instead of re-importing fleet.topology each time.
+                ./modules/sites/_topology.nix
                 # fleet-wide so adding arr-stack to a host doesn't silently fail for want of
                 # the `vpnNamespaces` option; inert on hosts that declare no namespace.
                 inputs.vpn-confinement.nixosModules.default

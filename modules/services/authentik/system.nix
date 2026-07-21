@@ -2,8 +2,8 @@
   config,
   lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
@@ -13,11 +13,7 @@
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
-  dbHost =
-    (import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }).dbEndpointIp;
+  dbHost = topo.dbEndpointIp;
 
   authentikBase = {
     image = "ghcr.io/goauthentik/server:${authentikTag}";
@@ -60,10 +56,10 @@ in {
   config = lib.mkIf cfg.enable {
     lab = {
       topology = {
-        # auth-ldap: the LDAP outpost endpoint, resolvable as ipProviding "auth-ldap" +
+        # auth-ldap: the LDAP outpost endpoint, resolvable via ipProviding caps.authLdap.name +
         # lab.authentik.ldapPort. no nix consumer yet (jellyfin's ldap plugin is configured
         # by hand), the capability just makes the endpoint discoverable
-        provides = ["auth-server" "auth-ldap"];
+        provides = [caps.authServer.name caps.authLdap.name];
         routes = [
           {
             host = "auth.${config.lab.site.domain}";

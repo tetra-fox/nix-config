@@ -2,19 +2,14 @@
   config,
   lib,
   modules,
-  fleet,
   pkgs,
   nixosConfigurations,
+  topo,
   ...
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.postgres;
   inherit (cfg) ha;
-
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
 
   selfIp = config.lab.site.internalIp;
 

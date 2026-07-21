@@ -4,6 +4,7 @@
   lib,
   pkgs,
   fleet,
+  caps,
   ...
 }: let
   cfg = config.lab.postgres;
@@ -13,9 +14,9 @@ in {
   # host without importing the server or HA module. imported by server, HA, and pure clients
   # alike, so it's the one place every db-role host passes through.
   config.lab.topology.provides =
-    lib.optional cfg.server.enable "db-server"
-    ++ lib.optional cfg.ha.enable "db-ha-node"
-    ++ lib.optional cfg.client.enable "db-client";
+    lib.optional cfg.server.enable caps.dbServer.name
+    ++ lib.optional cfg.ha.enable caps.dbHaNode.name
+    ++ lib.optional cfg.client.enable caps.dbClient.name;
 
   options.lab.postgres = {
     server.enable = lib.mkEnableOption "run the postgres server on this host";

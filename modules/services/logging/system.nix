@@ -2,8 +2,7 @@
   config,
   lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
   ...
 }: let
   siteData = config.lab.site.dataDir;
@@ -13,10 +12,6 @@
   # loki.dataDir wants a full path, unlike prometheus.stateDir which is relative to /var/lib
   lokiStateDir = "${siteData}/loki";
 
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = hn;
-  };
   inherit (topo) hostsInSite siteServers serverIp multiHost myIp;
 
   # reached by both same-box grafana and remote agents, so binds all interfaces; the

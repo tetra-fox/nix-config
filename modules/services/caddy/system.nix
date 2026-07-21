@@ -2,16 +2,13 @@
   config,
   lib,
   modules,
-  fleet,
   pkgs,
   nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
   defaultAuthUpstream =
     if (config.lab.authentik.enable or false)
     then "127.0.0.1:9000"
@@ -191,7 +188,7 @@ in {
   };
 
   config = {
-    lab.topology.provides = ["edge"];
+    lab.topology.provides = [caps.edge.name];
 
     services.caddy = {
       enable = true;

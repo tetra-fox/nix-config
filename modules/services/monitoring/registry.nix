@@ -4,14 +4,9 @@
   config,
   lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
   ...
 }: let
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
   inherit (topo) multiHost myIp;
 in {
   options.lab.monitoring = {

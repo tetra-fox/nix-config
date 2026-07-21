@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  caps,
   ...
 }: {
   imports = [./apikey.nix];
 
-  lab.topology.provides = ["media"];
+  lab.topology.provides = [caps.media.name];
   lab.topology.routes = [
     {
       host = "jellyfin.${config.lab.site.domain}";

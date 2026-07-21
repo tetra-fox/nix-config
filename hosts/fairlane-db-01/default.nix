@@ -3,18 +3,11 @@
 # connect here; the db list is derived from the arr host (fleet.topology arrDatabases), not
 # hardcoded. no authentik at fairlane, so the only role is arr.
 {
-  config,
-  lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
   ...
 }: let
-  arrDbs =
-    (import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }).arrDatabases;
+  arrDbs = topo.arrDatabases;
 in {
   imports = [
     modules.profiles.server.system

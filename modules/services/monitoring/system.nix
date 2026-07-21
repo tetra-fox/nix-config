@@ -4,7 +4,8 @@
   pkgs,
   nixosConfigurations,
   modules,
-  fleet,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
@@ -15,10 +16,6 @@
   nodePort = 9100;
   systemdPort = 9558;
 
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = hn;
-  };
   inherit (topo) hostsInSite ipOf siteServers multiHost myIp;
 
   # grafana's public fqdn. declared once here and used for BOTH the stats route and grafana's
@@ -126,7 +123,7 @@ in {
 
     # ---- server: prometheus + grafana, one per site ----
     (lib.mkIf cfg.server.enable {
-      lab.topology.provides = ["monitoring"];
+      lab.topology.provides = [caps.monitoring.name];
       lab.topology.routes = [
         {
           host = statsFqdn;

@@ -2,14 +2,9 @@
   config,
   lib,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
   ...
 }: let
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
   edgeIps = topo.edgeHostIps;
 in {
   lab.topology.routes = [

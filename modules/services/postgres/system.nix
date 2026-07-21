@@ -2,21 +2,14 @@
   config,
   lib,
   modules,
-  fleet,
   pkgs,
-  nixosConfigurations,
+  topo,
   ...
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.postgres;
 
-  inherit
-    ((import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }))
-    dbClientCidrs
-    ;
+  inherit (topo) dbClientCidrs;
 
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
