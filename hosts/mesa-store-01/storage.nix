@@ -95,14 +95,16 @@ in {
         # anongid=100), 0700, deliberately not group media and no setgid
         "d /mnt/megamax/backup/homeassistant 0700 admin users -"
       ]
-      # immich library + its db-dump backups, owned by the pinned immich uid (990) so the
+      # immich library + its db-dump backups, owned by the immich host's pinned uid so the
       # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
       # a host advertises the immich capability.
-      ++ lib.optionals (immichIp != null) [
-        "d /mnt/megamax/immich 0700 990 990 -"
-        "d /mnt/megamax/immich/library 0700 990 990 -"
-        "d /mnt/megamax/immich/backups 0700 990 990 -"
-      ];
+      ++ lib.optionals (immichIp != null) (let
+        uid = toString topo.immichUid;
+      in [
+        "d /mnt/megamax/immich 0700 ${uid} ${uid} -"
+        "d /mnt/megamax/immich/library 0700 ${uid} ${uid} -"
+        "d /mnt/megamax/immich/backups 0700 ${uid} ${uid} -"
+      ]);
 
     # boot-time safety net that re-asserts group ownership + setgid across the group-shared
     # trees (media only -- see groupSharedTrees), so a flubbed copy, a wrong-perms import, or a
@@ -173,8 +175,8 @@ in {
   lab.topology.provides = [caps.storage.name];
 
   # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no
-  # squash): immich runs as uid 990 on svc-02 and the dirs are owned 990 here, so writes
-  # line up. its own fsid=0 v4 root scoped to the immich host.
+  # squash): the dirs here are owned by the immich host's pinned uid, so writes line up.
+  # its own fsid=0 v4 root scoped to the immich host.
   services.nfs.server = {
     enable = true;
     exports =

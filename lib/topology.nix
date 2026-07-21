@@ -69,4 +69,14 @@ in
       if hosts != []
       then args.nixosConfigurations.${builtins.head hosts}.config.lab.arrStack.databases
       else [];
+
+    # the immich host's pinned uid (lab.immich.uid, a static-defaulted input, so cycle-safe).
+    # the store box owns the immich dataset dirs with it so NFS writes (numeric uids, no
+    # squash) land as immich on both ends.
+    immichUid = let
+      hosts = hostsProviding caps.immich.name;
+    in
+      if hosts != []
+      then args.nixosConfigurations.${builtins.head hosts}.config.lab.immich.uid
+      else null;
   }
