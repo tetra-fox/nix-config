@@ -66,7 +66,12 @@ in {
         inherit (cfg) package;
         dataDir = "${siteData}/postgresql/${cfg.package.psqlSchema}";
         enableTCPIP = true;
-        settings.listen_addresses = "*";
+        # mkForce: enableTCPIP hard-sets the wildcard upstream. fleet clients hit the
+        # east-west address, admin psql the server-VLAN one; nothing needs a wildcard
+        settings.listen_addresses = lib.mkForce (lib.concatStringsSep ", " (lib.unique (
+          ["127.0.0.1"]
+          ++ lib.filter (a: a != null) [config.lab.site.internalIp config.lab.site.hostIp]
+        )));
         authentication =
           lib.optionalString (effectiveCidrs != [])
           (lib.concatMapStringsSep "\n" (cidr: "host all all ${cidr} scram-sha-256") effectiveCidrs + "\n");

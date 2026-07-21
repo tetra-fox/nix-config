@@ -107,9 +107,11 @@ in {
         authentikBase
         // {
           cmd = ["server"];
+          # published on the internal VLAN only (same as the ldap outpost): the edge
+          # proxies from there and nothing legitimate hits authentik on the server VLAN
           ports = [
-            "${toString cfg.port}:${toString cfg.port}"
-            "9444:9443"
+            "${config.lab.site.internalIp}:${toString cfg.port}:${toString cfg.port}"
+            "${config.lab.site.internalIp}:9444:9443"
           ];
           volumes = [
             authentikDataVol

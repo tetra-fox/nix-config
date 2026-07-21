@@ -142,6 +142,8 @@ in {
         prometheus = {
           enable = true;
           stateDir = promStateDir;
+          # nothing remote reads prometheus itself, only the same-box grafana datasource
+          listenAddress = "127.0.0.1";
 
           globalConfig = {
             scrape_interval = "15s";

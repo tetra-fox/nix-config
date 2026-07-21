@@ -24,10 +24,11 @@
       SteamTokenDumperPluginEnabled = true;
     };
 
-    # KnownNetworks gates auth-free web UI access by subnet
+    # KnownNetworks gates auth-free web UI access by subnet; bind the server-VLAN address
+    # (trusted-VLAN clients route to it), not every interface
     ipcSettings = {
       Kestrel = {
-        Endpoints.HTTP.Url = "http://*:1242";
+        Endpoints.HTTP.Url = "http://${config.lab.site.hostIp}:1242";
         KnownNetworks = [
           config.lab.net.trustedCidr
         ];

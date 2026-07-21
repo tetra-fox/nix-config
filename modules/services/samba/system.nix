@@ -13,6 +13,10 @@
         workgroup = lib.mkDefault "WORKGROUP";
         "netbios name" = lib.mkDefault config.networking.hostName;
         "server string" = lib.mkDefault config.networking.hostName;
+        # clients (macs, file managers) live on the routed VLANs and land on the server
+        # VLAN; never listen on the isolated internal fabric
+        interfaces = "lo ${config.lab.site.serverInterface}";
+        "bind interfaces only" = "yes";
         security = "user";
         "guest account" = "nobody";
         "map to guest" = "Bad User";
@@ -40,6 +44,8 @@
     samba-wsdd = {
       enable = true;
       openFirewall = true;
+      # discovery announces on the client-facing VLAN only, same scope as smbd
+      interface = config.lab.site.serverInterface;
     };
 
     avahi.extraServiceFiles.smb = lib.mkIf config.services.avahi.enable (

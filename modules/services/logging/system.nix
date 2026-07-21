@@ -12,18 +12,16 @@
   # loki.dataDir wants a full path, unlike prometheus.stateDir which is relative to /var/lib
   lokiStateDir = "${siteData}/loki";
 
-  inherit (topo) hostsInSite siteServers serverIp multiHost myIp;
+  inherit (topo) siteServers serverIp;
 
-  # reached by both same-box grafana and remote agents, so binds all interfaces; the
-  # source-scoped nftables rule (monitoring module) gates access, not loki
-  lokiListen =
-    if multiHost
-    then "0.0.0.0"
-    else "127.0.0.1";
+  # loki binds the east-west address (the registry's bind rule), never every interface;
+  # same-box consumers (alloy below, grafana's datasource) use the same address, which
+  # routes over loopback, so the source-scoped nftables rule only gates remote agents
+  lokiListen = config.lab.monitoring.bindAddr;
 
   lokiHost =
     if serverEnabled
-    then "127.0.0.1"
+    then lokiListen
     else
       # serverIp is null during single-host bootstrap; loopback so alloy still starts
       (
@@ -189,7 +187,7 @@ in {
             name = "loki";
             type = "loki";
             access = "proxy";
-            url = "http://127.0.0.1:${toString cfg.lokiPort}";
+            url = "http://${lokiListen}:${toString cfg.lokiPort}";
           }
         ];
 
