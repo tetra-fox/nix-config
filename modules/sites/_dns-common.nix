@@ -28,7 +28,7 @@
       file = pkgs.replaceVars (./files + "/${config.lab.site.domain}.zone.in") {
         nsIp = config.lab.site.hostIp;
         edgeVip = topo.edgeEndpointIp;
-        hostRecords = topo.hostRecords;
+        inherit (topo) hostRecords;
       };
     };
   };
