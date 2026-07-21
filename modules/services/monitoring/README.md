@@ -91,10 +91,9 @@ from the `tetra-nurpkgs` package set) -- list-merged across modules.
   once two servers exist.
 - grafana 26.05+ wants an explicit `security.secret_key`; this module declares the sops
   secret and wires it via `$__file{...}` so the value doesn't land in the nix store
-- grafana is always reached via caddy (`stats.<site>.tetra.cool`), never directly. on a
-  multi-host site the caddy lives on a different box (the svc agent) and proxies across
-  to the server's grafana -- the upstream is auto-derived (see `modules/caddy`'s
-  `STATS_UPSTREAM`), so the Caddyfile never hardcodes which box runs grafana.
+- grafana is always reached via caddy (`stats.<site>.tetra.cool`), never directly. the
+  module declares the stats vhost via `lab.topology.routes`, so the edge renders the
+  upstream from the route registry and the Caddyfile never hardcodes which box runs grafana.
 - per-unit ingress/egress byte metrics need `DefaultIPAccounting = true`, set here.
   otherwise the `systemd_unit_ip_*_bytes` series are all zero
 - a proxmox VM that's a monitoring server (`<site>-mon-01`) needs `modules.platform.proxmox-vm.system`

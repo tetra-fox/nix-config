@@ -25,8 +25,7 @@ client ---> VIP:5432 (keepalived floats it across the 3 nodes)
   mutually exclusive and the module asserts it). Owns pg_hba via the DCS, so a NixOS-rendered
   pg_hba would be ignored -- the allow-list goes into `settings.bootstrap.dcs.postgresql.pg_hba`.
 - **HAProxy** -- on every node, routes `VIP:5432` to whichever backend answers Patroni's REST
-  `/primary` with 200 (the leader). Failover is invisible to keepalived. `VIP:5433` -> replicas
-  is declared but unused.
+  `/primary` with 200 (the leader). Failover is invisible to keepalived.
 - **keepalived** -- floats the VIP. Unicast VRRP (no L2 multicast reliance), all `BACKUP` +
   `noPreempt` so a recovered node doesn't flap the VIP. Tracks HAProxy liveness only.
 
@@ -58,5 +57,6 @@ watchdog, so a full kernel lockup is outside its reach (a true hardware watchdog
 - **No TLS on etcd or the Patroni REST API.** The internal VLAN (10.10.0.0/24) is isolated L2
   with only the db nodes on it -- that isolation is the trust boundary. If the VLAN ever gains
   other tenants, enable etcd peer/client TLS + Patroni REST auth.
-- **5433 read pool is unused.** The arr/authentik workload doesn't read-scale; the frontend is
-  declared for completeness. Wiring a client to it means accepting replica staleness.
+- **No read pool.** The arr/authentik workload doesn't read-scale, so haproxy only fronts the
+  writer. Adding one later means a second `listen` on the VIP checking `/replica` instead of
+  `/primary`, and clients that accept replica staleness.
