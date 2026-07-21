@@ -18,11 +18,13 @@
 {
   config,
   lib,
+  fleet,
   topo,
   caps,
   ...
 }: let
   cfg = config.lab.immich;
+  allowFrom = import fleet.nft {inherit lib;};
   # the public FQDN, declared once. the caddy route and immich's externalDomain (for
   # share links) both derive from it, so the hostname lives in one place.
   fqdn = "immich.${config.lab.site.domain}";
@@ -349,12 +351,8 @@ in {
       };
     };
 
-    # reach immich from this site's edge (caddy) hosts only, source-scoped via nftables.
-    # caddy proxies from its own box IP, not the VIP, so allow every edge host's real IP.
-    networking.firewall.extraInputRules =
-      lib.concatMapStringsSep "\n" (
-        ip: "ip saddr ${ip} tcp dport ${toString config.services.immich.port} accept"
-      )
-      topo.edgeHostIps;
+    # reach immich from this site's edge (caddy) hosts only. caddy proxies from its own
+    # box IP, not the VIP, so allow every edge host's real IP.
+    networking.firewall.extraInputRules = allowFrom topo.edgeHostIps [config.services.immich.port];
   };
 }

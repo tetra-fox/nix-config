@@ -1,11 +1,12 @@
 {
   config,
   lib,
-  modules,
+  fleet,
   topo,
   ...
 }: let
   edgeIps = topo.edgeHostIps;
+  allowFrom = import fleet.nft {inherit lib;};
 in {
   lab.topology.routes = [
     {
@@ -30,8 +31,5 @@ in {
     environmentFile = config.sops.templates."nowplaying.env".path;
   };
 
-  # source-scoped rules need the nftables backend (base profile enables it fleet-wide).
-  networking.firewall.extraInputRules = lib.mkIf (edgeIps != []) (
-    lib.concatMapStringsSep "\n" (ip: "ip saddr ${ip} tcp dport 8090 accept") edgeIps
-  );
+  networking.firewall.extraInputRules = lib.mkIf (edgeIps != []) (allowFrom edgeIps [8090]);
 }

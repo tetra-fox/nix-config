@@ -4,12 +4,14 @@
   pkgs,
   nixosConfigurations,
   modules,
+  fleet,
   topo,
   caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.monitoring;
+  allowFrom = import fleet.nft {inherit lib;};
   hn = config.networking.hostName;
   promStateDir = "${lib.removePrefix "/var/lib/" siteData}/prometheus";
 
@@ -108,16 +110,11 @@ in {
         }
       ];
 
-      # open every registered exporter port to this site's server only (source-scoped, nftables)
+      # open every registered exporter port to this site's server only
       networking.firewall.extraInputRules = lib.mkIf (multiHost && allExporterPorts != []) (
-        lib.concatMapStringsSep "\n" (
-          name: let
-            ip = ipOf name;
-          in
-            lib.optionalString (ip != null && name != hn)
-            "ip saddr ${ip} tcp dport { ${lib.concatMapStringsSep ", " toString allExporterPorts} } accept"
-        )
-        siteServers
+        allowFrom
+        (lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) siteServers)))
+        allExporterPorts
       );
     }
 
@@ -197,12 +194,9 @@ in {
       };
 
       # expose grafana + loki to this site's agents only (remote caddy proxies stats, remote
-      # alloy ships logs), source-scoped, never the whole VLAN
+      # alloy ships logs), never the whole VLAN
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
-        lib.concatMapStringsSep "\n" (
-          ip: "ip saddr ${ip} tcp dport { ${toString grafanaPort}, ${toString lokiPort} } accept"
-        )
-        siteAgentIps
+        allowFrom siteAgentIps [grafanaPort lokiPort]
       );
     })
   ];
