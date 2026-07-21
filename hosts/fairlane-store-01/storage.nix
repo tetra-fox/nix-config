@@ -3,19 +3,15 @@
 {
   config,
   lib,
-  fleet,
-  nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
   # the media host's internal-VLAN IP; the export + firewall scope to it.
-  svcIp =
-    (import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }).mediaHostIp;
+  svcIp = topo.mediaHostIp;
 in {
-  users.groups.media.gid = 1002;
+  users.groups.media.gid = config.lab.media.gid;
 
   systemd.tmpfiles.rules = [
     "d ${siteData} 0755 root media -"
@@ -33,7 +29,7 @@ in {
     options = ["defaults" "noatime" "nofail" "commit=60"];
   };
 
-  lab.topology.provides = ["storage"];
+  lab.topology.provides = [caps.storage.name];
 
   # single fsid=0 root scoped to svc-01; it mounts `:/`. keeps numeric uids so arr imports
   # land <svc-uid>:media, not nobody.

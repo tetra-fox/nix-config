@@ -14,15 +14,11 @@
   lib,
   pkgs,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
-  topo = import fleet.topology {inherit lib;} {
-    inherit nixosConfigurations;
-    hostName = config.networking.hostName;
-  };
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
   # the immich host's internal-VLAN IP; it NFS-mounts megamax/immich for the library.
@@ -72,9 +68,7 @@ in {
   # import it at boot without this. the pool name is host data, not a zfs-module default.
   boot.zfs.extraPools = ["megamax"];
 
-  users.groups.media = {
-    gid = 1002;
-  };
+  users.groups.media.gid = config.lab.media.gid;
 
   users.users = lib.genAttrs sambaUsers (name: {
     isSystemUser = true;
@@ -177,7 +171,7 @@ in {
   # admin:users (1000:100) since HAOS connects as root, backups owned by admin in admin's own
   # group, kept out of group media on purpose. the media dataset is one filesystem
   # (library/torrents/nzb are dirs, not datasets), so a single export per client.
-  lab.topology.provides = ["storage"];
+  lab.topology.provides = [caps.storage.name];
 
   # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no
   # squash): immich runs as uid 990 on svc-02 and the dirs are owned 990 here, so writes

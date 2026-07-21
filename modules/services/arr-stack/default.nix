@@ -3,8 +3,8 @@
   lib,
   pkgs,
   modules,
-  fleet,
-  nixosConfigurations,
+  topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
@@ -18,13 +18,7 @@
   vpn = config.vpnNamespaces.${vpnNs};
 
   # the single db server's IP, or the HA cluster's VIP. null until a host enables either
-  inherit
-    ((import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }))
-    dbEndpointIp
-    ;
+  inherit (topo) dbEndpointIp;
 
   # local db is reached over the veth bridge, remote db at its LAN endpoint
   defaultPostgresHost =
@@ -229,7 +223,7 @@ in {
 
   config = lib.mkMerge [
     {
-      lab.topology.provides = ["arr"];
+      lab.topology.provides = [caps.arr.name];
 
       assertions = let
         netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
@@ -360,7 +354,7 @@ in {
     }
 
     {
-      users.groups.${cfg.mediaGroup} = {};
+      users.groups.${cfg.mediaGroup}.gid = config.lab.media.gid;
       users.users = lib.mkMerge [
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {

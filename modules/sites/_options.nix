@@ -1,9 +1,9 @@
 # lab.site.* + lab.topology.* option declarations. fleet-wide (not in a site's facts file)
-# because site-topology + the colmena deploy output read them on every host, not just one site's.
+# because the topology layer + the colmena deploy output read them on every host, not just one site's.
 {lib, ...}: {
   # capabilities this host advertises for same-site service discovery. each service module
   # appends its own capability string when its enable flag is on (gated on a plain input, never
-  # a derived value -- see the no-recursion rule in site-topology.nix). site-topology reads this
+  # a derived value -- see the no-recursion rule in topology.nix). the topology layer reads this
   # across hosts to answer "which host in my site provides X".
   options.lab = {
     topology = {
@@ -114,6 +114,15 @@
         description = "the proxmox node hosting this VM (for topology); set on multi-node sites";
         example = "pooltoy";
       };
+    };
+
+    # the shared `media` group's gid. one fleet constant because NFS group-write squashes on gid
+    # (not name), so the store host (NFS server) and every client must agree. arr-stack pins the
+    # group to this on compute hosts; the store hosts set it directly.
+    media.gid = lib.mkOption {
+      type = lib.types.int;
+      default = 1002;
+      description = "gid of the shared media group; must match on the NFS store host and all clients";
     };
   };
 }
