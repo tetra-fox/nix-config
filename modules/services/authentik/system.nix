@@ -71,7 +71,7 @@ in {
         routes = [
           {
             host = "auth.${config.lab.site.domain}";
-            port = cfg.port;
+            inherit (cfg) port;
             # podman's published port DNATs before the input chain; an input allow
             # would be a dead rule
             openFirewall = false;

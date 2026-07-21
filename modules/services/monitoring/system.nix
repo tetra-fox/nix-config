@@ -26,7 +26,7 @@
   statsFqdn = "stats.${config.lab.site.domain}";
 
   # the registry (registry.nix) owns the bind-address rule; read it, don't recompute it
-  bindAddr = cfg.bindAddr;
+  inherit (cfg) bindAddr;
 
   # read only this sibling INPUT option, never a monitoring-derived value, or the
   # cross-host eval cycles
