@@ -227,6 +227,19 @@ in {
     {
       lab.topology.provides = [caps.arr.name];
 
+      # the arrs log more to their <name>.txt than to stdout, so ship those to the site
+      # loki too; the media group grants alloy read on the 0644/0664 files. sabnzbd and
+      # qbittorrent logs are 0600 and stay journal-only.
+      lab.logging = {
+        extraGroups = [mediaGroup];
+        fileSources =
+          map (name: {
+            job = name;
+            path = "${siteData}/${name}/logs/${name}.txt";
+          })
+          (lib.attrNames arrServices);
+      };
+
       assertions = let
         netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
         anyArrInNetns = netnsArrs != [];

@@ -7,7 +7,6 @@
     ./storage.nix
     ./asf.nix
     ./nowplaying.nix
-    ./monitoring.nix
 
     modules.profiles.server.system
 
