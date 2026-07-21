@@ -14,7 +14,6 @@
     mountpoint = "/mnt/media";
   };
 
-  # dataDir root is group media so service uids can co-write; the media group is declared by
-  # arr-stack, pinned to lab.media.gid.
-  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root media -"];
+  # dataDir root is group media so service uids can co-write
+  lab.site.dataDirGroup = config.lab.media.group;
 }

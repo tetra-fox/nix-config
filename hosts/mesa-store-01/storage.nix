@@ -19,7 +19,6 @@
   caps,
   ...
 }: let
-  siteData = config.lab.site.dataDir;
   allowFrom = import fleet.nft {inherit lib;};
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
@@ -70,6 +69,7 @@ in {
   boot.zfs.extraPools = ["megamax"];
 
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
+  lab.site.dataDirGroup = config.lab.media.group;
 
   users.users = lib.genAttrs sambaUsers (name: {
     isSystemUser = true;
@@ -87,7 +87,6 @@ in {
   systemd = {
     tmpfiles.rules =
       [
-        "d ${siteData} 0755 root media -"
         "d /mnt/megamax/media/library 2775 admin media -"
         "d /mnt/megamax/media/torrents 2775 admin media -"
         "d /mnt/megamax/media/nzb 2775 admin media -"

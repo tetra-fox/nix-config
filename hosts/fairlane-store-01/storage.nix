@@ -8,15 +8,15 @@
   caps,
   ...
 }: let
-  siteData = config.lab.site.dataDir;
   allowFrom = import fleet.nft {inherit lib;};
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
 in {
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
+  lab.site.dataDirGroup = config.lab.media.group;
+
   systemd.tmpfiles.rules = [
-    "d ${siteData} 0755 root media -"
     # setgid so new files inherit group media, letting service uids + SMB @users share write.
     "Z /mnt/media/media - admin media 2775"
     "Z /mnt/media/torrents - admin media 2775"

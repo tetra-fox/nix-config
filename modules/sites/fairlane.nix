@@ -11,8 +11,7 @@ _: {
     site = {
       domain = "fairlane.tetra.cool";
       internalCidr = "10.10.0.0/24";
-      # each host creates+owns this dir itself via tmpfiles (ownership differs per host),
-      # so no tmpfiles rule here
+      # created by _common.nix's tmpfiles rule, group per lab.site.dataDirGroup
       dataDir = "/var/lib/fairlane";
     };
 

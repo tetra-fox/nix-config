@@ -12,8 +12,7 @@
     mountpoint = "/mnt/store";
   };
 
-  # dataDir root is group media so service uids + samba @users can co-write; the per-service
-  # subdirs under it are created by their own modules (arr-stack etc). the media group itself is
-  # declared by arr-stack, pinned to lab.media.gid.
-  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root media -"];
+  # dataDir root is group media so service uids can co-write; the per-service subdirs
+  # under it are created by their own modules (arr-stack etc)
+  lab.site.dataDirGroup = config.lab.media.group;
 }

@@ -97,10 +97,16 @@
         default = null;
         description = ''
           site-scoped state root (service modules put their state under it), set in the
-          site facts file. each host creates and owns the directory itself via tmpfiles
-          (ownership differs per host). null = host belongs to no site.
+          site facts file. _common.nix creates it via tmpfiles, group per dataDirGroup.
+          null = host belongs to no site.
         '';
         example = "/var/lib/mesa";
+      };
+
+      dataDirGroup = lib.mkOption {
+        type = lib.types.str;
+        default = "root";
+        description = "group owning the dataDir root; media hosts set the shared media group so services co-write";
       };
 
       # the site's public domain, set in the per-site facts file. service modules build their vhost

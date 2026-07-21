@@ -17,8 +17,5 @@
     };
   };
 
-  # no storage.nix here, so create the siteData root itself
-  systemd.tmpfiles.rules = ["d ${config.lab.site.dataDir} 0755 root root -"];
-
   system.stateVersion = "26.11";
 }

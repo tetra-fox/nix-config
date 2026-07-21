@@ -37,6 +37,11 @@
     };
   };
 
+  # the site data root, owned once here instead of per host; only the group varies
+  systemd.tmpfiles.rules = lib.mkIf (config.lab.site.dataDir != null) [
+    "d ${config.lab.site.dataDir} 0755 root ${config.lab.site.dataDirGroup} -"
+  ];
+
   topology.self = {
     parent = config.lab.site.proxmoxParent;
     guestType = "vm";
