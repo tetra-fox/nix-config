@@ -34,7 +34,9 @@
     services.jellyfin = {
       enable = true;
       group = lib.mkDefault config.lab.media.group;
-      openFirewall = true;
+      # no openFirewall: clients come through the vhost, so the route's derived edge
+      # allow covers 8096 and the UDP autodiscovery ports have nothing to discover for
+      openFirewall = false;
       dataDir = "${config.lab.site.dataDir}/jellyfin/data";
       cacheDir = "${config.lab.site.dataDir}/jellyfin/cache";
       configDir = "${config.lab.site.dataDir}/jellyfin/config";

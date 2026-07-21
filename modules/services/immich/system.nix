@@ -18,13 +18,11 @@
 {
   config,
   lib,
-  fleet,
   topo,
   caps,
   ...
 }: let
   cfg = config.lab.immich;
-  allowFrom = import fleet.nft {inherit lib;};
   # the public FQDN, declared once. the caddy route and immich's externalDomain (for
   # share links) both derive from it, so the hostname lives in one place.
   fqdn = "immich.${config.lab.site.domain}";
@@ -77,7 +75,7 @@ in {
     lab.topology.routes = [
       {
         host = fqdn;
-        port = 2283;
+        port = config.services.immich.port;
         maxBodySize = "100GB"; # mmmm prores log :woozy:
       }
     ];
@@ -350,9 +348,5 @@ in {
         user.deleteDelay = 7;
       };
     };
-
-    # reach immich from this site's edge (caddy) hosts only. caddy proxies from its own
-    # box IP, not the VIP, so allow every edge host's real IP.
-    networking.firewall.extraInputRules = allowFrom topo.edgeHostIps [config.services.immich.port];
   };
 }

@@ -310,6 +310,9 @@
                 # provides the per-host `topo` module arg (the fleet topology attrset), so
                 # consumers read topo.<derive> instead of re-importing fleet.topology each time.
                 ./modules/sites/_topology.nix
+                # firewall allows for published routes (edge hosts -> route port), so a
+                # service that declares a route never hand-writes its ingress rule.
+                ./modules/sites/_route-firewall.nix
                 # fleet-wide so adding arr-stack to a host doesn't silently fail for want of
                 # the `vpnNamespaces` option; inert on hosts that declare no namespace.
                 inputs.vpn-confinement.nixosModules.default

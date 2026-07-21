@@ -49,6 +49,15 @@
               description = "request_body max_size for this vhost (e.g. immich's large uploads); null = caddy default";
               example = "50GB";
             };
+            openFirewall = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = ''
+                let _route-firewall.nix admit the site's edge hosts to this route's port.
+                false for upstreams reachable another way (podman-published ports DNAT
+                before the input chain ever sees them).
+              '';
+            };
           };
         });
         default = [];

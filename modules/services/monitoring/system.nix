@@ -193,10 +193,11 @@ in {
         };
       };
 
-      # expose grafana + loki to this site's agents only (remote caddy proxies stats, remote
-      # alloy ships logs), never the whole VLAN
+      # expose loki to this site's agents only (remote alloy ships logs), never the whole
+      # VLAN. grafana's allow is derived from its route (_route-firewall.nix): only the
+      # edge hosts proxy it, agents have no business on 3000.
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
-        allowFrom siteAgentIps [grafanaPort lokiPort]
+        allowFrom siteAgentIps [lokiPort]
       );
     })
   ];
