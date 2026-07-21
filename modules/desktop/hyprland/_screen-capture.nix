@@ -11,10 +11,9 @@
     slurp
   ];
 
-  wayland.windowManager.hyprland.extraLuaFiles."screen-capture".content =
-    pkgs.replaceVars ./_screen-capture.lua {
-      hyprshot = lib.getExe config.programs.hyprshot.package;
-      wfrecorder = lib.getExe pkgs.wf-recorder;
-      slurp = lib.getExe pkgs.slurp;
-    };
+  wayland.windowManager.hyprland.extraLuaFiles."screen-capture".content = pkgs.replaceVars ./_screen-capture.lua {
+    hyprshot = lib.getExe config.programs.hyprshot.package;
+    wfrecorder = lib.getExe pkgs.wf-recorder;
+    slurp = lib.getExe pkgs.slurp;
+  };
 }

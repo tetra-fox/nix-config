@@ -15,10 +15,9 @@
     };
   };
 
-  wayland.windowManager.hyprland.extraLuaFiles.clipboard.content =
-    pkgs.replaceVars ./_clipboard.lua {
-      inherit main_mod;
-      kitty = lib.getExe pkgs.kitty;
-      clipse = lib.getExe config.services.clipse.package;
-    };
+  wayland.windowManager.hyprland.extraLuaFiles.clipboard.content = pkgs.replaceVars ./_clipboard.lua {
+    inherit main_mod;
+    kitty = lib.getExe pkgs.kitty;
+    clipse = lib.getExe config.services.clipse.package;
+  };
 }
