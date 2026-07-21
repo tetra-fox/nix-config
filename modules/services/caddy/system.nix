@@ -11,16 +11,18 @@
   siteData = config.lab.site.dataDir;
   defaultAuthUpstream =
     if (config.lab.authentik.enable or false)
-    then "127.0.0.1:9000"
+    then "127.0.0.1:${toString config.lab.authentik.port}"
     else if topo.authServerIp != null
-    then "${topo.authServerIp}:9000"
+    then "${topo.authServerIp}:${toString topo.authServerPort}"
+    # no auth server anywhere in this site: AUTH_UPSTREAM is still set in caddy's env,
+    # but no vhost references it, so the value is a never-routed placeholder
     else "127.0.0.1:9000";
 
   # the arr host's address, for a site (fairlane) that proxies the arr UIs directly instead of
   # through authentik forward_auth (mesa's pattern). the arr-stack DNATs each arr's port onto its
   # host, so the Caddyfile uses {$ARR_HOST}:<port>. loopback if the arrs are on this box, else
   # the derived arr host. null-safe: sites without an arr host just don't reference it.
-  arrIsLocal = config.lab.arrStack.databases or [] != [];
+  arrIsLocal = builtins.elem caps.arr.name config.lab.topology.provides;
   arrHostAddr =
     if arrIsLocal
     then "127.0.0.1"

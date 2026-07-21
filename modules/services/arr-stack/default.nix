@@ -13,6 +13,7 @@
   arrLib = import ./lib.nix {inherit lib;};
 
   arrPgUser = "arr";
+  arrPgPassSecret = "arr/pg_pass";
 
   # VPN-Confinement caps namespace names at 7 chars (used as unit + iface suffix)
   vpnNs = "wg";
@@ -63,7 +64,7 @@
       host = cfg.postgresHost;
       port = 5432;
       user = arrPgUser;
-      password = {_sops = "arr/pg_pass";};
+      password = {_sops = arrPgPassSecret;};
     };
   };
 
@@ -141,11 +142,16 @@ in {
       lib.mkEnableOption "DNAT host ports into the vpn netns for LAN access"
       // {default = true;};
 
-    # published so the db server reads the arr db list from here instead of re-deriving it
-    databases = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+    # published so the db host reads the whole role spec (name, secret, dbs) off this host
+    # via topo.arrDbRole instead of restating any of it. readOnly with a static default,
+    # so the cross-host read can't cycle.
+    dbRole = lib.mkOption {
       readOnly = true;
-      default = arrDbs;
+      default = {
+        name = arrPgUser;
+        passwordSecret = arrPgPassSecret;
+        owns = arrDbs;
+      };
     };
 
     torrentsPath = lib.mkOption {type = lib.types.str;};
@@ -324,7 +330,7 @@ in {
         # derived from client.enable. /24 spans both ends of the bridge
         extraAllowedCidrs = ["${vpn.bridgeAddress}/24"];
         roles.${arrPgUser} = {
-          passwordSecret = "arr/pg_pass";
+          passwordSecret = arrPgPassSecret;
           owns = arrDbs;
         };
       };

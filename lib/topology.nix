@@ -1,5 +1,5 @@
 # mesa's service-discovery POLICY: the named cross-host derives the mesa modules consume
-# (dbEndpointIp, serverIp, arrDatabases, ...). the generic engine -- site membership, address
+# (dbEndpointIp, serverIp, arrDbRole, ...). the generic engine -- site membership, address
 # resolution, the capability primitives, the no-recursion invariant -- lives in engine.nix; this
 # file is just the mesa capability vocabulary mapped onto it.
 #
@@ -11,6 +11,19 @@
   engine = import ./engine.nix {inherit lib;} args;
   caps = import ./caps.nix;
   inherit (engine) ipProviding ipsProviding hostsProviding hostsInSite haEndpointFor optionalHaEndpointFor publicUrlProviding;
+
+  # read a value off the single host advertising `cap`, with ipProviding's arity rule:
+  # nobody -> `absent` (a legitimate lack the caller guards on), two providers is a config
+  # error, not a pick-one. per the invariant, `read` must return an input or a
+  # static-defaulted (readOnly) option, never a peer-derived value.
+  inputOfProviding = cap: read: absent: let
+    hosts = hostsProviding cap;
+  in
+    if hosts == []
+    then absent
+    else if lib.length hosts == 1
+    then read args.nixosConfigurations.${builtins.head hosts}.config
+    else throw "fleet: site '${engine.mySite}' has ${toString (lib.length hosts)} hosts providing '${cap}'; expected at most one";
 in
   engine
   // {
@@ -49,10 +62,6 @@ in
       cap = caps.edge.name;
       vipPath = caps.edge.vipPath;
     };
-    dnsEndpointIp = haEndpointFor {
-      cap = caps.dns.name;
-      vipPath = caps.dns.vipPath;
-    };
 
     # /32 of each client's hostIp; a netns client's traffic is SNAT'd to its hostIp
     # (lab.arrStack.netnsSnatHosts), so this covers it.
@@ -61,22 +70,17 @@ in
     # real IP.
     edgeHostIps = ipsProviding caps.edge.name;
 
-    # the arr db list, read off the single host advertising the arr capability. cycle-safe: the
-    # published list is readOnly, defaulted from a static attrset, so it depends on no peer.
-    arrDatabases = let
-      hosts = hostsProviding caps.arr.name;
-    in
-      if hosts != []
-      then args.nixosConfigurations.${builtins.head hosts}.config.lab.arrStack.databases
-      else [];
+    # the arr postgres role spec {name, passwordSecret, owns}, read off the arr host so the
+    # db host restates none of it. cycle-safe: the published value is readOnly, defaulted
+    # from static attrsets.
+    arrDbRole = inputOfProviding caps.arr.name (c: c.lab.arrStack.dbRole) null;
 
     # the immich host's pinned uid (lab.immich.uid, a static-defaulted input, so cycle-safe).
     # the store box owns the immich dataset dirs with it so NFS writes (numeric uids, no
     # squash) land as immich on both ends.
-    immichUid = let
-      hosts = hostsProviding caps.immich.name;
-    in
-      if hosts != []
-      then args.nixosConfigurations.${builtins.head hosts}.config.lab.immich.uid
-      else null;
+    immichUid = inputOfProviding caps.immich.name (c: c.lab.immich.uid) null;
+
+    # authentik's http port (lab.authentik.port, readOnly), for caddy's forward-auth
+    # upstream; pairs with authServerIp
+    authServerPort = inputOfProviding caps.authServer.name (c: c.lab.authentik.port) null;
   }

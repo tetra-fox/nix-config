@@ -3,12 +3,11 @@
 # and own the databases. host files keep only their IPs and sops yaml.
 {
   config,
+  lib,
   modules,
   topo,
   ...
-}: let
-  arrDbs = topo.arrDatabases;
-in {
+}: {
   imports = [
     modules.profiles.server.system
 
@@ -26,16 +25,18 @@ in {
     # trusted-VLAN direct psql; fleet clients are derived from their client.enable flag.
     extraAllowedCidrs = [config.lab.net.trustedCidr];
 
-    roles = {
-      arr = {
-        passwordSecret = "arr/pg_pass";
-        owns = arrDbs;
+    # the arr role spec comes off the arr host via the registry, so nothing arr-shaped
+    # is restated here
+    roles =
+      {
+        authentik = {
+          passwordSecret = "auth/pg_pass";
+          owns = ["authentik"];
+        };
+      }
+      // lib.optionalAttrs (topo.arrDbRole != null) {
+        ${topo.arrDbRole.name} = {inherit (topo.arrDbRole) passwordSecret owns;};
       };
-      authentik = {
-        passwordSecret = "auth/pg_pass";
-        owns = ["authentik"];
-      };
-    };
   };
 
   system.stateVersion = "26.11";

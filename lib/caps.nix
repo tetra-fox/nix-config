@@ -26,8 +26,7 @@
     name = "edge";
     vipPath = ["lab" "caddy" "ha" "vip"];
   };
-  dns = {
-    name = "dns";
-    vipPath = ["lab" "bind" "ha" "vip"];
-  };
+  # no vipPath: nothing derives a dns endpoint in nix (clients get the resolver VIP from
+  # the router/DHCP, not from config)
+  dns = {name = "dns";};
 }

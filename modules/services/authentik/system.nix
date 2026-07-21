@@ -46,6 +46,14 @@ in {
   options.lab.authentik = {
     enable = lib.mkEnableOption "run the authentik SSO containers (server/worker/ldap) on this host";
 
+    # readOnly: the container side is baked into the image and published 1:1, so this is
+    # a published fact (the route + caddy's forward-auth upstream read it), not a knob
+    port = lib.mkOption {
+      type = lib.types.port;
+      readOnly = true;
+      default = 9000;
+    };
+
     ldapPort = lib.mkOption {
       type = lib.types.port;
       default = 3389;
@@ -63,7 +71,7 @@ in {
         routes = [
           {
             host = "auth.${config.lab.site.domain}";
-            port = 9000;
+            port = cfg.port;
           }
         ];
       };
@@ -97,7 +105,7 @@ in {
         // {
           cmd = ["server"];
           ports = [
-            "9000:9000"
+            "${toString cfg.port}:${toString cfg.port}"
             "9444:9443"
           ];
           volumes = [
@@ -122,7 +130,7 @@ in {
         labels = config.lab.podman.autoUpdate.containerLabels;
         dependsOn = ["auth-server"];
         environment = {
-          AUTHENTIK_HOST = "http://auth-server:9000";
+          AUTHENTIK_HOST = "http://auth-server:${toString cfg.port}";
           AUTHENTIK_INSECURE = "true";
         };
         ports = ["${config.lab.site.internalIp}:${toString cfg.ldapPort}:3389"];
