@@ -1,12 +1,7 @@
 {
-  config,
-  modules,
-  ...
-}: {
   imports = [
+    ../common/mon-host.nix
     ./monitoring.nix
-
-    modules.profiles.server.system
   ];
 
   lab = {
@@ -16,6 +11,4 @@
       proxmoxParent = "pooltoy";
     };
   };
-
-  system.stateVersion = "26.11";
 }
