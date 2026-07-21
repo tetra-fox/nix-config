@@ -75,7 +75,6 @@ in {
     isSystemUser = true;
     group = config.lab.media.group;
     extraGroups = ["users"];
-    shell = "${pkgs.shadow}/bin/nologin";
   });
 
   # these run after zfs-mount (zfs-mount is Before=local-fs.target, tmpfiles is After),
