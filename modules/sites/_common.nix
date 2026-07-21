@@ -10,10 +10,8 @@
 }: {
   networking = {
     useDHCP = false;
-    # both sites reuse the same 192.168.10.0/24 server-VLAN plan; a site with a
-    # different layout overrides these in its facts file
-    defaultGateway = lib.mkDefault "192.168.10.1";
-    nameservers = lib.mkDefault ["192.168.10.1"];
+    defaultGateway = lib.mkDefault config.lab.net.gateway;
+    nameservers = lib.mkDefault [config.lab.net.gateway];
 
     interfaces.${config.lab.site.serverInterface} = {
       mtu = 9000; # proxmox bridges + the switch run 9000 end-to-end at both sites

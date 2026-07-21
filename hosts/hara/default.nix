@@ -63,7 +63,8 @@
       }
     ];
     defaultGateway = "192.168.20.1";
-    nameservers = ["192.168.10.1"];
+    # the UDM's server-VLAN address; hara sits on the trusted VLAN but resolves against it
+    nameservers = [config.lab.net.gateway];
     search = ["mesa.tetra.cool"];
   };
 

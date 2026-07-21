@@ -130,7 +130,7 @@ in {
 
     trustedRanges = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = ["192.168.0.0/16" "10.0.0.0/8"];
+      default = config.lab.net.privateRanges;
       description = "client ranges that get the internal view (recursion + the authoritative zone + RPZ)";
     };
 

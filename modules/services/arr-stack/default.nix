@@ -157,7 +157,7 @@ in {
 
     accessibleFrom = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = ["192.168.0.0/16" "10.0.0.0/8"];
+      default = config.lab.net.privateRanges;
       description = "subnets allowed to reach the namespace via portMappings; covers return-route for any LAN client";
     };
 

@@ -1,5 +1,6 @@
-# lab.site.* + lab.topology.* option declarations. fleet-wide (not in a site's facts file)
-# because the topology layer + the colmena deploy output read them on every host, not just one site's.
+# lab.site.* + lab.topology.* + the shared lab.net/lab.appliances facts. fleet-wide (not in a
+# site's facts file) because the topology layer + the colmena deploy output read them on every
+# host, not just one site's.
 {lib, ...}: {
   # capabilities this host advertises for same-site service discovery. each service module
   # appends its own capability string when its enable flag is on (gated on a plain input, never
@@ -113,6 +114,45 @@
         default = null;
         description = "the proxmox node hosting this VM (for topology); set on multi-node sites";
         example = "pooltoy";
+      };
+    };
+
+    # addresses of the routers and the private address plan, shared by both sites on purpose
+    # (physically separate networks built to the same layout). a site with a different plan
+    # overrides these in its facts file.
+    net = {
+      gateway = lib.mkOption {
+        type = lib.types.str;
+        default = "192.168.10.1";
+        description = "the site router's server-VLAN address; VMs use it as default gateway and resolver";
+      };
+
+      trustedCidr = lib.mkOption {
+        type = lib.types.str;
+        default = "192.168.20.0/24";
+        description = "the trusted/admin VLAN; services that admit humans directly (psql, web UIs) allow it";
+      };
+
+      privateRanges = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = ["192.168.0.0/16" "10.0.0.0/8"];
+        description = "the private v4 ranges LAN clients come from; lan-scoped defaults (bind, arr, fail2ban) read this";
+      };
+    };
+
+    # addresses of the site's non-nix appliances (things the fleet proxies or scrapes but
+    # doesn't configure). per-site values, set in the site facts file.
+    appliances = {
+      haosIp = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "the address services reach Home Assistant OS at; null = site has no HAOS box";
+      };
+
+      proxmoxIp = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "the proxmox web UI address the edge proxies and monitoring scrapes; null on sites with no single node to point at";
       };
     };
 

@@ -7,11 +7,17 @@
 _: {
   imports = [./_common.nix];
 
-  config.lab.site = {
-    domain = "fairlane.tetra.cool";
-    internalCidr = "10.10.0.0/24";
-    # each host creates+owns this dir itself via tmpfiles (ownership differs per host),
-    # so no tmpfiles rule here
-    dataDir = "/var/lib/fairlane";
+  config.lab = {
+    site = {
+      domain = "fairlane.tetra.cool";
+      internalCidr = "10.10.0.0/24";
+      # each host creates+owns this dir itself via tmpfiles (ownership differs per host),
+      # so no tmpfiles rule here
+      dataDir = "/var/lib/fairlane";
+    };
+
+    # no internal-VLAN leg on fairlane's HAOS; it's reached on the server VLAN.
+    # proxmoxIp stays null: two nodes (plush/pooltoy), nothing proxies or scrapes a single one
+    appliances.haosIp = "192.168.10.215";
   };
 }

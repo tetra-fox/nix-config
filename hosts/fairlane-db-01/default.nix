@@ -3,6 +3,7 @@
 # connect here; the db list is derived from the arr host (fleet.topology arrDatabases), not
 # hardcoded. no authentik at fairlane, so the only role is arr.
 {
+  config,
   modules,
   topo,
   ...
@@ -29,7 +30,8 @@ in {
       server.enable = true;
       admin.enable = true;
       openFirewall = true;
-      extraAllowedCidrs = ["192.168.20.0/24"];
+      # trusted-VLAN direct psql
+      extraAllowedCidrs = [config.lab.net.trustedCidr];
 
       roles.arr = {
         passwordSecret = "arr/pg_pass";

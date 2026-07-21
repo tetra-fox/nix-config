@@ -2,6 +2,7 @@
 # and roles on purpose: any node can be the leader, so each must be able to bootstrap
 # and own the databases. host files keep only their IPs and sops yaml.
 {
+  config,
   modules,
   topo,
   ...
@@ -22,8 +23,8 @@ in {
     };
     admin.enable = true;
 
-    # admin-VLAN direct psql; fleet clients are derived from their client.enable flag.
-    extraAllowedCidrs = ["192.168.20.0/24"];
+    # trusted-VLAN direct psql; fleet clients are derived from their client.enable flag.
+    extraAllowedCidrs = [config.lab.net.trustedCidr];
 
     roles = {
       arr = {

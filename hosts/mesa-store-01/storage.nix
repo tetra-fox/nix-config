@@ -25,12 +25,11 @@
   # null until a host advertises the immich capability, so the export/firewall/tmpfiles
   # for immich are all guarded on it being non-null.
   immichIp = topo.immichHostIp;
-  # HAOS is multihomed; inter-VM traffic rides the internal VLAN exclusively (the server
-  # VLAN is for inter-VLAN routing), so the export and firewall scope to its internal leg.
-  # HAOS must mount this box's internal IP or its NFS source won't match. it connects as
-  # root, so the export all_squashes root to admin:users. the backups are HAOS's private
-  # blobs, deliberately NOT group media (not shared media content).
-  haIp = "10.10.0.20";
+  # haosIp is HAOS's internal-VLAN leg (see the site facts), so the export and firewall
+  # scope to inter-VM traffic. HAOS must mount this box's internal IP or its NFS source
+  # won't match. it connects as root, so the export all_squashes root to admin:users. the
+  # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
+  haIp = config.lab.appliances.haosIp;
 
   # media is the one tree that's genuinely group-shared (arr services + every samba user
   # co-write into it), so it's the only one the boot-time recursive reconciler below touches.

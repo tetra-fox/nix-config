@@ -276,14 +276,15 @@ in {
         maxtime = "168h";
         overalljails = true;
       };
-      ignoreIP = [
-        "127.0.0.0/8"
-        "::1/128"
-        "10.0.0.0/8"
-        "172.16.0.0/12"
-        "192.168.0.0/16"
-        "fc00::/7"
-      ];
+      # the LAN ranges plus loopback and the rest of private space; banning any of it is never right
+      ignoreIP =
+        config.lab.net.privateRanges
+        ++ [
+          "127.0.0.0/8"
+          "::1/128"
+          "172.16.0.0/12"
+          "fc00::/7"
+        ];
       jails.caddy-status.settings = {
         enabled = true;
         filter = "caddy-status";

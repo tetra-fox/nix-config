@@ -1,6 +1,10 @@
 # render: `just update-topology`
 {config, ...}: let
   inherit (config.lib.topology) mkInternet mkRouter mkSwitch mkConnection;
+  # appliance addresses come from the site facts (lab.appliances). every host of a site
+  # carries them; the store hosts are just an arbitrary stable anchor each
+  mesaAppliances = config.nixosConfigurations.mesa-store-01.config.lab.appliances;
+  fairlaneAppliances = config.nixosConfigurations.fairlane-store-01.config.lab.appliances;
 in {
   # mesa and fairlane reuse the same cidrs (192.168.10/20/30), so networks are
   # namespaced per-site or the two sites render as one L2 segment
@@ -89,7 +93,7 @@ in {
           addresses = [];
         };
         "vmbr0.10" = {
-          addresses = ["192.168.10.2"];
+          addresses = [mesaAppliances.proxmoxIp];
           network = "mesa-server-vlan";
           virtual = true;
         };
@@ -129,7 +133,7 @@ in {
         # the internal-VLAN leg: inter-VM traffic (NFS backups to store-01, the edge's
         # home.* vhost, prometheus scrapes) uses this address exclusively
         enp0s19 = {
-          addresses = ["10.10.0.20"];
+          addresses = [mesaAppliances.haosIp];
           network = "mesa-internal-vlan";
           virtual = true;
           physicalConnections = [(mkConnection "milkfish" "vmbr0.1010")];
@@ -243,7 +247,7 @@ in {
       icon = ./images/icons/home-assistant.svg;
       hardware.info = "Home Assistant OS";
       interfaces.ens18 = {
-        addresses = ["192.168.10.215"];
+        addresses = [fairlaneAppliances.haosIp];
         network = "fairlane-server-vlan";
         virtual = true;
         physicalConnections = [(mkConnection "plush" "vmbr0.10")];

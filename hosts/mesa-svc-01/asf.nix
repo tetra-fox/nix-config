@@ -29,7 +29,7 @@
       Kestrel = {
         Endpoints.HTTP.Url = "http://*:1242";
         KnownNetworks = [
-          "192.168.20.0/24" # trusted VLAN
+          config.lab.net.trustedCidr
         ];
       };
     };

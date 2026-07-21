@@ -20,19 +20,20 @@
     monitoring = {
       server.enable = true;
       unifi.enable = true;
-      unifi.controllerUrl = "https://192.168.10.1";
+      # the controller is the UDM, the same box as the gateway
+      unifi.controllerUrl = "https://${config.lab.net.gateway}";
 
       extraScrapeConfigs = [
         # non-NixOS node-exporter targets (not auto-discovered from the flake)
         {
-          # scraped over the internal VLAN (inter-VM traffic policy); HAOS's exporter
+          # haosIp is the internal-VLAN leg (inter-VM traffic policy); HAOS's exporter
           # binds all interfaces
           job_name = "node-haos";
-          static_configs = [{targets = ["10.10.0.20:9100"];}];
+          static_configs = [{targets = ["${config.lab.appliances.haosIp}:9100"];}];
         }
         {
           job_name = "node-milkfish";
-          static_configs = [{targets = ["192.168.10.2:9100"];}];
+          static_configs = [{targets = ["${config.lab.appliances.proxmoxIp}:9100"];}];
         }
       ];
     };
