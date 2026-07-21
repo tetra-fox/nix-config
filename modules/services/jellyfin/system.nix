@@ -17,9 +17,13 @@
   # pin the uid; the NFS share squashes on uid, not name, and upstream auto-allocates it
   users.users.jellyfin.uid = 991;
 
+  # declare the group here too, not just in arr-stack: jellyfin must not depend on being
+  # co-deployed with the arrs for its group to exist (equal gid defs merge fine)
+  users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
+
   services.jellyfin = {
     enable = true;
-    group = lib.mkDefault "media";
+    group = lib.mkDefault config.lab.media.group;
     openFirewall = true;
     dataDir = "${config.lab.site.dataDir}/jellyfin/data";
     cacheDir = "${config.lab.site.dataDir}/jellyfin/cache";

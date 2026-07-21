@@ -67,11 +67,11 @@ in {
   # import it at boot without this. the pool name is host data, not a zfs-module default.
   boot.zfs.extraPools = ["megamax"];
 
-  users.groups.media.gid = config.lab.media.gid;
+  users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
   users.users = lib.genAttrs sambaUsers (name: {
     isSystemUser = true;
-    group = "media";
+    group = config.lab.media.group;
     extraGroups = ["users"];
     shell = "${pkgs.shadow}/bin/nologin";
   });
@@ -214,7 +214,7 @@ in {
       "write list" = "@users";
       "create mask" = "0664";
       "directory mask" = "0775";
-      "force group" = "media";
+      "force group" = config.lab.media.group;
     };
 
     # %U -> per-user private subdir (0700, owner-only). root preexec creates it since samba

@@ -162,13 +162,20 @@
       };
     };
 
-    # the shared `media` group's gid. one fleet constant because NFS group-write squashes on gid
-    # (not name), so the store host (NFS server) and every client must agree. arr-stack pins the
-    # group to this on compute hosts; the store hosts set it directly.
-    media.gid = lib.mkOption {
-      type = lib.types.int;
-      default = 1002;
-      description = "gid of the shared media group; must match on the NFS store host and all clients";
+    # the shared media group. the gid is one fleet constant because NFS group-write squashes
+    # on gid (not name), so the store host (NFS server) and every client must agree; the name
+    # is here so every module that creates or joins the group reads the same one.
+    media = {
+      gid = lib.mkOption {
+        type = lib.types.int;
+        default = 1002;
+        description = "gid of the shared media group; must match on the NFS store host and all clients";
+      };
+      group = lib.mkOption {
+        type = lib.types.str;
+        default = "media";
+        description = "name of the shared media group";
+      };
     };
   };
 }

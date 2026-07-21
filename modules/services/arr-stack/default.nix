@@ -9,6 +9,7 @@
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
+  mediaGroup = config.lab.media.group;
   arrLib = import ./lib.nix {inherit lib;};
 
   arrPgUser = "arr";
@@ -145,11 +146,6 @@ in {
       type = lib.types.listOf lib.types.str;
       readOnly = true;
       default = arrDbs;
-    };
-
-    mediaGroup = lib.mkOption {
-      type = lib.types.str;
-      default = "media";
     };
 
     torrentsPath = lib.mkOption {type = lib.types.str;};
@@ -314,7 +310,7 @@ in {
         // lib.mapAttrs' (name: svc:
           lib.nameValuePair "${name}.env" {
             content = mkEnvFileContent name svc;
-            group = cfg.mediaGroup;
+            group = mediaGroup;
             mode = "0440";
           })
         arrServices;
@@ -339,7 +335,7 @@ in {
         lib.optionalAttrs svc.hasNixosModule {
           ${name} = {
             enable = true;
-            group = cfg.mediaGroup;
+            group = mediaGroup;
             dataDir = "${siteData}/${name}";
             environmentFiles = [config.sops.templates."${name}.env".path];
             # mirror the env-injected values so the module's defaults don't override them
@@ -354,13 +350,13 @@ in {
     }
 
     {
-      users.groups.${cfg.mediaGroup}.gid = config.lab.media.gid;
+      users.groups.${mediaGroup}.gid = config.lab.media.gid;
       users.users = lib.mkMerge [
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {
             isSystemUser = true;
             inherit (svc) uid;
-            group = cfg.mediaGroup;
+            group = mediaGroup;
             home = "${siteData}/${name}";
           }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices))
 
@@ -375,7 +371,7 @@ in {
       # AppFolder"
       systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
         owner = svc.user or name;
-      in "d ${siteData}/${name} 0750 ${owner} ${cfg.mediaGroup} -")
+      in "d ${siteData}/${name} 0750 ${owner} ${mediaGroup} -")
       arrServices;
     }
 
@@ -392,7 +388,7 @@ in {
               serviceConfig = {
                 Type = "simple";
                 User = svc.user or name;
-                Group = cfg.mediaGroup;
+                Group = mediaGroup;
                 ExecStart = "${pkgs.${name}}/bin/${lib.toSentenceCase name} -nobrowser -data=${siteData}/${name}";
                 EnvironmentFile = [config.sops.templates."${name}.env".path];
                 Restart = "on-failure";

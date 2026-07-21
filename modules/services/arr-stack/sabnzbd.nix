@@ -6,6 +6,7 @@
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
+  mediaGroup = config.lab.media.group;
   sabnzbdStateDir = "${lib.removePrefix "/var/lib/" siteData}/sabnzbd";
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 
@@ -52,7 +53,7 @@ in {
 
     services.sabnzbd = {
       enable = true;
-      group = cfg.mediaGroup;
+      group = mediaGroup;
       stateDir = sabnzbdStateDir;
       allowConfigWrite = true;
       openFirewall = true;

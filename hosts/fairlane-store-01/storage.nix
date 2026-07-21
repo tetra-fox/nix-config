@@ -11,7 +11,7 @@
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
 in {
-  users.groups.media.gid = config.lab.media.gid;
+  users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
   systemd.tmpfiles.rules = [
     "d ${siteData} 0755 root media -"
@@ -56,7 +56,7 @@ in {
       "write list" = "@users";
       "create mask" = "0664";
       "directory mask" = "0775";
-      "force group" = "media";
+      "force group" = config.lab.media.group;
     };
   };
 }

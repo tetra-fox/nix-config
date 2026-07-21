@@ -5,6 +5,7 @@
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.arrStack;
+  mediaGroup = config.lab.media.group;
   torrents = cfg.torrentsPath;
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 
@@ -16,7 +17,7 @@
 in {
   config = {
     systemd.tmpfiles.rules = [
-      "d ${siteData}/qbittorrent 0750 qbittorrent ${cfg.mediaGroup} -"
+      "d ${siteData}/qbittorrent 0750 qbittorrent ${mediaGroup} -"
     ];
 
     # pin the uid: NFS squashes on uid, not name
@@ -24,7 +25,7 @@ in {
 
     services.qbittorrent = {
       enable = true;
-      group = cfg.mediaGroup;
+      group = mediaGroup;
       profileDir = "${siteData}/qbittorrent";
       webuiPort = 8888; # 8080 would collide with sabnzbd
       inherit (cfg) torrentingPort;
