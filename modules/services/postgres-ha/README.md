@@ -41,8 +41,8 @@ replicates out.
 
 ## Endpoint derive
 
-Clients never name a node. They read `dbEndpointIp` from the site topology, which resolves to
-`lab.postgres.ha.vip` when the site is HA, else falls back to the single-server `dbServerIp`.
+Clients never name a node. They read `dbEndpointIp` from the topology layer, which resolves to
+`lab.postgres.ha.vip` when the site is HA, else falls back to the single db server's IP.
 So the single-node -> HA cutover swaps the resolved address without touching any client.
 
 ## Watchdog / fencing

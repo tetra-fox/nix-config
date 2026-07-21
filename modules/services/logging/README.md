@@ -7,7 +7,7 @@ follows the monitoring module's server/agent split:
 - **server** (the host with `lab.monitoring.server.enable`): runs loki, adds it as a
   grafana datasource, and ships the log dashboards.
 
-an agent finds its site's loki by the same `site-topology.nix` derivation the monitoring
+an agent finds its site's loki by the same topology derive (`lib/topology.nix`) the monitoring
 module uses: alloy's `loki.write` endpoint (`LOKI_HOST`) is `127.0.0.1` on the server
 (loki is local) and the site server's derived IP on a remote agent. exactly one server
 per site is asserted.

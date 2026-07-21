@@ -26,7 +26,7 @@
       nzbPath = "/mnt/store/nzb";
       # the forwarded port AirVPN assigned to this account
       torrentingPort = 42924;
-      # netnsSnatHosts defaults to [dbServerIp], which SNATs the arrs' netns traffic to
+      # netnsSnatHosts defaults to [dbEndpointIp], which SNATs the arrs' netns traffic to
       # the remote db so replies route back; no need to set it.
     };
 

@@ -10,7 +10,7 @@
   cfg = config.lab.postgres;
   sitePrefix = import fleet.site-prefix {inherit lib;};
 in {
-  # advertise the db capabilities from the plain enable flags, so site-topology discovers this
+  # advertise the db capabilities from the plain enable flags, so the topology layer discovers this
   # host without importing the server or HA module. imported by server, HA, and pure clients
   # alike, so it's the one place every db-role host passes through.
   config.lab.topology.provides =
@@ -25,7 +25,7 @@ in {
 
     openFirewall = lib.mkEnableOption "5432/tcp in the host firewall";
 
-    # declared here, not in the HA module, so the site-topology derive can read ha.enable/ha.vip
+    # declared here, not in the HA module, so the topology derive can read ha.enable/ha.vip
     # without importing that module.
     ha = {
       enable = lib.mkEnableOption "run the Patroni HA postgres stack on this host (instead of server.enable)";
@@ -35,7 +35,7 @@ in {
         default = null;
         description = ''
           the floating virtual IP HAProxy binds and clients reach. every HA node in the
-          site declares the same value; the site-topology dbEndpointIp derive returns it so
+          site declares the same value; the topology dbEndpointIp derive returns it so
           clients point at the VIP, which always routes to the current primary. on the
           internal VLAN (east-west db traffic).
         '';

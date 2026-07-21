@@ -4,7 +4,7 @@ shared postgres with a `lab.postgres.roles` abstraction for declarative role + p
 
 server/client split mirrors the monitoring module. the host running the db sets
 `server.enable`; client hosts set `client.enable`. clients find the server via the
-site-topology `dbServerIp` derive (no hardcoded address); the server admits clients via
+topology `dbEndpointIp` derive (no hardcoded address); the server admits clients via
 the inverse `dbClientCidrs` derive (no hand-maintained allow-list). this makes an HA
 cluster a drop-in later -- the derives swap to a VIP/leader without touching any client.
 
@@ -31,7 +31,7 @@ cluster a drop-in later -- the derives swap to a VIP/leader without touching any
 
 ## options (`lab.postgres.*`)
 
-- `server.enable` - run the postgres server here. the site-topology `dbServerIp` derive
+- `server.enable` - run the postgres server here. the topology `dbEndpointIp` derive
   points clients at this host's IP. without it the module only provides options (a client)
 - `client.enable` - this host connects to the site's db; the server folds its hostIp into
   pg_hba via the `dbClientCidrs` derive. assumes the client reaches the db from its hostIp

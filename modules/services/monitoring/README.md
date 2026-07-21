@@ -13,7 +13,7 @@ site `mesa`. the server derives its scrape list by folding over the flake's
 `nixosConfigurations`, keeping hosts that share its site prefix, and reading each one's
 declared `lab.site` address (the internal-VLAN IP when it has one, else the server-VLAN
 IP). no hand-maintained target list, no DNS dependency. the derivation lives in
-`modules/lib/site-topology.nix` (shared with logging, postgres, caddy, arr-stack).
+`lib/topology.nix` (shared with logging, postgres, caddy, arr-stack).
 `instance` is labelled with the hostname so grafana legends read names, not ip:port.
 
 ## exporter registry
