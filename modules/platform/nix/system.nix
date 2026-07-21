@@ -8,15 +8,11 @@ _: {
       # let wheel members push unsigned store paths via `nixos-rebuild --target-host`
       trusted-users = ["root" "@wheel"];
     };
+    # automatic + retention live in common.nix; only the systemd schedule + persistence here
     gc = {
-      automatic = true;
       dates = "weekly";
       persistent = true;
-      options = "--delete-older-than 7d";
     };
-    optimise = {
-      automatic = true;
-      dates = ["weekly"];
-    };
+    optimise.dates = ["weekly"];
   };
 }
