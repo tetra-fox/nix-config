@@ -71,7 +71,11 @@ in {
           # not run through replaceVars: its @DEFAULT_AUDIO_SINK@ tokens would trip the leftover-token check
           media = ./_lua/media.lua;
           bindings.content = pkgs.replaceVars ./_lua/bindings.lua {
-            inherit main_mod terminal menu file_manager;
+            inherit main_mod;
+            app2unit = lib.getExe pkgs.app2unit;
+            terminal = lib.getExe pkgs.kitty;
+            menu = lib.getExe pkgs.walker;
+            file_manager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"} ~";
             hyprpicker = "${pkgs.hyprpicker}/bin/hyprpicker";
           };
         }

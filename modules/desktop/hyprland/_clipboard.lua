@@ -6,7 +6,7 @@ hl.bind(mod .. " + V", function()
   if w then
     hl.dispatch(hl.dsp.window.kill({ window = w }))
   else
-    hl.exec_cmd("kitty --class clipse -e clipse")
+    hl.exec_cmd("@kitty@ --class clipse -e @clipse@")
   end
 end)
 

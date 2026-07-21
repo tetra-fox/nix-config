@@ -1,7 +1,7 @@
 local mod = "@main_mod@"
 
-hl.bind(mod .. " + GRAVE", hl.dsp.exec_cmd("app2unit -- @terminal@"))
-hl.bind(mod .. " + E", hl.dsp.exec_cmd("app2unit -- @file_manager@"))
+hl.bind(mod .. " + GRAVE", hl.dsp.exec_cmd("@app2unit@ -- @terminal@"))
+hl.bind(mod .. " + E", hl.dsp.exec_cmd("@app2unit@ -- @file_manager@"))
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("@menu@"))
 hl.bind(mod .. " + C", hl.dsp.exec_cmd("@hyprpicker@ -a"))
 

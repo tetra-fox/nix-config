@@ -1,9 +1,38 @@
 {
+  config,
   pkgs,
   lib,
   modules,
   ...
-}: {
+}: let
+  # vrcx's optional OpenVR overlay inits on startup. two runtime dlopen-by-
+  # short-name lookups fail under nix because neither consults a RUNPATH:
+  #   - xrizer (the openvrpaths.vrpath shim, see modules/steam/home.nix)
+  #     dlopens "libopenxr_loader.so" -> needs openxr-loader on the path
+  #   - the .NET overlay thread (VRCXVRElectron.SetupTextures) dlopens
+  #     "libEGL.so.1"/"libGL.so.1" -> needs the glvnd dispatch libs, and
+  #     those in turn dlopen the nvidia vendor driver from the driver link
+  # scope all of it to vrcx instead of polluting the global env. driverLink
+  # is /run/opengl-driver so this tracks driver bumps.
+  #
+  # this gets vrcx running with a working OpenXR session and GL context, but
+  # the overlay still does not render: xrizer 0.5 panics in SetOverlayTexture
+  # (get_real_session_data, overlay.rs:64) because it assumes a compositor
+  # session already exists, and vrcx is overlay-only so it never submits
+  # frames through IVRCompositor. upstream gap, not fixable here. to actually
+  # get the overlay, either wait for xrizer overlay-only support or try
+  # pointing openvrpaths at opencomposite (already scaffolded in
+  # modules/steam/home.nix), weighed against vrchat which is tuned for xrizer.
+  vrcx = pkgs.vrcx-nightly.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or []) ++ [pkgs.makeWrapper];
+    postFixup =
+      (old.postFixup or "")
+      + ''
+        wrapProgram $out/bin/vrcx \
+          --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [pkgs.openxr-loader pkgs.libglvnd]}:${pkgs.addDriverRunpath.driverLink}/lib
+      '';
+  });
+in {
   imports = [
     modules.profiles.workstation.home
 
@@ -21,11 +50,11 @@
 
   # session autostart, rendered into hyprland's startup lua by the module
   my.hyprland.autostart = [
-    "app2unit -- firefox"
-    "app2unit -- Telegram -startintray"
-    "app2unit -- discord --start-minimized"
-    "app2unit -- vrcx --no-sandbox --startup"
-    "app2unit -- steam -silent"
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe pkgs.firefox}"
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe' pkgs.telegram-desktop "Telegram"} -startintray"
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe' config.programs.nixcord.finalPackage.discord "discord"} --start-minimized"
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe vrcx} --no-sandbox --startup"
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe pkgs.steam} -silent"
   ];
 
   xdg.mimeApps = {
@@ -134,33 +163,7 @@
     })
     (bottles.override {removeWarningPopup = true;})
 
-    # vrcx's optional OpenVR overlay inits on startup. two runtime dlopen-by-
-    # short-name lookups fail under nix because neither consults a RUNPATH:
-    #   - xrizer (the openvrpaths.vrpath shim, see modules/steam/home.nix)
-    #     dlopens "libopenxr_loader.so" -> needs openxr-loader on the path
-    #   - the .NET overlay thread (VRCXVRElectron.SetupTextures) dlopens
-    #     "libEGL.so.1"/"libGL.so.1" -> needs the glvnd dispatch libs, and
-    #     those in turn dlopen the nvidia vendor driver from the driver link
-    # scope all of it to vrcx instead of polluting the global env. driverLink
-    # is /run/opengl-driver so this tracks driver bumps.
-    #
-    # this gets vrcx running with a working OpenXR session and GL context, but
-    # the overlay still does not render: xrizer 0.5 panics in SetOverlayTexture
-    # (get_real_session_data, overlay.rs:64) because it assumes a compositor
-    # session already exists, and vrcx is overlay-only so it never submits
-    # frames through IVRCompositor. upstream gap, not fixable here. to actually
-    # get the overlay, either wait for xrizer overlay-only support or try
-    # pointing openvrpaths at opencomposite (already scaffolded in
-    # modules/steam/home.nix), weighed against vrchat which is tuned for xrizer.
-    (vrcx-nightly.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [makeWrapper];
-      postFixup =
-        (old.postFixup or "")
-        + ''
-          wrapProgram $out/bin/vrcx \
-            --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [openxr-loader libglvnd]}:${addDriverRunpath.driverLink}/lib
-        '';
-    }))
+    vrcx
   ];
 
   # paws off!
