@@ -1,4 +1,9 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  osConfig,
+  fleet,
+  ...
+}: {
   programs.vscodium.profiles.default = {
     extensions = with pkgs.open-vsx; [
       jnoortheen.nix-ide
@@ -7,11 +12,11 @@
       "nix.enableLanguageServer" = true;
       "nix.serverPath" = "${pkgs.nixd}/bin/nixd";
       # nix.formatterPath is ignored once nixd.formatting.command is set
-      "nix.serverSettings" = {
-        nixd = {
+      "nix.serverSettings".nixd =
+        (import fleet.nixd-settings {inherit pkgs osConfig;})
+        // {
           formatting.command = ["${pkgs.alejandra}/bin/alejandra"];
         };
-      };
       "[nix]" = {
         "editor.defaultFormatter" = "jnoortheen.nix-ide";
       };
