@@ -70,10 +70,14 @@
 
   networking.firewall.allowedUDPPorts = [51820];
 
-  # physical cabling for the topology diagram
-  topology.self.interfaces.enp11s0f0np0.physicalConnections = [
-    (config.lib.topology.mkConnection "tengigablort" "eth1")
-  ];
+  # physical cabling for the topology diagram; the address is on the trusted VLAN, so
+  # attach the interface to that network or it renders detached
+  topology.self.interfaces.enp11s0f0np0 = {
+    network = "mesa-trusted-vlan";
+    physicalConnections = [
+      (config.lib.topology.mkConnection "tengigablort" "eth1")
+    ];
+  };
 
   # paws off!
   system.stateVersion = "25.11";

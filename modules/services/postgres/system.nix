@@ -61,6 +61,11 @@ in {
     }
 
     (lib.mkIf cfg.server.enable {
+      # nix-topology's postgresql extractor prints 0.0.0.0 whenever enableTCPIP is set
+      # (it never reads listen_addresses); mkForce replaces its line with the real listeners
+      topology.self.services.postgresql.details.listen.text =
+        lib.mkForce "${config.services.postgresql.settings.listen_addresses}:${toString config.services.postgresql.settings.port}";
+
       services.postgresql = {
         enable = true;
         inherit (cfg) package;
