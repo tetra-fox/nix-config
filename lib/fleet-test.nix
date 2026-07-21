@@ -4,7 +4,7 @@
 # ever needs an engine change to pass, the engine isn't generic -- it just looked generic
 # because the mesa capability set happened to be complete.
 #
-# run: nix eval --impure --expr 'import ./lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'
+# run: `just fleet-test` (the one place the eval invocation lives)
 # returns the string "ok" on success, or throws with the failing assertion.
 {lib}: let
   engine = import ./engine.nix {inherit lib;};
