@@ -3,11 +3,13 @@
 {
   config,
   lib,
+  fleet,
   topo,
   caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
+  allowFrom = import fleet.nft {inherit lib;};
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
 in {
@@ -40,9 +42,7 @@ in {
     '';
   };
 
-  networking.firewall.extraInputRules = ''
-    ip saddr ${svcIp} tcp dport 2049 accept
-  '';
+  networking.firewall.extraInputRules = allowFrom [svcIp] [2049];
 
   services.samba.settings = {
     # no "guest ok": valid users already forecloses the guest fallback, so it was dead config

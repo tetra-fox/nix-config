@@ -13,12 +13,14 @@
   config,
   lib,
   pkgs,
+  fleet,
   modules,
   topo,
   caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
+  allowFrom = import fleet.nft {inherit lib;};
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
   # the immich host's internal-VLAN IP; it NFS-mounts megamax/immich for the library.
@@ -189,15 +191,8 @@ in {
       '';
   };
 
-  # source-scoped rules need the nftables backend (base profile enables it fleet-wide).
   networking.firewall.extraInputRules =
-    ''
-      ip saddr ${svcIp} tcp dport 2049 accept
-      ip saddr ${haIp} tcp dport 2049 accept
-    ''
-    + lib.optionalString (immichIp != null) ''
-      ip saddr ${immichIp} tcp dport 2049 accept
-    '';
+    allowFrom ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp) [2049];
 
   services.samba.settings = {
     global = {
