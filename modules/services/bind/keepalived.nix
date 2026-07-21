@@ -54,7 +54,7 @@ in {
       vrrpInterface = config.lab.site.internalInterface; # heartbeat on the isolated VLAN
       vipInterface = config.lab.site.serverInterface; # but the VIP is client-facing, on the server VLAN
       inherit (ha) virtualRouterId;
-      priority = 110 - (selfIdx * 5);
+      priorityIndex = selfIdx;
       unicastSrcIp = selfInternalIp;
       unicastPeers = otherDnsInternalIps;
       instanceName = "bindvip";

@@ -96,7 +96,6 @@
   '';
 
   selfIndex = lib.lists.findFirstIndex (ip: ip == selfIp) 0 haNodeIps;
-  vrrpPriority = 110 - (selfIndex * 5);
 in {
   imports = [modules.services.postgres.options modules.services.vrrp.system];
 
@@ -289,7 +288,7 @@ in {
       vrrpInterface = config.lab.site.internalInterface;
       vipInterface = config.lab.site.internalInterface;
       inherit (ha) virtualRouterId;
-      priority = vrrpPriority;
+      priorityIndex = selfIndex;
       unicastSrcIp = selfIp;
       unicastPeers = otherNodeIps;
       instanceName = "pgvip";

@@ -253,7 +253,7 @@ in {
       vrrpInterface = config.lab.site.serverInterface;
       vipInterface = config.lab.site.serverInterface;
       inherit (ha) virtualRouterId;
-      priority = 110 - (selfEdgeIdx * 5);
+      priorityIndex = selfEdgeIdx;
       unicastSrcIp = selfServerIp;
       unicastPeers = otherEdgeServerIps;
       instanceName = "caddyvip";

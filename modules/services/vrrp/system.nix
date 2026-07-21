@@ -1,12 +1,14 @@
-# peer-list and priority derivation is NOT here on purpose: callers differ (db indexes by
+# peer-list and index derivation is NOT here on purpose: callers differ (db indexes by
 # hostname, edge/dns sort by IP; db/dns peer on internalIp, edge on hostIp), and folding it in
-# would change the default VIP holder. each caller resolves unicastSrcIp/unicastPeers/priority.
+# would change the default VIP holder. each caller resolves unicastSrcIp/unicastPeers and its
+# own priorityIndex; only the index-to-priority formula lives here.
 {
   config,
   lib,
   ...
 }: let
   cfg = config.lab.vrrp;
+  priority = 110 - (cfg.priorityIndex * 5);
 in {
   options.lab.vrrp = {
     enable = lib.mkEnableOption "keepalived VRRP for an HA service VIP on this host";
@@ -83,9 +85,9 @@ in {
       '';
     };
 
-    priority = lib.mkOption {
+    priorityIndex = lib.mkOption {
       type = lib.types.int;
-      description = "this node's VRRP priority. higher = preferred holder. callers use 110 - idx*5.";
+      description = "this node's stable index among its cluster peers (0 = preferred VIP holder); priority derives as 110 - idx*5";
     };
 
     unicastSrcIp = lib.mkOption {
@@ -160,7 +162,7 @@ in {
           ${cfg.instanceName} = {
             interface = cfg.vrrpInterface;
             inherit (cfg) virtualRouterId;
-            inherit (cfg) priority;
+            inherit priority;
             # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back and flap.
             state = "BACKUP";
             noPreempt = true;
@@ -183,7 +185,7 @@ in {
           "${cfg.instanceName}6" = {
             interface = cfg.vipInterface;
             virtualRouterId = cfg.virtualRouterId6;
-            inherit (cfg) priority;
+            inherit priority;
             state = "BACKUP";
             noPreempt = true;
             unicastSrcIp = cfg.unicastSrcIp6;
