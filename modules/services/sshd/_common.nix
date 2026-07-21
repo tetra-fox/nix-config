@@ -33,4 +33,8 @@
   pubkeyAcceptedAlgorithms = "sk-ssh-ed25519-cert-v01@openssh.com,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,sk-ssh-ed25519@openssh.com,ssh-ed25519,rsa-sha2-512,rsa-sha2-256";
   caSignatureAlgorithms = "ssh-ed25519,rsa-sha2-512,rsa-sha2-256";
   requiredRSASize = 3072;
+
+  # CVE-2002-20001 mitigation
+  maxStartups = "10:30:100";
+  perSourceMaxStartups = 1;
 }

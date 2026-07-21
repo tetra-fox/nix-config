@@ -29,10 +29,11 @@ in {
     ];
 
     settings = {
-      # remove small diffie-hellman moduli. ModuliFile is types.path, not
-      # types.package, so it won't coerce a derivation; interpolate to a string path
+      # remove small diffie-hellman moduli, floor derived from requiredRSASize (the moduli
+      # size column stores bits minus one). ModuliFile is types.path, not types.package,
+      # so it won't coerce a derivation; interpolate to a string path
       ModuliFile = "${pkgs.runCommand "ssh-moduli-hardened" {} ''
-        awk '$5 >= 3071' ${pkgs.openssh}/etc/ssh/moduli > $out
+        awk '$5 >= ${toString (common.requiredRSASize - 1)}' ${pkgs.openssh}/etc/ssh/moduli > $out
       ''}";
 
       PasswordAuthentication = false;
@@ -48,9 +49,8 @@ in {
       CASignatureAlgorithms = common.caSignatureAlgorithms;
       RequiredRSASize = common.requiredRSASize;
 
-      # CVE-2002-20001 mitigation
-      MaxStartups = "10:30:100";
-      PerSourceMaxStartups = 1;
+      MaxStartups = common.maxStartups;
+      PerSourceMaxStartups = common.perSourceMaxStartups;
     };
   };
 }

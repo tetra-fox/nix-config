@@ -28,9 +28,8 @@ in {
     CASignatureAlgorithms ${common.caSignatureAlgorithms}
     RequiredRSASize ${toString common.requiredRSASize}
 
-    # CVE-2002-20001 mitigation
-    MaxStartups 10:30:100
-    PerSourceMaxStartups 1
+    MaxStartups ${common.maxStartups}
+    PerSourceMaxStartups ${toString common.perSourceMaxStartups}
   '';
 
   # the same keyring contract as the nixos module. nix-darwin writes these to
