@@ -1,24 +1,7 @@
-# fairlane-specific resolver facts (the split-horizon zone + RPZ blocklists); the generic
-# resolver behaviour is in modules.services.bind.system. mirrors modules/sites/mesa-dns.nix --
-# this is the proof the bind module is genuinely site-agnostic: a second site is one file.
-{
-  config,
-  lib,
-  pkgs,
-  modules,
-  fleet,
-  nixosConfigurations,
-  ...
-}: let
-  inherit
-    ((import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }))
-    edgeEndpointIp
-    hostRecords
-    ;
-in {
+# fairlane-specific resolver facts: the RPZ blocklists + zone assembly live in _dns-common.nix
+# (proof the bind module is site-agnostic -- a second site keeps only its real deltas). fairlane's
+# deltas are the dual-stack WAN knobs and the shared v6 VIP both dns hosts float.
+{modules, ...}: {
   imports = [modules.services.bind.system ./_dns-common.nix];
 
   lab.bind = {
@@ -36,13 +19,8 @@ in {
       "fe80::/10" # v6 link-local
     ];
 
-    zone = {
-      name = "fairlane.tetra.cool";
-      file = pkgs.replaceVars ./files/fairlane.tetra.cool.zone.in {
-        nsIp = config.lab.site.hostIp;
-        edgeVip = edgeEndpointIp;
-        inherit hostRecords;
-      };
-    };
+    # the ULA v6 VIP both fairlane dns hosts float (keepalived flips it); the v4 vip lives in
+    # hosts/common/dns-host.nix. per-host hostV6 (the v6 heartbeat source) stays in the host file.
+    ha.vip6 = "fd00:10::53";
   };
 }

@@ -1,33 +1,6 @@
-# mesa-specific resolver facts (the split-horizon zone + RPZ blocklists); the generic resolver
-# behaviour is in modules.services.bind.system, driven by the options this file sets.
-{
-  config,
-  lib,
-  pkgs,
-  modules,
-  fleet,
-  nixosConfigurations,
-  ...
-}: let
-  inherit
-    ((import fleet.topology {inherit lib;} {
-      inherit nixosConfigurations;
-      hostName = config.networking.hostName;
-    }))
-    edgeEndpointIp
-    hostRecords
-    ;
-in {
+# mesa-specific resolver facts. the shared resolver behaviour is in modules.services.bind.system,
+# and the RPZ blocklists + zone assembly in _dns-common.nix; mesa runs the defaults (v4-only), so
+# this is just the imports.
+{modules, ...}: {
   imports = [modules.services.bind.system ./_dns-common.nix];
-
-  lab.bind = {
-    zone = {
-      name = "mesa.tetra.cool";
-      file = pkgs.replaceVars ./files/mesa.tetra.cool.zone.in {
-        nsIp = config.lab.site.hostIp;
-        edgeVip = edgeEndpointIp;
-        inherit hostRecords;
-      };
-    };
-  };
 }
