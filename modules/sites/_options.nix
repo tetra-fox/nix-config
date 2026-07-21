@@ -1,7 +1,11 @@
 # lab.site.* + lab.topology.* + the shared lab.net/lab.appliances facts. fleet-wide (not in a
 # site's facts file) because the topology layer + the colmena deploy output read them on every
 # host, not just one site's.
-{lib, ...}: {
+{
+  lib,
+  caps,
+  ...
+}: {
   # capabilities this host advertises for same-site service discovery. each service module
   # appends its own capability string when its enable flag is on (gated on a plain input, never
   # a derived value -- see the no-recursion rule in topology.nix). the topology layer reads this
@@ -9,7 +13,9 @@
   options.lab = {
     topology = {
       provides = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
+        # enum over the caps registry: a name outside caps.nix fails at the producer, matching
+        # the consumer side where a caps.<x> typo is already a missing-attribute error
+        type = lib.types.listOf (lib.types.enum (map (c: c.name) (lib.attrValues caps)));
         default = [];
         example = ["db-server" "db-client"];
       };
