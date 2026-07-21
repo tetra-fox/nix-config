@@ -193,6 +193,31 @@
       in
         !r.success;
     }
+    # sitePrefix contract: the regex that derives a host's site. pins the parse so a future change
+    # that breaks tagging fails here instead of silently re-siting a host. the two "whole name"
+    # rows are bogus tags that fail loud at the perTag facts-file import; mesa-db-alt-01 is the
+    # residual tripwire -- a two-token role parses cleanly to the wrong site, harmless only because
+    # no such site exists today
+    {
+      name = "sitePrefix parses the site off a hostname";
+      ok =
+        map f.sitePrefix [
+          "mesa-db-01"
+          "mesa-db-1"
+          "hara"
+          "mesa-db-01-old"
+          "mesa-db-alt-01"
+          "mesa-DB-01"
+        ]
+        == [
+          "mesa"
+          "mesa"
+          "hara"
+          "mesa-db-01-old"
+          "mesa-db"
+          "mesa-DB-01"
+        ];
+    }
   ];
 
   failures = lib.filter (c: !c.ok) checks;
