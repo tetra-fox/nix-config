@@ -107,16 +107,27 @@
       name = "absent capability is null/empty, not an error";
       ok = f.ipProviding "nonexistent" == null && f.ipsProviding "nonexistent" == [];
     }
-    # endpointFor: no HA node, single provider -> the single provider's IP
+    # optionalHaEndpointFor: a distinct single-server cap with no HA node -> the single server's IP
     {
-      name = "endpointFor returns the single provider when no HA";
+      name = "optionalHaEndpointFor returns the single server while one exists";
       ok =
-        f.endpointFor {
+        f.optionalHaEndpointFor {
           singleCap = "metrics";
           haCap = "metrics-ha";
           vipPath = ["lab" "whatever" "vip"];
         }
         == "10.1.0.1";
+    }
+    # no single server, but the HA cap's hosts float a VIP -> the VIP (the migration-complete state)
+    {
+      name = "optionalHaEndpointFor falls through to the VIP when no single server exists";
+      ok =
+        f.optionalHaEndpointFor {
+          singleCap = "absent-single";
+          haCap = "cache-node";
+          vipPath = ["lab" "cachevip" "vip"];
+        }
+        == "10.1.0.100";
     }
     # routesInSite folds every same-site host's routes and pairs each with its resolved upstream
     # (ipOf, so cache-01's internal IP), and excludes other sites (beta's route never appears)
@@ -169,25 +180,32 @@
       name = "ipProviding throws when two hosts claim a single-provider cap";
       ok = !(builtins.tryEval (f.ipProviding "cache-node")).success;
     }
-    # singleCap == haCap with two providers is the normal HA state: fall through to the shared
-    # VIP instead of throwing on the two single-cap matches
+    # haEndpointFor: a sole provider points straight at itself (the pair isn't up yet)
     {
-      name = "endpointFor falls through to the VIP when the single cap is the HA cap";
+      name = "haEndpointFor points at the sole provider before the pair exists";
       ok =
-        f.endpointFor {
-          singleCap = "cache-node";
-          haCap = "cache-node";
+        f.haEndpointFor {
+          cap = "metrics";
+          vipPath = ["lab" "cachevip" "vip"];
+        }
+        == "10.1.0.1";
+    }
+    # two providers is the normal HA state -> the shared VIP, not a throw on the two matches
+    {
+      name = "haEndpointFor resolves to the VIP when two hosts provide the cap";
+      ok =
+        f.haEndpointFor {
+          cap = "cache-node";
           vipPath = ["lab" "cachevip" "vip"];
         }
         == "10.1.0.100";
     }
     # HA nodes advertising different VIPs is a config error, not a pick-one
     {
-      name = "endpointFor throws on divergent VIPs";
+      name = "haEndpointFor throws on divergent VIPs";
       ok = let
-        r = builtins.tryEval (f.endpointFor {
-          singleCap = "cache-node";
-          haCap = "cache-node";
+        r = builtins.tryEval (f.haEndpointFor {
+          cap = "cache-node";
           vipPath = ["lab" "badvip" "vip"];
         });
       in

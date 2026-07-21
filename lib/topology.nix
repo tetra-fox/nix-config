@@ -8,7 +8,7 @@
 # everything mesa-specific is below.
 {lib}: args: let
   engine = import ./engine.nix {inherit lib;} args;
-  inherit (engine) ipProviding ipsProviding hostsProviding hostsInSite endpointFor publicUrlProviding;
+  inherit (engine) ipProviding ipsProviding hostsProviding hostsInSite haEndpointFor optionalHaEndpointFor publicUrlProviding;
 in
   engine
   // {
@@ -38,19 +38,17 @@ in
     # restating the fqdn. safe (cross-service, not fed back into authentik's own config).
     authServerUrl = publicUrlProviding "auth-server";
 
-    dbEndpointIp = endpointFor {
+    dbEndpointIp = optionalHaEndpointFor {
       singleCap = "db-server";
       haCap = "db-ha-node";
       vipPath = ["lab" "postgres" "ha" "vip"];
     };
-    edgeEndpointIp = endpointFor {
-      singleCap = "edge";
-      haCap = "edge";
+    edgeEndpointIp = haEndpointFor {
+      cap = "edge";
       vipPath = ["lab" "caddy" "ha" "vip"];
     };
-    dnsEndpointIp = endpointFor {
-      singleCap = "dns";
-      haCap = "dns";
+    dnsEndpointIp = haEndpointFor {
+      cap = "dns";
       vipPath = ["lab" "bind" "ha" "vip"];
     };
 

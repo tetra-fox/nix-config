@@ -8,7 +8,7 @@
 # hosts in a site each derive from the other (A resolves B's endpoint, B resolves A's, deadlock).
 # so everything this engine reads across hosts is a plain INPUT: lab.topology.provides and
 # lab.site.{hostIp,internalIp} -- flags/values a host sets directly, never computed from a peer.
-# consumers that resolve a further cross-host VALUE (endpointFor's vipPath, or reading a
+# consumers that resolve a further cross-host VALUE (the endpoint helpers' vipPath, or reading a
 # published list) must keep to the same rule: the value read must be an input or a static
 # default, never something derived from another host. the engine can't check a caller's vipPath
 # points at an input, so that part of the invariant stays the consumer's contract -- but the
@@ -111,45 +111,69 @@
       then "https://${(builtins.head routes).host}"
       else throw "fleet: '${cap}' provider '${host}' declares ${toString (lib.length routes)} routes; publicUrlProviding needs exactly one to name a public url";
 
-  # the endpoint a client points at for an optionally-HA service: the single provider while one
-  # exists (a live single server keeps the traffic until it's retired), else the floating VIP any
-  # HA node advertises, else null. vipPath is an option path (e.g. ["lab" "caddy" "ha" "vip"]);
-  # per the invariant it must point at a plain input option, not a derived value.
-  #
-  # the single lookup here does NOT reuse ipProviding: when singleCap == haCap (an HA-only service
-  # like edge/dns, where the same hosts fill both roles), two providers is the normal HA state and
-  # must fall through to the VIP, not throw. so a >1 single-cap match resolves to null (use the
-  # VIP) rather than an error. a distinct singleCap (db-server) can still only have one host, but
-  # that's enforced where it's read as a direct endpoint, not here.
-  endpointFor = {
+  # the single VIP the given hosts declare at vipPath: throws if they disagree (every HA node must
+  # declare the same one, not a pick-one), null if none declares it. vipPath is an option path
+  # (e.g. ["lab" "caddy" "ha" "vip"]); per the invariant it must point at a plain input option, not
+  # a derived value.
+  vipAmong = hosts: vipPath: capLabel: let
+    vips =
+      lib.unique (lib.filter (v: v != null)
+        (map (name: lib.attrByPath vipPath null nixosConfigurations.${name}.config) hosts));
+  in
+    if lib.length vips > 1
+    then throw "fleet: site '${mySite}' HA cap '${capLabel}' has ${toString (lib.length vips)} distinct VIPs at ${lib.concatStringsSep "." vipPath} (${lib.concatStringsSep ", " vips}); every HA node must declare the same one"
+    else if vips != []
+    then builtins.head vips
+    else null;
+
+  # shared body: a sole provider of singleHosts wins (a live single server keeps the traffic until
+  # it's retired), else the VIP the haHosts float, else null. the single lookup does NOT reuse
+  # ipProviding -- two providers must fall through to the VIP, not throw.
+  resolveEndpoint = {
+    singleHosts,
+    haHosts,
+    vipPath,
+    capLabel,
+  }:
+    if lib.length singleHosts == 1
+    then ipOf (builtins.head singleHosts)
+    else vipAmong haHosts vipPath capLabel;
+
+  # HA-only service (edge, dns): the same hosts advertise `cap` and float the VIP. one provider
+  # points straight at it (the pair isn't up yet), two resolve to the VIP, none is null. null means
+  # "nobody in this site provides it".
+  haEndpointFor = {
+    cap,
+    vipPath,
+  }: let
+    hosts = hostsProviding cap;
+  in
+    resolveEndpoint {
+      singleHosts = hosts;
+      haHosts = hosts;
+      inherit vipPath;
+      capLabel = cap;
+    };
+
+  # optional-HA service (postgres): a distinct single-server cap kept live through a migration,
+  # with separate HA nodes behind a VIP. the sole single server wins while one exists, else the
+  # VIP, else null. null means "neither a single server nor any HA node provides it".
+  optionalHaEndpointFor = {
     singleCap,
     haCap,
     vipPath,
-  }: let
-    singleHosts = hostsProviding singleCap;
-    single =
-      if lib.length singleHosts == 1
-      then ipOf (builtins.head singleHosts)
-      else null;
-    vips =
-      lib.unique (lib.filter (v: v != null)
-        (map (name: lib.attrByPath vipPath null nixosConfigurations.${name}.config) (hostsProviding haCap)));
-    # every HA node must declare the same VIP; more than one distinct value is a config error, not
-    # a pick-one situation. throw instead of silently taking whichever sorts first.
-    vip =
-      if lib.length vips > 1
-      then throw "fleet: site '${mySite}' HA cap '${haCap}' has ${toString (lib.length vips)} distinct VIPs at ${lib.concatStringsSep "." vipPath} (${lib.concatStringsSep ", " vips}); every HA node must declare the same one"
-      else if vips != []
-      then builtins.head vips
-      else null;
-  in
-    if single != null
-    then single
-    else vip;
+  }:
+    resolveEndpoint {
+      singleHosts = hostsProviding singleCap;
+      haHosts = hostsProviding haCap;
+      inherit vipPath;
+      capLabel = haCap;
+    };
 in {
   inherit sitePrefix mySite hostsInSite ipOf;
   inherit hostsWhere ipWhere ipsWhere;
-  inherit hostsProviding ipProviding ipsProviding endpointFor routesInSite publicUrlProviding;
+  inherit hostsProviding ipProviding ipsProviding routesInSite publicUrlProviding;
+  inherit haEndpointFor optionalHaEndpointFor;
   multiHost = lib.length hostsInSite > 1;
   myIp = ipOf hostName;
 }
