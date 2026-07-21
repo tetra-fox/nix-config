@@ -18,17 +18,15 @@
   nodePort = 9100;
   systemdPort = 9558;
 
-  inherit (topo) hostsInSite ipOf siteServers multiHost myIp;
+  inherit (topo) hostsInSite ipOf siteServers multiHost;
 
   # grafana's public fqdn. declared once here and used for BOTH the stats route and grafana's
   # root_url below, so the hostname isn't restated. reads only lab.site.domain (a plain input),
   # never a topo derive, so it can't cycle.
   statsFqdn = "stats.${config.lab.site.domain}";
 
-  bindAddr =
-    if multiHost && myIp != null
-    then myIp
-    else "127.0.0.1";
+  # the registry (registry.nix) owns the bind-address rule; read it, don't recompute it
+  bindAddr = cfg.bindAddr;
 
   # read only this sibling INPUT option, never a monitoring-derived value, or the
   # cross-host eval cycles
@@ -73,7 +71,9 @@
   siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
 
   grafanaPort = 3000;
-  lokiPort = 3100;
+  # loki's port is the logging module's fact (lab.logging.lokiPort); the firewall rule
+  # here must track it, not restate it
+  lokiPort = config.lab.logging.lokiPort;
 in {
   # options-only, so an exporter producer can register without pulling in this whole stack
   imports = [modules.services.monitoring.registry];
@@ -124,7 +124,7 @@ in {
       lab.topology.routes = [
         {
           host = statsFqdn;
-          port = 3000;
+          port = grafanaPort;
         }
       ];
 
