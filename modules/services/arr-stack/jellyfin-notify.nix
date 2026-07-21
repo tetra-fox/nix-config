@@ -42,7 +42,9 @@
       secretFile = jfKeyFile arr;
       fields = {
         host = vpn.bridgeAddress;
-        port = 8096; # hardcoded: services.jellyfin has no port option
+        # the jellyfin module's published fact; eval fails loud if the arr host
+        # doesn't also run jellyfin, which this notification assumes anyway
+        port = config.lab.jellyfin.port;
         updateLibrary = true;
       };
     }
