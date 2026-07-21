@@ -2,49 +2,50 @@
 # HAOS appliance, and the arr blocks. jellyfin and stats render from lab.topology.routes.
 # no authentik at fairlane, so the arr UIs are lan-only proxies straight to the arr host
 # ({$ARR_HOST}, the derived arr box); the arr-stack DNATs each netns port onto that host.
-# sabnzbd runs on the arr host too (8080). shared by both edge hosts: stateless clones
-# behind the same VIP serving the identical vhost set.
-''
+# sabnzbd runs on the arr host too (8080). imported by edge-host.nix with the host's lab
+# config; shared by both edge hosts: stateless clones behind the same VIP serving the
+# identical vhost set.
+{lab}: ''
   # public
-  fairlane.tetra.cool {
+  ${lab.site.domain} {
   	import log
   	respond "my paws hurt :("
   }
 
-  home.fairlane.tetra.cool {
+  home.${lab.site.domain} {
   	import log
-  	reverse_proxy 192.168.10.215:8123
+  	reverse_proxy ${lab.appliances.haosIp}:8123
   }
 
-  qb.fairlane.tetra.cool {
+  qb.${lab.site.domain} {
   	route {
   		import lan_only
   		reverse_proxy {$ARR_HOST}:8888
   	}
   }
 
-  sonarr.fairlane.tetra.cool {
+  sonarr.${lab.site.domain} {
   	route {
   		import lan_only
   		reverse_proxy {$ARR_HOST}:8989
   	}
   }
 
-  radarr.fairlane.tetra.cool {
+  radarr.${lab.site.domain} {
   	route {
   		import lan_only
   		reverse_proxy {$ARR_HOST}:7878
   	}
   }
 
-  prowlarr.fairlane.tetra.cool {
+  prowlarr.${lab.site.domain} {
   	route {
   		import lan_only
   		reverse_proxy {$ARR_HOST}:9696
   	}
   }
 
-  sabnzbd.fairlane.tetra.cool {
+  sabnzbd.${lab.site.domain} {
   	route {
   		import lan_only
   		reverse_proxy {$ARR_HOST}:8080

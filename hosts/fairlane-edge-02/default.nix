@@ -1,4 +1,4 @@
-{modules, ...}: {
+_: {
   imports = [../common/edge-host.nix];
 
   lab = {
@@ -9,7 +9,5 @@
       internalIp = "10.10.0.151";
       proxmoxParent = "pooltoy";
     };
-
-    caddy.staticTail = import ../common/fairlane-caddy-tail.nix;
   };
 }
