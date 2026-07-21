@@ -5,6 +5,7 @@
   pkgs,
   nixosConfigurations,
   topo,
+  caps,
   ...
 }: let
   siteData = config.lab.site.dataDir;
@@ -13,8 +14,8 @@
 
   selfIp = config.lab.site.internalIp;
 
-  haNodeNames = topo.hostsProviding "db-ha-node";
-  haNodeIps = topo.ipsProviding "db-ha-node";
+  haNodeNames = topo.hostsProviding caps.dbHaNode.name;
+  haNodeIps = topo.ipsProviding caps.dbHaNode.name;
   otherNodeIps = lib.filter (ip: ip != selfIp) haNodeIps;
 
   # etcdInitialCluster and haproxyBackends interpolate each peer's internalIp; a peer
@@ -33,6 +34,10 @@
     haNodeNames;
 
   postgresPkg = cfg.package;
+
+  # patroni's REST port: the haproxy health check, the leader probe, and the firewall
+  # must all agree with the patroni setting
+  patroniRestPort = 8008;
 
   # CREATE ROLE/DATABASE IF NOT EXISTS isn't valid SQL, so guard each with a SELECT ... \gexec.
   roleReconcileSql = let
@@ -93,7 +98,7 @@
     lib.concatStringsSep "\n"
     (map (name: let
       ip = nixosConfigurations.${name}.config.lab.site.internalIp;
-    in "    server ${name} ${ip}:5432 check port 8008")
+    in "    server ${name} ${ip}:5432 check port ${toString patroniRestPort}")
     haNodeNames);
 
   haproxyConfig = ''
@@ -174,7 +179,7 @@ in {
         # dir is created via tmpfiles below instead.
         dataDir = "${siteData}/patroni";
         postgresqlDataDir = "${siteData}/patroni/pgdata/${postgresPkg.psqlSchema}";
-        restApiPort = 8008;
+        restApiPort = patroniRestPort;
         softwareWatchdog = true;
 
         environmentFiles = {
@@ -261,7 +266,7 @@ in {
             # leader's own unit's job, not a failure).
             script = ''
               for i in $(seq 1 30); do
-                if ${pkgs.curl}/bin/curl -sf http://${selfIp}:8008/primary >/dev/null 2>&1; then
+                if ${pkgs.curl}/bin/curl -sf http://${selfIp}:${toString patroniRestPort}/primary >/dev/null 2>&1; then
                   ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
               ${roleReconcileSql}
               EOF
@@ -333,7 +338,7 @@ in {
       2379
       2380
       5432
-      8008
+      patroniRestPort
     ];
     # the VRRP accept rule on the internal interface comes from modules.services.vrrp.system.
   };

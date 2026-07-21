@@ -7,6 +7,7 @@
   nixosConfigurations,
   modules,
   topo,
+  caps,
   ...
 }: let
   cfg = config.lab.bind;
@@ -17,7 +18,7 @@
     lib.sort (a: b: a < b)
     (lib.filter (i: i != null)
       (map (name: nixosConfigurations.${name}.config.lab.site.internalIp or null)
-        (topo.hostsProviding "dns")));
+        (topo.hostsProviding caps.dns.name)));
   otherDnsInternalIps = lib.filter (ip: ip != selfInternalIp) allDnsInternalIps;
   selfIdx = lib.lists.findFirstIndex (i: i == selfInternalIp) 0 allDnsInternalIps;
 
@@ -26,7 +27,7 @@
   otherDnsV6 =
     lib.filter (v6: v6 != null && v6 != ha.hostV6)
     (map (name: nixosConfigurations.${name}.config.lab.bind.ha.hostV6 or null)
-      (topo.hostsProviding "dns"));
+      (topo.hostsProviding caps.dns.name));
 in {
   imports = [modules.services.vrrp.system];
 

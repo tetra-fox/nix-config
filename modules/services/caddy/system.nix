@@ -25,10 +25,10 @@
     if arrIsLocal
     then "127.0.0.1"
     else let
-      hosts = topo.hostsProviding "arr";
+      hosts = topo.hostsProviding caps.arr.name;
     in
       if hosts != []
-      then topo.ipProviding "arr"
+      then topo.ipProviding caps.arr.name
       else "127.0.0.1";
 
   # render one reverse-proxy vhost per same-site route. the engine resolved each route's upstream
@@ -98,7 +98,7 @@
     lib.sort (a: b: a < b)
     (lib.filter (ip: ip != null)
       (map (name: nixosConfigurations.${name}.config.lab.site.hostIp or null)
-        (topo.hostsProviding "edge")));
+        (topo.hostsProviding caps.edge.name)));
   otherEdgeServerIps = lib.filter (ip: ip != selfServerIp) allEdgeServerIps;
   selfEdgeIdx = lib.lists.findFirstIndex (i: i == selfServerIp) 0 allEdgeServerIps;
 in {
