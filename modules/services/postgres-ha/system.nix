@@ -39,39 +39,17 @@
   # must all agree with the patroni setting
   patroniRestPort = 8008;
 
-  # CREATE ROLE/DATABASE IF NOT EXISTS isn't valid SQL, so guard each with a SELECT ... \gexec.
-  roleReconcileSql = let
-    clauseStr = role:
-      lib.concatStringsSep " "
-      (lib.mapAttrsToList (c: v: lib.optionalString v (lib.toUpper c))
-        (lib.filterAttrs (_: v: v) role.clauses));
+  # the per-role reconcile SQL is shared with the single-server module (role-sql.nix)
+  roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
-    mkRole = name: role: ''
-      SELECT 'CREATE ROLE ${name} LOGIN ${clauseStr role}'
-        WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${name}')\gexec
-      ALTER ROLE ${name} WITH LOGIN ${clauseStr role} ENCRYPTED PASSWORD :'pw_${name}';
-    '';
-
-    mkDb = name: db: ''
-      SELECT 'CREATE DATABASE "${db}" OWNER ${name}'
-        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${db}')\gexec
-      ALTER DATABASE "${db}" OWNER TO ${name};
-    '';
-
-    # pg 15+: public schema owner must be the role or it can't CREATE TABLE.
-    mkSchema = name: db: ''
-      \connect "${db}"
-      ALTER SCHEMA public OWNER TO ${name};
-      \connect postgres
-    '';
-
-    rolesList = lib.attrsToList cfg.roles;
-  in
-    lib.concatStringsSep "\n" (
-      (map (e: mkRole e.name e.value) rolesList)
-      ++ lib.concatMap (e: map (db: mkDb e.name db) e.value.owns) rolesList
-      ++ lib.concatMap (e: map (db: mkSchema e.name db) e.value.owns) rolesList
-    );
+  roleReconcileSql =
+    lib.concatStringsSep "\n"
+    (lib.mapAttrsToList (name: role:
+      roleSql {
+        inherit name role;
+        passwordVar = "pw_${name}";
+      })
+    cfg.roles);
 
   # psql -v so the password reaches ALTER ROLE as :'pw_<name>' and never hits argv.
   roleCredArgs =

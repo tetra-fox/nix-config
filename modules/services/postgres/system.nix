@@ -13,7 +13,10 @@
 
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
-  # pg 15+: public schema owner must be the role or it can't CREATE TABLE, hence ALTER SCHEMA.
+  # the role SQL is shared with the HA module (role-sql.nix); idempotent, so running it
+  # after ensureUsers has already created the role is fine
+  roleSql = import modules.services.postgres.role-sql {inherit lib;};
+
   mkRoleUnit = name: role: {
     description = "Set ${name} postgres role password + ownership from sops";
     after = ["postgresql-setup.service"];
@@ -26,16 +29,12 @@
       LoadCredential = "pgpass:${config.sops.secrets.${role.passwordSecret}.path}";
     };
     # heredoc lets "${db-with-hyphen}" reach psql intact; EOF unquoted so $CREDENTIALS_DIRECTORY expands
-    script = let
-      ownerStmts = lib.concatMapStringsSep "\n" (db: ''
-        ALTER DATABASE "${db}" OWNER TO ${name};
-        \connect "${db}"
-        ALTER SCHEMA public OWNER TO ${name};'')
-      role.owns;
-    in ''
+    script = ''
       ${cfg.package}/bin/psql -v "pass=$(cat $CREDENTIALS_DIRECTORY/pgpass)" <<EOF
-      ALTER USER ${name} WITH ENCRYPTED PASSWORD :'pass';
-      ${ownerStmts}
+      ${roleSql {
+        inherit name role;
+        passwordVar = "pass";
+      }}
       EOF
     '';
   };
