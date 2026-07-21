@@ -5,11 +5,20 @@
 # per-site parts (fairlane's dual-stack knobs) stay in the site file.
 {
   config,
+  lib,
   pkgs,
   topo,
   ...
 }: {
-  lab.bind = {
+  # declared here, not in the bind module: this is a template input for the zone assembly
+  # below, which is site policy; bind itself only ever sees the finished zone file
+  options.lab.bind.zone.extraRecords = lib.mkOption {
+    type = lib.types.lines;
+    default = "";
+    description = "site-specific records appended to the generated zone (e.g. mesa's unifi A record)";
+  };
+
+  config.lab.bind = {
     rpzLists = [
       {
         name = "oisd.rpz";
@@ -25,9 +34,12 @@
 
     zone = {
       name = config.lab.site.domain;
-      file = pkgs.replaceVars (./files + "/${config.lab.site.domain}.zone.in") {
+      # one template for every site; only the substituted facts differ
+      file = pkgs.replaceVars ./files/site.zone.in {
+        domain = config.lab.site.domain;
         nsIp = config.lab.site.hostIp;
         edgeVip = topo.edgeEndpointIp;
+        extraRecords = config.lab.bind.zone.extraRecords;
         inherit (topo) hostRecords;
       };
     };

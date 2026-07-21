@@ -1,0 +1,25 @@
+; the internal split-horizon zone, one template for every site. a real zone file with the
+; domain and derived addresses substituted by nix (replaceVars, see _dns-common.nix): this
+; resolver's own IP, the edge ingress VIP, a block of one A record per fleet host at its own
+; hostIp, and any site-specific extra records. NOTE: replaceVars substitutes every literal
+; occurrence of a placeholder token in this file, comments included -- don't write a
+; placeholder's own at-sign-delimited name anywhere in prose, or it gets replaced too.
+; the wildcard answers every other name under this zone from the edge VIP (fine for HTTP(S)
+; vhosts); the per-host and extra records are more-specific and win over it, no special-casing
+; needed -- a direct-protocol hostname (SSH, Samba, NFS) needs its own record or it silently
+; falls through to the edge VIP, which doesn't speak that protocol. serial is static (1) because
+; this zone is generated, never hand-edited or transferred between servers.
+$TTL 300
+$ORIGIN @domain@.
+@   IN SOA ns.@domain@. hostmaster.@domain@. (
+        1          ; serial
+        3600       ; refresh
+        900        ; retry
+        604800     ; expire
+        300 )      ; negative cache ttl
+    IN NS  ns.@domain@.
+ns    IN A   @nsIp@
+@     IN A   @edgeVip@
+*     IN A   @edgeVip@
+@extraRecords@
+@hostRecords@
