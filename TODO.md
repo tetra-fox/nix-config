@@ -51,11 +51,12 @@
   - fleet alert set: baselines from every agent (target down, unit failed, fs >85%,
     oom kills, service flapping, clock unsync) + producer-registered (zfs pool
     health/capacity, smart x3, restic stale, arr vpn down, gpu temp)
-  - NEXT alerts, rough order of value: blackbox exporter on the mon hosts probing
-    through the edge vip (https + cert expiry <14d, dns against the .53 vip, tcp to
-    db vip); db tier internals (etcd needs listen-metrics-urls on a separate port and
-    patroni's rest api is unauthed incl switchover -- think before opening either to
-    mon); loki-based rules need a per-rule datasource field in mkRule first
+  - blackbox: DONE. monitoring/blackbox.nix rides the server role; https probes derived
+    from the route registry, dns probe against topo.dnsEndpointIp (caps.dns gained its
+    vipPath), tcp to topo.dbEndpointIp. probe-failed + cert-expiry (<14d) alerts
+  - NEXT alerts: db tier internals (etcd needs listen-metrics-urls on a separate port
+    and patroni's rest api is unauthed incl switchover -- think before opening either
+    to mon); loki-based rules need a per-rule datasource field in mkRule first
   - influxdb: rejected. prometheus covers pool health/capacity (pdf zfs_exporter) and
     arc/io (node exporter zfs collector); influx's only real edge is zpool_influxdb's
     per-vdev latency histograms, not worth a second tsdb + telegraf

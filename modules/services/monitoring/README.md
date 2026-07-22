@@ -54,6 +54,16 @@ there is no contact point provisioned yet: firing alerts show in grafana's alert
 (and annotate dashboards), but push notifications need a per-site
 `services.grafana.provision.alerting.contactPoints` + `policies` on the mon host.
 
+## blackbox probes
+
+`blackbox.nix` rides along with the server role and probes what users actually hit,
+not per-box health: https through the edge for every vhost in the site's route
+registry (the probe list maintains itself), a dns query against the resolver
+endpoint (`topo.dnsEndpointIp`, the bind VIP), and a tcp connect to the db endpoint
+(`topo.dbEndpointIp`). the exporter binds loopback, only the same-box prometheus
+talks to it. comes with `probe failed` and `tls certificate expiring` (<14d) alerts;
+the cert one is the tripwire for a silently broken acme renewal.
+
 ## single-host vs multi-host
 
 the bind/firewall machinery is **dormant on a single-host site** and **activates the

@@ -166,8 +166,12 @@
     isPaused = false;
   };
 in {
-  # options-only, so an exporter producer can register without pulling in this whole stack
-  imports = [modules.services.monitoring.registry];
+  # registry is options-only, so an exporter producer can register without pulling in this
+  # whole stack; blackbox carries the server's synthetic probes and gates itself on the role
+  imports = [
+    modules.services.monitoring.registry
+    modules.services.monitoring.blackbox
+  ];
 
   config = lib.mkMerge [
     # ---- agent: always on, every host ----

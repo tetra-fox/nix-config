@@ -62,6 +62,10 @@ in
       cap = caps.edge.name;
       vipPath = caps.edge.vipPath;
     };
+    dnsEndpointIp = haEndpointFor {
+      cap = caps.dns.name;
+      vipPath = caps.dns.vipPath;
+    };
 
     # /32 of each client's hostIp; a netns client's traffic is SNAT'd to its hostIp
     # (lab.arrStack.netnsSnatHosts), so this covers it.
