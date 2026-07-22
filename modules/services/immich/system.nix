@@ -182,14 +182,14 @@ in {
           faceDetection.concurrency = 2;
           integrityCheck.concurrency = 1;
           library.concurrency = 5;
-          metadataExtraction.concurrency = 24;
+          metadataExtraction.concurrency = 5;
           migration.concurrency = 5;
           notifications.concurrency = 5;
           ocr.concurrency = 1;
           search.concurrency = 5;
           sidecar.concurrency = 5;
           smartSearch.concurrency = 2;
-          thumbnailGeneration.concurrency = 12;
+          thumbnailGeneration.concurrency = 5;
           videoConversion.concurrency = 1;
           workflow.concurrency = 5;
         };
