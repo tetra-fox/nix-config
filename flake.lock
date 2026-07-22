@@ -1518,11 +1518,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1784640146,
-        "narHash": "sha256-i6FISkEdblBt31GAjiD0+7+BddszXF90tbyBjUdH948=",
+        "lastModified": 1784752400,
+        "narHash": "sha256-dK7+GdRwgzLvnT1/7vi93h67O1sHzKefNXfqCUgdKv0=",
         "owner": "tetra-fox",
         "repo": "nurpkgs",
-        "rev": "2ffd4b5ccdc0d88e32362345a7e2b915131a9528",
+        "rev": "28b798c05b4653617723e5499e0dddcf06992e56",
         "type": "github"
       },
       "original": {
