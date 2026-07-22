@@ -28,9 +28,11 @@
   # the registry (registry.nix) owns the bind-address rule; read it, don't recompute it
   inherit (cfg) bindAddr;
 
-  # read only this sibling INPUT option, never a monitoring-derived value, or the
+  # read only these sibling INPUT options, never a monitoring-derived value, or the
   # cross-host eval cycles
   exportersOf = name: nixosConfigurations.${name}.config.lab.monitoring.exporters or [];
+  alertsOf = name: nixosConfigurations.${name}.config.lab.monitoring.alerts or [];
+  dashboardsOf = name: nixosConfigurations.${name}.config.lab.monitoring.dashboards or [];
 
   scrapeAddr = name:
     if name == hn
@@ -74,6 +76,93 @@
   # loki's port is the logging module's fact (lab.logging.lokiPort); the firewall rule
   # here must track it, not restate it
   lokiPort = config.lab.logging.lokiPort;
+
+  # identical registrations from multiple hosts collapse; a name registered twice with
+  # different bodies survives the unique and is caught by the assertion below.
+  # sorted so the provisioned file doesn't depend on host iteration order
+  siteAlerts = lib.sort (a: b: a.name < b.name) (lib.unique (lib.concatMap alertsOf hostsInSite));
+
+  dupAlertNames = let
+    names = map (a: a.name) siteAlerts;
+  in
+    lib.unique (lib.filter (n: lib.count (x: x == n) names > 1) names);
+
+  # cross-host copies of one dashboard are distinct attrsets with the same outPath
+  # (lib.unique can't compare derivations), so dedupe on the store path
+  siteDashboards = lib.foldl' (
+    acc: p:
+      if lib.any (q: q.outPath == p.outPath) acc
+      then acc
+      else acc ++ [p]
+  ) [] (lib.concatMap dashboardsOf hostsInSite);
+
+  # same uid scheme as the dashboard packages (sha256 prefix of the name), so edits to
+  # an existing rule update it in place and a rename is a new rule
+  alertUid = name: builtins.substring 0 14 (builtins.hashString "sha256" name);
+
+  promDsUid = "prometheus";
+
+  # the grafana rule shape: A instant promql, B reduce(last), C threshold. the reduce
+  # step exists so summaries can template the measured value as {{ $values.B }}
+  mkRule = a: {
+    uid = alertUid a.name;
+    title = a.name;
+    condition = "C";
+    data = [
+      {
+        refId = "A";
+        relativeTimeRange = {
+          from = 600;
+          to = 0;
+        };
+        datasourceUid = promDsUid;
+        model = {
+          refId = "A";
+          expr = a.expr;
+          instant = true;
+          range = false;
+          intervalMs = 1000;
+          maxDataPoints = 43200;
+        };
+      }
+      {
+        refId = "B";
+        datasourceUid = "__expr__";
+        model = {
+          refId = "B";
+          type = "reduce";
+          expression = "A";
+          reducer = "last";
+        };
+      }
+      {
+        refId = "C";
+        datasourceUid = "__expr__";
+        model = {
+          refId = "C";
+          type = "threshold";
+          expression = "B";
+          conditions = [
+            {
+              evaluator = {
+                type = a.condition.op;
+                params = [a.condition.value];
+              };
+              operator.type = "and";
+              query.params = ["C"];
+              reducer.type = "last";
+              type = "query";
+            }
+          ];
+        };
+      }
+    ];
+    inherit (a) for noDataState;
+    execErrState = "Error";
+    annotations.summary = a.summary;
+    inherit (a) labels;
+    isPaused = false;
+  };
 in {
   # options-only, so an exporter producer can register without pulling in this whole stack
   imports = [modules.services.monitoring.registry];
@@ -110,6 +199,63 @@ in {
         }
       ];
 
+      lab.monitoring.dashboards = with pkgs.grafana-dashboards; [
+        node-exporter-full
+        systemd-exporter
+      ];
+
+      # companion alerts for the exporters above. registered by every host identically,
+      # so they collapse to one rule each on the server
+      lab.monitoring.alerts = [
+        {
+          name = "scrape target down";
+          expr = "up == bool 0";
+          summary = "prometheus can't scrape {{ $labels.job }} on {{ $labels.instance }}";
+          labels.severity = "critical";
+        }
+        {
+          name = "systemd unit failed";
+          expr = ''max by (name, instance) (systemd_unit_state{state="failed"})'';
+          summary = "{{ $labels.name }} on {{ $labels.instance }} is failed";
+          labels.severity = "warning";
+        }
+        {
+          # zfs excluded: datasets share the pool, the pool capacity alert covers it
+          name = "filesystem filling up";
+          expr = ''100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|zfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|zfs"})'';
+          condition.value = 85;
+          for = "30m";
+          summary = "{{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $values.B }}% full";
+          labels.severity = "warning";
+        }
+        {
+          # event alert: the 15m increase window keeps it visible, a pending
+          # period would only delay the notification
+          name = "oom kills";
+          expr = "increase(node_vmstat_oom_kill[15m])";
+          for = "0s";
+          summary = "{{ $values.B }} oom kill(s) on {{ $labels.instance }} in the last 15m, check the journal";
+          labels.severity = "warning";
+        }
+        {
+          # Restart=always crash loops never reach the failed state, this catches them
+          name = "service flapping";
+          expr = "increase(systemd_service_restart_total[1h])";
+          condition.value = 3;
+          for = "0s";
+          summary = "{{ $labels.name }} on {{ $labels.instance }} restarted {{ $values.B }} times in the last hour";
+          labels.severity = "warning";
+        }
+        {
+          # etcd leases, patroni ttls and dnssec signing all assume sane clocks
+          name = "clock out of sync";
+          expr = "node_timex_sync_status == bool 0";
+          for = "15m";
+          summary = "clock on {{ $labels.instance }} is not ntp-synced";
+          labels.severity = "warning";
+        }
+      ];
+
       # open every registered exporter port to this site's server only
       networking.firewall.extraInputRules = lib.mkIf (multiHost && allExporterPorts != []) (
         allowFrom
@@ -120,6 +266,13 @@ in {
 
     # ---- server: prometheus + grafana, one per site ----
     (lib.mkIf cfg.server.enable {
+      assertions = [
+        {
+          assertion = dupAlertNames == [];
+          message = "lab.monitoring.alerts: rule name(s) registered more than once with differing bodies: ${lib.concatStringsSep ", " dupAlertNames}";
+        }
+      ];
+
       lab.topology.provides = [caps.monitoring.name];
       lab.topology.routes = [
         {
@@ -134,10 +287,9 @@ in {
       };
 
       services = {
-        grafana-dashboards.community = with pkgs.grafana-dashboards; [
-          node-exporter-full
-          systemd-exporter
-        ];
+        # every site host's registered dashboards (this host's own included, node/systemd
+        # from the agent block above)
+        grafana-dashboards.community = siteDashboards;
 
         prometheus = {
           enable = true;
@@ -189,8 +341,28 @@ in {
                 access = "proxy";
                 url = "http://localhost:${toString config.services.prometheus.port}";
                 isDefault = true;
+                # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
+                # string as a uid, and the alert rules reference it (promDsUid)
+                uid = promDsUid;
               }
             ];
+
+            alerting.rules.settings = {
+              apiVersion = 1;
+              groups = lib.optional (siteAlerts != []) {
+                orgId = 1;
+                name = "fleet";
+                folder = "fleet";
+                interval = "60s";
+                rules = map mkRule siteAlerts;
+              };
+              deleteRules =
+                map (n: {
+                  orgId = 1;
+                  uid = alertUid n;
+                })
+                cfg.retiredAlerts;
+            };
           };
         };
       };

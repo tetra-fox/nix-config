@@ -18,13 +18,41 @@ IP). no hand-maintained target list, no DNS dependency. the derivation lives in
 
 ## exporter registry
 
-every exporter a host runs (node, systemd, nvidia, cadvisor, ...) registers a
+every exporter a host runs (node, systemd, nvidia, zfs, cadvisor, ...) registers a
 `{name, port}` into `lab.monitoring.exporters` (declared in the options-only
 `registry.nix`). the server folds over each site host's registry to build the scrape
 jobs -- agents expose exporters, the server discovers them uniformly. a producer module
-(e.g. `modules.hardware.nvidia.system`) imports `registry.nix`, registers its exporter, and binds
-`lab.monitoring.bindAddr` for its listen address -- so it works whether the host is a
-server (loopback) or a remote agent (site IP), without depending on the full stack.
+(e.g. `modules.hardware.nvidia.system`, `modules.platform.zfs.system`) imports `registry.nix`,
+registers its exporter, and binds `lab.monitoring.bindAddr` for its listen address -- so it
+works whether the host is a server (loopback) or a remote agent (site IP), without
+depending on the full stack.
+
+## dashboard + alert registry
+
+the same discovery works for what the server should *show* and *watch*. a producer
+registers alongside its exporter:
+
+- `lab.monitoring.dashboards` -- `pkgs.grafana-dashboards.*` packages. the server folds
+  every site host's list (deduped by store path) into its grafana community provider, so
+  the zfs dashboard lands on `stats.mesa` because `mesa-store-01` runs zfs, not because
+  the mon host lists it.
+- `lab.monitoring.alerts` -- compact rule specs the server renders into one
+  file-provisioned grafana rule group (folder `fleet`, evaluated every 60s). a rule is
+  `{name, expr, condition?, for?, summary, labels?, noDataState?}`: `expr` is an instant
+  promql query, `condition` a threshold on its value (default `gt 0`), and one alert
+  instance fires per breaching series. use `== bool` comparisons to turn a state into
+  0/1 (see `up == bool 0` in the agent block). summaries are go-templated;
+  `{{ $values.B }}` is the measured value, `{{ $labels.* }}` come from the series.
+
+identical registrations from many hosts collapse to one rule (the node/systemd baseline
+alerts are registered by every agent); the same name with a *different* body is an eval
+error. rule uids are hashed from the name, so a rename is a new rule -- and grafana never
+deletes provisioned rules on its own, so retiring or renaming one means putting the old
+name in `lab.monitoring.retiredAlerts` on the server host until every grafana has dropped it.
+
+there is no contact point provisioned yet: firing alerts show in grafana's alert list
+(and annotate dashboards), but push notifications need a per-site
+`services.grafana.provision.alerting.contactPoints` + `policies` on the mon host.
 
 ## single-host vs multi-host
 
@@ -75,9 +103,16 @@ oauth/SSO config, the matching sops secret for the oauth client.
 - `lab.monitoring.extraScrapeConfigs` - extra prometheus scrape jobs for targets the
   auto-derive can't discover (non-NixOS hosts, external exporters). same-site NixOS hosts
   are scraped automatically.
+- `lab.monitoring.dashboards` - grafana dashboard packages this host wants on its site's
+  grafana (see the registry section above).
+- `lab.monitoring.alerts` - alert rules this host wants its site's grafana to evaluate.
+- `lab.monitoring.retiredAlerts` - names of removed rules grafana should delete (server
+  host only).
 
-dashboards are added via `services.grafana-dashboards.community` (grafana.com dashboards
-from the `tetra-nurpkgs` package set) -- list-merged across modules.
+dashboard packages come from `pkgs.grafana-dashboards` (grafana.com dashboards pinned in
+`tetra-nurpkgs`). server-local integrations like unpoller still assign
+`services.grafana-dashboards.community` directly -- the registry is for dashboards that
+follow a *remote* producer.
 
 ## gotchas
 
@@ -96,6 +131,10 @@ from the `tetra-nurpkgs` package set) -- list-merged across modules.
   upstream from the route registry and the Caddyfile never hardcodes which box runs grafana.
 - per-unit ingress/egress byte metrics need `DefaultIPAccounting = true`, set here.
   otherwise the `systemd_unit_ip_*_bytes` series are all zero
+- file-provisioned alert rules are read-only in the grafana UI, and grafana keeps rules
+  that vanish from the provisioning file -- removal goes through `retiredAlerts`
+- alert rules default `noDataState = "OK"`: a vanished series usually means the exporter
+  died, which the target-down alert already reports; `NoData` would fire both
 - a proxmox VM that's a monitoring server (`<site>-mon-01`) needs `modules.platform.proxmox-vm.system`
   to boot (qemu-guest + virtio initrd) -- not specific to monitoring, but easy to forget
   when scaffolding a fresh mon box
