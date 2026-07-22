@@ -304,14 +304,16 @@ in {
           "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
         ]
         # upstream now drops netns-initiated connections out the veth as leak protection
-        # (Maroka-chan/VPN-Confinement#47), which also kills the arrs' connections to the
-        # remote db. insert an accept above the drop for each SNAT dest; a failed insert
-        # fails the unit, which fails closed with the arrs bound to it.
+        # (Maroka-chan/VPN-Confinement#47), which also kills the arrs' legitimate
+        # non-tunnel flows: the remote db (netnsSnatHosts) and host-side sabnzbd at the
+        # bridge address. insert an accept above the drop for each; neither dest can
+        # route to the WAN, so the leak protection stays intact. a failed insert fails
+        # the unit, which fails closed with the arrs bound to it.
         # TODO: replace with an upstream option if one appears
         ++ map (
           ip: "${pkgs.iproute2}/bin/ip netns exec ${vpnNs} ${pkgs.iptables}/bin/iptables -I OUTPUT 1 -o veth-${vpnNs} -d ${ip} -j ACCEPT"
         )
-        cfg.netnsSnatHosts;
+        (cfg.netnsSnatHosts ++ [vpn.bridgeAddress]);
 
       # masquerade netns-initiated traffic to each dest so replies come back: without
       # SNAT the dest sees the private namespaceAddress and can't reply. a declarative
