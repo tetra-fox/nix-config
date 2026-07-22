@@ -68,7 +68,9 @@
     })
     byExporter;
 
-  allExporterPorts = lib.unique (lib.concatMap (name: map (e: e.port) (exportersOf name)) hostsInSite);
+  # this host's own registrations, not a site-wide fold: the firewall should open
+  # exactly the ports something here listens on
+  myExporterPorts = map (e: e.port) cfg.exporters;
 
   siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
 
@@ -256,11 +258,11 @@ in {
         }
       ];
 
-      # open every registered exporter port to this site's server only
-      networking.firewall.extraInputRules = lib.mkIf (multiHost && allExporterPorts != []) (
+      # open this host's exporter ports to this site's server only
+      networking.firewall.extraInputRules = lib.mkIf (multiHost && myExporterPorts != []) (
         allowFrom
         (lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) siteServers)))
-        allExporterPorts
+        myExporterPorts
       );
     }
 
