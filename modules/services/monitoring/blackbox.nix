@@ -41,6 +41,12 @@
         source_labels = ["__param_target"];
         target_label = "instance";
       }
+      # the community dashboard (14928) filters its panels and template variable on a
+      # `target` label, instance alone leaves its legends as raw series identities
+      {
+        source_labels = ["__param_target"];
+        target_label = "target";
+      }
       {
         target_label = "__address__";
         replacement = "127.0.0.1:${toString blackboxPort}";
