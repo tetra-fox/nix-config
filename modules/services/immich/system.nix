@@ -70,13 +70,13 @@ in {
     ];
 
     lab.topology.provides = [caps.immich.name];
-    # immich uploads whole photos/videos in one request, so lift the body cap well past any
-    # single asset (caddy's default would reject large originals).
+    # immich uploads whole photos/videos in one request. caddy applies no body limit unless
+    # max_size is set, so this is the only cap in the path; keep it past any single asset.
     lab.topology.routes = [
       {
         host = fqdn;
         port = config.services.immich.port;
-        maxBodySize = "100GB"; # mmmm prores log :woozy:
+        maxBodySize = "128GB"; # mmmm prores log :woozy:
       }
     ];
 
