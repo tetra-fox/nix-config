@@ -9,6 +9,7 @@
   imports = [
     modules.platform.nixpkgs.system
     modules.cli.zsh.system
+    modules.cli.nix-purge.system
   ];
 
   environment.systemPackages = with pkgs;
