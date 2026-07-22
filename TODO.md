@@ -34,10 +34,31 @@
   - separate datasets? eg: `megamax/store/tetra` `megamax/store/mel` `megamax/backup/timemachine/tetra` etc etc.
   - when this lands we can update timemachine with auth n stuff.
 
-- grafana: alerting analog to the dashboard/node exporter discovery
-  - hosts can set up grafana alerts that get picked up by the main grafana instance at eval time
-  - **impawtent for zfs!!!!!! i have old ass disks!!!!!! do it soon!!!!**
-  - maybe zfs exporter too to grafana.
+- grafana: alerting analog to the dashboard/node exporter discovery: BUILT. hosts register
+  lab.monitoring.{alerts,dashboards} (registry.nix); the site server folds both at eval time
+  into a provisioned grafana rule group (folder "fleet") + the community dashboard provider.
+  platform/zfs self-registers the pdf zfs_exporter, pool unhealthy/capacity alerts, and the
+  zfs dashboard; every agent registers target-down + unit-failed baselines.
+  - to land: push nurpkgs (new zfs + smartctl dashboards), bump flake.lock, rebuild
+    mesa-mon-01 + mesa-store-01
+  - smartctl exporter: DONE. modules/hardware/smartctl (exporter + smart-failed /
+    sector-errors / temperature alerts + dashboard), imported by mesa-store-01. SMART
+    verified working through the virtio-scsi passthrough (sat auto-detect)
+  - contact point: telegram, added by hand in grafana's UI (bot token + chat id stay out
+    of the repo; it's ui state in grafana's dataDir, two fields to redo if ever lost).
+    check the default notification policy routes to it, or provisioned rules keep going
+    to the dead grafana-default-email receiver
+  - fleet alert set: baselines from every agent (target down, unit failed, fs >85%,
+    oom kills, service flapping, clock unsync) + producer-registered (zfs pool
+    health/capacity, smart x3, restic stale, arr vpn down, gpu temp)
+  - NEXT alerts, rough order of value: blackbox exporter on the mon hosts probing
+    through the edge vip (https + cert expiry <14d, dns against the .53 vip, tcp to
+    db vip); db tier internals (etcd needs listen-metrics-urls on a separate port and
+    patroni's rest api is unauthed incl switchover -- think before opening either to
+    mon); loki-based rules need a per-rule datasource field in mkRule first
+  - influxdb: rejected. prometheus covers pool health/capacity (pdf zfs_exporter) and
+    arc/io (node exporter zfs collector); influx's only real edge is zpool_influxdb's
+    per-vdev latency histograms, not worth a second tsdb + telegraf
 
 ## general
 
