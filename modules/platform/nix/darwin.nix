@@ -8,16 +8,18 @@ _: {
   nix = {
     settings.trusted-users = ["root" "@admin"];
 
-    # automatic + retention live in common.nix; only the launchd schedule here
+    # automatic + retention live in common.nix; only the launchd schedule here.
+    # the mac keeps local (pacific) time, so sunday 4a is inside the sleep window
+    # see SCHEDULE.md
     gc.interval = {
       Weekday = 0;
-      Hour = 3;
+      Hour = 4;
       Minute = 0;
     };
 
     optimise.interval = {
       Weekday = 0;
-      Hour = 4;
+      Hour = 5;
       Minute = 0;
     };
   };

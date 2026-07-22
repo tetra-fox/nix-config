@@ -266,7 +266,8 @@
 in {
   services.recyclarr = {
     enable = true;
-    schedule = "daily";
+    # see SCHEDULE.md
+    schedule = "12:00"; # servers are UTC. 4a/5a pacific
     configuration = {
       sonarr.sonarr = {
         base_url = "http://${nsVethIp}:8989";

@@ -39,7 +39,9 @@ in {
         dockerSocket.enable = true;
         autoPrune = {
           enable = true;
-          dates = "weekly";
+          # servers are UTC. monday 13:00 is 5a/6a pacific
+          # see SCHEDULE.md
+          dates = "Mon 13:00";
         };
       };
       oci-containers.backend = "podman";
@@ -48,6 +50,10 @@ in {
     # systemd.packages installs the unit files but not the [Install] section, so enable the timer here
     systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
       wantedBy = ["timers.target"];
+      # upstream fires at midnight utc (4p/5p pacific) and restarts updated containers;
+      # move it into the sleep window. empty string resets the inherited OnCalendar
+      # see SCHEDULE.md
+      timerConfig.OnCalendar = ["" "12:00"];
     };
 
     users.users.${username}.extraGroups = ["podman"];

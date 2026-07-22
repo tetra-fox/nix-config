@@ -78,7 +78,9 @@ in {
     timerConfig = lib.mkOption {
       type = lib.types.attrs;
       default = {
-        OnCalendar = "02:30";
+        # servers are UTC. 6:30a/7:30a pacific, after the nightly db dumps land
+        # see SCHEDULE.md
+        OnCalendar = "14:30";
         Persistent = true;
       };
       description = "systemd timer for the backup run. Persistent catches up a missed run after downtime.";

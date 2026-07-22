@@ -29,6 +29,9 @@
   # this room's valve basestations, powered with monado by the steam module
   lab.steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
 
+  # TODO: temporary
+  hardware.nvidia-container-toolkit.enable = true;
+
   # native wine ableton live; consumed via legacyPackages (not the fleet overlay)
   # so it builds against nurpkgs' own nixpkgs pin, see the tetra-nurpkgs input
   # comment in flake.nix. pulls in ableton-wine.

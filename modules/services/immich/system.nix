@@ -102,7 +102,10 @@ in {
 
       settings = {
         backup.database = {
-          cronExpression = "0 02 * * *";
+          # server is UTC. dump at 14:00 (6a/7a pacific), half an hour before the
+          # store box's restic run uploads it
+          # see SCHEDULE.md
+          cronExpression = "0 14 * * *";
           enabled = true;
           keepLastAmount = 14;
         };
@@ -159,19 +162,21 @@ in {
           };
         };
 
+        # server is UTC. 13:00 is 5a/6a pacific, between the nightly tasks and the db dump
+        # see SCHEDULE.md
         integrityChecks = {
           checksumFiles = {
-            cronExpression = "0 03 * * *";
+            cronExpression = "0 13 * * *";
             enabled = true;
             percentageLimit = 1;
             timeLimit = 3600000;
           };
           missingFiles = {
-            cronExpression = "0 03 * * *";
+            cronExpression = "0 13 * * *";
             enabled = true;
           };
           untrackedFiles = {
-            cronExpression = "0 03 * * *";
+            cronExpression = "0 13 * * *";
             enabled = true;
           };
         };
@@ -196,7 +201,9 @@ in {
 
         library = {
           scan = {
-            cronExpression = "0 0 * * *";
+            # server is UTC. 12:00 is 4a/5a pacific
+            # see SCHEDULE.md
+            cronExpression = "0 12 * * *";
             enabled = true;
           };
           watch.enabled = false;
@@ -236,7 +243,7 @@ in {
             minRecognitionScore = 0.8;
             modelName = "PP-OCRv5_mobile";
           };
-          urls = ["http://localhost:3003"];
+          urls = ["http://192.168.20.86:3003"];
         };
 
         map = {
@@ -257,7 +264,8 @@ in {
           databaseCleanup = true;
           generateMemories = true;
           missingThumbnails = true;
-          startTime = "00:00";
+          # see SCHEDULE.md
+          startTime = "12:00"; # server is UTC. 4a/5a pacific
           syncQuotaUsage = true;
         };
 

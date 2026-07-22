@@ -20,7 +20,9 @@
     # weekly default is a lot of thrash on multi-TB spinning pools
     autoScrub = {
       enable = true;
-      interval = "monthly";
+      # monthly on the 1st. servers are UTC, 12:00 is 4a/5a pacific
+      # see SCHEDULE.md
+      interval = "*-*-01 12:00:00";
     };
 
     # only snapshots datasets with com.sun:auto-snapshot=true set, so this is

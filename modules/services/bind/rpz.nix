@@ -67,7 +67,9 @@ in {
       description = "daily RPZ blocklist refresh";
       wantedBy = ["timers.target"];
       timerConfig = {
-        OnCalendar = "daily";
+        # servers are UTC. 12:00 plus the random hour is 4a-6a pacific
+        # see SCHEDULE.md
+        OnCalendar = "12:00";
         # run after boot too, else a freshly-booted resolver (empty stubs) blocks nothing until
         # the next daily tick. 3min so network + named are up first.
         OnBootSec = "3min";
