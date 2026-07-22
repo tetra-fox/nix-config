@@ -47,17 +47,12 @@
       "swiftformat"
       "swiftgen"
       "xcodegen"
-      # the nix texlive closure is multi-GB; brew's is fine for occasional use
-      "texlive"
-      "latexindent"
     ];
 
     casks = [
       "1password-cli@beta"
       "1password@beta"
       "ableton-live-suite"
-      "appcleaner"
-      "arc"
       "blackhole-2ch"
       "caldigit-thunderbolt-charging"
       "coconutbattery"
@@ -66,7 +61,6 @@
       "elmedia-player"
       "firefox"
       "focusrite-control"
-      "godot"
       "google-chrome"
       "grandperspective"
       "handbrake-app"
@@ -100,7 +94,6 @@
       "tor-browser"
       "transmission"
       "ultimate-vocal-remover"
-      "unetbootin"
       "unnaturalscrollwheels"
       "webex"
       "wireshark-app"
