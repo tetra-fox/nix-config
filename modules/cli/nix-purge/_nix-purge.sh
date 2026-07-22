@@ -15,7 +15,9 @@ case "${1:-}" in
     ;;
 esac
 
-sudo=(sudo)
+# -H because macos sudo keeps the caller's HOME, and nix run as root with a
+# HOME it does not own warns and falls back to root's passwd home on every call
+sudo=(sudo -H)
 if [ "$(id -u)" -eq 0 ]; then
   sudo=()
 fi
