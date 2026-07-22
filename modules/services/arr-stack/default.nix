@@ -135,6 +135,8 @@ in {
     # the client options contract, not the server module: the arrs are a pg client. the host
     # imports postgres.system itself when it also runs the server (co-located single-box site)
     modules.services.postgres.options
+    # options-only, registers the vpn-down alert without pulling in the monitoring stack
+    modules.services.monitoring.registry
   ];
 
   options.lab.arrStack = {
@@ -226,6 +228,17 @@ in {
   config = lib.mkMerge [
     {
       lab.topology.provides = [caps.arr.name];
+
+      # bindsTo takes the arrs down with the netns unit: they end up stopped, not
+      # failed, so the unit-failed baseline never sees it
+      lab.monitoring.alerts = [
+        {
+          name = "arr vpn down";
+          expr = ''systemd_unit_state{name="${vpnNs}.service",state="active"} == bool 0'';
+          summary = "vpn netns unit on {{ $labels.instance }} is not active, the arr stack is down with it";
+          labels.severity = "critical";
+        }
+      ];
 
       # the arrs log more to their <name>.txt than to stdout, so ship those to the site
       # loki too; the media group grants alloy read on the 0644/0664 files. sabnzbd and

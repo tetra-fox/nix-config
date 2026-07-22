@@ -41,17 +41,27 @@ in {
         port = cfg.exporter.port;
         listenAddress = config.lab.monitoring.bindAddr;
       };
-
-      grafana-dashboards.community = lib.mkIf (cfg.exporter.enable && config.lab.monitoring.server.enable) [
-        pkgs.grafana-dashboards.nvidia-gpu
-      ];
     };
 
-    lab.monitoring.exporters = lib.mkIf cfg.exporter.enable [
-      {
-        name = "nvidia";
-        port = cfg.exporter.port;
-      }
-    ];
+    lab.monitoring = lib.mkIf cfg.exporter.enable {
+      exporters = [
+        {
+          name = "nvidia";
+          port = cfg.exporter.port;
+        }
+      ];
+      # registered here, lands on the site's grafana via the server's dashboard fold
+      dashboards = [pkgs.grafana-dashboards.nvidia-gpu];
+      alerts = [
+        {
+          name = "gpu temperature high";
+          expr = "nvidia_smi_temperature_gpu";
+          condition.value = 85;
+          for = "15m";
+          summary = "gpu on {{ $labels.instance }} at {{ $values.B }}C";
+          labels.severity = "warning";
+        }
+      ];
+    };
   };
 }

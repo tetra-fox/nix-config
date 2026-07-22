@@ -9,6 +9,7 @@
     modules.services.restic.system # offsite backup of the small datasets to backblaze b2
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
     modules.toolsets.disk.system # smartctl etc for the passthrough drives
+    modules.hardware.smartctl.system # smart metrics + pre-failure alerts for those drives
   ];
 
   lab = {

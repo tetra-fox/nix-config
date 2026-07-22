@@ -18,6 +18,7 @@
 {
   config,
   lib,
+  modules,
   ...
 }: let
   cfg = config.lab.backup.restic;
@@ -97,11 +98,26 @@ in {
     };
   };
 
+  # options-only, registers the staleness alert without pulling in the monitoring stack
+  imports = [modules.services.monitoring.registry];
+
   config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = cfg.datasets != [] || cfg.paths != [];
         message = "lab.backup.restic is enabled but neither datasets nor paths is set on host '${hn}'";
+      }
+    ];
+
+    lab.monitoring.alerts = [
+      {
+        # stronger than watching the service fail: also fires when the timer never
+        # ran at all. 26h not 24h so a persistent catch-up after downtime has slack
+        name = "restic backup stale";
+        expr = ''(time() - systemd_timer_last_trigger_seconds{name=~"restic-backups-.+"}) / 3600'';
+        condition.value = 26;
+        summary = "backup timer {{ $labels.name }} on {{ $labels.instance }} last fired {{ $values.B }}h ago";
+        labels.severity = "critical";
       }
     ];
 
