@@ -21,17 +21,19 @@
       enable = true;
       bucket = "mesa-512e3904";
       timerConfig = {
-        OnCalendar = "10:30"; # servers are UTC. 2:30A PST
+        OnCalendar = "10:30"; # servers are UTC. 2:30a PST
         Persistent = true;
       };
       # each child dataset listed explicitly: a zfs snapshot of the parent
       # megamax/backup does NOT capture child datasets (verified: children appear
       # as empty dirs in the parent snapshot), so restic must snapshot each one.
       datasets = [
+        # user facing general purpose samba shares
         {
           name = "megamax/store";
           mountpoint = "/mnt/megamax/store";
         }
+        # backups
         {
           name = "megamax/backup/homeassistant";
           mountpoint = "/mnt/megamax/backup/homeassistant";
@@ -40,13 +42,12 @@
           name = "megamax/backup/timemachine";
           mountpoint = "/mnt/megamax/backup/timemachine";
         }
-        # immich writes library/ + its pg_dumpall backups/ under here, so one snapshot
-        # captures the photos and a consistent db dump together
+        # immich (backups, db, encoded-video, library, profile, thumbs, upload)
         {
           name = "megamax/immich";
           mountpoint = "/mnt/megamax/immich";
         }
-        # megamax/backup/postgres added with the pgBackRest/postgres-backup task
+        # TODO: megamax/backup/postgres maybe later uwu
       ];
     };
   };
