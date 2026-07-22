@@ -336,6 +336,17 @@ in {
           provision = {
             enable = true;
             datasources.settings.prune = true;
+            # grafana can't change a provisioned datasource's uid in place, it errors
+            # "data source not found" and refuses to start. delete-by-name runs before
+            # create each start so the record is recreated with the pinned uid below;
+            # only its numeric id churns, which nothing keys on.
+            # TODO: drop once every site's grafana has started on this generation
+            datasources.settings.deleteDatasources = [
+              {
+                orgId = 1;
+                name = "prometheus";
+              }
+            ];
             datasources.settings.datasources = [
               {
                 name = "prometheus";
