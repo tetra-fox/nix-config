@@ -299,9 +299,19 @@ in {
       };
 
       # VPN-Confinement drops MTU during wg-quick parsing, set it on the iface ourselves
-      systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
-        "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
-      ];
+      systemd.services.${vpnNs}.serviceConfig.ExecStartPost =
+        [
+          "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
+        ]
+        # upstream now drops netns-initiated connections out the veth as leak protection
+        # (Maroka-chan/VPN-Confinement#47), which also kills the arrs' connections to the
+        # remote db. insert an accept above the drop for each SNAT dest; a failed insert
+        # fails the unit, which fails closed with the arrs bound to it.
+        # TODO: replace with an upstream option if one appears
+        ++ map (
+          ip: "${pkgs.iproute2}/bin/ip netns exec ${vpnNs} ${pkgs.iptables}/bin/iptables -I OUTPUT 1 -o veth-${vpnNs} -d ${ip} -j ACCEPT"
+        )
+        cfg.netnsSnatHosts;
 
       # masquerade netns-initiated traffic to each dest so replies come back: without
       # SNAT the dest sees the private namespaceAddress and can't reply. a declarative
