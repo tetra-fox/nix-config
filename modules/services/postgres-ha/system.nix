@@ -242,8 +242,13 @@ in {
             # reconcile once this node is leader; exit 0 if it never is (a replica's work is the
             # leader's own unit's job, not a failure).
             script = ''
+              # only the leader is out of recovery; wait for it. a node can briefly hold the
+              # patroni leader lock (so /primary answers 200) while postgres is still finishing
+              # promotion and read-only, which is what fails the ALTER ROLE below. gate on the
+              # actual recovery state instead of the rest endpoint. replicas never leave
+              # recovery, so they fall through to the exit-0, exactly as the old check did.
               for i in $(seq 1 30); do
-                if ${pkgs.curl}/bin/curl -sf http://${selfIp}:${toString patroniRestPort}/primary >/dev/null 2>&1; then
+                if [ "$(${postgresPkg}/bin/psql -tAqc 'SELECT NOT pg_is_in_recovery()' -h /run/postgresql -U postgres -d postgres 2>/dev/null)" = t ]; then
                   ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
               ${roleReconcileSql}
               EOF
@@ -251,7 +256,7 @@ in {
                 fi
                 sleep 2
               done
-              echo "not the leader after 60s; reconcile is the leader's job, exiting 0"
+              echo "not a read-write leader after 60s; reconcile is the leader's job, exiting 0"
               exit 0
             '';
           };
