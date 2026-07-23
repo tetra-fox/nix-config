@@ -99,6 +99,9 @@ in {
       # database.enable + redis.enable default true: both run locally on this box.
       # vectorchord is enabled automatically by the module.
       machine-learning.enable = true; # cpu inference, no accelerationDevices set
+      # keep models resident (<= 0 disables the idle unload), the clip model is
+      # ~4gb and reloading it costs several seconds on the first search after idle
+      machine-learning.environment.MACHINE_LEARNING_MODEL_TTL = "0";
 
       settings = {
         backup.database = {
@@ -222,7 +225,7 @@ in {
           };
           clip = {
             enabled = true;
-            modelName = "ViT-B-32__openai";
+            modelName = "ViT-SO400M-16-SigLIP2-384__webli";
           };
           duplicateDetection = {
             enabled = true;
@@ -243,7 +246,7 @@ in {
             minRecognitionScore = 0.8;
             modelName = "PP-OCRv5_mobile";
           };
-          urls = ["http://192.168.20.86:3003"];
+          urls = ["http://localhost:3003"];
         };
 
         map = {
