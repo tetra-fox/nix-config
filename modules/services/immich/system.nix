@@ -117,11 +117,11 @@ in {
           accel = "disabled";
           accelDecode = true;
           acceptedAudioCodecs = ["aac" "mp3" "opus"];
-          acceptedContainers = ["mov" "ogg" "webm"];
+          acceptedContainers = ["mov" "mp4" "ogg" "webm"];
           acceptedVideoCodecs = ["h264" "hevc"];
           bframes = -1;
           cqMode = "auto";
-          crf = 31;
+          crf = 28;
           gopSize = 0;
           maxBitrate = "0"; # immich wants this as a string
           preferredHwDevice = "auto";
@@ -132,7 +132,7 @@ in {
             videoCodecs = ["h264" "hevc" "av1"];
           };
           refs = 0;
-          targetAudioCodec = "aac";
+          targetAudioCodec = "hevc";
           targetResolution = "original";
           targetVideoCodec = "vp9";
           temporalAQ = false;
