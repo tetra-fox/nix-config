@@ -288,6 +288,10 @@ in {
         enable = true;
         wireguardConfigFile = config.sops.templates."wg.conf".path;
         inherit (cfg) accessibleFrom;
+        # the non-tunnel flows the arrs initiate: the remote db (netnsSnatHosts) and
+        # host-side sabnzbd at the bridge address. allowedEgress is our upstream PR
+        # (Maroka-chan/VPN-Confinement#48), consumed from the fork branch until it merges
+        allowedEgress = cfg.netnsSnatHosts ++ [vpn.bridgeAddress];
         portMappings = lib.optionals cfg.lanProxy (
           lib.mapAttrsToList (_: port: {
             from = port;
@@ -299,21 +303,9 @@ in {
       };
 
       # VPN-Confinement drops MTU during wg-quick parsing, set it on the iface ourselves
-      systemd.services.${vpnNs}.serviceConfig.ExecStartPost =
-        [
-          "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
-        ]
-        # upstream now drops netns-initiated connections out the veth as leak protection
-        # (Maroka-chan/VPN-Confinement#47), which also kills the arrs' legitimate
-        # non-tunnel flows: the remote db (netnsSnatHosts) and host-side sabnzbd at the
-        # bridge address. insert an accept above the drop for each; neither dest can
-        # route to the WAN, so the leak protection stays intact. a failed insert fails
-        # the unit, which fails closed with the arrs bound to it.
-        # TODO: replace with an upstream option if one appears
-        ++ map (
-          ip: "${pkgs.iproute2}/bin/ip netns exec ${vpnNs} ${pkgs.iptables}/bin/iptables -I OUTPUT 1 -o veth-${vpnNs} -d ${ip} -j ACCEPT"
-        )
-        (cfg.netnsSnatHosts ++ [vpn.bridgeAddress]);
+      systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
+        "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
+      ];
 
       # masquerade netns-initiated traffic to each dest so replies come back: without
       # SNAT the dest sees the private namespaceAddress and can't reply. a declarative
