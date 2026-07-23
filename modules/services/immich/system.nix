@@ -132,9 +132,9 @@ in {
             videoCodecs = ["h264" "hevc" "av1"];
           };
           refs = 0;
-          targetAudioCodec = "hevc";
+          targetAudioCodec = "aac";
           targetResolution = "original";
-          targetVideoCodec = "vp9";
+          targetVideoCodec = "hevc";
           temporalAQ = false;
           threads = 0;
           tonemap = "mobius";
