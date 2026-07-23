@@ -111,6 +111,26 @@
     serviceConfig.UMask = lib.mkForce "0002";
   };
 
+  # the arrs don't retry a failed initial db connection: on a db that isn't up yet they log
+  # "Non-recoverable failure, waiting for user intervention" and park with the process still
+  # alive, so Restart=on-failure never fires and a boot race against the db -- or a leader
+  # failover -- leaves them down until a manual restart. gate startup on the primary answering.
+  # pg_isready does the real startup handshake, so it reports not-ready even when haproxy
+  # accepts the tcp connection with no healthy backend; postgresHost is the VIP, which only
+  # routes to the read-write primary, so a ready answer means promoted and writable.
+  # TimeoutStartSec bounds the wait: on timeout the unit fails cleanly and Restart retries,
+  # instead of the app parking with no exit for systemd to act on.
+  waitForDb = pkgs.writeShellScript "arr-wait-for-postgres" ''
+    until ${config.lab.postgres.package}/bin/pg_isready -q -h ${cfg.postgresHost} -p 5432 -t 3; do
+      sleep 2
+    done
+  '';
+
+  arrDbGate.serviceConfig = {
+    ExecStartPre = lib.mkBefore ["${waitForDb}"];
+    TimeoutStartSec = 180;
+  };
+
   wgConfTemplate = ''
     [Interface]
     PrivateKey = ${config.sops.placeholder."arr/wg_private_key"}
@@ -435,6 +455,10 @@ in {
         {
           qbittorrent = arrDeps {inNetns = true;};
         }
+
+        # block each arr's startup until its postgres primary answers (see waitForDb).
+        # qbittorrent is excluded here: it has no database.
+        (lib.mapAttrs (_: _: arrDbGate) arrServices)
       ];
     }
   ];
