@@ -19,6 +19,9 @@ in {
 
   lab = {
     monitoring = {
+      # needs monitoring/telegram_env in this host's sops file
+      telegram.enable = true;
+
       unifi.enable = true;
       # the controller is the UDM, the same box as the gateway
       unifi.controllerUrl = "https://${config.lab.net.gateway}";

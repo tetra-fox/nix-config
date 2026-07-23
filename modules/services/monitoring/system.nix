@@ -228,7 +228,8 @@ in {
         {
           # zfs excluded: datasets share the pool, the pool capacity alert covers it
           name = "filesystem filling up";
-          expr = ''100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|zfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|zfs"})'';
+          # round() here and below so summaries render "85.3%" not a 16-digit float
+          expr = ''round(100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|zfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|zfs"}), 0.1)'';
           condition.value = 85;
           for = "30m";
           summary = "{{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $values.B }}% full";
@@ -238,7 +239,7 @@ in {
           # event alert: the 15m increase window keeps it visible, a pending
           # period would only delay the notification
           name = "oom kills";
-          expr = "increase(node_vmstat_oom_kill[15m])";
+          expr = "round(increase(node_vmstat_oom_kill[15m]))";
           for = "0s";
           summary = "{{ $values.B }} oom kill(s) on {{ $labels.instance }} in the last 15m, check the journal";
           labels.severity = "warning";
@@ -246,7 +247,7 @@ in {
         {
           # Restart=always crash loops never reach the failed state, this catches them
           name = "service flapping";
-          expr = "increase(systemd_service_restart_total[1h])";
+          expr = "round(increase(systemd_service_restart_total[1h]))";
           condition.value = 3;
           for = "0s";
           summary = "{{ $labels.name }} on {{ $labels.instance }} restarted {{ $values.B }} times in the last hour";
@@ -291,6 +292,12 @@ in {
         owner = "grafana";
         group = "grafana";
       };
+
+      # env file with TELEGRAM_BOT_TOKEN= and TELEGRAM_CHAT_ID=, read by systemd as
+      # root; grafana's provisioning interpolates the vars into the contact point
+      sops.secrets."monitoring/telegram_env" = lib.mkIf cfg.telegram.enable {};
+      systemd.services.grafana.serviceConfig.EnvironmentFile =
+        lib.mkIf cfg.telegram.enable config.sops.secrets."monitoring/telegram_env".path;
 
       services = {
         # every site host's registered dashboards (this host's own included, node/systemd
@@ -379,6 +386,69 @@ in {
                   uid = alertUid n;
                 })
                 cfg.retiredAlerts;
+            };
+
+            # one section per notification, one bullet per alert instance. the rule
+            # summaries carry the detail, so no label dump, no debug values. html parse
+            # mode, so keep < > & out of summaries
+            alerting.templates.settings = {
+              apiVersion = 1;
+              templates = [
+                {
+                  orgId = 1;
+                  name = "homelab";
+                  template = ''
+                    {{ define "homelab.message" -}}
+                    {{ if .Alerts.Firing }}🔥 <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b>{{ with .CommonLabels.severity }} [{{ . }}]{{ end }}{{ if gt (len .Alerts.Firing) 1 }} ({{ len .Alerts.Firing }} firing){{ end }}{{ with (index .Alerts.Firing 0).GeneratorURL }} | <a href="{{ . }}">view</a>{{ end }}
+                    {{ range .Alerts.Firing }}• {{ .Annotations.summary }}{{ with .SilenceURL }} <a href="{{ . }}">silence</a>{{ end }}
+                    {{ end }}{{ end -}}
+                    {{ if .Alerts.Resolved }}✅ <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b> resolved{{ if gt (len .Alerts.Resolved) 1 }} ({{ len .Alerts.Resolved }}){{ end }}
+                    {{ range .Alerts.Resolved }}• {{ .Annotations.summary }}
+                    {{ end }}{{ end -}}
+                    {{ end }}
+                  '';
+                }
+              ];
+            };
+
+            # bottoken/chatid resolve from the env file at provisioning time, so the
+            # values never enter the store. provisioned policy replaces the default
+            # tree: everything routes to telegram, grouped per rule
+            alerting.contactPoints.settings = lib.mkIf cfg.telegram.enable {
+              apiVersion = 1;
+              contactPoints = [
+                {
+                  orgId = 1;
+                  name = "telegram";
+                  receivers = [
+                    {
+                      uid = "telegram";
+                      type = "telegram";
+                      settings = {
+                        bottoken = "$TELEGRAM_BOT_TOKEN";
+                        chatid = "$TELEGRAM_CHAT_ID";
+                        message = ''{{ template "homelab.message" . }}'';
+                        parse_mode = "HTML";
+                        disable_web_page_preview = true;
+                      };
+                    }
+                  ];
+                }
+              ];
+            };
+
+            alerting.policies.settings = lib.mkIf cfg.telegram.enable {
+              apiVersion = 1;
+              policies = [
+                {
+                  orgId = 1;
+                  receiver = "telegram";
+                  group_by = ["grafana_folder" "alertname"];
+                  group_wait = "30s";
+                  group_interval = "5m";
+                  repeat_interval = "4h";
+                }
+              ];
             };
           };
         };

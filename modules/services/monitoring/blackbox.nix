@@ -125,7 +125,7 @@ in {
           # acme renews certs 30 days out, so at 14 the renewal has been broken
           # for over two weeks already
           name = "tls certificate expiring";
-          expr = "(probe_ssl_earliest_cert_expiry - time()) / 86400";
+          expr = "round((probe_ssl_earliest_cert_expiry - time()) / 86400, 0.1)";
           condition = {
             op = "lt";
             value = 14;

@@ -44,10 +44,10 @@
   - smartctl exporter: DONE. modules/hardware/smartctl (exporter + smart-failed /
     sector-errors / temperature alerts + dashboard), imported by mesa-store-01. SMART
     verified working through the virtio-scsi passthrough (sat auto-detect)
-  - contact point: telegram, added by hand in grafana's UI (bot token + chat id stay out
-    of the repo; it's ui state in grafana's dataDir, two fields to redo if ever lost).
-    check the default notification policy routes to it, or provisioned rules keep going
-    to the dead grafana-default-email receiver
+  - contact point: now declarative (lab.monitoring.telegram.enable on the mon host):
+    provisioned telegram contact point + policy + message template, secrets via the
+    monitoring/telegram_env sops env file. the hand-made UI contact point can be
+    deleted after the provisioned one is live
   - fleet alert set: baselines from every agent (target down, unit failed, fs >85%,
     oom kills, service flapping, clock unsync) + producer-registered (zfs pool
     health/capacity, smart x3, restic stale, arr vpn down, gpu temp)

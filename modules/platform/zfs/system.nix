@@ -49,7 +49,7 @@
       {
         # past ~85% zfs allocation slows down and fragmentation compounds
         name = "zfs pool capacity high";
-        expr = "100 * zfs_pool_capacity_ratio";
+        expr = "round(100 * zfs_pool_capacity_ratio, 0.1)";
         condition.value = 85;
         for = "1h";
         summary = "pool {{ $labels.pool }} on {{ $labels.instance }} is {{ $values.B }}% full";

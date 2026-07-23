@@ -50,9 +50,14 @@ error. rule uids are hashed from the name, so a rename is a new rule -- and graf
 deletes provisioned rules on its own, so retiring or renaming one means putting the old
 name in `lab.monitoring.retiredAlerts` on the server host until every grafana has dropped it.
 
-there is no contact point provisioned yet: firing alerts show in grafana's alert list
-(and annotate dashboards), but push notifications need a per-site
-`services.grafana.provision.alerting.contactPoints` + `policies` on the mon host.
+notifications are declarative too (`lab.monitoring.telegram.enable`, per mon host): a
+provisioned telegram contact point + a policy routing everything to it, grouped per
+rule, plus a message template (one bold header per notification, one summary bullet
+per alert instance, inline view/silence links). the bot token and chat id come from
+the `monitoring/telegram_env` sops secret, an env file grafana's unit loads;
+provisioning interpolates `$TELEGRAM_BOT_TOKEN` / `$TELEGRAM_CHAT_ID` so the values
+never land in the store. rule summaries should round() any float they template,
+they render verbatim.
 
 ## blackbox probes
 

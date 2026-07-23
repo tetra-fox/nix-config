@@ -114,7 +114,7 @@ in {
         # stronger than watching the service fail: also fires when the timer never
         # ran at all. 26h not 24h so a persistent catch-up after downtime has slack
         name = "restic backup stale";
-        expr = ''(time() - systemd_timer_last_trigger_seconds{name=~"restic-backups-.+"}) / 3600'';
+        expr = ''round((time() - systemd_timer_last_trigger_seconds{name=~"restic-backups-.+"}) / 3600, 0.1)'';
         condition.value = 26;
         summary = "backup timer {{ $labels.name }} on {{ $labels.instance }} last fired {{ $values.B }}h ago";
         labels.severity = "critical";
