@@ -20,7 +20,7 @@ prefix -- `mesa-db-01` and `mesa-svc-01` share site `mesa`):
 
 ```nix
 engine = import ./engine.nix { inherit lib; } { inherit nixosConfigurations; hostName; };
-engine.ipProviding "db-server"      # the single provider's IP (null if 0 or >1)
+engine.ipProviding "db-server"      # the single provider's IP (null if none, throws if two)
 engine.ipsProviding "db-client"     # every provider's IP
 engine.hostsProviding "db-ha-node"  # the provider host names
 engine.optionalHaEndpointFor {      # the address for an optionally-HA service:
