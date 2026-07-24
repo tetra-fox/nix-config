@@ -17,6 +17,13 @@
   # after ensureUsers has already created the role is fine
   roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
+  # the dump script is shared with the HA module too (dump.nix); there it runs leader-gated
+  dumpScript = import modules.services.postgres.dump {
+    inherit pkgs;
+    postgresPkg = cfg.package;
+    inherit (cfg) backup;
+  };
+
   mkRoleUnit = name: role: {
     description = "Set ${name} postgres role password + ownership from sops";
     after = ["postgresql-setup.service"];
@@ -114,6 +121,35 @@ in {
             lib.nameValuePair "postgresql-set-${name}-password" (mkRoleUnit name role)
         )
         cfg.roles;
+    })
+
+    (lib.mkIf (cfg.server.enable && cfg.backup.enable) {
+      systemd = {
+        services.postgres-dump = {
+          description = "pg_dumpall to ${cfg.backup.dir} (keep newest ${toString cfg.backup.keep})";
+          after = ["postgresql.service"];
+          requires = ["postgresql.service"];
+          unitConfig.RequiresMountsFor = [cfg.backup.dir];
+          serviceConfig = {
+            Type = "oneshot";
+            User = "postgres";
+            # a wedged write (e.g. an unreachable NFS dir) should fail the unit, and with
+            # it the fleet failed-unit alert, instead of hanging the oneshot forever
+            TimeoutStartSec = "15min";
+          };
+          script = dumpScript;
+        };
+
+        timers.postgres-dump = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = cfg.backup.onCalendar;
+            Persistent = true;
+          };
+        };
+
+        tmpfiles.rules = ["d ${cfg.backup.dir} 0700 postgres postgres -"];
+      };
     })
   ];
 }

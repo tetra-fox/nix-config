@@ -11,10 +11,11 @@
 | 12:00-13:00 | 4-5a  | 5-6a  | mesa-dns-01/02, fairlane-dns-01/02 | bind RPZ blocklist refresh + graceful reload (1h random spread)                              |
 | 13:00       | 5:00a | 6:00a | mesa-svc-02                        | immich integrity checks (file checksums capped at 1h, missing files, untracked files)        |
 | 14:00       | 6:00a | 7:00a | mesa-svc-02                        | immich pg_dumpall to megamax/immich/backups over nfs (minutes)                               |
+| 14:00       | 6:00a | 7:00a | mesa-db leader, fairlane-db-01     | postgres pg_dumpall, keep 14: mesa to megamax/backup/postgres over nfs, fairlane to local disk |
 | 14:00       | 6:00a | 7:00a | proxmox (external)                 | vzdump vm backup, configured in pve, not this repo                                           |
 | 14:30       | 6:30a | 7:30a | mesa-store-01                      | restic to backblaze b2: zfs-snapshots each dataset, uploads, prunes                          |
 
-the backup chain is the reason for the ordering: immich dumps its database next to the photo library at 14:00, restic snapshots megamax/immich at 14:30, so the offsite copy always carries a dump at most half an hour stale beside the exact library state it describes. everything else just needs to be off my evening.
+the backup chain is the reason for the ordering: immich dumps its database next to the photo library at 14:00, whichever db node is the patroni leader dumps the cluster to megamax/backup/postgres at the same time, and restic snapshots both at 14:30, so the offsite copy always carries dumps at most half an hour stale. everything else just needs to be off my evening.
 
 ## weekly (monday)
 
@@ -49,4 +50,4 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
 ## not backed up, on purpose
 
 - fairlane-store-01: ext4 media store, contents re-downloadable, no restic. fairlane stays low-maintenance
-- megamax/backup/postgres: TODO on mesa-store-01, add to restic's dataset list once db dumps land there
+- fairlane-db-01 postgres: nightly local dumps only, nothing offsite. covers a bad migration or a dropped table, not the vm disk dying

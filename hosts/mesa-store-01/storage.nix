@@ -7,7 +7,7 @@
 #   megamax/store                  general-purpose catch-all, per-user %U subdirs (snapshots on)
 #   megamax/backup/homeassistant   gzipped HA backups pushed over NFS by the HAOS box
 #   megamax/backup/timemachine     mac time machine target, per-user %U subdirs (samba, authenticated)
-#   megamax/backup/postgres        postgres backups, wired up with the pgBackRest task (later)
+#   megamax/backup/postgres        cluster dumps, pushed over NFS by the db leader's nightly pg_dumpall
 #   megamax/immich                 immich photo library + inline db (immich task, later)
 {
   config,
@@ -31,6 +31,9 @@
   # won't match. it connects as root, so the export all_squashes root to admin:users. the
   # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
   haIp = config.lab.appliances.haosIp;
+  # every db node's internal-VLAN IP: any of them can be the Patroni leader, so the
+  # postgres-dump export and firewall admit all of them
+  dbIps = topo.dbHaNodeIps;
 
   # media is the one tree that's genuinely group-shared (arr services + every samba user
   # co-write into it), so it's the only one the boot-time recursive reconciler below touches.
@@ -54,6 +57,7 @@
     "megamax/immich" # library + immich's own db dumps; local history for oops-recovery
     "megamax/backup/homeassistant" # HA backup tarballs
     "megamax/backup/timemachine" # time machine image
+    "megamax/backup/postgres" # cluster dumps; snapshots also survive a misbehaving pruner
   ];
 
   # samba's account registry is Linux users (valid users = @users on the media/store shares):
@@ -94,6 +98,9 @@ in {
         # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
         # anongid=100), 0700, deliberately not group media and no setgid
         "d /mnt/megamax/backup/homeassistant 0700 admin users -"
+        # postgres dumps: same all_squash model as homeassistant; squashing sidesteps the
+        # patroni uid differing across db nodes
+        "d /mnt/megamax/backup/postgres 0700 admin users -"
       ]
       # immich library + its db-dump backups, owned by the immich host's pinned uid so the
       # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
@@ -157,14 +164,15 @@ in {
     };
   };
 
-  # three fsid=0 roots below, one per client. this is unusual -- nfsd normally has a single
-  # pseudo-root -- but it's safe as long as every fsid=0 export's client specifier is a single
-  # host address with no overlap between them: nfsd resolves a client's `:/` mount against
-  # whichever export line matches its source address, so disjoint single-IP scopes can never
-  # collide. that's structural here, not just true today: mediaHostIp/immichHostIp come from
-  # the capability engine's single-provider lookup, which throws rather than silently returning
-  # an ambiguous IP if two hosts ever advertised the same capability, and haIp is a literal
-  # address, not a range. if this ever grows a CIDR-scoped export instead of a single IP, that
+  # a fsid=0 root per client below (media, homeassistant, immich, one per db node). this is
+  # unusual -- nfsd normally has a single pseudo-root -- but it's safe as long as every fsid=0
+  # export's client specifier is a single host address with no overlap between them: nfsd
+  # resolves a client's `:/` mount against whichever export line matches its source address, so
+  # disjoint single-IP scopes can never collide. that's structural here, not just true today:
+  # mediaHostIp/immichHostIp come from the capability engine's single-provider lookup, which
+  # throws rather than silently returning an ambiguous IP if two hosts ever advertised the same
+  # capability, haIp is a literal address, not a range, and the db-node list is one distinct
+  # host address per entry. if this ever grows a CIDR-scoped export instead of a single IP, that
   # invariant breaks and overlapping clients would see "access denied" or the wrong root -- the
   # cleaner alternative at that point is one export of the whole /mnt/megamax pseudo-root with
   # per-client subtree permissions, not more fsid=0 lines.
@@ -186,11 +194,16 @@ in {
       ''
       + lib.optionalString (immichIp != null) ''
         /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
+      ''
+      # the dump lands as whichever uid patroni has on that node, so all_squash like
+      # homeassistant: every write becomes admin:users, matching the dir above
+      + lib.optionalString (dbIps != []) ''
+        /mnt/megamax/backup/postgres ${lib.concatMapStringsSep " " (ip: "${ip}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)") dbIps}
       '';
   };
 
   networking.firewall.extraInputRules =
-    allowFrom ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp) [2049];
+    allowFrom ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp ++ dbIps) [2049];
 
   services.samba.settings = {
     global = {

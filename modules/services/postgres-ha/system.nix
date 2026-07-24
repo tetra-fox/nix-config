@@ -42,6 +42,12 @@
   # the per-role reconcile SQL is shared with the single-server module (role-sql.nix)
   roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
+  # so is the dump script (dump.nix); the unit below wraps it in the leader gate
+  dumpScript = import modules.services.postgres.dump {
+    inherit pkgs postgresPkg;
+    inherit (cfg) backup;
+  };
+
   roleReconcileSql =
     lib.concatStringsSep "\n"
     (lib.mapAttrsToList (name: role:
@@ -260,6 +266,31 @@ in {
               exit 0
             '';
           };
+
+          postgres-dump = lib.mkIf cfg.backup.enable {
+            description = "pg_dumpall from the Patroni leader to ${cfg.backup.dir} (keep newest ${toString cfg.backup.keep})";
+            after = ["patroni.service"];
+            unitConfig.RequiresMountsFor = [cfg.backup.dir];
+            serviceConfig = {
+              Type = "oneshot";
+              # patroni runs the postmaster; the local trust line lets this user reach the
+              # postgres role over the socket (same as patroni-role-reconcile)
+              User = "patroni";
+              # a wedged NFS write should fail the unit (and the fleet failed-unit alert)
+              # instead of hanging the oneshot forever
+              TimeoutStartSec = "15min";
+            };
+            # every node runs the timer, only the current leader dumps. no promotion-wait
+            # like the reconcile above: at a steady-state 14:00 some node is the leader; a
+            # failover racing the timer can skip one night and the next run self-heals
+            script = ''
+              if [ "$(${postgresPkg}/bin/psql -tAqc 'SELECT NOT pg_is_in_recovery()' -h /run/postgresql -U postgres -d postgres 2>/dev/null)" != t ]; then
+                echo "not the leader; the dump is the leader's job"
+                exit 0
+              fi
+              ${dumpScript}
+            '';
+          };
         }
 
         # installed but nothing auto-starts, so no node bootstraps a partial cluster; clear the
@@ -272,6 +303,15 @@ in {
           patroni-role-reconcile.wantedBy = lib.mkForce [];
         })
       ];
+
+      timers.postgres-dump = lib.mkIf cfg.backup.enable {
+        # bootstrapHold: installed but not scheduled, like the rest of the stack
+        wantedBy = lib.optionals (!ha.bootstrapHold) ["timers.target"];
+        timerConfig = {
+          OnCalendar = cfg.backup.onCalendar;
+          Persistent = true;
+        };
+      };
 
       tmpfiles.rules = [
         "d ${siteData}/etcd 0700 etcd etcd -"

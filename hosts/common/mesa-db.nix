@@ -11,8 +11,18 @@
   imports = [
     modules.profiles.server.system
 
+    modules.services.media-mount.system
     modules.services.postgres-ha.system
   ];
+
+  # the store box exports megamax/backup/postgres to each db node as that client's fsid=0
+  # root, so the generic store mount surfaces the dump dataset here. no gatedServices: the
+  # dump unit orders on the mount itself (RequiresMountsFor)
+  lab.storage.mediaMount = {
+    enable = true;
+    mountpoint = "/mnt/pgbackup";
+    gatedServices = [];
+  };
 
   lab.postgres = {
     ha = {
@@ -20,6 +30,12 @@
       vip = "10.10.0.115";
     };
     admin.enable = true;
+
+    # nightly leader dump onto the store box; restic ships it offsite at 14:30
+    backup = {
+      enable = true;
+      dir = "/mnt/pgbackup";
+    };
 
     # trusted-VLAN direct psql; fleet clients are derived from their client.enable flag.
     extraAllowedCidrs = [config.lab.net.trustedCidr];

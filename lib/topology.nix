@@ -74,6 +74,10 @@ in
     # real IP.
     edgeHostIps = ipsProviding caps.edge.name;
 
+    # every HA db node's address: any of them can be the Patroni leader, so the store box's
+    # postgres-dump export + firewall admit all of them
+    dbHaNodeIps = ipsProviding caps.dbHaNode.name;
+
     # the arr postgres role spec {name, passwordSecret, owns}, read off the arr host so the
     # db host restates none of it. cycle-safe: the published value is readOnly, defaulted
     # from static attrsets.

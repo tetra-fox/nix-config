@@ -26,6 +26,9 @@
       server.enable = true;
       admin.enable = true;
       openFirewall = true;
+      # local dumps only (fairlane has no restic, on purpose): covers a bad migration or
+      # a dropped table, not the vm disk dying
+      backup.enable = true;
       # trusted-VLAN direct psql
       extraAllowedCidrs = [config.lab.net.trustedCidr];
 

@@ -44,7 +44,11 @@
           name = "megamax/immich";
           mountpoint = "/mnt/megamax/immich";
         }
-        # TODO: megamax/backup/postgres maybe later uwu
+        # cluster dumps from the db leader at 14:00, shipped offsite here at 14:30
+        {
+          name = "megamax/backup/postgres";
+          mountpoint = "/mnt/megamax/backup/postgres";
+        }
       ];
     };
   };

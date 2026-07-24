@@ -77,6 +77,30 @@ in {
       readOnly = true;
     };
 
+    # shared by the single-server and HA modules. replication is not backup: the HA cluster
+    # faithfully replicates a dropped database to every standby, this is what undoes it.
+    backup = {
+      enable = lib.mkEnableOption "a nightly pg_dumpall of every database + globals into backup.dir";
+
+      dir = lib.mkOption {
+        type = lib.types.str;
+        default = "${config.lab.site.dataDir}/postgres-dumps";
+        description = "where dumps land. the single-server module creates it; an NFS-backed dir must already exist on the export";
+      };
+
+      keep = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 14;
+        description = "dump generations to keep in dir; older ones are pruned after each run";
+      };
+
+      onCalendar = lib.mkOption {
+        type = lib.types.str;
+        default = "14:00";
+        description = "dump time (servers run UTC). the default lands before the store box's 14:30 restic run, see SCHEDULE.md";
+      };
+    };
+
     admin = {
       enable = lib.mkEnableOption "an `admin` superuser role for dbeaver/psql access";
       passwordSecret = lib.mkOption {
