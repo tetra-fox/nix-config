@@ -50,6 +50,8 @@ in {
     vlc
     qview
 
+    kicad
+
     onlyoffice-desktopeditors
     obsidian-with-sops
 
