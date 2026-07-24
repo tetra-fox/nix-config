@@ -130,7 +130,7 @@ in {
     # initialClusterState = "new" is read only on first start of an empty data dir, so
     # reboots are fine, but a wiped/replaced node re-bootstraps a new cluster and fails to
     # join. re-add via etcdctl member add + initialClusterState=existing, or wipe all three
-    # and re-bootstrap together. runbook: project_mesa_ip_scheme memory.
+    # and re-bootstrap together. runbook: this module's README
     services = {
       etcd = {
         enable = true;
