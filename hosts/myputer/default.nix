@@ -27,8 +27,6 @@
     };
 
     taps = [
-      "buo/cask-upgrade"
-      "jeffreywildman/virt-manager"
       "rhettbull/osxphotos"
     ];
 
@@ -41,7 +39,6 @@
       "nicotine-plus" # gui app shipped as a formula, not a cask
       "podman" # backs podman-desktop
       "portaudio" # native build dep for audio tooling
-      "spice-gtk" # goes with the virt-manager tap
       # xcode-adjacent toolchain, happier from brew than nixpkgs on darwin
       "carthage"
       "swiftformat"
@@ -67,19 +64,17 @@
       "hex-fiend"
       "insomnia"
       "keka"
+      "kicad"
       "macs-fan-control"
       "mp3tag"
       "native-access"
       "notion"
       "obs"
       "obsidian"
-      "onyx"
       "openrgb"
       "parsec"
       "plugdata"
-      "podman-desktop"
       "prismlauncher"
-      "proton-mail-bridge"
       "rar"
       "raycast"
       "rectangle"
@@ -95,7 +90,6 @@
       "transmission"
       "ultimate-vocal-remover"
       "unnaturalscrollwheels"
-      "webex"
       "wireshark-app"
       "xld"
       "youlean-loudness-meter"
