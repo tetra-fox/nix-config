@@ -213,9 +213,8 @@
     }
     # sitePrefix contract: the regex that derives a host's site. pins the parse so a future change
     # that breaks tagging fails here instead of silently re-siting a host. the two "whole name"
-    # rows are bogus tags that fail loud at the perTag facts-file import; mesa-db-alt-01 is the
-    # residual tripwire -- a two-token role parses cleanly to the wrong site, harmless only because
-    # no such site exists today
+    # rows are bogus tags that fail loud at the perTag facts-file import; mesa-db-alt-01 pins
+    # the multi-token role case, the site is the first dash-free token
     {
       name = "sitePrefix parses the site off a hostname";
       ok =
@@ -232,7 +231,7 @@
           "mesa"
           "hara"
           "mesa-db-01-old"
-          "mesa-db"
+          "mesa"
           "mesa-DB-01"
         ];
     }
