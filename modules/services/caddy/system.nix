@@ -79,15 +79,16 @@
       }
     ''
     # only when the site has an outpost. trusted_proxies lets it trust caddy's X-Forwarded-*
-    # so it resolves the app by the original Host; copy_headers passes identity and the
-    # basic-auth injection to the backend
+    # so it resolves the app by the original Host; copy_headers passes identity to the backend.
+    # no Authorization: the arrs skip auth for local addresses (all traffic is lan_only), so
+    # nothing injects basic-auth
     + lib.optionalString (authOutpost != null) ''
 
       (authentik) {
       	reverse_proxy /outpost.goauthentik.io/* ${authOutpost}
       	forward_auth ${authOutpost} {
       		uri /outpost.goauthentik.io/auth/caddy
-      		copy_headers Authorization X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+      		copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
       		trusted_proxies private_ranges
       	}
       }
