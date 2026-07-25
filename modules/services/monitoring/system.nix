@@ -120,7 +120,7 @@
         datasourceUid = promDsUid;
         model = {
           refId = "A";
-          expr = a.expr;
+          inherit (a) expr;
           instant = true;
           range = false;
           intervalMs = 1000;
@@ -194,74 +194,76 @@ in {
         ];
       };
 
-      lab.monitoring.exporters = [
-        {
-          name = "node";
-          port = nodePort;
-        }
-        {
-          name = "systemd";
-          port = systemdPort;
-        }
-      ];
+      lab.monitoring = {
+        exporters = [
+          {
+            name = "node";
+            port = nodePort;
+          }
+          {
+            name = "systemd";
+            port = systemdPort;
+          }
+        ];
 
-      lab.monitoring.dashboards = with pkgs.grafana-dashboards; [
-        node-exporter-full
-        systemd-exporter
-      ];
+        dashboards = with pkgs.grafana-dashboards; [
+          node-exporter-full
+          systemd-exporter
+        ];
 
-      # companion alerts for the exporters above. registered by every host identically,
-      # so they collapse to one rule each on the server
-      lab.monitoring.alerts = [
-        {
-          name = "scrape target down";
-          expr = "up == bool 0";
-          summary = "prometheus can't scrape {{ $labels.job }} on {{ $labels.instance }}";
-          labels.severity = "critical";
-        }
-        {
-          name = "systemd unit failed";
-          expr = ''max by (name, instance) (systemd_unit_state{state="failed"})'';
-          summary = "{{ $labels.name }} on {{ $labels.instance }} is failed";
-          labels.severity = "warning";
-        }
-        {
-          # zfs excluded: datasets share the pool, the pool capacity alert covers it
-          name = "filesystem filling up";
-          # round() here and below so summaries render "85.3%" not a 16-digit float
-          expr = ''round(100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|zfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|zfs"}), 0.1)'';
-          condition.value = 85;
-          for = "30m";
-          summary = "{{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $values.B }}% full";
-          labels.severity = "warning";
-        }
-        {
-          # event alert: the 15m increase window keeps it visible, a pending
-          # period would only delay the notification
-          name = "oom kills";
-          expr = "round(increase(node_vmstat_oom_kill[15m]))";
-          for = "0s";
-          summary = "{{ $values.B }} oom kill(s) on {{ $labels.instance }} in the last 15m, check the journal";
-          labels.severity = "warning";
-        }
-        {
-          # Restart=always crash loops never reach the failed state, this catches them
-          name = "service flapping";
-          expr = "round(increase(systemd_service_restart_total[1h]))";
-          condition.value = 3;
-          for = "0s";
-          summary = "{{ $labels.name }} on {{ $labels.instance }} restarted {{ $values.B }} times in the last hour";
-          labels.severity = "warning";
-        }
-        {
-          # etcd leases, patroni ttls and dnssec signing all assume sane clocks
-          name = "clock out of sync";
-          expr = "node_timex_sync_status == bool 0";
-          for = "15m";
-          summary = "clock on {{ $labels.instance }} is not ntp-synced";
-          labels.severity = "warning";
-        }
-      ];
+        # companion alerts for the exporters above. registered by every host identically,
+        # so they collapse to one rule each on the server
+        alerts = [
+          {
+            name = "scrape target down";
+            expr = "up == bool 0";
+            summary = "prometheus can't scrape {{ $labels.job }} on {{ $labels.instance }}";
+            labels.severity = "critical";
+          }
+          {
+            name = "systemd unit failed";
+            expr = ''max by (name, instance) (systemd_unit_state{state="failed"})'';
+            summary = "{{ $labels.name }} on {{ $labels.instance }} is failed";
+            labels.severity = "warning";
+          }
+          {
+            # zfs excluded: datasets share the pool, the pool capacity alert covers it
+            name = "filesystem filling up";
+            # round() here and below so summaries render "85.3%" not a 16-digit float
+            expr = ''round(100 * (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|zfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|zfs"}), 0.1)'';
+            condition.value = 85;
+            for = "30m";
+            summary = "{{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $values.B }}% full";
+            labels.severity = "warning";
+          }
+          {
+            # event alert: the 15m increase window keeps it visible, a pending
+            # period would only delay the notification
+            name = "oom kills";
+            expr = "round(increase(node_vmstat_oom_kill[15m]))";
+            for = "0s";
+            summary = "{{ $values.B }} oom kill(s) on {{ $labels.instance }} in the last 15m, check the journal";
+            labels.severity = "warning";
+          }
+          {
+            # Restart=always crash loops never reach the failed state, this catches them
+            name = "service flapping";
+            expr = "round(increase(systemd_service_restart_total[1h]))";
+            condition.value = 3;
+            for = "0s";
+            summary = "{{ $labels.name }} on {{ $labels.instance }} restarted {{ $values.B }} times in the last hour";
+            labels.severity = "warning";
+          }
+          {
+            # etcd leases, patroni ttls and dnssec signing all assume sane clocks
+            name = "clock out of sync";
+            expr = "node_timex_sync_status == bool 0";
+            for = "15m";
+            summary = "clock on {{ $labels.instance }} is not ntp-synced";
+            labels.severity = "warning";
+          }
+        ];
+      };
 
       # open this host's exporter ports to this site's server only
       networking.firewall.extraInputRules = lib.mkIf (multiHost && myExporterPorts != []) (
@@ -346,109 +348,113 @@ in {
           # services.grafana-dashboards.{community,extras}
           provision = {
             enable = true;
-            datasources.settings.prune = true;
-            # grafana can't change a provisioned datasource's uid in place, it errors
-            # "data source not found" and refuses to start. delete-by-name runs before
-            # create each start so the record is recreated with the pinned uid below;
-            # only its numeric id churns, which nothing keys on.
-            # TODO: drop once every site's grafana has started on this generation
-            datasources.settings.deleteDatasources = [
-              {
-                orgId = 1;
-                name = "prometheus";
-              }
-            ];
-            datasources.settings.datasources = [
-              {
-                name = "prometheus";
-                type = "prometheus";
-                access = "proxy";
-                url = "http://localhost:${toString config.services.prometheus.port}";
-                isDefault = true;
-                # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
-                # string as a uid, and the alert rules reference it (promDsUid)
-                uid = promDsUid;
-              }
-            ];
+            datasources.settings = {
+              prune = true;
+              # grafana can't change a provisioned datasource's uid in place, it errors
+              # "data source not found" and refuses to start. delete-by-name runs before
+              # create each start so the record is recreated with the pinned uid below;
+              # only its numeric id churns, which nothing keys on.
+              # TODO: drop once every site's grafana has started on this generation
+              deleteDatasources = [
+                {
+                  orgId = 1;
+                  name = "prometheus";
+                }
+              ];
+              datasources = [
+                {
+                  name = "prometheus";
+                  type = "prometheus";
+                  access = "proxy";
+                  url = "http://localhost:${toString config.services.prometheus.port}";
+                  isDefault = true;
+                  # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
+                  # string as a uid, and the alert rules reference it (promDsUid)
+                  uid = promDsUid;
+                }
+              ];
+            };
 
-            alerting.rules.settings = {
-              apiVersion = 1;
-              groups = lib.optional (siteAlerts != []) {
-                orgId = 1;
-                name = "fleet";
-                folder = "fleet";
-                interval = "60s";
-                rules = map mkRule siteAlerts;
+            alerting = {
+              rules.settings = {
+                apiVersion = 1;
+                groups = lib.optional (siteAlerts != []) {
+                  orgId = 1;
+                  name = "fleet";
+                  folder = "fleet";
+                  interval = "60s";
+                  rules = map mkRule siteAlerts;
+                };
+                deleteRules =
+                  map (n: {
+                    orgId = 1;
+                    uid = alertUid n;
+                  })
+                  cfg.retiredAlerts;
               };
-              deleteRules =
-                map (n: {
-                  orgId = 1;
-                  uid = alertUid n;
-                })
-                cfg.retiredAlerts;
-            };
 
-            # one section per notification, one bullet per alert instance. the rule
-            # summaries carry the detail, so no label dump, no debug values. html parse
-            # mode, so keep < > & out of summaries
-            alerting.templates.settings = {
-              apiVersion = 1;
-              templates = [
-                {
-                  orgId = 1;
-                  name = "homelab";
-                  template = ''
-                    {{ define "homelab.message" -}}
-                    {{ if .Alerts.Firing }}🔥 <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b>{{ with .CommonLabels.severity }} [{{ . }}]{{ end }}{{ if gt (len .Alerts.Firing) 1 }} ({{ len .Alerts.Firing }} firing){{ end }}{{ with (index .Alerts.Firing 0).GeneratorURL }} | <a href="{{ . }}">view</a>{{ end }}
-                    {{ range .Alerts.Firing }}• {{ .Annotations.summary }}{{ with .SilenceURL }} <a href="{{ . }}">silence</a>{{ end }}
-                    {{ end }}{{ end -}}
-                    {{ if .Alerts.Resolved }}✅ <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b> resolved{{ if gt (len .Alerts.Resolved) 1 }} ({{ len .Alerts.Resolved }}){{ end }}
-                    {{ range .Alerts.Resolved }}• {{ .Annotations.summary }}
-                    {{ end }}{{ end -}}
-                    {{ end }}
-                  '';
-                }
-              ];
-            };
+              # one section per notification, one bullet per alert instance. the rule
+              # summaries carry the detail, so no label dump, no debug values. html parse
+              # mode, so keep < > & out of summaries
+              templates.settings = {
+                apiVersion = 1;
+                templates = [
+                  {
+                    orgId = 1;
+                    name = "homelab";
+                    template = ''
+                      {{ define "homelab.message" -}}
+                      {{ if .Alerts.Firing }}🔥 <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b>{{ with .CommonLabels.severity }} [{{ . }}]{{ end }}{{ if gt (len .Alerts.Firing) 1 }} ({{ len .Alerts.Firing }} firing){{ end }}{{ with (index .Alerts.Firing 0).GeneratorURL }} | <a href="{{ . }}">view</a>{{ end }}
+                      {{ range .Alerts.Firing }}• {{ .Annotations.summary }}{{ with .SilenceURL }} <a href="{{ . }}">silence</a>{{ end }}
+                      {{ end }}{{ end -}}
+                      {{ if .Alerts.Resolved }}✅ <b>{{ with .CommonLabels.alertname }}{{ . }}{{ else }}alert{{ end }}</b> resolved{{ if gt (len .Alerts.Resolved) 1 }} ({{ len .Alerts.Resolved }}){{ end }}
+                      {{ range .Alerts.Resolved }}• {{ .Annotations.summary }}
+                      {{ end }}{{ end -}}
+                      {{ end }}
+                    '';
+                  }
+                ];
+              };
 
-            # bottoken/chatid resolve from the env file at provisioning time, so the
-            # values never enter the store. provisioned policy replaces the default
-            # tree: everything routes to telegram, grouped per rule
-            alerting.contactPoints.settings = lib.mkIf cfg.telegram.enable {
-              apiVersion = 1;
-              contactPoints = [
-                {
-                  orgId = 1;
-                  name = "telegram";
-                  receivers = [
-                    {
-                      uid = "telegram";
-                      type = "telegram";
-                      settings = {
-                        bottoken = "$TELEGRAM_BOT_TOKEN";
-                        chatid = "$TELEGRAM_CHAT_ID";
-                        message = ''{{ template "homelab.message" . }}'';
-                        parse_mode = "HTML";
-                        disable_web_page_preview = true;
-                      };
-                    }
-                  ];
-                }
-              ];
-            };
+              # bottoken/chatid resolve from the env file at provisioning time, so the
+              # values never enter the store. provisioned policy replaces the default
+              # tree: everything routes to telegram, grouped per rule
+              contactPoints.settings = lib.mkIf cfg.telegram.enable {
+                apiVersion = 1;
+                contactPoints = [
+                  {
+                    orgId = 1;
+                    name = "telegram";
+                    receivers = [
+                      {
+                        uid = "telegram";
+                        type = "telegram";
+                        settings = {
+                          bottoken = "$TELEGRAM_BOT_TOKEN";
+                          chatid = "$TELEGRAM_CHAT_ID";
+                          message = ''{{ template "homelab.message" . }}'';
+                          parse_mode = "HTML";
+                          disable_web_page_preview = true;
+                        };
+                      }
+                    ];
+                  }
+                ];
+              };
 
-            alerting.policies.settings = lib.mkIf cfg.telegram.enable {
-              apiVersion = 1;
-              policies = [
-                {
-                  orgId = 1;
-                  receiver = "telegram";
-                  group_by = ["grafana_folder" "alertname"];
-                  group_wait = "30s";
-                  group_interval = "5m";
-                  repeat_interval = "4h";
-                }
-              ];
+              policies.settings = lib.mkIf cfg.telegram.enable {
+                apiVersion = 1;
+                policies = [
+                  {
+                    orgId = 1;
+                    receiver = "telegram";
+                    group_by = ["grafana_folder" "alertname"];
+                    group_wait = "30s";
+                    group_interval = "5m";
+                    repeat_interval = "4h";
+                  }
+                ];
+              };
             };
           };
         };

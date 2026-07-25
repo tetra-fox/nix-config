@@ -247,30 +247,32 @@ in {
 
   config = lib.mkMerge [
     {
-      lab.topology.provides = [caps.arr.name];
+      lab = {
+        topology.provides = [caps.arr.name];
 
-      # bindsTo takes the arrs down with the netns unit: they end up stopped, not
-      # failed, so the unit-failed baseline never sees it
-      lab.monitoring.alerts = [
-        {
-          name = "arr vpn down";
-          expr = ''systemd_unit_state{name="${vpnNs}.service",state="active"} == bool 0'';
-          summary = "vpn netns unit on {{ $labels.instance }} is not active, the arr stack is down with it";
-          labels.severity = "critical";
-        }
-      ];
+        # bindsTo takes the arrs down with the netns unit: they end up stopped, not
+        # failed, so the unit-failed baseline never sees it
+        monitoring.alerts = [
+          {
+            name = "arr vpn down";
+            expr = ''systemd_unit_state{name="${vpnNs}.service",state="active"} == bool 0'';
+            summary = "vpn netns unit on {{ $labels.instance }} is not active, the arr stack is down with it";
+            labels.severity = "critical";
+          }
+        ];
 
-      # the arrs log more to their <name>.txt than to stdout, so ship those to the site
-      # loki too; the media group grants alloy read on the 0644/0664 files. sabnzbd and
-      # qbittorrent logs are 0600 and stay journal-only.
-      lab.logging = {
-        extraGroups = [mediaGroup];
-        fileSources =
-          map (name: {
-            job = name;
-            path = "${siteData}/${name}/logs/${name}.txt";
-          })
-          (lib.attrNames arrServices);
+        # the arrs log more to their <name>.txt than to stdout, so ship those to the site
+        # loki too; the media group grants alloy read on the 0644/0664 files. sabnzbd and
+        # qbittorrent logs are 0600 and stay journal-only.
+        logging = {
+          extraGroups = [mediaGroup];
+          fileSources =
+            map (name: {
+              job = name;
+              path = "${siteData}/${name}/logs/${name}.txt";
+            })
+            (lib.attrNames arrServices);
+        };
       };
 
       assertions = let
