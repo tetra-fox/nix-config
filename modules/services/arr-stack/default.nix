@@ -201,11 +201,11 @@ in {
       # a remote db needs SNAT so its replies route back; a local db has nothing to SNAT
       default = lib.optional (!dbIsLocal && dbEndpointIp != null) dbEndpointIp;
       description = ''
-        LAN IPs whose netns-initiated traffic must be SNAT'd to this host's LAN address
-        so they can reply. the accessibleFrom routes already take LAN destinations off
-        the tunnel, but replies would target the private namespaceAddress (unroutable on
-        the LAN) without this masquerade. defaults to the remote db's IP; populate with
-        extra dests when another off-box service (jellyfin) is added.
+        LAN IPs the arrs initiate connections to outside the tunnel. fed into
+        vpn-confinement's allowedEgress, which routes them via the bridge and
+        masquerades them to this host's LAN address so replies route back.
+        defaults to the remote db's IP; populate with extra dests when another
+        off-box service (jellyfin) is added.
       '';
     };
 
@@ -350,23 +350,6 @@ in {
       systemd.services.${vpnNs}.serviceConfig.ExecStartPost = [
         "${pkgs.iproute2}/bin/ip -n ${vpnNs} link set ${vpnNs}0 mtu ${toString cfg.wgMtu}"
       ];
-
-      # masquerade netns-initiated traffic to each dest so replies come back: without
-      # SNAT the dest sees the private namespaceAddress and can't reply. a declarative
-      # nftables table, not an ExecStartPost rule, so an `nft` reload doesn't wipe it.
-      # scoped per-dest so it never touches the inbound portMappings DNAT return flows
-      networking.nftables.tables.arr-netns-snat = lib.mkIf (cfg.netnsSnatHosts != []) {
-        family = "ip";
-        content = ''
-          chain postrouting {
-            type nat hook postrouting priority srcnat; policy accept;
-            ${lib.concatMapStringsSep "\n    " (
-              ip: "ip saddr ${vpn.namespaceAddress}/24 ip daddr ${ip} masquerade"
-            )
-            cfg.netnsSnatHosts}
-          }
-        '';
-      };
     }
 
     {
