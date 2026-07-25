@@ -91,8 +91,15 @@
     defaults
         mode tcp
         timeout connect 5s
-        timeout client 30m
-        timeout server 30m
+        # a db proxy must not reap idle-but-healthy pooled connections. authentik and other
+        # pooled clients hold persistent connections idle for long stretches; the 30m default
+        # from the patroni haproxy example cut them every half hour, which authentik surfaced
+        # as "Postgres connection is not healthy" before reconnecting. long inactivity timeout
+        # plus tcp keepalives: healthy idle pools survive, a genuinely dead peer (crashed app)
+        # is still detected by keepalive and cleaned up instead of leaking a session.
+        option tcpka
+        timeout client 24h
+        timeout server 24h
     listen postgres-write
         bind ${ha.vip}:5432
         option httpchk GET /primary
