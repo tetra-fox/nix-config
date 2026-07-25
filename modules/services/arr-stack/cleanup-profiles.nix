@@ -1,7 +1,7 @@
 # recyclarr never deletes a profile (destructive when media is assigned), so a renamed
 # or removed profile lingers. cleanup-profiles.sh reassigns everything on an orphaned
 # profile to a managed default then deletes it. runs after recyclarr so it sees the
-# current managed set (from profile-names.nix, the same list recyclarr builds from).
+# current managed set (from profiles.nix, the same list recyclarr builds from).
 {
   config,
   lib,
@@ -11,7 +11,7 @@
   cfg = config.lab.arrStack;
   vpn = config.vpnNamespaces.wg;
 
-  managedNames = import ./profile-names.nix;
+  managedNames = (import ./profiles.nix).names;
   managedFile = pkgs.writeText "managed-profiles.json" (builtins.toJSON managedNames);
 
   cleanup = pkgs.writeShellApplication {

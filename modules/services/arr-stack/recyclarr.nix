@@ -1,4 +1,8 @@
-{config, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   nsVethIp = config.vpnNamespaces.wg.namespaceAddress;
 
   # arr scores are a single summed integer, so each quality axis lives in its own
@@ -15,13 +19,13 @@
   # to re-verify trash_ids: clone TRaSH-Guides/Guides and grep
   # docs/json/{sonarr,radarr}/cf/*.json for the format name -> trash_id.
 
-  profileNames = import ./profile-names.nix;
+  profiles = import ./profiles.nix;
   mkScore = score: ids: {
     trash_ids =
       if builtins.isList ids
       then ids
       else [ids];
-    assign_scores_to = map (name: {inherit name score;}) profileNames;
+    assign_scores_to = map (name: {inherit name score;}) profiles.names;
   };
 
   mkCustomFormats = ids: [
@@ -59,13 +63,14 @@
     (mkScore (-1000000) ids.bans)
   ];
 
-  # hard-capped at `cap` but every lower tier is allowed so it can still grab
+  # hard-capped at its top rung, but every lower rung stays enabled so it can still grab
   # something when nothing at the cap exists
-  mkProfile = name: cap: qualities: {
-    inherit name qualities;
+  mkProfile = name: rungs: {
+    inherit name;
+    qualities = rungs;
     upgrade = {
       allowed = true;
-      until_quality = cap;
+      until_quality = (builtins.head rungs).name;
       until_score = 10000000;
     };
     # below one or two stacked demotes (-40000) so a flagged-but-fine release survives,
@@ -161,12 +166,27 @@
     ];
   };
 
-  mkProfiles = ladder: capName: [
-    (mkProfile "best-2160p" capName.r2160 (ladder."2160p" ++ ladder."1080p" ++ ladder."720p" ++ ladder.sd))
-    (mkProfile "best-1080p" capName.r1080 (ladder."1080p" ++ ladder."720p" ++ ladder.sd))
-    (mkProfile "best-720p" capName.r720 (ladder."720p" ++ ladder.sd))
-    (mkProfile "best-sd" capName.rsd ladder.sd)
-  ];
+  # one resolution's rungs from the WEB group down, dropping the disc tiers above it.
+  # the webdl profiles apply it at every resolution, not just their own, so a fallback
+  # never lands on a remux
+  fromWeb = rungs: let
+    web = lib.lists.findFirstIndex (q: lib.hasPrefix "WEB " q.name) null rungs;
+  in
+    lib.sublist web (lib.length rungs) rungs;
+
+  # each resolution gets a best-* and a webdl-*, both stacking that resolution's rungs
+  # with every lower resolution's
+  mkProfiles = ladder:
+    lib.concatMap (
+      res: let
+        down = lib.drop (lib.lists.findFirstIndex (r: r == res) null profiles.resolutions) profiles.resolutions;
+        rungs = keep: lib.concatMap (r: keep ladder.${r}) down;
+      in [
+        (mkProfile "best-${res}" (rungs lib.id))
+        (mkProfile "webdl-${res}" (rungs fromWeb))
+      ]
+    )
+    profiles.resolutions;
 
   # sonarr and radarr use different trash_ids for the same formats, hence two tables
   sonarrIds = {
@@ -274,12 +294,7 @@ in {
         api_key._secret = config.sops.secrets."apps/sonarr_api_key".path;
         delete_old_custom_formats = true;
         quality_definition.type = "series";
-        quality_profiles = mkProfiles sonarrLadder {
-          r2160 = "Bluray-2160p Remux";
-          r1080 = "Bluray-1080p Remux";
-          r720 = "Bluray-720p";
-          rsd = "Bluray-576p";
-        };
+        quality_profiles = mkProfiles sonarrLadder;
         custom_formats = mkCustomFormats sonarrIds;
       };
       radarr.radarr = {
@@ -287,12 +302,7 @@ in {
         api_key._secret = config.sops.secrets."apps/radarr_api_key".path;
         delete_old_custom_formats = true;
         quality_definition.type = "movie";
-        quality_profiles = mkProfiles radarrLadder {
-          r2160 = "Remux-2160p";
-          r1080 = "Remux-1080p";
-          r720 = "Bluray-720p";
-          rsd = "Bluray-576p";
-        };
+        quality_profiles = mkProfiles radarrLadder;
         custom_formats = mkCustomFormats radarrIds;
       };
     };
