@@ -18,6 +18,21 @@ in {
     ++ lib.optional cfg.ha.enable caps.dbHaNode.name
     ++ lib.optional cfg.client.enable caps.dbClient.name;
 
+  # admin.enable maps to a role HERE, not in a server module, so the single-server password
+  # unit and the HA leader reconcile create it alike; it used to live in the single-server
+  # module only, which left admin.enable silently inert on HA nodes
+  config.lab.postgres.roles = lib.mkIf cfg.admin.enable {
+    admin = {
+      passwordSecret = cfg.admin.passwordSecret;
+      clauses = {
+        superuser = true;
+        createdb = true;
+        createrole = true;
+        replication = true;
+      };
+    };
+  };
+
   options.lab.postgres = {
     server.enable = lib.mkEnableOption "run the postgres server on this host";
 

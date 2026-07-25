@@ -50,21 +50,7 @@ in {
 
   config = lib.mkMerge [
     {
-      lab.postgres = {
-        passwordUnits = lib.mapAttrs (name: _: "postgresql-set-${name}-password.service") cfg.roles;
-
-        roles = lib.mkIf cfg.admin.enable {
-          admin = {
-            passwordSecret = cfg.admin.passwordSecret;
-            clauses = {
-              superuser = true;
-              createdb = true;
-              createrole = true;
-              replication = true;
-            };
-          };
-        };
-      };
+      lab.postgres.passwordUnits = lib.mapAttrs (name: _: "postgresql-set-${name}-password.service") cfg.roles;
     }
 
     (lib.mkIf cfg.server.enable {
