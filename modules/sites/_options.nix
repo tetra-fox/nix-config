@@ -49,6 +49,16 @@
               description = "request_body max_size for this vhost (e.g. immich's large uploads); null = caddy default";
               example = "50GB";
             };
+            middlewares = lib.mkOption {
+              type = lib.types.listOf (lib.types.enum ["lan_only" "forward_auth"]);
+              default = [];
+              description = ''
+                caddy middleware imports wrapped around the reverse_proxy, applied in order:
+                lan_only aborts non-LAN requests, forward_auth gates on the site's authentik
+                outpost. empty = a plain public reverse_proxy.
+              '';
+              example = ["lan_only" "forward_auth"];
+            };
             openFirewall = lib.mkOption {
               type = lib.types.bool;
               default = true;

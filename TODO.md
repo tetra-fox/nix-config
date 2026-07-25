@@ -22,11 +22,12 @@
   address via ipOf, and caddy renders the Caddyfile from that plus a per-host staticTail
   (appliances with no publisher: root, home/HAOS, pve). inverted both edge tiers (mesa +
   fairlane); engine covered by lib/fleet-test.nix.
-  - STILL OPEN: the arr vhosts. mesa proxies them through authentik's outpost ({$AUTH_UPSTREAM})
-    via forward_auth; fairlane proxies the arr UIs directly ({$ARR_HOST}, lan_only). both still
-    hand-written in each edge's caddy-tail.nix. inverting them needs a route type that expresses
-    "upstream is the site auth outpost" -- design it against BOTH patterns at once or it gets
-    reworked when fairlane lands. authUpstream + arrHost options stay until then.
+  - arr vhosts: DONE. routes gained a `middlewares` field (lan_only, forward_auth); the arr-stack
+    declares its UI routes and derives the middleware set from whether the site has an authentik
+    outpost (mesa gets forward_auth + lan_only, fairlane lan_only only). caddy renders the
+    (authentik) forward_auth snippet from the derived outpost address. killed {$AUTH_UPSTREAM},
+    {$ARR_HOST}, and the authUpstream/arrHost options. DEPLOY: switch each mesa arr provider in
+    authentik from Proxy to Forward-auth mode.
 
 - authentik/LDAP auth for samba shares
   - really fucking finicky i cant get it to work... someday though.

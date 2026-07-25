@@ -248,7 +248,29 @@ in {
   config = lib.mkMerge [
     {
       lab = {
-        topology.provides = [caps.arr.name];
+        topology = {
+          provides = [caps.arr.name];
+
+          # the arr web UIs, folded into the edge Caddyfile. lan_only always; forward_auth too
+          # when the site has an authentik outpost (mesa), so a site without one (fairlane) is
+          # lan-only by construction. openFirewall false: the netns arrs are DNAT'd (forward
+          # path, not the input chain) and sabnzbd opens its own port.
+          routes = let
+            mw = ["lan_only"] ++ lib.optional (topo.authServerIp != null) "forward_auth";
+            arrRoute = sub: port: {
+              host = "${sub}.${config.lab.site.domain}";
+              inherit port;
+              middlewares = mw;
+              openFirewall = false;
+            };
+          in [
+            (arrRoute "qb" cfg.lanProxyPorts.qbittorrent)
+            (arrRoute "sonarr" cfg.lanProxyPorts.sonarr)
+            (arrRoute "radarr" cfg.lanProxyPorts.radarr)
+            (arrRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
+            (arrRoute "sabnzbd" config.services.sabnzbd.settings.misc.port)
+          ];
+        };
 
         # bindsTo takes the arrs down with the netns unit: they end up stopped, not
         # failed, so the unit-failed baseline never sees it

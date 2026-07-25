@@ -9,29 +9,25 @@
   ...
 }: let
   siteData = config.lab.site.dataDir;
-  defaultAuthUpstream =
-    if (config.lab.authentik.enable or false)
-    then "127.0.0.1:${toString config.lab.authentik.port}"
-    else if topo.authServerIp != null
-    then "${topo.authServerIp}:${toString topo.authServerPort}"
-    # no auth server anywhere in this site: AUTH_UPSTREAM is still set in caddy's env,
-    # but no vhost references it, so the value is a never-routed placeholder
-    else "127.0.0.1:9000";
 
-  # the arr host's address, for a site (fairlane) that proxies the arr UIs directly instead of
-  # through authentik forward_auth (mesa's pattern). the arr-stack DNATs each arr's port onto its
-  # host, so the Caddyfile uses {$ARR_HOST}:<port>. loopback if the arrs are on this box, else
-  # the derived arr host. null-safe: sites without an arr host just don't reference it.
-  arrIsLocal = builtins.elem caps.arr.name config.lab.topology.provides;
-  arrHostAddr =
-    if arrIsLocal
-    then "127.0.0.1"
-    else let
-      hosts = topo.hostsProviding caps.arr.name;
-    in
-      if hosts != []
-      then topo.ipProviding caps.arr.name
-      else "127.0.0.1";
+  # the site's authentik outpost, used by forward_auth routes. loopback if authentik runs on
+  # this box, else the derived auth-server address. null when the site has no authentik
+  # (fairlane), which is what makes those sites lan-only by construction.
+  authOutpost =
+    if (config.lab.authentik.enable or false)
+    then "http://127.0.0.1:${toString config.lab.authentik.port}"
+    else if topo.authServerIp != null
+    then "http://${topo.authServerIp}:${toString topo.authServerPort}"
+    else null;
+
+  anyForwardAuth = lib.any (r: lib.elem "forward_auth" r.middlewares) topo.routesInSite;
+
+  # middleware -> caddy snippet name, emitted inside a route{} block so they run in order:
+  # lan_only aborts non-LAN first, then forward_auth (the authentik snippet) gates.
+  mwSnippet = {
+    lan_only = "lan_only";
+    forward_auth = "authentik";
+  };
 
   # render one reverse-proxy vhost per same-site route. the engine resolved each route's upstream
   # (ipOf the declaring host + its port), so this only emits Caddy syntax. vhosts sorted by host
@@ -45,10 +41,17 @@
       if r.scheme == "https"
       then "https://${r.upstream}"
       else r.upstream;
+    proxy =
+      if r.middlewares == []
+      then "\treverse_proxy ${upstream}"
+      else
+        "\troute {\n"
+        + lib.concatMapStrings (m: "\t\timport ${mwSnippet.${m}}\n") r.middlewares
+        + "\t\treverse_proxy ${upstream}\n\t}";
   in ''
     ${r.host} {
     	import log${bodyBlock}
-    	reverse_proxy ${upstream}
+    ${proxy}
     }
   '';
   renderedRoutes =
@@ -58,8 +61,7 @@
 
   # generic edge preamble: the reusable snippets every site imports + the ACME cert issuer. no
   # vhosts here -- the resolvable ones come from renderedRoutes, the site-specific ones from
-  # lab.caddy.staticTail. the (authentik) snippet stays env-var-driven ({$AUTH_UPSTREAM}) because
-  # the forward_auth path isn't inverted yet (see TODO: caddy route inversion, arr block).
+  # lab.caddy.staticTail.
   preamble =
     ''
       (lan_only) {
@@ -75,19 +77,22 @@
       		format transform "{common_log}"
       	}
       }
+    ''
+    # only when the site has an outpost. trusted_proxies lets it trust caddy's X-Forwarded-*
+    # so it resolves the app by the original Host; copy_headers passes identity and the
+    # basic-auth injection to the backend
+    + lib.optionalString (authOutpost != null) ''
 
       (authentik) {
-      	reverse_proxy /outpost.goauthentik.io/* {$AUTH_UPSTREAM} {
-      		header_up Host {http.reverse_proxy.upstream.hostport}
-      	}
-
-      	forward_auth {$AUTH_UPSTREAM} {
+      	reverse_proxy /outpost.goauthentik.io/* ${authOutpost}
+      	forward_auth ${authOutpost} {
       		uri /outpost.goauthentik.io/auth/caddy
-      		copy_headers Authorization
+      		copy_headers Authorization X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+      		trusted_proxies private_ranges
       	}
       }
-
     ''
+    + "\n"
     + config.lab.caddy.certIssuer;
   renderedCaddyfile = pkgs.writeText "Caddyfile" (
     preamble + "\n" + renderedRoutes + "\n" + config.lab.caddy.staticTail
@@ -141,9 +146,8 @@ in {
       description = "env var name -> sops secret name, rendered into caddy's EnvironmentFile. the default carries the cloudflare acme token.";
     };
 
-    # site-specific Caddyfile blocks appended after the rendered routes: the root vhost, appliances
-    # with no capability publisher (HAOS, proxmox), and the arr forward_auth block until it's
-    # inverted. set this (instead of caddyfile) to render the Caddyfile from lab.topology.routes.
+    # site-specific Caddyfile blocks appended after the rendered routes: the root vhost and
+    # appliances with no capability publisher (HAOS, proxmox). everything derivable is a route.
     staticTail = lib.mkOption {
       type = lib.types.lines;
       default = "";
@@ -167,25 +171,6 @@ in {
         default = 52;
         description = "VRRP router id for the edge VIP, unique per L2 segment (see lab.vrrp.virtualRouterId).";
       };
-    };
-
-    authUpstream = lib.mkOption {
-      type = lib.types.str;
-      default = defaultAuthUpstream;
-      description = ''
-        upstream for authentik (auth.<site> + the forward_auth outpost), referenced in
-        the Caddyfile as {$AUTH_UPSTREAM}. defaults to the site's authentik host
-        (loopback if local, else the derived auth host IP).
-      '';
-    };
-
-    arrHost = lib.mkOption {
-      type = lib.types.str;
-      default = arrHostAddr;
-      description = ''
-        the arr host's address ({$ARR_HOST}), for a Caddyfile that proxies arr UIs directly
-        (fairlane, no authentik) as {$ARR_HOST}:<port>. the derived arr host, loopback if local.
-      '';
     };
   };
 
@@ -215,11 +200,6 @@ in {
           serviceConfig.EnvironmentFile = [
             config.sops.templates."caddy.env".path
           ];
-
-          environment = {
-            AUTH_UPSTREAM = config.lab.caddy.authUpstream;
-            ARR_HOST = config.lab.caddy.arrHost;
-          };
         };
 
         fail2ban = {
@@ -267,6 +247,10 @@ in {
       {
         assertion = !ha.enable || ha.vip != null;
         message = "lab.caddy.ha.enable requires lab.caddy.ha.vip (the floating ingress endpoint).";
+      }
+      {
+        assertion = !anyForwardAuth || authOutpost != null;
+        message = "a route requests the forward_auth middleware but this site has no authentik outpost (no host provides caps.authServer); deploy authentik or drop forward_auth from the route.";
       }
     ];
 
