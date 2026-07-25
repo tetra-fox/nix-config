@@ -33,6 +33,7 @@
   - per user exposed shares maybe one per person in the household
   - separate datasets? eg: `megamax/store/tetra` `megamax/store/mel` `megamax/backup/timemachine/tetra` etc etc.
   - when this lands we can update timemachine with auth n stuff.
+  - BUT ALSO...... <https://docs.goauthentik.io/endpoint-devices/> maybe?
 
 - grafana: alerting analog to the dashboard/node exporter discovery: BUILT. hosts register
   lab.monitoring.{alerts,dashboards} (registry.nix); the site server folds both at eval time

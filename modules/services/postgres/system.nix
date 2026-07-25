@@ -119,8 +119,7 @@ in {
           serviceConfig = {
             Type = "oneshot";
             User = "postgres";
-            # a wedged write (e.g. an unreachable NFS dir) should fail the unit, and with
-            # it the fleet failed-unit alert, instead of hanging the oneshot forever
+            # a wedged write (unreachable nfs dir) fails the unit instead of hanging forever
             TimeoutStartSec = "15min";
           };
           script = dumpScript;

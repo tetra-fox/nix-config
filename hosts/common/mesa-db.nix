@@ -15,9 +15,8 @@
     modules.services.postgres-ha.system
   ];
 
-  # the store box exports megamax/backup/postgres to each db node as that client's fsid=0
-  # root, so the generic store mount surfaces the dump dataset here. no gatedServices: the
-  # dump unit orders on the mount itself (RequiresMountsFor)
+  # the store box exports megamax/backup/postgres to each db node, so the store mount
+  # surfaces the dump dir here. no gatedServices: the dump unit orders on the mount itself
   lab.storage.mediaMount = {
     enable = true;
     mountpoint = "/mnt/pgbackup";
@@ -31,7 +30,7 @@
     };
     admin.enable = true;
 
-    # nightly leader dump onto the store box; restic ships it offsite at 14:30
+    # nightly leader dump onto the store box, restic ships it offsite at 14:30
     backup = {
       enable = true;
       dir = "/mnt/pgbackup";

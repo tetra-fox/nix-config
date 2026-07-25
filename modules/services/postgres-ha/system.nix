@@ -91,12 +91,8 @@
     defaults
         mode tcp
         timeout connect 5s
-        # a db proxy must not reap idle-but-healthy pooled connections. authentik and other
-        # pooled clients hold persistent connections idle for long stretches; the 30m default
-        # from the patroni haproxy example cut them every half hour, which authentik surfaced
-        # as "Postgres connection is not healthy" before reconnecting. long inactivity timeout
-        # plus tcp keepalives: healthy idle pools survive, a genuinely dead peer (crashed app)
-        # is still detected by keepalive and cleaned up instead of leaking a session.
+        # authentik and other pooled clients hold long lived connections.
+        # long timeout so their sessions don't die
         option tcpka
         timeout client 24h
         timeout server 24h
@@ -280,16 +276,14 @@ in {
             unitConfig.RequiresMountsFor = [cfg.backup.dir];
             serviceConfig = {
               Type = "oneshot";
-              # patroni runs the postmaster; the local trust line lets this user reach the
-              # postgres role over the socket (same as patroni-role-reconcile)
+              # patroni runs the postmaster; local trust line lets this user reach postgres
+              # over the socket
               User = "patroni";
-              # a wedged NFS write should fail the unit (and the fleet failed-unit alert)
-              # instead of hanging the oneshot forever
+              # a wedged nfs write fails the unit instead of hanging forever
               TimeoutStartSec = "15min";
             };
-            # every node runs the timer, only the current leader dumps. no promotion-wait
-            # like the reconcile above: at a steady-state 14:00 some node is the leader; a
-            # failover racing the timer can skip one night and the next run self-heals
+            # every node runs the timer, only the leader dumps. a failover racing the timer
+            # can skip one night, the next run self-heals
             script = ''
               if [ "$(${postgresPkg}/bin/psql -tAqc 'SELECT NOT pg_is_in_recovery()' -h /run/postgresql -U postgres -d postgres 2>/dev/null)" != t ]; then
                 echo "not the leader; the dump is the leader's job"

@@ -18,9 +18,8 @@ in {
     ++ lib.optional cfg.ha.enable caps.dbHaNode.name
     ++ lib.optional cfg.client.enable caps.dbClient.name;
 
-  # admin.enable maps to a role HERE, not in a server module, so the single-server password
-  # unit and the HA leader reconcile create it alike; it used to live in the single-server
-  # module only, which left admin.enable silently inert on HA nodes
+  # admin.enable maps to a role here so both the single-server password unit and the HA
+  # leader reconcile create it (living in the server module left it inert on HA nodes)
   config.lab.postgres.roles = lib.mkIf cfg.admin.enable {
     admin = {
       passwordSecret = cfg.admin.passwordSecret;
@@ -92,8 +91,8 @@ in {
       readOnly = true;
     };
 
-    # shared by the single-server and HA modules. replication is not backup: the HA cluster
-    # faithfully replicates a dropped database to every standby, this is what undoes it.
+    # shared by single-server and HA. replication isn't backup: the cluster copies a dropped
+    # db to every standby, this is what gets it back
     backup = {
       enable = lib.mkEnableOption "a nightly pg_dumpall of every database + globals into backup.dir";
 

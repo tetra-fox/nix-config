@@ -1,13 +1,13 @@
-# the dump script shared by the single-server and HA modules: pg_dumpall (every database
-# plus the globals) compressed into backup.dir, pruned to the newest `keep`. connects over
-# the local socket as the postgres role, so neither module needs credentials for it.
+# dump script shared by the single-server and HA modules: pg_dumpall (all databases +
+# globals) zstd'd into backup.dir, pruned to newest `keep`. local socket as postgres, so
+# neither module needs credentials
 {
   pkgs,
   postgresPkg,
   backup,
 }: ''
   set -o pipefail
-  # a crashed prior run can leave a partial; it must never sit where restic ships it
+  # a crashed run leaves a .partial, never let it sit where restic ships it
   rm -f ${backup.dir}/*.sql.zst.partial
   out="${backup.dir}/all-$(date -u +%Y%m%dT%H%M%SZ).sql.zst"
   ${postgresPkg}/bin/pg_dumpall -h /run/postgresql -U postgres | ${pkgs.zstd}/bin/zstd -q -o "$out.partial"

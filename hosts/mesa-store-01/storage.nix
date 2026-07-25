@@ -31,8 +31,7 @@
   # won't match. it connects as root, so the export all_squashes root to admin:users. the
   # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
   haIp = config.lab.appliances.haosIp;
-  # every db node's internal-VLAN IP: any of them can be the Patroni leader, so the
-  # postgres-dump export and firewall admit all of them
+  # every db node's internal ip; any can be the leader, so the export and firewall admit all
   dbIps = topo.dbHaNodeIps;
 
   # media is the one tree that's genuinely group-shared (arr services + every samba user
@@ -98,8 +97,8 @@ in {
         # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
         # anongid=100), 0700, deliberately not group media and no setgid
         "d /mnt/megamax/backup/homeassistant 0700 admin users -"
-        # postgres dumps: same all_squash model as homeassistant; squashing sidesteps the
-        # patroni uid differing across db nodes
+        # postgres dumps: all_squash like homeassistant, sidesteps patroni's uid differing
+        # across db nodes
         "d /mnt/megamax/backup/postgres 0700 admin users -"
       ]
       # immich library + its db-dump backups, owned by the immich host's pinned uid so the
@@ -195,8 +194,8 @@ in {
       + lib.optionalString (immichIp != null) ''
         /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
       ''
-      # the dump lands as whichever uid patroni has on that node, so all_squash like
-      # homeassistant: every write becomes admin:users, matching the dir above
+      # dump lands as patroni's uid (differs per node), so all_squash to admin:users like
+      # homeassistant, matching the dir above
       + lib.optionalString (dbIps != []) ''
         /mnt/megamax/backup/postgres ${lib.concatMapStringsSep " " (ip: "${ip}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)") dbIps}
       '';
