@@ -1618,11 +1618,11 @@
     },
     "vpn-confinement": {
       "locked": {
-        "lastModified": 1784755893,
-        "narHash": "sha256-1OjsTnqNVA9PqKAH1Nxp9RblsZqYGQbAjb+epGI/AoU=",
+        "lastModified": 1784965518,
+        "narHash": "sha256-JZ+Pyyf4zD77KGu1YTNkkKxv6yMBLjBr/bYAWhykJK4=",
         "owner": "tetra-fox",
         "repo": "VPN-Confinement",
-        "rev": "00b09fa8561cbfd198623ddcf76ea01ce9056146",
+        "rev": "cb86598478df2613e2751f8bfcce0fc238e8a6a2",
         "type": "github"
       },
       "original": {
