@@ -96,8 +96,7 @@ in {
         # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
         # anongid=100), 0700, deliberately not group media and no setgid
         "d /mnt/megamax/backup/homeassistant 0700 admin users -"
-        # postgres dumps: all_squash like homeassistant, sidesteps patroni's uid differing
-        # across db nodes
+        # postgres dumps: all_squash bc patroni's uid differs per node
         "d /mnt/megamax/backup/postgres 0700 admin users -"
       ]
       # immich library + its db-dump backups, owned by the immich host's pinned uid so the
@@ -111,16 +110,9 @@ in {
         "d /mnt/megamax/immich/backups 0700 ${uid} ${uid} -"
       ]);
 
-    # boot-time safety net that re-asserts group ownership + setgid across the group-shared
-    # trees (media only -- see groupSharedTrees), so a flubbed copy, a wrong-perms import, or a
-    # future mistake is fixed by a reboot instead of nfs/samba throwing cryptic permission
-    # errors. deliberately fixes GROUP and mode only, never the per-file user: the arr services
-    # legitimately own their own files (sonarr writes as sonarr etc), and a chown -R to one
-    # user would rip that away every boot. chgrp+chmod is enough because the share model is
-    # group-based (force group media, 2775). runs after the mount and before the share daemons
-    # so they never start on a half-fixed tree. RequiresMountsFor covers every served tree
-    # (including store/timemachine), even though this unit only rewrites media's permissions --
-    # it still needs store/timemachine mounted before samba starts.
+    # boot-time perms safety net: re-assert group + setgid on the group-shared trees (media
+    # only) so bad perms get fixed by a reboot. GROUP and mode only, NEVER the per-file user:
+    # the arrs own their files (sonarr writes as sonarr), a chown -R would rip that away every boot
     services.megamax-fix-perms = {
       description = "reassert group ownership + setgid on the megamax group-shared trees";
       wantedBy = ["multi-user.target"];
@@ -158,22 +150,13 @@ in {
     };
   };
 
-  # a fsid=0 root per client below (media, homeassistant, immich, one per db node). this is
-  # unusual -- nfsd normally has a single pseudo-root -- but it's safe as long as every fsid=0
-  # export's client specifier is a single host address with no overlap between them: nfsd
-  # resolves a client's `:/` mount against whichever export line matches its source address, so
-  # disjoint single-IP scopes can never collide. that's structural here, not just true today:
-  # mediaHostIp/immichHostIp come from the capability engine's single-provider lookup, which
-  # throws rather than silently returning an ambiguous IP if two hosts ever advertised the same
-  # capability, haIp is a literal address, not a range, and the db-node list is one distinct
-  # host address per entry. if this ever grows a CIDR-scoped export instead of a single IP, that
-  # invariant breaks and overlapping clients would see "access denied" or the wrong root -- the
-  # cleaner alternative at that point is one export of the whole /mnt/megamax pseudo-root with
-  # per-client subtree permissions, not more fsid=0 lines.
-  # media keeps numeric uids (arr imports stay <svc-uid>:media); homeassistant all_squashes to
-  # admin:users (1000:100) since HAOS connects as root, backups owned by admin in admin's own
-  # group, kept out of group media on purpose. the media dataset is one filesystem
-  # (library/torrents/nzb are dirs, not datasets), so a single export per client.
+  # a fsid=0 root per client (media, homeassistant, immich, one per db node). multiple fsid=0
+  # roots is unusual, safe only because each client is a single non-overlapping IP. structural
+  # not luck: the caps engine throws if two hosts share a cap, the rest are literal single IPs.
+  # a CIDR-scoped export breaks it; to grow, export /mnt/megamax once with per-client subtree
+  # perms instead.
+  # media keeps numeric uids so arr imports stay <svc-uid>:media; homeassistant all_squashes
+  # because HAOS connects as root. media is one filesystem, so one export per client.
   lab.topology.provides = [caps.storage.name];
 
   # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no
@@ -189,8 +172,7 @@ in {
       + lib.optionalString (immichIp != null) ''
         /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
       ''
-      # dump lands as patroni's uid (differs per node), so all_squash to admin:users like
-      # homeassistant, matching the dir above
+      # pg_dump gets patroni's uid (differs per node), so all_squash to admin:users
       + lib.optionalString (dbIps != []) ''
         /mnt/megamax/backup/postgres ${lib.concatMapStringsSep " " (ip: "${ip}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)") dbIps}
       '';
@@ -204,8 +186,6 @@ in {
       "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
     };
 
-    # no "guest ok": valid users already forecloses the guest fallback, so it was dead config
-    # that misleadingly read as a guest share when it's actually authenticated-only.
     media = {
       path = "/mnt/megamax/media";
       browseable = "yes";
@@ -217,8 +197,7 @@ in {
       "force group" = config.lab.media.group;
     };
 
-    # %U -> per-user private subdir (0700, owner-only). root preexec creates it since samba
-    # doesn't; wrapped in sh -c because samba execs preexec directly, no shell.
+    # %U -> per-user private subdir (0700, owner-only)
     store = {
       path = "/mnt/megamax/store/%U";
       browseable = "yes";
@@ -230,8 +209,6 @@ in {
       "root preexec" = "${pkgs.bash}/bin/sh -c '${pkgs.coreutils}/bin/mkdir -p -m 0700 /mnt/megamax/store/%U && ${pkgs.coreutils}/bin/chown %U /mnt/megamax/store/%U'";
     };
 
-    # same %U/root preexec pattern as store. mac-side "Encrypt Backups" is still recommended,
-    # just not load-bearing now that this is authenticated rather than guest.
     timemachine = {
       path = "/mnt/megamax/backup/timemachine/%U";
       browseable = "no";
