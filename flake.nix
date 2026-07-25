@@ -236,6 +236,13 @@
         ...
       }: {
         formatter = pkgs.alejandra;
+
+        # runtime checks: VM tests exercising the real service modules on a fictional site
+        # (tests/). x86_64-linux only: they need kvm, and the fleet is x86_64.
+        checks = lib.mkIf (system == "x86_64-linux") (import ./tests {
+          inherit pkgs;
+          inherit (commonSpecialArgs) modules fleet caps;
+        });
         # `or {}`, not inputs': nurpkgs has no x86_64-darwin output, and the throwing
         # accessor would break every `nix <cmd> .#...` on the mac (the CLI resolves
         # attrs through packages.<system> first)

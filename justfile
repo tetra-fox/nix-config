@@ -20,6 +20,10 @@ lint:
 fleet-test:
     @out=$(nix eval --impure --raw --expr 'import ./lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'); [ "$out" = ok ] || { echo "fleet-test: $out"; exit 1; }; echo "fleet-test: ok"
 
+# run a VM integration test from tests/ (edge-vip-failover, db-failover); needs kvm
+vm-test name:
+    nix build .#checks.x86_64-linux.{{name}} -L --no-link
+
 # rebuild this host; args pass through to rebuild.sh (e.g. `just rebuild boot`, `just rebuild --target-host mesa-svc-01`)
 rebuild *args:
     bash modules/cli/rebuild/_rebuild.sh {{ args }}
