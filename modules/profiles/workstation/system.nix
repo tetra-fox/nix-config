@@ -8,10 +8,10 @@
     modules.profiles.base.system
     modules.cli.rebuild.system
 
-    modules.toolsets.archive.system
     modules.toolsets.disk.system
-    modules.toolsets.general.system
+    modules.toolsets.hardware.system
     modules.toolsets.net.system
+    modules.toolsets.observe.system
 
     modules.desktop.avahi.system
     modules.hardware.bluetooth.system
@@ -52,7 +52,6 @@
 
   environment.systemPackages = with pkgs; [
     rclone
-    usbutils # lsusb
 
     git
   ];

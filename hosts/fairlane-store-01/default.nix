@@ -7,6 +7,8 @@
     modules.services.samba.system
     modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
     modules.toolsets.disk.system # smartctl etc for the passthrough drive
+    modules.toolsets.hardware.system # lspci, to confirm the guest sees the passthrough controller
+    modules.toolsets.observe.system # iostat/iotop for disk-side latency
   ];
 
   lab = {

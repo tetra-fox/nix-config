@@ -7,10 +7,19 @@
 }: {
   environment.systemPackages = with pkgs;
     [
-      nmap
-      tcpdump
       iperf3
+      ldns # drill, which prints the dnssec chain dig only summarises
+      nmap
+      socat
+      tcpdump
+      whois
     ]
-    # ethernet-layer tooling only exists on linux
-    ++ lib.optionals stdenv.isLinux [ethtool];
+    # ethernet and conntrack layers only exist on linux, and nixpkgs marks
+    # traceroute linux-only too (macos ships its own in /usr/sbin)
+    ++ lib.optionals stdenv.isLinux [
+      # what nftables actually holds in state, for when a rule reads correct but traffic still drops
+      conntrack-tools
+      ethtool
+      traceroute
+    ];
 }

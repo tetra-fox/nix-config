@@ -61,7 +61,6 @@ in {
     qbittorrent
 
     vulkan-tools
-    ethtool
     imhex
 
     gcc

@@ -5,8 +5,6 @@
   imports = [
     modules.profiles.base.darwin
 
-    modules.toolsets.archive.system
-    modules.toolsets.general.system
     modules.toolsets.net.system
 
     modules.cli.rebuild.system

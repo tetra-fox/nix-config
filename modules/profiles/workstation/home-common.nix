@@ -37,7 +37,5 @@
     alejandra
     ffmpeg
     yt-dlp
-    ncdu
-    iperf3
   ];
 }
