@@ -300,17 +300,24 @@ in {
           etcd.wantedBy = lib.mkForce [];
           patroni.wantedBy = lib.mkForce [];
           haproxy.wantedBy = lib.mkForce [];
-          keepalived.wantedBy = lib.mkForce [];
           patroni-role-reconcile.wantedBy = lib.mkForce [];
         })
       ];
 
-      timers.postgres-dump = lib.mkIf cfg.backup.enable {
-        # bootstrapHold: installed but not scheduled, like the rest of the stack
-        wantedBy = lib.optionals (!ha.bootstrapHold) ["timers.target"];
-        timerConfig = {
-          OnCalendar = cfg.backup.onCalendar;
-          Persistent = true;
+      timers = {
+        postgres-dump = lib.mkIf cfg.backup.enable {
+          # bootstrapHold: installed but not scheduled, like the rest of the stack
+          wantedBy = lib.optionals (!ha.bootstrapHold) ["timers.target"];
+          timerConfig = {
+            OnCalendar = cfg.backup.onCalendar;
+            Persistent = true;
+          };
+        };
+
+        # keepalived.service has no wantedBy of its own in nixpkgs; this timer is what pulls it
+        # in, 5s after network-online, so the hold has to land here.
+        keepalived-boot-delay = lib.mkIf ha.bootstrapHold {
+          wantedBy = lib.mkForce [];
         };
       };
 
