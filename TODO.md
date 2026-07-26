@@ -6,28 +6,11 @@
   - remaining: two warm reboots checking systemd-analyze firmware time (~12s ok / ~40s+ = index dp bus wedged), then uncomment the two imports in hosts/hara/{default.nix,home/default.nix}, rebuild, reboot with acpi_enforce_resources=lax, verify ene dram + suspend hook
   - k100 detector permanently disabled (crashes the keyboard), ckb-next drives it instead
 
-- 1password ssh agent: apply the permanent SSH_AUTH_SOCK fix so i stop doing the manual export
-  - `home.sessionVariables.SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";` in modules/ssh/home.nix
-  - or just disable gcr-ssh-agent (cosmic doesn't need it): services.gnome.gnome-keyring.enable = lib.mkForce false
-
 - vrcx vr overlay: blocked upstream on xrizer (no overlay-only support), nothing to do until it ships or i switch to opencomposite per-app
-- vrcx shutdown hang: needs kill -9 on quit, pre-existing stock nixpkgs bug, diagnose later (CEF subprocess / unreaped wineserver suspects)
 
 - replace hyprshutdown with our quickshell. hyprshutdown is uggy and gwoss and we can make it pwetty and nice :3
 
 ## servers
-
-- caddy route inversion: SHIPPED. hosts publish lab.topology.routes = [{host, port, scheme?,
-  maxBodySize?}]; the engine folds them per-site (routesInSite) resolving each publisher's
-  address via ipOf, and caddy renders the Caddyfile from that plus a per-host staticTail
-  (appliances with no publisher: root, home/HAOS, pve). inverted both edge tiers (mesa +
-  fairlane); engine covered by lib/fleet-test.nix.
-  - arr vhosts: DONE. routes gained a `middlewares` field (lan_only, forward_auth); the arr-stack
-    declares its UI routes and derives the middleware set from whether the site has an authentik
-    outpost (mesa gets forward_auth + lan_only, fairlane lan_only only). caddy renders the
-    (authentik) forward_auth snippet from the derived outpost address. killed {$AUTH_UPSTREAM},
-    {$ARR_HOST}, and the authUpstream/arrHost options. DEPLOY: switch each mesa arr provider in
-    authentik from Proxy to Forward-auth mode.
 
 - authentik/LDAP auth for samba shares
   - really fucking finicky i cant get it to work... someday though.
@@ -36,32 +19,24 @@
   - when this lands we can update timemachine with auth n stuff.
   - BUT ALSO...... <https://docs.goauthentik.io/endpoint-devices/> maybe?
 
-- grafana: alerting analog to the dashboard/node exporter discovery: BUILT. hosts register
-  lab.monitoring.{alerts,dashboards} (registry.nix); the site server folds both at eval time
-  into a provisioned grafana rule group (folder "fleet") + the community dashboard provider.
-  platform/zfs self-registers the pdf zfs_exporter, pool unhealthy/capacity alerts, and the
-  zfs dashboard; every agent registers target-down + unit-failed baselines.
-  - to land: push nurpkgs (new zfs + smartctl dashboards), bump flake.lock, rebuild
-    mesa-mon-01 + mesa-store-01
-  - smartctl exporter: DONE. modules/hardware/smartctl (exporter + smart-failed /
-    sector-errors / temperature alerts + dashboard), imported by mesa-store-01. SMART
-    verified working through the virtio-scsi passthrough (sat auto-detect)
-  - contact point: now declarative (lab.monitoring.telegram.enable on the mon host):
-    provisioned telegram contact point + policy + message template, secrets via the
-    monitoring/telegram_env sops env file. the hand-made UI contact point can be
-    deleted after the provisioned one is live
-  - fleet alert set: baselines from every agent (target down, unit failed, fs >85%,
-    oom kills, service flapping, clock unsync) + producer-registered (zfs pool
-    health/capacity, smart x3, restic stale, arr vpn down, gpu temp)
-  - blackbox: DONE. monitoring/blackbox.nix rides the server role; https probes derived
-    from the route registry, dns probe against topo.dnsEndpointIp (caps.dns gained its
-    vipPath), tcp to topo.dbEndpointIp. probe-failed + cert-expiry (<14d) alerts
-  - NEXT alerts: db tier internals (etcd needs listen-metrics-urls on a separate port
-    and patroni's rest api is unauthed incl switchover -- think before opening either
-    to mon); loki-based rules need a per-rule datasource field in mkRule first
-  - influxdb: rejected. prometheus covers pool health/capacity (pdf zfs_exporter) and
-    arc/io (node exporter zfs collector); influx's only real edge is zpool_influxdb's
-    per-vdev latency histograms, not worth a second tsdb + telegraf
+- more alerts: db tier internals. etcd needs listen-metrics-urls on a separate port, and
+  patroni's rest api is unauthed incl switchover -- think before opening either to mon
+- loki-based alert rules need a per-rule datasource field in mkRule first
+
+- move alert rules from grafana to prometheus, keep grafana as the window. NOT WORTH IT YET
+  at 7 rules, revisit when the count grows or when a rule needs a condition gt/lt can't express
+  - why: grafana copies the provisioning file into its own db, so removing a rule from config
+    doesn't remove it. that's what retiredAlerts is, a tombstone list you add a name to and
+    then later have to take back out. `prune = true` solves this for datasources, but the
+    option doesn't exist for alert rules
+  - prometheus reads rule files live, so deleting the lines deletes the rule. also kills the
+    gt/lt condition enum (comparisons become plain promql, so >=, ==, and ranges work),
+    mkRule's A-reduce-C pipeline, and the sha256 uid hashing
+  - keep the grafana UI: alertmanager as a grafana datasource gives back the firing list and
+    the silence button, and the prometheus datasource surfaces the rules read-only (vanilla
+    prom has no ruler write api, which is what we want since nix owns them)
+  - cost: alertmanager becomes a new unit + routing tree, telegram moves to its bot_token_file
+  - verify grafana's alertmanager-datasource option names before building this, don't trust memory
 
 ## general
 
