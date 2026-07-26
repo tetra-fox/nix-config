@@ -23,13 +23,6 @@ _: let
       # "x-systemd.idle-timeout=0"
     ];
 in {
-  # declaring fsType = "ntfs" mounts makes nixos add pkgs.ntfs3g to system.fsPackages
-  # (nixos/modules/tasks/filesystems/ntfs.nix). that package ships /sbin/mount.ntfs,
-  # which the mount syscall path picks up as a helper and which mounts via FUSE
-  # (fuseblk) instead of the in-kernel ntfs driver we want. there is no nixos option
-  # to opt out, so disable that stock module; the kernel module autoloads by fstype.
-  disabledModules = ["tasks/filesystems/ntfs.nix"];
-
   fileSystems = {
     "/mnt/data" = {
       device = "/dev/disk/by-uuid/601C0E101C0DE1C0";
@@ -46,9 +39,6 @@ in {
     "/mnt/music" = {
       device = "/dev/disk/by-uuid/DECAF453CAF42A03";
       fsType = "ntfs";
-      # rw since 2026-07-19: live's recordings/temp projects live here, and the
-      # library is backed up on the nas. the ro era ended after it wedged live
-      # at startup (temp-project creation loop on a read-only volume)
       options = rwOptions;
     };
 
