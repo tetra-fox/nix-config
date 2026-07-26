@@ -1,5 +1,6 @@
 {
   config,
+  osConfig,
   pkgs,
   lib,
   modules,
@@ -50,11 +51,17 @@ in {
 
   # session autostart, rendered into hyprland's startup lua by the module
   my.hyprland.autostart = [
-    "${lib.getExe pkgs.app2unit} -- ${lib.getExe pkgs.firefox}"
+    # must be config.programs.firefox.finalPackage, not pkgs.firefox: home-manager wraps
+    # it with the policies/extensions/profile settings configured below
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe config.programs.firefox.finalPackage}"
     "${lib.getExe pkgs.app2unit} -- ${lib.getExe' pkgs.telegram-desktop "Telegram"} -startintray"
     "${lib.getExe pkgs.app2unit} -- ${lib.getExe' config.programs.nixcord.finalPackage.discord "discord"} --start-minimized"
     "${lib.getExe pkgs.app2unit} -- ${lib.getExe vrcx} --no-sandbox --startup"
-    "${lib.getExe pkgs.app2unit} -- ${lib.getExe pkgs.steam} -silent"
+    # must be osConfig.programs.steam.package, not pkgs.steam: the system module wraps
+    # it with STEAM_EXTRA_COMPAT_TOOLS_PATHS (see modules/desktop/steam/system.nix),
+    # and that wrapping only lands on the package exposed via programs.steam, not on
+    # the bare pkgs.steam derivation
+    "${lib.getExe pkgs.app2unit} -- ${lib.getExe osConfig.programs.steam.package} -silent"
   ];
 
   xdg.mimeApps = {

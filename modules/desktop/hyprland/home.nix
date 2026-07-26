@@ -74,7 +74,10 @@ in {
             inherit main_mod;
             app2unit = lib.getExe pkgs.app2unit;
             terminal = lib.getExe pkgs.kitty;
-            menu = lib.getExe pkgs.walker;
+            # must be config.programs.walker.package, not pkgs.walker: the walker flake's
+            # home-manager module pins its own build, and runAsService talks to that build
+            # over a socket, so the keybind has to launch the same one
+            menu = lib.getExe config.programs.walker.package;
             file_manager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"} ~";
             hyprpicker = "${pkgs.hyprpicker}/bin/hyprpicker";
           };
