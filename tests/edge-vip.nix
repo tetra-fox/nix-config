@@ -76,8 +76,17 @@ in {
       };
     };
 
-    # hostname "client" has no site prefix, so the engine never counts it as a fleet member
-    client = {};
+    # hostname "client" has no site prefix, so the engine never counts it as a fleet member.
+    # the test framework only puts it on 192.168.1.0/24, so park a site-subnet address on eth1
+    # by hand -- otherwise the vip is off-link and curl leaves via the qemu nat instead.
+    client = {
+      networking.interfaces.eth1.ipv4.addresses = [
+        {
+          address = "192.168.2.9";
+          prefixLength = 24;
+        }
+      ];
+    };
   };
 
   testScript = ''
@@ -95,7 +104,10 @@ in {
 
     for m in [edge1, edge2]:
         m.wait_for_unit("caddy.service")
-        m.wait_for_unit("keepalived.service")
+        # nixpkgs starts keepalived from keepalived-boot-delay.timer (5s after
+        # network-online) rather than multi-user.target, so wait_for_unit hits it while it is
+        # still inactive with no job queued and gives up. poll instead.
+        m.wait_until_succeeds("systemctl is-active keepalived.service")
     web.wait_for_unit("static-web-server.service")
 
     with subtest("an edge claims the vip and serves the engine-rendered route"):

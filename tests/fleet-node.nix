@@ -17,6 +17,12 @@
   ];
 
   config = {
+    # profiles/base turns this on for every production host, and the tests need it too:
+    # networking.firewall.extraInputRules only exists in the nftables backend, so on the
+    # iptables default the route firewall and the vrrp accept rule evaluate fine and then
+    # never reach the ruleset.
+    networking.nftables.enable = true;
+
     # what production gets from inputs.self.nixosConfigurations: every fleet member's config,
     # keyed by hostname. the test framework's `nodes` carries each node's config already.
     _module.args.nixosConfigurations =
