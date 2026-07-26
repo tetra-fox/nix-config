@@ -161,7 +161,6 @@ in {
       additionalLibs = [libxkbcommon];
       additionalPrograms = [libxkbcommon];
     })
-    (bottles.override {removeWarningPopup = true;})
 
     vrcx
   ];
