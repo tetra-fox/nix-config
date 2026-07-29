@@ -38,6 +38,18 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#statix nixpkgs#just -c just lint
 
+  # a plaintext secrets file would otherwise eval, build and commit cleanly: sops-nix's
+  # validateSopsFiles hashes these files but never checks they are encrypted
+  secrets-encrypted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-nix
+        with:
+          ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix shell --inputs-from . nixpkgs#just nixpkgs#python3 -c just secrets-check
+
   # ensure fleet discovery remains generic
   fleet-lib:
     runs-on: ubuntu-latest
@@ -53,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       hosts: ${{ steps.list.outputs.hosts }}
+      tests: ${{ steps.list.outputs.tests }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-nix
@@ -61,7 +74,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # both host classes, as full toplevel attr paths: darwin evals fine on
       # linux (eval is cross-platform) and auto-discovery means a new mac gets
-      # CI coverage the same way a new server does
+      # CI coverage the same way a new server does.
+      # the vm test list is derived the same way, so tests/default.nix stays the
+      # only place a test is named and a new one cannot be added without CI
       - id: list
         run: |
           nixos=$(nix eval --json .#nixosConfigurations --apply builtins.attrNames)
@@ -69,6 +84,8 @@ jobs:
           echo "hosts=$(jq -cn --argjson n "$nixos" --argjson d "$darwin" \
             '[($n[] | "nixosConfigurations." + . + ".config.system.build.toplevel"),
               ($d[] | "darwinConfigurations." + . + ".system")]')" >> "$GITHUB_OUTPUT"
+          echo "tests=$(nix eval --json .#checks.x86_64-linux --apply builtins.attrNames \
+            | jq -c .)" >> "$GITHUB_OUTPUT"
 
   eval:
     name: eval ${{ matrix.host }}
@@ -89,11 +106,12 @@ jobs:
   # runtime checks: VM tests of the failover claims (tests/). linux runners have kvm
   vm-test:
     name: vm-test ${{ matrix.test }}
+    needs: discover
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test: [edge-vip-failover, db-failover]
+        test: ${{ fromJSON(needs.discover.outputs.tests) }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-nix

@@ -20,6 +20,32 @@ lint:
 fleet-test:
     @out=$(nix eval --impure --raw --expr 'import ./lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'); [ "$out" = ok ] || { echo "fleet-test: $out"; exit 1; }; echo "fleet-test: ok"
 
+# assert every file under secrets/ is actually sops-encrypted. sops-nix's
+# validateSopsFiles only hashes these files, it never checks they are encrypted, so a
+# hand-written plaintext secrets file would eval, build and commit cleanly.
+secrets-check:
+    #!/usr/bin/env python3
+    import glob, re, sys
+
+    bad = []
+    for path in sorted(glob.glob("secrets/*.yaml")):
+        # everything above the sops: metadata block is payload; the block itself holds
+        # plaintext bookkeeping (recipients, mac, version) and is meant to be readable
+        body = open(path, encoding="utf-8").read().split("\nsops:", 1)[0]
+        if "ENC[AES256_GCM" not in body:
+            bad.append(path + ": no encrypted values at all")
+            continue
+        for n, line in enumerate(body.splitlines(), 1):
+            m = re.match(r"^\s*[\w.\-]+:\s+(\S.*)$", line)
+            if m and not m.group(1).startswith("ENC["):
+                bad.append(path + ":" + str(n) + ": plaintext value")
+
+    for b in bad:
+        print("secrets-check: " + b, file=sys.stderr)
+    if bad:
+        sys.exit(1)
+    print("secrets-check: ok, " + str(len(glob.glob("secrets/*.yaml"))) + " files encrypted")
+
 # run a VM integration test from tests/ (edge-vip-failover, db-failover); needs kvm
 vm-test name:
     nix build .#checks.x86_64-linux.{{name}} -L --no-link
