@@ -57,6 +57,12 @@
   baseSettings = {
     auth = {
       method = "Forms";
+      # stays DisabledForLocalAddresses on purpose: caddy dials from the site's edge IP,
+      # which the arrs count as local, so authentik's forward_auth is the single login
+      # the user sees. setting this to Enabled would stack each arr's own form on top of
+      # authentik. the exposure that comes with it (any private-range client reaching the
+      # port directly can read the api key from /initialize.json) is closed at the network
+      # layer instead, by accessibleFrom below.
       required = "DisabledForLocalAddresses";
     };
     log.level = "info";
@@ -108,7 +114,31 @@
     # servarr modules hardcode UMask 0022, making library dirs group-unwritable so a
     # later import by another media-group service hits UnauthorizedAccessException.
     # 0002 keeps dirs 0775 / files 0664 for the whole media group
-    serviceConfig.UMask = lib.mkForce "0002";
+    serviceConfig = {UMask = lib.mkForce "0002";} // arrHardening;
+  };
+
+  # systemd hardening for the arr units. sonarr and radarr inherit a decent set from their
+  # nixpkgs modules, but prowlarr (hand-defined below, no upstream module) and sabnzbd
+  # (whose module sets none) were running with none of it. mkDefault so wherever an
+  # upstream module already made a call, that call still wins.
+  # no MemoryDenyWriteExecute on purpose: these are .NET and python runtimes that JIT,
+  # and it would kill them.
+  arrHardening = lib.mapAttrs (_: lib.mkDefault) {
+    NoNewPrivileges = true;
+    PrivateTmp = true;
+    ProtectSystem = "full";
+    ProtectHome = true;
+    ProtectKernelTunables = true;
+    ProtectKernelModules = true;
+    ProtectControlGroups = true;
+    ProtectProc = "invisible";
+    RestrictSUIDSGID = true;
+    RestrictNamespaces = true;
+    RestrictRealtime = true;
+    LockPersonality = true;
+    # they bind ports above 1024 and run as their own uid, so no capability is needed
+    CapabilityBoundingSet = "";
+    SystemCallArchitectures = "native";
   };
 
   # the arrs don't retry a failed initial db connection: on a db that isn't up yet they log
@@ -181,8 +211,16 @@ in {
 
     accessibleFrom = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = config.lab.net.privateRanges;
-      description = "subnets allowed to reach the namespace via portMappings; covers return-route for any LAN client";
+      default = map (ip: "${ip}/32") topo.edgeHostIps;
+      description = ''
+        sources allowed to reach the namespace via portMappings. the site's edge hosts
+        only: caddy is the intended way in, and it already gates every arr vhost on
+        lan_only plus (where the site has authentik) forward_auth. opening these to all
+        of privateRanges, as this used to, let any LAN client hit the arr ports directly
+        and skip both gates. the on-host helpers (recyclarr, cleanup-profiles,
+        jellyfin-notify) are unaffected: they reach the arrs at the netns address, not
+        through these host-side mappings.
+      '';
     };
 
     postgresHost = lib.mkOption {
@@ -253,22 +291,23 @@ in {
 
           # the arr web UIs, folded into the edge Caddyfile. lan_only always; forward_auth too
           # when the site has an authentik outpost (mesa), so a site without one (fairlane) is
-          # lan-only by construction. openFirewall false: the netns arrs are DNAT'd (forward
-          # path, not the input chain) and sabnzbd opens its own port.
+          # lan-only by construction. the netns arrs take openFirewall false because they are
+          # DNAT'd (forward path, not the input chain) and scoped by accessibleFrom instead;
+          # sabnzbd is outside the netns, so its route carries the source-scoped input rule.
           routes = let
             mw = ["lan_only"] ++ lib.optional (topo.authServerIp != null) "forward_auth";
-            arrRoute = sub: port: {
+            arrRoute = openFirewall: sub: port: {
               host = "${sub}.${config.lab.site.domain}";
-              inherit port;
+              inherit port openFirewall;
               middlewares = mw;
-              openFirewall = false;
             };
+            netnsRoute = arrRoute false;
           in [
-            (arrRoute "qb" cfg.lanProxyPorts.qbittorrent)
-            (arrRoute "sonarr" cfg.lanProxyPorts.sonarr)
-            (arrRoute "radarr" cfg.lanProxyPorts.radarr)
-            (arrRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
-            (arrRoute "sabnzbd" config.services.sabnzbd.settings.misc.port)
+            (netnsRoute "qb" cfg.lanProxyPorts.qbittorrent)
+            (netnsRoute "sonarr" cfg.lanProxyPorts.sonarr)
+            (netnsRoute "radarr" cfg.lanProxyPorts.radarr)
+            (netnsRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
+            (arrRoute true "sabnzbd" config.services.sabnzbd.settings.misc.port)
           ];
         };
 
@@ -370,8 +409,10 @@ in {
         // lib.mapAttrs' (name: svc:
           lib.nameValuePair "${name}.env" {
             content = mkEnvFileContent name svc;
-            group = mediaGroup;
-            mode = "0440";
+            # sops-nix's default (root 0400) is what we want: systemd reads
+            # EnvironmentFile as root before dropping privileges, so widening these to
+            # the media group only handed the arr postgres password to every other
+            # media member (jellyfin, sabnzbd, alloy, the admin user).
           })
         arrServices;
     }
@@ -441,8 +482,9 @@ in {
           if svc.hasNixosModule
           then arrDeps svc
           else
-            arrDeps svc
-            // {
+            # recursiveUpdate, not //: a shallow merge would replace arrDeps' serviceConfig
+            # wholesale and silently drop both the UMask and the hardening set
+            lib.recursiveUpdate (arrDeps svc) {
               description = lib.toSentenceCase name;
               wantedBy = ["multi-user.target"];
               serviceConfig = {
