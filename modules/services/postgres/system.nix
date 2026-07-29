@@ -35,9 +35,14 @@
       RemainAfterExit = true;
       LoadCredential = "pgpass:${config.sops.secrets.${role.passwordSecret}.path}";
     };
-    # heredoc lets "${db-with-hyphen}" reach psql intact; EOF unquoted so $CREDENTIALS_DIRECTORY expands
+    # the password goes in via the environment and \getenv, not psql -v: a -v value is
+    # assembled by the shell before exec and so ends up in psql's argv, which any local
+    # user can read out of /proc/<pid>/cmdline.
+    # heredoc quoted so the SQL reaches psql literally (db names may contain hyphens);
+    # $CREDENTIALS_DIRECTORY is expanded by the shell on the assignment line instead.
     script = ''
-      ${cfg.package}/bin/psql -v "pass=$(cat $CREDENTIALS_DIRECTORY/pgpass)" <<EOF
+      PGROLEPASS="$(cat "$CREDENTIALS_DIRECTORY/pgpass")" ${cfg.package}/bin/psql <<'EOF'
+      \getenv pass PGROLEPASS
       ${roleSql {
         inherit name role;
         passwordVar = "pass";

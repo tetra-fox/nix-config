@@ -4,7 +4,10 @@
 # guarded with SELECT ... \gexec and everything else is ALTER.
 # pg 15+: the public schema owner must be the role or it can't CREATE TABLE, hence the
 # ALTER SCHEMA per owned db.
-# passwordVar is the psql -v variable holding the password, so it never hits argv.
+# passwordVar is the psql variable holding the password. callers must populate it with
+# \getenv from an environment variable, not psql -v: a -v value is built by the shell
+# before exec, so it lands in psql's argv and /proc/<pid>/cmdline is world-readable.
+# the environment is only readable by the process owner and root.
 {lib}: {
   name,
   role,
