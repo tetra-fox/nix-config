@@ -68,5 +68,11 @@
     ReadWritePaths = ["${config.lab.site.dataDir}/asf"];
   };
 
-  networking.firewall.allowedTCPPorts = [1242]; # asf web ui (KnownNetworks gates auth)
+  # asf web ui. KnownNetworks above is what makes it auth-free, and it is scoped to the
+  # trusted VLAN, so scope the port to the same range instead of opening it on every
+  # interface: without this the only thing standing between any routable source and the
+  # IPC api is asf's own check, and no IPCPassword is set behind it.
+  networking.firewall.extraInputRules = ''
+    ip saddr ${config.lab.net.trustedCidr} tcp dport 1242 accept
+  '';
 }
