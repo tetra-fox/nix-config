@@ -70,6 +70,13 @@
       recursion yes;
       dnssec-validation auto;
 
+      # bind defaults allow-transfer to any, and the internal view's match-clients is all
+      # of RFC1918, so without this any private-range client could AXFR the whole zone and
+      # get the fleet inventory (one A record per host, per lib/topology.nix). both dns
+      # hosts are masters of the same nix-generated zone file and neither replicates from
+      # the other, so nothing legitimately transfers.
+      allow-transfer { none; };
+
       # rescan interfaces so a freshly-floated keepalived VIP gets a listening socket without a restart.
       interface-interval 60;
     };
