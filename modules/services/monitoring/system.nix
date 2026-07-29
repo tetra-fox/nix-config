@@ -342,14 +342,25 @@ in {
         }
       ];
 
-      sops.secrets."monitoring/grafana_secret_key" = {
-        owner = "grafana";
-        group = "grafana";
-      };
+      sops.secrets = let
+        ownedByGrafana = {
+          owner = "grafana";
+          group = "grafana";
+        };
+      in {
+        "monitoring/grafana_secret_key" = ownedByGrafana;
 
-      # env file with TELEGRAM_BOT_TOKEN= and TELEGRAM_CHAT_ID=, read by systemd as
-      # root; grafana's provisioning interpolates the vars into the contact point
-      sops.secrets."monitoring/telegram_env" = lib.mkIf cfg.telegram.enable {};
+        # nixpkgs defaults security.admin_password to "admin" and grafana reapplies the
+        # configured value on every start, so leaving it unset parks the local admin
+        # account on admin/admin. fairlane needs this in particular: it keeps grafana's
+        # native login form (no OAuth there), so that form is the way in and it has to
+        # ask for something real.
+        "monitoring/grafana_admin_password" = ownedByGrafana;
+
+        # env file with TELEGRAM_BOT_TOKEN= and TELEGRAM_CHAT_ID=, read by systemd as
+        # root; grafana's provisioning interpolates the vars into the contact point
+        "monitoring/telegram_env" = lib.mkIf cfg.telegram.enable {};
+      };
       systemd.services.grafana.serviceConfig.EnvironmentFile =
         lib.mkIf cfg.telegram.enable config.sops.secrets."monitoring/telegram_env".path;
 
@@ -385,7 +396,15 @@ in {
               root_url = "https://${statsFqdn}/";
             };
             analytics = analyticsOff;
-            security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
+            security = {
+              secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
+              admin_password = "$__file{${config.sops.secrets."monitoring/grafana_admin_password".path}}";
+            };
+
+            # disable_login_form only hides the browser form, it does not stop basic auth
+            # on /api/*, which is a separate switch that defaults on. without this the
+            # local admin account stays reachable over the api on any published vhost.
+            "auth.basic".enabled = false;
           };
 
           declarativePlugins = dashboardPlugins;
