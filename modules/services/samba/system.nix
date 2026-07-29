@@ -22,6 +22,10 @@
         "map to guest" = "Bad User";
 
         "server min protocol" = "SMB3_11";
+        # every client that gets this far already negotiated SMB 3.1.1, which mandates
+        # encryption support, so requiring it locks nobody out. without it the transport
+        # is signed but not encrypted, and time machine images cross the VLAN in clear.
+        "server smb encrypt" = "required";
         "server role" = "standalone server";
 
         "vfs objects" = "catia fruit streams_xattr";
