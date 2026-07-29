@@ -61,3 +61,26 @@ update-topology:
     install -m 644 "$out"/main.svg images/topology/main.svg && \
     install -m 644 "$out"/network.svg images/topology/network.svg && \
     echo "wrote images/topology/main.svg and images/topology/network.svg"
+
+# lab.caddy.package pins a fixed-output hash over the xcaddy+plugins vendor dir (see
+# modules/services/caddy/system.nix), which drifts whenever caddy or a plugin version bumps.
+# this forces a placeholder hash, rebuilds, and reads the real one back out of the mismatch
+# error instead of copy-pasting it out of a failed `just rebuild` by hand.
+update-caddy-hash:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    file=modules/services/caddy/system.nix
+    old=$(sed -n 's/.*hash = "\(sha256-[^"]*\)".*/\1/p' "$file")
+    fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    trap 'sed -i "s#$fake#$old#" "$file"' EXIT
+    sed -i "s#$old#$fake#" "$file"
+    out=$(nix build .#nixosConfigurations.mesa-edge-01.config.lab.caddy.package --no-link 2>&1) || true
+    new=$(grep -oP 'got:\s+\Ksha256-\S+' <<<"$out" | head -1)
+    if [ -z "$new" ]; then
+      echo "$out" >&2
+      echo "update-caddy-hash: build didn't fail with the expected hash mismatch, nothing to update" >&2
+      exit 1
+    fi
+    trap - EXIT
+    sed -i "s#$fake#$new#" "$file"
+    echo "update-caddy-hash: $old -> $new"

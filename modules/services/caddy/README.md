@@ -34,6 +34,6 @@ the exclude list is our real services (home assistant frontend, jellyfin's `/Ite
 
 ## gotchas
 
-- the cloudflare plugin is baked into the package (`pkgs.caddy.withPlugins`), not loaded at runtime. the `hash` pin needs bumping together with the version
+- the cloudflare plugin is baked into the package (`pkgs.caddy.withPlugins`), not loaded at runtime. the `hash` pin needs bumping together with the version. run `just update-caddy-hash` instead of copying it out of a failed rebuild by hand
 - both filters match apache-style common_log (caddy's `transform-encoder` plugin, baked into the package). `caddy-status` deliberately skips 404 and other 4xx so a reverse-proxied SPA's missing source maps and favicons don't false-positive; `caddy-probe` bans on the path regardless of status. `caddy-probe` anchors its match to the request path (stops at `?`), so a probe path reflected into a legit `/login?redirectTo=...` query does not trip it
 - the Caddyfile is expected to log access to `/var/log/caddy/access.log` (use the `(log)` snippet)
