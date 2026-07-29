@@ -16,9 +16,16 @@
   	reverse_proxy ${lab.appliances.haosIp}:8123
   }
 
+  # authentik as well as lan_only: this is the hypervisor UI, so "any RFC1918 source" is
+  # too broad a gate on its own. proxmox's own login is behind it, but a compromised host
+  # anywhere on the LAN should not even reach that form.
+  # tls_insecure_skip_verify stays for now: proxmox serves its own self-signed cert, and
+  # trusting it properly means pinning its CA here. the hop is edge -> proxmox on the
+  # server VLAN.
   pve.${lab.site.domain} {
   	route {
   		import lan_only
+  		import authentik
   		reverse_proxy https://${lab.appliances.proxmoxIp}:8006 {
   			transport http {
   				tls_insecure_skip_verify
