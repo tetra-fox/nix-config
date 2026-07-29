@@ -21,16 +21,17 @@ in {
       listenAddress = config.lab.monitoring.bindAddr;
     };
 
-    lab.monitoring.exporters = lib.mkIf cfg.cadvisor.enable [
-      {
-        name = "cadvisor";
-        port = cfg.cadvisor.port;
-      }
-    ];
-
-    services.grafana-dashboards.community = lib.mkIf (cfg.cadvisor.enable && config.lab.monitoring.server.enable) [
-      pkgs.grafana-dashboards.cadvisor
-    ];
+    lab.monitoring = lib.mkIf cfg.cadvisor.enable {
+      exporters = [
+        {
+          name = "cadvisor";
+          port = cfg.cadvisor.port;
+        }
+      ];
+      # registered with the exporter like every other producer, so the dashboard follows
+      # cadvisor to whichever grafana covers this host (the site fold or local mode)
+      dashboards = [pkgs.grafana-dashboards.cadvisor];
+    };
 
     virtualisation = {
       podman = {
