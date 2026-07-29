@@ -9,8 +9,12 @@
 #   sops updatekeys secrets/<path>.yaml
 
 keys:
-  # users
+  # users. one key per operator machine rather than one key copied around, so a
+  # lost machine is revoked by dropping its anchor and re-running `sops updatekeys`
+  # instead of rotating every secret. both decrypt every file: an operator key is
+  # fleet-wide by design, unlike the per-host keys below.
   - &user_tetra age1en4ycn72qkfzqge4exkxe6jjzuxtp5090zr6z3wqhgf0qsha8e4s8dhgs8
+  - &user_myputer age1l6yt4ftjlgcvyfyppkcm9htv7l2rd4x783drauedqm6jkqqrhsfq0l2wxn
 
   # hosts
   - &host_mesa_svc_01 age1jwvvwvzlvqrxhyy5y84ltn7w6gtq52ss5ek93whlvx3hxezkjejqaxylpj
@@ -39,74 +43,89 @@ creation_rules:
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_svc_01
   - path_regex: secrets/mesa-svc-02\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_svc_02
   - path_regex: secrets/fairlane-svc-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_fairlane_svc_01
   - path_regex: secrets/fairlane-db-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_fairlane_db_01
   - path_regex: secrets/fairlane-mon-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_fairlane_mon_01
   - path_regex: secrets/fairlane-edge-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_fairlane_edge_01
   - path_regex: secrets/fairlane-edge-02\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_fairlane_edge_02
   - path_regex: secrets/mesa-mon-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_mon_01
   - path_regex: secrets/mesa-db-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_db_01
   - path_regex: secrets/mesa-db-02\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_db_02
   - path_regex: secrets/mesa-db-03\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_db_03
   - path_regex: secrets/mesa-auth-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_auth_01
   - path_regex: secrets/mesa-edge-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_edge_01
   - path_regex: secrets/mesa-edge-02\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_edge_02
   - path_regex: secrets/mesa-store-01\.yaml$
     key_groups:
       - age:
           - *user_tetra
+          - *user_myputer
           - *host_mesa_store_01
