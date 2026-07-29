@@ -1618,16 +1618,15 @@
     },
     "vpn-confinement": {
       "locked": {
-        "lastModified": 1784972286,
-        "narHash": "sha256-mRcV0HUsFNXHxBoYt8j5okgeGOnbAADsEOOJB8fjN1o=",
-        "owner": "tetra-fox",
+        "lastModified": 1785142579,
+        "narHash": "sha256-WEPxDMiKt3uGVVu/aorHnIgYYW62mEq2Q+rlN3qH6bg=",
+        "owner": "Maroka-chan",
         "repo": "VPN-Confinement",
-        "rev": "d4926cd6b38f39524da601a465c2a8387edf755c",
+        "rev": "b3aa71a7edfe6af748c23729d1bdec3b499741ff",
         "type": "github"
       },
       "original": {
-        "owner": "tetra-fox",
-        "ref": "allowed-egress",
+        "owner": "Maroka-chan",
         "repo": "VPN-Confinement",
         "type": "github"
       }

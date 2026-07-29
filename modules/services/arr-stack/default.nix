@@ -332,9 +332,6 @@ in {
         enable = true;
         wireguardConfigFile = config.sops.templates."wg.conf".path;
         inherit (cfg) accessibleFrom;
-        # the non-tunnel flows the arrs initiate: the remote db (netnsSnatHosts) and
-        # host-side sabnzbd at the bridge address. allowedEgress is our upstream PR
-        # (Maroka-chan/VPN-Confinement#48), consumed from the fork branch until it merges
         allowedEgress = cfg.netnsSnatHosts ++ [vpn.bridgeAddress];
         portMappings = lib.optionals cfg.lanProxy (
           lib.mapAttrsToList (_: port: {

@@ -96,9 +96,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # our fork's branch until the allowedEgress PR lands upstream
-    # (Maroka-chan/VPN-Confinement#48), then point back
-    vpn-confinement.url = "github:tetra-fox/VPN-Confinement/allowed-egress";
+    vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
 
     nix-topology = {
       url = "github:oddlama/nix-topology";
