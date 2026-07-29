@@ -12,4 +12,5 @@
 in {
   edge-vip-failover = pkgs.testers.runNixOSTest (import ./edge-vip.nix deps);
   db-failover = pkgs.testers.runNixOSTest (import ./db-failover.nix deps);
+  caddy-middleware = pkgs.testers.runNixOSTest (import ./caddy-middleware.nix deps);
 }
