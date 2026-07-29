@@ -814,6 +814,27 @@
         "type": "github"
       }
     },
+    "nix-vscode-extensions-darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-darwin"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784708718,
+        "narHash": "sha256-+tUJuSur9ZL1tKWhXSgjR1kILUAcTV3dPZawCBsR4js=",
+        "owner": "nix-community",
+        "repo": "nix-vscode-extensions",
+        "rev": "1c7bb95446387973178363916a51b14515fa5ee4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nix-vscode-extensions",
+        "rev": "1c7bb95446387973178363916a51b14515fa5ee4",
+        "type": "github"
+      }
+    },
     "nix-yazi-plugins": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -1204,6 +1225,7 @@
         "nix-secrets": "nix-secrets",
         "nix-topology": "nix-topology",
         "nix-vscode-extensions": "nix-vscode-extensions",
+        "nix-vscode-extensions-darwin": "nix-vscode-extensions-darwin",
         "nix-yazi-plugins": "nix-yazi-plugins",
         "nixcord": "nixcord",
         "nixpkgs": "nixpkgs_3",

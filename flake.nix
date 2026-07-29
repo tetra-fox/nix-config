@@ -32,6 +32,16 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # separate pin for x86_64-darwin, same reason as nixpkgs-darwin above. upstream
+    # dropped the platform from nix/systemPlatform.nix in 435c758 (2026-07-22), and the
+    # overlay resolves `systemPlatform.${system}` unguarded, so on this platform it is a
+    # missing-attribute error rather than an empty extension set. 1c7bb95 is the commit
+    # right before that, the last one that still carries x86_64-darwin. it pins the
+    # extension data at that date too, which is the cost of keeping the platform working.
+    nix-vscode-extensions-darwin = {
+      url = "github:nix-community/nix-vscode-extensions?rev=1c7bb95446387973178363916a51b14515fa5ee4";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
 
     betterfox-nix = {
       url = "github:HeitorAugustoLN/betterfox-nix";
@@ -280,16 +290,23 @@
             # via _module.args (NixOS-only), not commonSpecialArgs, so `self` doesn't leak
             # into the home-manager eval.
             {_module.args.nixosConfigurations = inputs.self.nixosConfigurations;}
-            {
+            ({config, ...}: {
               nixpkgs.overlays =
                 [
-                  inputs.nix-vscode-extensions.overlays.default
+                  # x86_64-darwin takes the pinned revision; every other system tracks
+                  # upstream. reads hostPlatform rather than pkgs, which would need the
+                  # overlays this is defining
+                  (
+                    if config.nixpkgs.hostPlatform.system == "x86_64-darwin"
+                    then inputs.nix-vscode-extensions-darwin.overlays.default
+                    else inputs.nix-vscode-extensions.overlays.default
+                  )
                   inputs.quickshell.overlays.default
                   inputs.nix-yazi-plugins.overlays.default
                   inputs.tetra-nurpkgs.overlays.default
                 ]
                 ++ localOverlays;
-            }
+            })
             {
               home-manager = {
                 extraSpecialArgs = commonSpecialArgs // {inherit inputs;};
