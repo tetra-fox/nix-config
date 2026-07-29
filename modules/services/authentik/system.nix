@@ -22,7 +22,13 @@
       AUTHENTIK_POSTGRESQL__HOST = "postgres-host";
       AUTHENTIK_POSTGRESQL__NAME = "authentik";
       AUTHENTIK_POSTGRESQL__USER = "authentik";
-      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,10.88.0.0/16";
+      # the edge hosts have to be in here or authentik distrusts their X-Forwarded-For and
+      # attributes every login, audit event and brute-force decision to the proxy address
+      # instead of the real client, which makes per-ip lockout either never fire or lock
+      # out the whole site at once. 10.88.0.0/16 is podman's own bridge range.
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS =
+        lib.concatStringsSep ","
+        (["127.0.0.1/32" "::1/128" "10.88.0.0/16"] ++ map (ip: "${ip}/32") topo.edgeHostIps);
       AUTHENTIK_WEB__WORKERS = "4";
     };
     environmentFiles = [config.sops.templates."authentik.env".path];
