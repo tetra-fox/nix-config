@@ -317,5 +317,16 @@ in {
     # and sets no UMask, so it lands 0644 with both arr api keys in plaintext. the file
     # persists between timer runs, so this is not a narrow window.
     serviceConfig.UMask = "0077";
+
+    # UMask only governs files created from here on, and `>` truncates an existing file
+    # without touching its mode, so a config.yml already created 0644 would keep that
+    # mode forever. chmod it before upstream's preStart renders into it. mkBefore because
+    # that render is itself a preStart fragment. the path is not exposed as an option;
+    # upstream hardcodes it from StateDirectory.
+    preStart = lib.mkBefore ''
+      if [ -e /var/lib/recyclarr/config.yml ]; then
+        chmod 0600 /var/lib/recyclarr/config.yml
+      fi
+    '';
   };
 }
