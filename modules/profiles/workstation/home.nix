@@ -25,8 +25,8 @@ in {
     modules.cli.kitty.home
     modules.desktop.obs-studio.home
     modules.desktop.udiskie.home
-    modules.desktop.walker.home
     modules.desktop.discord.home
+    modules.desktop.vicinae.home
   ];
 
   my = {
