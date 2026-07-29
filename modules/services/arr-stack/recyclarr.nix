@@ -313,5 +313,9 @@ in {
   systemd.services.recyclarr = {
     after = ["wg.service" "sonarr.service" "radarr.service"];
     wants = ["sonarr.service" "radarr.service"];
+    # the upstream module builds /var/lib/recyclarr/config.yml with a bare `>` redirect
+    # and sets no UMask, so it lands 0644 with both arr api keys in plaintext. the file
+    # persists between timer runs, so this is not a narrow window.
+    serviceConfig.UMask = "0077";
   };
 }
