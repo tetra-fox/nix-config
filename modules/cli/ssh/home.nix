@@ -46,7 +46,13 @@ in {
         fleetBlocks
         // {
           "*" = {
-            forwardAgent = true;
+            # off: with one operator key authorizing every fleet host and passwordless
+            # sudo on all of them, a forwarded socket lets root on any host you connect
+            # to authenticate as you everywhere else, and to github for nix-secrets.
+            # nothing here needs it: deploys authenticate from this machine, and flake
+            # inputs are evaluated locally, so no fleet host reaches onward over ssh.
+            # set forwardAgent per-host if some future target genuinely needs it.
+            forwardAgent = false;
             addKeysToAgent = "no";
             compression = false;
             serverAliveInterval = 0;
