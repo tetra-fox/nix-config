@@ -4,10 +4,12 @@
   modules,
   pkgs,
   nixosConfigurations,
+  fleet,
   topo,
   caps,
   ...
 }: let
+  allowFrom = import fleet.nft {inherit lib;};
   siteData = config.lab.site.dataDir;
   cfg = config.lab.postgres;
   inherit (cfg) ha;
@@ -51,15 +53,27 @@
   roleReconcileSql =
     lib.concatStringsSep "\n"
     (lib.mapAttrsToList (name: role:
-      roleSql {
+      ''
+        \getenv ${pwVar name} ${pwEnv name}
+      ''
+      + roleSql {
         inherit name role;
-        passwordVar = "pw_${name}";
+        passwordVar = pwVar name;
       })
     cfg.roles);
 
-  # psql -v so the password reaches ALTER ROLE as :'pw_<name>' and never hits argv.
-  roleCredArgs =
-    lib.concatStringsSep " " (lib.mapAttrsToList (name: _: "-v \"pw_${name}=$(cat $CREDENTIALS_DIRECTORY/${name})\"")
+  # neither a psql variable nor an env var can hold a hyphen, so derive both names from a
+  # sanitised role name rather than the raw attr key
+  varName = lib.replaceStrings ["-"] ["_"];
+  pwVar = name: "pw_${varName name}";
+  pwEnv = name: "PGPASS_${lib.toUpper (varName name)}";
+
+  # the passwords reach psql through the environment, read back by the \getenv lines above.
+  # not psql -v: a -v value is assembled by the shell before exec, so every role password
+  # would sit in one argv, and /proc/<pid>/cmdline is world-readable. the environment is
+  # readable only by the process owner and root.
+  roleCredEnv =
+    lib.concatStringsSep " " (lib.mapAttrsToList (name: _: ''${pwEnv name}="$(cat "$CREDENTIALS_DIRECTORY/${name}")"'')
       cfg.roles);
 
   roleLoadCreds =
@@ -258,7 +272,7 @@ in {
               # recovery, so they fall through to the exit-0, exactly as the old check did.
               for i in $(seq 1 30); do
                 if [ "$(${postgresPkg}/bin/psql -tAqc 'SELECT NOT pg_is_in_recovery()' -h /run/postgresql -U postgres -d postgres 2>/dev/null)" = t ]; then
-                  ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres ${roleCredArgs} <<'EOF'
+                  ${roleCredEnv} ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres <<'EOF'
               ${roleReconcileSql}
               EOF
                   exit 0
@@ -364,12 +378,17 @@ in {
       cfg.roles)
     ];
 
-    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [
-      2379
-      2380
-      5432
-      patroniRestPort
-    ];
+    # etcd (2379/2380) and the patroni REST api (8008) have no authentication and no TLS,
+    # so the only thing bounding them is who can open the socket. an interface-scoped open
+    # puts that boundary at "anything on the internal VLAN", which is every mesa host, not
+    # the three db nodes the comment above assumes. source-scope them to the cluster
+    # members so the rule matches the assumption the rest of this module is built on.
+    networking.firewall.extraInputRules = allowFrom haNodeIps [2379 2380 patroniRestPort];
+
+    # 5432 stays interface-scoped: db clients (the arrs, authentik) reach the VIP from
+    # across the internal VLAN, and unlike etcd and patroni it sits behind scram auth and
+    # pg_hba, so reachability is not the only control.
+    networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [5432];
     # the VRRP accept rule on the internal interface comes from modules.services.vrrp.system.
   };
 }
