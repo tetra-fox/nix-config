@@ -1,4 +1,5 @@
 {
+  lib,
   modules,
   pkgs,
   username,
@@ -7,6 +8,10 @@
   imports = [
     modules.profiles.base.system
     modules.cli.rebuild.system
+
+    # the monitoring agent (node + systemd exporters) plus local mode below: a
+    # loopback grafana as the machine's resource monitor
+    modules.services.monitoring.system
 
     modules.toolsets.disk.system
     modules.toolsets.hardware.system
@@ -23,6 +28,9 @@
     modules.desktop.udiskie.system
     modules.cli.yazi.system
   ];
+
+  # the resource monitor at http://localhost:3000
+  lab.monitoring.local.enable = lib.mkDefault true;
 
   users.users.${username} = {
     isNormalUser = true;

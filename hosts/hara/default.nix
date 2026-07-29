@@ -20,14 +20,19 @@
     modules.services.ollama.system
   ];
 
-  # nvidia doesn't hand the DDC/CI bus to ddcci_backlight, so force the attach
-  lab.ddcci.forceProbe = true;
+  lab = {
+    # nvidia doesn't hand the DDC/CI bus to ddcci_backlight, so force the attach
+    ddcci.forceProbe = true;
+
+    # gpu metrics + dashboard for the local resource monitor
+    nvidia.exporter.enable = true;
+
+    # this room's valve basestations, powered with monado by the steam module
+    steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
+  };
 
   # cuda build for the rtx 3090; the ollama module leaves package at the cpu default
   services.ollama.package = pkgs.ollama-cuda;
-
-  # this room's valve basestations, powered with monado by the steam module
-  lab.steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
 
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;

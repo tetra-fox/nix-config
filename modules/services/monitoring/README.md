@@ -1,12 +1,18 @@
 # monitoring
 
-two roles:
+three roles:
 
 - **agent** (always on, every host that imports this module): node-exporter +
   systemd-exporter. produces metrics about the host. unconditional -- self-observability
   is an invariant, not a toggle.
 - **server** (`lab.monitoring.server.enable = true`): prometheus + grafana on top. one
   per site (the `<site>-mon-01` box). auto-discovers and scrapes every agent in its site.
+- **local** (`lab.monitoring.local.enable = true`, the workstation profile's default):
+  prometheus + grafana on loopback only, scraping just this host's own registered
+  exporters. a resource monitor for interactive machines: anonymous admin, no login
+  form, opens on the node-exporter-full dashboard at `http://localhost:3000`. no route,
+  no firewall holes, no sops secret, no alerting. mutually exclusive with `server.enable`.
+  scrapes every 5s (not the fleet's 15s) so it behaves like a task manager.
 
 a "site" is the hostname prefix: `mesa-svc-01`, `mesa-svc-02`, `mesa-mon-01` all share
 site `mesa`. the server derives its scrape list by folding over the flake's
@@ -110,6 +116,8 @@ oauth/SSO config, the matching sops secret for the oauth client.
 - `lab.monitoring.server.enable` - make this host the site's monitoring server
   (prometheus + grafana + loki via the logging module). default false. the agent
   exporters run regardless.
+- `lab.monitoring.local.enable` - loopback-only prometheus + grafana, the desktop
+  resource monitor described above. default false (true via the workstation profile).
 - `lab.monitoring.exporters` - registry of `{name, port}` an exporter module registers
   into so the server discovers it (declared in `registry.nix`). node/systemd/nvidia/
   cadvisor populate it; you rarely set it directly.

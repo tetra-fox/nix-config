@@ -72,6 +72,19 @@
   # exactly the ports something here listens on
   myExporterPorts = map (e: e.port) cfg.exporters;
 
+  # local mode scrapes this host's own registrations only, no cross-host fold
+  localScrapes =
+    map (e: {
+      job_name = e.name;
+      static_configs = [
+        {
+          targets = ["${bindAddr}:${toString e.port}"];
+          labels.instance = hn;
+        }
+      ];
+    })
+    cfg.exporters;
+
   siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
 
   grafanaPort = 3000;
@@ -103,6 +116,45 @@
   alertUid = name: builtins.substring 0 14 (builtins.hashString "sha256" name);
 
   promDsUid = "prometheus";
+
+  # everything below is shared by both grafana modes (site server and local resource
+  # monitor) so the datasource uid, plugin set and telemetry opt-out are stated once
+  analyticsOff = {
+    reporting_enabled = false;
+    check_for_updates = false;
+  };
+
+  dashboardPlugins = with pkgs.grafanaPlugins; [
+    grafana-clock-panel
+    grafana-piechart-panel
+  ];
+
+  datasourceSettings = {
+    prune = true;
+    # grafana can't change a provisioned datasource's uid in place, it errors
+    # "data source not found" and refuses to start. delete-by-name runs before
+    # create each start so the record is recreated with the pinned uid below;
+    # only its numeric id churns, which nothing keys on.
+    # TODO: drop once every site's grafana has started on this generation
+    deleteDatasources = [
+      {
+        orgId = 1;
+        name = "prometheus";
+      }
+    ];
+    datasources = [
+      {
+        name = "prometheus";
+        type = "prometheus";
+        access = "proxy";
+        url = "http://localhost:${toString config.services.prometheus.port}";
+        isDefault = true;
+        # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
+        # string as a uid, and the alert rules reference it (promDsUid)
+        uid = promDsUid;
+      }
+    ];
+  };
 
   # the grafana rule shape: A instant promql, B reduce(last), C threshold. the reduce
   # step exists so summaries can template the measured value as {{ $values.B }}
@@ -332,48 +384,17 @@ in {
               # route uses. trailing slash is what grafana expects.
               root_url = "https://${statsFqdn}/";
             };
-            analytics = {
-              reporting_enabled = false;
-              check_for_updates = false;
-            };
+            analytics = analyticsOff;
             security.secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
           };
 
-          declarativePlugins = with pkgs.grafanaPlugins; [
-            grafana-clock-panel
-            grafana-piechart-panel
-          ];
+          declarativePlugins = dashboardPlugins;
 
           # provider wiring: tetra-nurpkgs/modules/grafana-dashboards.nix reads
           # services.grafana-dashboards.{community,extras}
           provision = {
             enable = true;
-            datasources.settings = {
-              prune = true;
-              # grafana can't change a provisioned datasource's uid in place, it errors
-              # "data source not found" and refuses to start. delete-by-name runs before
-              # create each start so the record is recreated with the pinned uid below;
-              # only its numeric id churns, which nothing keys on.
-              # TODO: drop once every site's grafana has started on this generation
-              deleteDatasources = [
-                {
-                  orgId = 1;
-                  name = "prometheus";
-                }
-              ];
-              datasources = [
-                {
-                  name = "prometheus";
-                  type = "prometheus";
-                  access = "proxy";
-                  url = "http://localhost:${toString config.services.prometheus.port}";
-                  isDefault = true;
-                  # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
-                  # string as a uid, and the alert rules reference it (promDsUid)
-                  uid = promDsUid;
-                }
-              ];
-            };
+            datasources.settings = datasourceSettings;
 
             alerting = {
               rules.settings = {
@@ -466,6 +487,68 @@ in {
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
         allowFrom siteAgentIps [lokiPort]
       );
+    })
+
+    # ---- local: loopback prometheus + grafana, a resource monitor for interactive hosts ----
+    # no route, no firewall holes, no site fold: the agent's exporters feed a same-box
+    # prometheus and grafana serves it on localhost only
+    (lib.mkIf cfg.local.enable {
+      assertions = [
+        {
+          assertion = !cfg.server.enable;
+          message = "lab.monitoring: local.enable and server.enable both configure this host's prometheus + grafana; pick one";
+        }
+      ];
+
+      services = {
+        # only this host's registered dashboards, matching what its exporters produce
+        grafana-dashboards.community = cfg.dashboards;
+
+        prometheus = {
+          enable = true;
+          # nothing remote reads it, only the same-box grafana
+          listenAddress = "127.0.0.1";
+          # 5s, not the fleet's 15s: this instance is a task manager, and a spike
+          # shorter than the scrape interval never shows up
+          globalConfig.scrape_interval = "5s";
+          scrapeConfigs = localScrapes ++ cfg.extraScrapeConfigs;
+        };
+
+        grafana = {
+          enable = true;
+
+          settings = {
+            server = {
+              http_addr = "127.0.0.1";
+              http_port = grafanaPort;
+            };
+            analytics = analyticsOff;
+            # loopback on a single-user machine: the browser lands straight on the
+            # dashboards with full edit rights, no login
+            "auth.anonymous" = {
+              enabled = true;
+              org_role = "Admin";
+            };
+            auth = {
+              disable_login_form = true;
+              disable_signout_menu = true;
+            };
+            # the key encrypts datasource credentials at rest and this instance stores
+            # none (anonymous auth, credential-less prometheus datasource), so the
+            # static value nixpkgs suggests for exactly this case is fine
+            security.secret_key = "local-resource-monitor";
+            # open on the machine overview
+            dashboards.default_home_dashboard_path = "${pkgs.grafana-dashboards.node-exporter-full}";
+          };
+
+          declarativePlugins = dashboardPlugins;
+
+          provision = {
+            enable = true;
+            datasources.settings = datasourceSettings;
+          };
+        };
+      };
     })
   ];
 }

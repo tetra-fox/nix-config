@@ -14,6 +14,10 @@ in {
       lib.mkEnableOption "the monitoring server (prometheus + grafana). one per site"
       // {default = false;};
 
+    local.enable =
+      lib.mkEnableOption "a loopback-only prometheus + grafana on this host, a resource monitor for interactive machines. scrapes only this host's own registered exporters"
+      // {default = false;};
+
     bindAddr = lib.mkOption {
       type = lib.types.str;
       readOnly = true;

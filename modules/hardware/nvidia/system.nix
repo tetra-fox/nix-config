@@ -40,6 +40,8 @@ in {
         enable = true;
         port = cfg.exporter.port;
         listenAddress = config.lab.monitoring.bindAddr;
+        # per-process gpu metrics, the dashboard's process panels key on them
+        extraFlags = ["--collect.compute-apps"];
       };
     };
 
