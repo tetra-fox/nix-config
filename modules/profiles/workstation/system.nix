@@ -20,6 +20,8 @@
 
     modules.desktop.avahi.system
     modules.hardware.bluetooth.system
+    # smart metrics for the machine's physical drives, shown by the resource monitor
+    modules.hardware.smartctl.system
     modules.services.podman.system
     modules.desktop.obs-studio.system
     modules.desktop.onepassword.system
