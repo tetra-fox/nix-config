@@ -5,7 +5,7 @@
     ];
     userSettings = {
       "[json]" = {
-        "editor.defaultFormatter" = "esbenp.prettier-vscode";
+        "editor.defaultFormatter" = "oxc.oxc-vscode";
       };
     };
   };

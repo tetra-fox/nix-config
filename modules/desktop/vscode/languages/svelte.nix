@@ -5,7 +5,7 @@
     ];
     userSettings = {
       "[svelte]" = {
-        "editor.defaultFormatter" = "svelte.svelte-vscode";
+        "editor.defaultFormatter" = "oxc.oxc-vscode";
       };
       "svelte.enable-ts-plugin" = true;
     };

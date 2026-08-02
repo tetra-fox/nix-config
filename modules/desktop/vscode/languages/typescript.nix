@@ -8,10 +8,10 @@
     userSettings = {
       "deno.path" = "${pkgs.deno}/bin/deno";
       "[javascript]" = {
-        "editor.defaultFormatter" = "esbenp.prettier-vscode";
+        "editor.defaultFormatter" = "oxc.oxc-vscode";
       };
       "[typescript]" = {
-        "editor.defaultFormatter" = "esbenp.prettier-vscode";
+        "editor.defaultFormatter" = "oxc.oxc-vscode";
       };
     };
   };
