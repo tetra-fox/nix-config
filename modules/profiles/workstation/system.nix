@@ -43,6 +43,14 @@
   time.timeZone = "America/Los_Angeles";
 
   networking.networkmanager.enable = true;
+  # nixpkgs ships NetworkManager with connectivity checking compiled off, so it
+  # can never report "full" and desktop applets nag with a false-positive
+  # "Limited Connectivity" notification even when the network is fine
+  networking.networkmanager.settings.connectivity = {
+    uri = "http://fedoraproject.org/static/hotspot.txt";
+    response = "OK";
+    interval = 300;
+  };
 
   services = {
     printing.enable = true;
