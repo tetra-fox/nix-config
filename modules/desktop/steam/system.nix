@@ -53,6 +53,10 @@
       IPC_EXIT_WHEN_IDLE = "1";
       IPC_EXIT_WHEN_IDLE_DELAY_MS = "30000";
 
+      # default 3000ms isn't enough time for all 3 trackers plus both controllers
+      # to pair in; ones that show up late get permanently dropped for the session
+      LH_DISCOVER_WAIT_MS = "8000";
+
       # fixes vkAcquireXlibDisplayEXT: VK_ERROR_UNKNOWN (0x000058b7a0764a80)
       # https://wiki.vronlinux.org/docs/fossvr/monado/#nvidia-specific-vkacquirexlibdisplayext-vk_error_unknown-0x000058b7a0764a80
       XRT_COMPOSITOR_FORCE_WAYLAND_DIRECT = "1";
