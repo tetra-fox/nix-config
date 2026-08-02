@@ -1,8 +1,9 @@
 {
   config,
-  pkgs,
   ...
 }: {
+  imports = [../_autostart.nix];
+
   programs.nixcord = {
     enable = true;
     discord = {
@@ -46,18 +47,8 @@
 
   # home.file."${config.programs.nixcord.discord.configDir}/settings.json".force = true;
 
-  systemd.user.services.discord = {
-    Unit = {
-      Description = "Discord (COSMIC session)";
-      PartOf = ["cosmic-session.target"];
-      After = ["cosmic-session.target"];
-    };
-    Service = {
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
-      ExecStart = "${config.programs.nixcord.finalPackage.discord}/bin/discord --start-minimized";
-    };
-    Install = {
-      WantedBy = ["cosmic-session.target"];
-    };
+  my.autostart.apps.discord = {
+    exec = "${config.programs.nixcord.finalPackage.discord}/bin/discord --start-minimized";
+    tray = true;
   };
 }

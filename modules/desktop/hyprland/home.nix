@@ -11,6 +11,7 @@
   main_mod = "SUPER";
 in {
   imports = [
+    ../_autostart.nix
     ./_hyprpaper
     ./_hyprcursor.nix
     ./_quickshell
@@ -19,13 +20,9 @@ in {
     ./_1password.nix
   ];
 
-  options.my.hyprland.autostart = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [];
-    description = "commands run once at hyprland startup (via hl.exec_cmd); personal app lists belong in host config, not this module";
-  };
-
   config = {
+    my.autostart.targets = ["wayland-session@hyprland.desktop.target"];
+
     _module.args = {
       inherit
         main_mod
@@ -41,6 +38,22 @@ in {
       hyprshutdown
     ];
 
+    # uwsm sources this into the systemd --user activation env specifically
+    # for XDG_CURRENT_DESKTOP=Hyprland (uwsm/env-${desktop,,}, see prepare-env.sh),
+    # and restores the prior env on session stop. this is what actually reaches
+    # apps launched via app2unit (systemd units), unlike hl.env/home.sessionVariables.
+    # QT_* values mirror what stylix.targets.qt.enable computes for platform "qtct"
+    # (modules/desktop/stylix/home.nix pins the global default back to plasma's kde+breeze).
+    # SSH_ASKPASS: plasma6.nix sets the global default to ksshaskpass (mkDefault,
+    # nothing else in this repo overrides it), fine for plasma but only correct
+    # there by accident; pin the same binary here explicitly so it's an intentional
+    # hyprland choice too, not an inherited one
+    xdg.configFile."uwsm/env-hyprland".text = ''
+      export QT_QPA_PLATFORMTHEME=qt5ct
+      export QT_STYLE_OVERRIDE=kvantum
+      export SSH_ASKPASS=${lib.getExe' pkgs.kdePackages.ksshaskpass "ksshaskpass"}
+    '';
+
     home.sessionVariables = {
       NIXOS_OZONE_WL = "1";
 
@@ -51,7 +64,6 @@ in {
       GDK_BACKEND = "wayland,x11,*";
       CLUTTER_BACKEND = "wayland";
 
-      # QT_QPA_PLATFORMTHEME is set by stylix
       QT_QPA_PLATFORM = "wayland;xcb";
       QT_AUTO_SCREEN_SCALE_FACTOR = "1";
       QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
@@ -65,24 +77,16 @@ in {
 
       configType = "lua";
 
-      extraLuaFiles =
-        {
-          config = ./_lua/config.lua;
-          # not run through replaceVars: its @DEFAULT_AUDIO_SINK@ tokens would trip the leftover-token check
-          media = ./_lua/media.lua;
-          bindings.content = pkgs.replaceVars ./_lua/bindings.lua {
-            inherit main_mod terminal menu file_manager;
-            app2unit = lib.getExe pkgs.app2unit;
-            hyprpicker = "${pkgs.hyprpicker}/bin/hyprpicker";
-          };
-        }
-        // lib.optionalAttrs (config.my.hyprland.autostart != []) {
-          startup.content = pkgs.writeText "startup.lua" (
-            "hl.on(\"hyprland.start\", function()\n"
-            + lib.concatMapStrings (c: "  hl.exec_cmd(\"${c}\")\n") config.my.hyprland.autostart
-            + "end)\n"
-          );
+      extraLuaFiles = {
+        config = ./_lua/config.lua;
+        # not run through replaceVars: its @DEFAULT_AUDIO_SINK@ tokens would trip the leftover-token check
+        media = ./_lua/media.lua;
+        bindings.content = pkgs.replaceVars ./_lua/bindings.lua {
+          inherit main_mod terminal menu file_manager;
+          app2unit = lib.getExe pkgs.app2unit;
+          hyprpicker = "${pkgs.hyprpicker}/bin/hyprpicker";
         };
+      };
     };
   };
 }

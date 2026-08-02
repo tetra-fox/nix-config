@@ -1,8 +1,20 @@
 {
   config,
+  osConfig,
   pkgs,
   ...
 }: {
+  imports = [../_autostart.nix];
+
+  # must be osConfig.programs.steam.package, not pkgs.steam: the system module wraps
+  # it with STEAM_EXTRA_COMPAT_TOOLS_PATHS (see modules/desktop/steam/system.nix),
+  # and that wrapping only lands on the package exposed via programs.steam, not on
+  # the bare pkgs.steam derivation
+  my.autostart.apps.steam = {
+    exec = "${osConfig.programs.steam.package}/bin/steam -silent";
+    tray = true;
+  };
+
   # xrizer reads $XRIZER_CUSTOM_BINDINGS_DIR/<controller_type>.json; set it per-game
   # in Steam -> game -> Properties -> Launch Options, e.g.
   #   XRIZER_CUSTOM_BINDINGS_DIR=$HOME/.local/share/xrizer-bindings/vrchat %command%

@@ -39,10 +39,4 @@ in {
 
   wayland.windowManager.hyprland.extraLuaFiles.quickshell.content =
     pkgs.replaceVars ./hyprland-binds.lua {inherit main_mod;};
-
-  # hide nm-applet (from cosmic); quickshell already shows networkmanager
-  xdg.configFile."autostart/nm-applet.desktop".text = ''
-    [Desktop Entry]
-    Hidden=true
-  '';
 }

@@ -8,7 +8,10 @@
   home.packages = [pkgs.wl-clipboard];
 
   services = {
-    clipse.enable = true;
+    clipse = {
+      enable = true;
+      systemdTarget = "wayland-session@hyprland.desktop.target";
+    };
     wl-clip-persist = {
       enable = true;
       systemdTargets = "wayland-session@hyprland.desktop.target";

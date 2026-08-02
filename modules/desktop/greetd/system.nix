@@ -1,9 +1,15 @@
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time-format '%A, %B %e - %T' --remember --remember-session -g 'hey kiddo!' --greet-align left --sessions /run/current-system/sw/share/wayland-sessions";
+        # sessions come from the displayManager registry, not /run/current-system/sw,
+        # so session packages show up even when they aren't in systemPackages
+        command = "${pkgs.tuigreet}/bin/tuigreet --time-format '%A, %B %e - %T' --remember --remember-session -g 'hey kiddo!' --greet-align left --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions";
         user = "greeter";
       };
     };

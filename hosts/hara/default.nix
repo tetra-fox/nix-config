@@ -8,9 +8,9 @@
   imports = [
     modules.profiles.workstation.system
 
-    modules.desktop.cosmic.system
     modules.desktop.greetd.system
     modules.desktop.hyprland.system
+    modules.desktop.kde.system
     modules.hardware.nvidia.system
     modules.hardware.ddcci.system
     # modules.hardware.openrgb.system
@@ -28,7 +28,7 @@
     nvidia.exporter.enable = true;
 
     # this room's valve basestations, powered with monado by the steam module
-    steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
+    # steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
   };
 
   # cuda build for the rtx 3090; the ollama module leaves package at the cpu default

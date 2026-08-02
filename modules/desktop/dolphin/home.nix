@@ -26,9 +26,6 @@
       taglib
     ]);
 
-  # fixes dolphin theming under non-KDE compositors (hyprland, niri)
-  xdg.configFile."kdeglobals".text = ''
-    [UiSettings]
-    ColorScheme=*
-  '';
+  # no kdeglobals here: plasma owns that file now, and a home-manager symlink
+  # would stop systemsettings from writing it
 }

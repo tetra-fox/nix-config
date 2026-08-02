@@ -34,7 +34,7 @@ in {
   };
 
   config = {
-    # point tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere) at 1P, not gnome-keyring / cosmic-session
+    # point tools that bypass ~/.ssh/config (ssh-add, nixos-anywhere) at 1P, not whatever agent the session spawned
     home.sessionVariables.SSH_AUTH_SOCK = opAgent;
 
     programs.ssh = {

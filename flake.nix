@@ -47,13 +47,6 @@
       url = "github:HeitorAugustoLN/betterfox-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cosmic-manager = {
-      url = "github:HeitorAugustoLN/cosmic-manager";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-      };
-    };
     stylix = {
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -367,7 +360,6 @@
                 {
                   home-manager.users.${username}.imports = [
                     ./hosts/hara/home
-                    inputs.cosmic-manager.homeManagerModules.cosmic-manager
                     inputs.betterfox-nix.homeModules.betterfox
                     inputs.catppuccin.homeModules.catppuccin
                     inputs.nixcord.homeModules.default

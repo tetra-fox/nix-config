@@ -26,6 +26,7 @@ in {
     modules.desktop.obs-studio.home
     modules.desktop.udiskie.home
     modules.desktop.discord.home
+    modules.desktop.telegram.home
     modules.desktop.vicinae.home
   ];
 
@@ -43,7 +44,6 @@ in {
   home.packages = with pkgs; [
     chromium
 
-    telegram-desktop
     signal-desktop
     cinny-desktop
 

@@ -12,7 +12,7 @@
   ];
 
   stylix.targets = {
-    # font targets stay on so fonts.fontconfig.defaultFonts stays populated (cosmic/kitty/vscode read it via lib.head)
+    # font targets stay on so fonts.fontconfig.defaultFonts stays populated (kitty/vscode read it via lib.head)
     font-packages.enable = true;
     fontconfig.enable = true;
   };

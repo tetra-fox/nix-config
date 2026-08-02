@@ -7,6 +7,8 @@
 }: let
   customExtensions = import ./_custom-extensions.nix {inherit pkgs;};
 in {
+  imports = [../_autostart.nix];
+
   options.my.firefox.bookmarks = lib.mkOption {
     type = with lib.types; listOf anything;
     default = [];
@@ -14,6 +16,10 @@ in {
   };
 
   config = {
+    # must be config.programs.firefox.finalPackage, not pkgs.firefox: home-manager
+    # wraps it with the policies/extensions/profile settings configured below
+    my.autostart.apps.firefox.exec = lib.getExe config.programs.firefox.finalPackage;
+
     home.sessionVariables = {
       MOZ_LEGACY_PROFILES = "1"; # missing profile fix
       # force the native wayland backend so the fractional-scale workaround below takes effect
