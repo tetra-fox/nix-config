@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   # stock plasma 6; greetd stays the greeter, the wayland session is named "plasma"
   #
   # plasma6.enable pulls in more than the plasma session itself. most of it
@@ -23,4 +27,15 @@
   # silently vanish with it. remove this block on purpose when that day comes.
   systemd.packages = [pkgs.kdePackages.drkonqi];
   systemd.services."drkonqi-coredump-processor@".wantedBy = ["systemd-coredump@.service"];
+
+  # plasma6.nix also wires pam_kwallet5 into the "login" and "kde" PAM
+  # services (login is what greetd includes for every session, hyprland or
+  # plasma). pam_kwallet5's session-close hook is a no-op upstream -- kwalletd
+  # is only ever reaped by Plasma's own logout sequence, which hyprland
+  # doesn't have, so every hyprland login left an orphaned kwalletd/ksecretd
+  # pinning its session's cgroup, stuck in "closing" state in logind forever.
+  # not using kwallet, so stop it from starting instead of teaching hyprland
+  # to clean up after it.
+  security.pam.services.login.kwallet.enable = lib.mkForce false;
+  security.pam.services.kde.kwallet.enable = lib.mkForce false;
 }
