@@ -56,7 +56,6 @@
       "dbeaver-community"
       "discord"
       "elmedia-player"
-      "firefox"
       "focusrite-control"
       "google-chrome"
       "grandperspective"
@@ -93,6 +92,9 @@
       "wireshark-app"
       "xld"
       "youlean-loudness-meter"
+      # zen's flake only builds aarch64-darwin, so this intel host takes the
+      # universal-binary cask instead
+      "zen"
     ];
   };
 

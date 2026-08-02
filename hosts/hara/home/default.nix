@@ -62,7 +62,7 @@ in {
         "x-scheme-handler/about"
         "x-scheme-handler/unknown"
         "text/html"
-      ] (_: "firefox.desktop"))
+      ] (_: "zen-beta.desktop"))
       // (lib.genAttrs [
         "audio/mpeg"
         "audio/mp4"

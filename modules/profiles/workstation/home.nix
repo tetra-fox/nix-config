@@ -21,7 +21,7 @@ in {
   imports = [
     ./home-common.nix
 
-    modules.desktop.firefox.home
+    modules.desktop.zen-browser.home
     modules.cli.kitty.home
     modules.desktop.obs-studio.home
     modules.desktop.udiskie.home
@@ -35,8 +35,9 @@ in {
     ssh.opVaults = ["Private" "mesa" "homelab_DTW"];
 
     # bookmark data lives in the private nix-secrets input; referenced here (the personal
-    # profile) so the firefox module itself works without that input
-    firefox.bookmarks = inputs.nix-secrets.lib.firefox-bookmarks;
+    # profile) so the browser module itself works without that input. the secrets attr
+    # keeps its firefox- name, the format is home-manager's either way
+    zen-browser.bookmarks = inputs.nix-secrets.lib.firefox-bookmarks;
   };
 
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";

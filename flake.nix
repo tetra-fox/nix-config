@@ -43,9 +43,10 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
-    betterfox-nix = {
-      url = "github:HeitorAugustoLN/betterfox-nix";
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
     stylix = {
       url = "github:nix-community/stylix";
@@ -360,7 +361,7 @@
                 {
                   home-manager.users.${username}.imports = [
                     ./hosts/hara/home
-                    inputs.betterfox-nix.homeModules.betterfox
+                    inputs.zen-browser.homeModules.beta
                     inputs.catppuccin.homeModules.catppuccin
                     inputs.nixcord.homeModules.default
                   ];

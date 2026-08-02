@@ -1,14 +1,10 @@
-{
-  username,
-  lib,
-  ...
-}: {
+{lib, ...}: {
   # stylix's cursor module sets home.pointerCursor.{name,package,size,...} but
   # not enable; newer home-manager deprecated inferring enable from their presence
   home.pointerCursor.enable = true;
 
+  # no browser target: stylix has no zen-browser module, zen themes itself
   stylix.targets = {
-    firefox.profileNames = [username];
     # keep on so fonts.fontconfig.defaultFonts stays populated (vscode reads it via lib.head)
     fontconfig.enable = true;
     hyprpaper.enable = true;

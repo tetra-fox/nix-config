@@ -6,7 +6,6 @@
 }: let
   terminal = lib.getExe pkgs.kitty;
   menu = "${lib.getExe config.programs.vicinae.package} toggle";
-  browser = "firefox";
   file_manager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"} ~";
   main_mod = "SUPER";
 in {
@@ -28,7 +27,6 @@ in {
         main_mod
         terminal
         menu
-        browser
         file_manager
         ;
     };
