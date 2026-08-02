@@ -12,6 +12,14 @@
   zinput = lib.mkOrder 500 ''
     source ${./zinputrc}
   '';
+  # zsh-autocomplete's recent-dirs module defaults recent-dirs-max to 0
+  # (unbounded) and stats every entry on every shell's first prompt to build
+  # its directory-completion list. Left uncapped that file grows forever;
+  # setting this before the plugin's first precmd fires makes it respect our
+  # cap instead (it only sets its own default if the style is unset).
+  recentDirsCap = lib.mkOrder 500 ''
+    zstyle ':chpwd:*' recent-dirs-max 20
+  '';
   sudoToggle = lib.mkOrder 1000 ''
     sudo-command-line() {
       if [[ -z $BUFFER ]]; then
@@ -71,6 +79,7 @@ in {
       initContent = lib.mkMerge [
         sudoToggle
         zinput
+        recentDirsCap
         zshPatina
       ];
       plugins = [
