@@ -1,7 +1,4 @@
-{
-  config,
-  ...
-}: {
+{config, ...}: {
   imports = [../_autostart.nix];
 
   programs.nixcord = {
