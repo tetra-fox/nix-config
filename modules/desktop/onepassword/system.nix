@@ -11,7 +11,7 @@
   # package execs .zen-wrapped regardless of channel
   # https://github.com/0xc000022070/zen-browser-flake#1password
   environment.etc."1password/custom_allowed_browsers" = {
-    text = ".zen-wrapped";
+    text = ".zen-beta-wrapped";
     mode = "0755";
   };
 }
