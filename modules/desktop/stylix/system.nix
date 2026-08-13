@@ -33,7 +33,7 @@
     fonts = {
       serif = {
         package = inputs.apple-fonts.packages.${pkgs.stdenv.hostPlatform.system}.ny;
-        name = "New York";
+        name = "New York Small";
       };
       sansSerif = {
         package = pkgs.inter;
