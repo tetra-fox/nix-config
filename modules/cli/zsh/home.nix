@@ -34,6 +34,20 @@
     zle -N sudo-command-line
     bindkey "\e\e" sudo-command-line
   '';
+  # nixpkgs fetches zsh-autocomplete with plain fetchFromGitHub, but upstream
+  # 26.08.03 moved the async engine out into the z-async submodule, so the
+  # plugin autoloads a file that isn't there and errors on every prompt.
+  # refetch with submodules until nixpkgs sets fetchSubmodules itself.
+  # TODO: drop this once pkgs/by-name/zs/zsh-autocomplete fetches submodules.
+  # the hash is tied to the rev, so a nixpkgs version bump fails the build here
+  # and needs a new one.
+  autocompleteSrc = pkgs.fetchFromGitHub {
+    owner = "marlonrichert";
+    repo = "zsh-autocomplete";
+    rev = pkgs.zsh-autocomplete.version;
+    fetchSubmodules = true;
+    hash = "sha256-XKreHmT3vkvYWk8IbGWv9RR/V5nIohcE/ck1SPjI++U=";
+  };
   # nixpkgs carries zsh-patina on unstable (linux, hydra-cached); 26.05-darwin
   # predates its packaging, so the mac builds the flake's package against the
   # darwin nixpkgs pin instead
@@ -60,12 +74,24 @@ in {
       # disable global rc files (nix-generated)
       envExtra = "setopt no_global_rcs";
       # rebuild the compdump at most once per 24h; force a rebuild with `rm ~/.cache/zsh/compdump`
+      #
+      # zsh-autocomplete already tries to invalidate the dump by comparing the
+      # mtime of its newest Completions file against it, but every file in the
+      # store has mtime 1, so that comparison never fires. combined with
+      # compinit -C, which reuses the dump instead of rescanning fpath, a plugin
+      # update leaves the dump advertising the old version's functions and
+      # calling a newly added one fails. stamp the plugin path next to the dump
+      # and rebuild whenever it changes.
       completionInit = ''
         () {
           setopt local_options extendedglob
           local _zac_dump=''${XDG_CACHE_HOME:-$HOME/.cache}/zsh/compdump
-          if [[ -n $_zac_dump(#qN.mh+24) ]]; then
+          local _zac_stamp=$_zac_dump.src
+          if [[ -n $_zac_dump(#qN.mh+24) ]] ||
+             [[ ! -r $_zac_stamp || "$(<$_zac_stamp)" != ${autocompleteSrc} ]]; then
             rm -f "$_zac_dump"
+            mkdir -p "''${_zac_dump:h}"
+            print -r -- ${autocompleteSrc} > "$_zac_stamp"
           fi
           zstyle ':autocomplete::compinit' arguments -C
         }
@@ -85,7 +111,7 @@ in {
       plugins = [
         {
           name = "zsh-autocomplete";
-          src = pkgs.zsh-autocomplete.src;
+          src = autocompleteSrc;
         }
       ];
     };
