@@ -97,7 +97,12 @@
 
     colmena = {
       url = "github:zhaofengli/colmena";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # follows the darwin pin, same reason as zsh-patina: the devshell pulls
+      # colmena's package on x86_64-darwin, and unstable hard-errors on that
+      # platform. the deploy CLI and the lib.makeHive that builds the hive
+      # (flake/colmena.nix) have to come from one input, so this can't be split
+      # per-platform without risking a version skew between the two.
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
@@ -237,6 +242,16 @@
         system,
         ...
       }: {
+        # x86_64-darwin resolves pkgs from the 26.05 pin, same reason hosts.myputer does:
+        # unstable dropped the platform and now throws on any eval of its package set, which
+        # takes the devshell, formatter and packages down with it (the host configs were
+        # unaffected because they already pick their own nixpkgs). flake-parts defaults this
+        # to inputs.nixpkgs for every entry in `systems`, so it has to be stated here too.
+        _module.args.pkgs =
+          if system == "x86_64-darwin"
+          then inputs.nixpkgs-darwin.legacyPackages.${system}
+          else inputs.nixpkgs.legacyPackages.${system};
+
         formatter = pkgs.alejandra;
 
         # runtime checks: VM tests exercising the real service modules on a fictional site
