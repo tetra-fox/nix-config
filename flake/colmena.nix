@@ -20,6 +20,10 @@
       # rather than restating "admin" here
       targetUser = c._module.specialArgs.username;
       tags = [(sitePrefix name)];
+      # the deploying machine builds, not the target: these VMs are too small to build their
+      # own closures (the edges are 1 core / 900M). colmena's default, restated because it is
+      # a real constraint on the deploy host, which must be able to build x86_64-linux. see
+      # modules/platform/nix/darwin.nix for how a mac gets that.
       buildOnTarget = false;
     };
     imports = c._module.args.modules or [];
