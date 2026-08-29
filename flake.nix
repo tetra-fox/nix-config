@@ -298,6 +298,9 @@
                   inputs.quickshell.overlays.default
                   inputs.nix-yazi-plugins.overlays.default
                   inputs.tetra-nurpkgs.overlays.default
+                  # every host, not just the nixos ones: the mac's zen gets its
+                  # addons from nur.repos.rycee too (modules/desktop/zen-browser)
+                  inputs.nur.overlays.default
                 ]
                 ++ localOverlays;
             })
@@ -355,7 +358,6 @@
               arch = "x86_64";
               class = "nixos";
               modules = [
-                inputs.nur.modules.nixos.default
                 inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
                 inputs.stylix.nixosModules.stylix
                 {

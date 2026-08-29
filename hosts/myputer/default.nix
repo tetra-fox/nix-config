@@ -6,6 +6,7 @@
 }: {
   imports = [
     modules.profiles.workstation.darwin
+    modules.desktop.zen-browser.darwin
   ];
 
   networking.applicationFirewall = {
@@ -120,7 +121,7 @@
         # captured layout; the dock is fully managed now, rearrangements
         # belong here rather than in the gui
         persistent-apps = [
-          "/Applications/Firefox.app"
+          "/Applications/Zen.app"
           "/Applications/Telegram.app"
           "/Applications/Discord.app"
           "/System/Applications/Messages.app"
