@@ -34,20 +34,26 @@
     zle -N sudo-command-line
     bindkey "\e\e" sudo-command-line
   '';
-  # nixpkgs fetches zsh-autocomplete with plain fetchFromGitHub, but upstream
-  # 26.08.03 moved the async engine out into the z-async submodule, so the
-  # plugin autoloads a file that isn't there and errors on every prompt.
-  # refetch with submodules until nixpkgs sets fetchSubmodules itself.
+  # nixpkgs fetches zsh-autocomplete with plain fetchFromGitHub, but from
+  # 26.08.03 upstream moved the async engine out into the z-async submodule, so
+  # the plugin autoloads a file that isn't there and errors on every prompt.
+  # refetch those with submodules until nixpkgs sets fetchSubmodules itself.
+  # the 26.05-darwin pin still carries 25.03.19, which has no .gitmodules at
+  # all, so there it takes the packaged source unchanged.
   # TODO: drop this once pkgs/by-name/zs/zsh-autocomplete fetches submodules.
   # the hash is tied to the rev, so a nixpkgs version bump fails the build here
   # and needs a new one.
-  autocompleteSrc = pkgs.fetchFromGitHub {
-    owner = "marlonrichert";
-    repo = "zsh-autocomplete";
-    rev = pkgs.zsh-autocomplete.version;
-    fetchSubmodules = true;
-    hash = "sha256-XKreHmT3vkvYWk8IbGWv9RR/V5nIohcE/ck1SPjI++U=";
-  };
+  autocompleteSrc =
+    if lib.versionAtLeast pkgs.zsh-autocomplete.version "26.08.03"
+    then
+      pkgs.fetchFromGitHub {
+        owner = "marlonrichert";
+        repo = "zsh-autocomplete";
+        rev = pkgs.zsh-autocomplete.version;
+        fetchSubmodules = true;
+        hash = "sha256-XKreHmT3vkvYWk8IbGWv9RR/V5nIohcE/ck1SPjI++U=";
+      }
+    else "${pkgs.zsh-autocomplete}/share/zsh-autocomplete";
   # nixpkgs carries zsh-patina on unstable (linux, hydra-cached); 26.05-darwin
   # predates its packaging, so the mac builds the flake's package against the
   # darwin nixpkgs pin instead
