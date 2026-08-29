@@ -50,7 +50,18 @@ usage() {
 }
 
 if [ -n "$SUDO_USER" ]; then
-  user_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+  # sudo leaves $HOME as root's, so look up the invoker's. the account database
+  # differs by platform: getent is glibc-only and macos has none, it keeps users
+  # in directory services
+  if [ -n "$darwin" ]; then
+    user_home=$(dscl . -read "/Users/$SUDO_USER" NFSHomeDirectory 2>/dev/null | sed 's/^NFSHomeDirectory: //')
+  else
+    user_home=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+  fi
+  # both lookups end in a pipe, so a miss still exits 0 and set -e won't fire.
+  # dscl's own stderr is suppressed because an empty result reports better here
+  # than a raw directory-services error
+  [ -d "$user_home" ] || { echo "rebuild: could not resolve a home directory for $SUDO_USER" >&2; exit 1; }
 else
   user_home=$HOME
 fi
