@@ -2,6 +2,7 @@
 # site's facts file) because the topology layer + the colmena deploy output read them on every
 # host, not just one site's.
 {
+  config,
   lib,
   caps,
   ...
@@ -180,10 +181,26 @@
         description = "the address services reach Home Assistant OS at; null = site has no HAOS box";
       };
 
+      # names match the lab.site.proxmoxParent each host declares, so the topology's
+      # parent links and monitoring's scrape targets can't name different sets of nodes
+      proxmoxNodes = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        example = {milkfish = "192.168.10.2";};
+        description = "the site's proxmox nodes as name -> server-VLAN address; the site's mon host scrapes each one's node exporter";
+      };
+
       proxmoxIp = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = null;
-        description = "the proxmox web UI address the edge proxies and monitoring scrapes; null on sites with no single node to point at";
+        # derived so a single-node site states its address once, in proxmoxNodes. a
+        # multi-node site has no one node to proxy or draw, so it lands null
+        default = let
+          addrs = builtins.attrValues config.lab.appliances.proxmoxNodes;
+        in
+          if builtins.length addrs == 1
+          then builtins.head addrs
+          else null;
+        description = "the proxmox web UI address the edge proxies and the topology draws; null unless the site has exactly one node";
       };
     };
 

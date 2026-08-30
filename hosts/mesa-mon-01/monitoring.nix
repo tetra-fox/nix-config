@@ -26,17 +26,14 @@ in {
       # the controller is the UDM, the same box as the gateway
       unifi.controllerUrl = "https://${config.lab.net.gateway}";
 
+      # the proxmox nodes are scraped from the site facts by mon-host.nix; HAOS is the
+      # one target that isn't derivable, so it stays here
       extraScrapeConfigs = [
-        # non-NixOS node-exporter targets (not auto-discovered from the flake)
         {
           # haosIp is the internal-VLAN leg (inter-VM traffic policy); HAOS's exporter
           # binds all interfaces
           job_name = "node-haos";
           static_configs = [{targets = ["${config.lab.appliances.haosIp}:9100"];}];
-        }
-        {
-          job_name = "node-milkfish";
-          static_configs = [{targets = ["${config.lab.appliances.proxmoxIp}:9100"];}];
         }
       ];
     };

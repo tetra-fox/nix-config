@@ -19,8 +19,8 @@
   - when this lands we can update timemachine with auth n stuff.
   - BUT ALSO...... <https://docs.goauthentik.io/endpoint-devices/> maybe?
 
-- fairlane-mon-01: still missing the non-NixOS node-exporter targets (HA, the plush and
-  pooltoy proxmox nodes) via lab.monitoring.extraScrapeConfigs
+- fairlane-mon-01: HA has no node exporter yet, so it isn't scraped. mesa points its
+  node-haos job at lab.appliances.haosIp; do the same here once the addon is installed
 
 - more alerts: db tier internals. etcd needs listen-metrics-urls on a separate port, and
   patroni's rest api is unauthed incl switchover -- think before opening either to mon

@@ -16,8 +16,15 @@ _: {
       dataDir = "/var/lib/fairlane";
     };
 
-    # no internal-VLAN leg on fairlane's HAOS; it's reached on the server VLAN.
-    # proxmoxIp stays null: two nodes (plush/pooltoy), nothing proxies or scrapes a single one
-    appliances.haosIp = "192.168.10.215";
+    # no internal-VLAN leg on fairlane's HAOS; it's reached on the server VLAN
+    appliances = {
+      haosIp = "192.168.10.215";
+      # two nodes, so the derived proxmoxIp stays null: there's no single web UI for the
+      # edge to proxy or the topology to draw. monitoring scrapes both by name
+      proxmoxNodes = {
+        plush = "192.168.10.212";
+        pooltoy = "192.168.10.7";
+      };
+    };
   };
 }

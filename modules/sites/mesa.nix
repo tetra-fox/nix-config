@@ -21,8 +21,7 @@ _: {
       # HAOS is multihomed; inter-VM traffic rides its internal-VLAN leg exclusively
       # (the server VLAN is for inter-VLAN routing)
       haosIp = "10.10.0.20";
-      # milkfish
-      proxmoxIp = "192.168.10.2";
+      proxmoxNodes.milkfish = "192.168.10.2";
     };
   };
 }
