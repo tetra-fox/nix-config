@@ -28,6 +28,10 @@ in {
   lab.site.dataDirGroup = config.lab.media.group;
 
   systemd.tmpfiles.rules = [
+    # the library container, which is also svc-01's fsid=0 export root. `d` because the three
+    # trees below use `Z`, which adjusts an existing path but never creates one, so without
+    # this nothing declares who owns the root of that export
+    "d /mnt/bigdisk/media 2775 admin media -"
     # setgid so new files inherit group media, so the arr uids on svc-01 keep group write
     # across the nfs export (it keeps numeric uids, so the gid is what lines up).
     "Z /mnt/bigdisk/media/media - admin media 2775"
