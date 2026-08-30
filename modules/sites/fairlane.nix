@@ -16,9 +16,11 @@ _: {
       dataDir = "/var/lib/fairlane";
     };
 
-    # no internal-VLAN leg on fairlane's HAOS; it's reached on the server VLAN
     appliances = {
-      haosIp = "192.168.10.215";
+      # HAOS is multihomed, same as mesa's: inter-VM traffic (the nfs backup target, the
+      # edge's home. vhost) rides its internal-VLAN leg, and the site reuses mesa's host
+      # octet for it because both sites are built to the same address plan
+      haosIp = "10.10.0.20";
       # two nodes, so the derived proxmoxIp stays null: there's no single web UI for the
       # edge to proxy or the topology to draw. monitoring scrapes both by name
       proxmoxNodes = {

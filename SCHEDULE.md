@@ -43,8 +43,8 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
 
 - proxmox vzdump at 14:00: assuming the pve clock is UTC like everything else, that's 6a/7a pacific, already in the window. worth confirming in pve which vms it covers, where it writes, and that the target isn't a dataset restic reads at 14:30
 - haos backups land in megamax/backup/homeassistant (mesa) and /mnt/bigdisk/backup/homeassistant
-  (fairlane) over nfs. each site's HAOS mounts its own store box, mesa's on the internal vlan
-  and fairlane's on the server vlan
+  (fairlane) over nfs. each site's HAOS is multihomed onto the internal vlan and mounts its own
+  store box's internal address there
   - > When the backup creation starts. By default Home Assistant picks the optimal time between 04:45 and 05:45.
   - aim mesa's before 14:00 UTC so each restic run ships a fresh one. fairlane has no restic,
     so its timing only decides how stale the local copy is

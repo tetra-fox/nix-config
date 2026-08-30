@@ -17,10 +17,10 @@
   allowFrom = import fleet.nft {inherit lib;};
   # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
-  # fairlane's HAOS has no internal-VLAN leg (see the site facts), so unlike mesa it reaches
-  # this box over the server VLAN and must mount this host's lab.site.hostIp, not its internal
-  # address. it connects as root, so the export all_squashes root to admin:users. the backups
-  # are HAOS's private blobs, deliberately NOT group media.
+  # haosIp is HAOS's internal-VLAN leg (see the site facts), so the export and firewall scope
+  # to inter-VM traffic. HAOS must mount this box's internal IP or its NFS source won't match.
+  # it connects as root, so the export all_squashes root to admin:users. the backups are HAOS's
+  # private blobs, deliberately NOT group media.
   haIp = config.lab.appliances.haosIp;
 in {
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
