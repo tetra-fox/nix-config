@@ -19,11 +19,8 @@
   - when this lands we can update timemachine with auth n stuff.
   - BUT ALSO...... <https://docs.goauthentik.io/endpoint-devices/> maybe?
 
-- fairlane-mon-01: no unifi metrics yet. needs a read-only local account on the fairlane
-  controller, its creds in secrets/fairlane-mon-01.yaml, then modules.services.monitoring.unifi
-  in hosts/fairlane-mon-01/monitoring.nix. same shape as mesa, only the controller url differs
-  - also still missing: fairlane's non-NixOS node-exporter targets (HA, the proxmox hosts)
-    via lab.monitoring.extraScrapeConfigs
+- fairlane-mon-01: still missing the non-NixOS node-exporter targets (HA, the plush and
+  pooltoy proxmox nodes) via lab.monitoring.extraScrapeConfigs
 
 - more alerts: db tier internals. etcd needs listen-metrics-urls on a separate port, and
   patroni's rest api is unauthed incl switchover -- think before opening either to mon
