@@ -17,7 +17,8 @@ in {
   lab.site.dataDirGroup = config.lab.media.group;
 
   systemd.tmpfiles.rules = [
-    # setgid so new files inherit group media, letting service uids + SMB @users share write.
+    # setgid so new files inherit group media, so the arr uids on svc-01 keep group write
+    # across the nfs export (it keeps numeric uids, so the gid is what lines up).
     "Z /mnt/media/media - admin media 2775"
     "Z /mnt/media/torrents - admin media 2775"
     "Z /mnt/media/nzb - admin media 2775"
@@ -43,20 +44,4 @@ in {
   };
 
   networking.firewall.extraInputRules = allowFrom [svcIp] [2049];
-
-  services.samba.settings = {
-    # no "guest ok": valid users already forecloses the guest fallback, so it was dead config
-    # (see mesa-store-01/storage.nix for the full explanation). server string/netbios name come
-    # from modules/services/samba/system.nix's hostname default.
-    store = {
-      path = "/mnt/media";
-      browseable = "yes";
-      "read only" = "no";
-      "valid users" = "@users";
-      "write list" = "@users";
-      "create mask" = "0664";
-      "directory mask" = "0775";
-      "force group" = config.lab.media.group;
-    };
-  };
 }
