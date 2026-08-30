@@ -175,6 +175,10 @@
     # addresses of the site's non-nix appliances (things the fleet proxies or scrapes but
     # doesn't configure). per-site values, set in the site facts file.
     appliances = {
+      # HAOS is the one thing behind the edge that nix doesn't configure, so the contract
+      # authentik gets for free (topo.edgeHostIps -> trusted proxies) has to be kept by hand
+      # there: its configuration.yaml http.trusted_proxies must list the edge hosts' internal
+      # addresses, or every proxied request comes back "400: Bad Request"
       haosIp = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
