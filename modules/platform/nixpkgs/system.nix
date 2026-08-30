@@ -13,22 +13,6 @@
           colmena
           ;
       })
-
-      (final: prev: {
-        # TODO: remove when hydra bumps nixos-unstable past nixpkgs commit 1dce89d
-        # (https://github.com/NixOS/nixpkgs/pull/545542). cmake 4.3 hard-errors if
-        # CUDAToolkit_ROOT doesn't contain nvcc instead of falling back to PATH like
-        # 4.1 did, and nixpkgs' generic cuda setup hook builds that var without nvcc's
-        # dir in it. unsetting it restores the PATH fallback; cuda_nvcc is already a
-        # nativeBuildInput regardless. https://github.com/NixOS/nixpkgs/issues/545286
-        ollama-cuda = prev.ollama-cuda.overrideAttrs (old: {
-          preBuild =
-            ''
-              unset CUDAToolkit_ROOT
-            ''
-            + old.preBuild;
-        });
-      })
     ];
   };
 
