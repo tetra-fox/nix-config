@@ -42,7 +42,7 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
 ## external, not in this repo
 
 - proxmox vzdump at 14:00: assuming the pve clock is UTC like everything else, that's 6a/7a pacific, already in the window. worth confirming in pve which vms it covers, where it writes, and that the target isn't a dataset restic reads at 14:30
-- haos backups land in megamax/backup/homeassistant (mesa) and /mnt/media/backup/homeassistant
+- haos backups land in megamax/backup/homeassistant (mesa) and /mnt/bigdisk/backup/homeassistant
   (fairlane) over nfs. each site's HAOS mounts its own store box, mesa's on the internal vlan
   and fairlane's on the server vlan
   - > When the backup creation starts. By default Home Assistant picks the optimal time between 04:45 and 05:45.
@@ -53,6 +53,6 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
 ## not backed up, on purpose
 
 - fairlane-store-01: ext4 media store, contents re-downloadable, no restic. fairlane stays
-  low-maintenance. the one exception on that disk is /mnt/media/backup/homeassistant, which is
+  low-maintenance. the one exception on that disk is /mnt/bigdisk/backup/homeassistant, which is
   a local-only copy: losing the disk loses the HA backup history with it
 - fairlane-db-01 postgres: nightly local dumps only, nothing offsite. covers a bad migration or a dropped table, not the vm disk dying

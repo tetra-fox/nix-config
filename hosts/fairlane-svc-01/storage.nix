@@ -1,7 +1,7 @@
-# /mnt/media   the shared library, NFS-mounted from fairlane-store-01. mounted at /mnt/media (not
-# mesa's /mnt/store) because fairlane's arr DBs have root/download dirs baked in under /mnt/media --
-# changing the path would make every item show as missing. this box is a pure NFS client, like
-# mesa-svc-01.
+# /mnt/media   the shared library, NFS-mounted from fairlane-store-01 (its /mnt/bigdisk/media,
+# exported as that client's fsid=0 root). mounted at /mnt/media here, not mesa's /mnt/store,
+# because fairlane's arr DBs have root/download dirs baked in under /mnt/media -- changing this
+# path would make every item show as missing. this box is a pure NFS client, like mesa-svc-01.
 {
   config,
   modules,
