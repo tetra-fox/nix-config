@@ -350,11 +350,14 @@ in {
       in {
         "monitoring/grafana_secret_key" = ownedByGrafana;
 
-        # nixpkgs defaults security.admin_password to "admin" and grafana reapplies the
-        # configured value on every start, so leaving it unset parks the local admin
-        # account on admin/admin. fairlane needs this in particular: it keeps grafana's
-        # native login form (no OAuth there), so that form is the way in and it has to
-        # ask for something real.
+        # nixpkgs defaults security.admin_password to "admin", so leaving it unset parks
+        # the local admin account on admin/admin. fairlane needs this in particular: it
+        # keeps grafana's native login form (no OAuth there), so that form is the way in
+        # and it has to ask for something real.
+        # setting it is necessary but not sufficient: grafana reads admin_password only
+        # when it CREATES the admin user, so an instance that already has one keeps
+        # whatever password it was first initialised with. the reconcile unit below is
+        # what actually moves an existing account onto this value.
         "monitoring/grafana_admin_password" = ownedByGrafana;
 
         # env file with TELEGRAM_BOT_TOKEN= and TELEGRAM_CHAT_ID=, read by systemd as
@@ -363,6 +366,36 @@ in {
       };
       systemd.services.grafana.serviceConfig.EnvironmentFile =
         lib.mkIf cfg.telegram.enable config.sops.secrets."monitoring/telegram_env".path;
+
+      # grafana has no declarative way to change an existing admin password, so reconcile
+      # it through the cli on every start, the same shape as the postgres role units.
+      systemd.services.grafana-admin-password = {
+        description = "reconcile the grafana admin password from sops";
+        after = ["grafana.service"];
+        requires = ["grafana.service"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "grafana";
+          Group = "grafana";
+          RemainAfterExit = true;
+          LoadCredential = "adminpass:${config.sops.secrets."monitoring/grafana_admin_password".path}";
+          # bounds the health wait below; on timeout the unit fails instead of hanging
+          TimeoutStartSec = 180;
+        };
+        # /api/health only answers once the db is migrated, which the cli needs. the
+        # password arrives on stdin, never as an argument: an argv password is readable
+        # out of /proc/<pid>/cmdline by any local user, same rule as the postgres units.
+        script = ''
+          until ${pkgs.curl}/bin/curl -sf http://${bindAddr}:${toString grafanaPort}/api/health >/dev/null; do
+            sleep 2
+          done
+          ${config.services.grafana.package}/bin/grafana cli \
+            --homepath ${config.services.grafana.dataDir} \
+            admin reset-admin-password --password-from-stdin \
+            < "$CREDENTIALS_DIRECTORY/adminpass"
+        '';
+      };
 
       services = {
         # every site host's registered dashboards (this host's own included, node/systemd
