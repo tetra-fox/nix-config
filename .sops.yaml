@@ -1,6 +1,9 @@
 # sops-nix recipients. encrypted files live under ./secrets/.
 # generate the user age key once with `age-keygen -o ~/.config/sops/age/keys.txt`
-# and replace the placeholder below with the resulting public key.
+# and replace the placeholder below with the resulting public key. sops only looks
+# there by default on linux; on darwin its default is ~/Library/Application Support,
+# so modules/cli/sops/home.nix sets SOPS_AGE_KEY_FILE to the path above on both. on a
+# fresh mac, before home-manager has run, pass it in the environment by hand.
 #
 # host age keys are derived from the vm's ssh ed25519 host key:
 #   ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
