@@ -51,6 +51,15 @@
         repo = "zsh-autocomplete";
         rev = pkgs.zsh-autocomplete.version;
         fetchSubmodules = true;
+        # upstream's .gitmodules points z-async at git@github.com:, the maintainer's
+        # own push url (the sibling clitest submodule uses https). a sandboxed fetch
+        # has no ssh binary and no key, so the submodule clone fails and takes every
+        # linux build with it. rewrite it to https for the fetch only.
+        # TODO: drop with the block above, or sooner if upstream fixes .gitmodules.
+        gitConfigFile = pkgs.writeText "zsh-autocomplete-gitconfig" ''
+          [url "https://github.com/"]
+          	insteadOf = git@github.com:
+        '';
         hash = "sha256-XKreHmT3vkvYWk8IbGWv9RR/V5nIohcE/ck1SPjI++U=";
       }
     else "${pkgs.zsh-autocomplete}/share/zsh-autocomplete";
