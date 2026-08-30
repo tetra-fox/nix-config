@@ -15,18 +15,6 @@
       })
 
       (final: prev: {
-        pythonPackagesExtensions =
-          prev.pythonPackagesExtensions
-          ++ [
-            (pyFinal: pyPrev: {
-              # TODO: remove when hydra bumps nixos-unstable
-              # cheetah3 -> ct3 so sabnzbd builds
-              cheetah3 = pyPrev.cheetah3.overridePythonAttrs (_: {dontCheckPythonMetadata = true;});
-            })
-          ];
-      })
-
-      (final: prev: {
         # TODO: remove when hydra bumps nixos-unstable past nixpkgs commit 1dce89d
         # (https://github.com/NixOS/nixpkgs/pull/545542). cmake 4.3 hard-errors if
         # CUDAToolkit_ROOT doesn't contain nvcc instead of falling back to PATH like
