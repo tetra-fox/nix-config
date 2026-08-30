@@ -14,6 +14,7 @@
 | 14:00       | 6:00a | 7:00a | mesa-db leader, fairlane-db-01     | postgres pg_dumpall, keep 14: mesa to megamax/backup/postgres over nfs, fairlane to local disk |
 | 14:00       | 6:00a | 7:00a | proxmox (external)                 | vzdump vm backup, configured in pve, not this repo                                             |
 | 14:30       | 6:30a | 7:30a | mesa-store-01                      | restic to backblaze b2: zfs-snapshots each dataset, uploads, prunes                            |
+| 14:30       | 6:30a | 7:30a | fairlane-store-01                  | restic to backblaze b2: uploads /mnt/bigdisk/backup live (ext4, no snapshots), prunes          |
 
 the backup chain is the reason for the ordering: immich dumps its database next to the photo library at 14:00, whichever db node is the patroni leader dumps the cluster to megamax/backup/postgres at the same time, and restic snapshots both at 14:30, so the offsite copy always carries dumps at most half an hour stale. everything else just needs to be off my evening.
 
@@ -46,13 +47,11 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
   (fairlane) over nfs. each site's HAOS is multihomed onto the internal vlan and mounts its own
   store box's internal address there
   - > When the backup creation starts. By default Home Assistant picks the optimal time between 04:45 and 05:45.
-  - aim mesa's before 14:00 UTC so each restic run ships a fresh one. fairlane has no restic,
-    so its timing only decides how stale the local copy is
+  - aim both before 14:00 UTC so each site's restic run at 14:30 ships a fresh one
 - time machine (myputer) writes megamax/backup/timemachine hourly while the mac is awake; restic snapshots whatever state is there at 14:30
 
 ## not backed up, on purpose
 
-- fairlane-store-01: ext4 media store, contents re-downloadable, no restic. fairlane stays
-  low-maintenance. the one exception on that disk is /mnt/bigdisk/backup/homeassistant, which is
-  a local-only copy: losing the disk loses the HA backup history with it
+- fairlane-store-01 /mnt/bigdisk/media: the library, re-downloadable and far too big to ship.
+  restic on this host covers /mnt/bigdisk/backup only, never the media tree
 - fairlane-db-01 postgres: nightly local dumps only, nothing offsite. covers a bad migration or a dropped table, not the vm disk dying
