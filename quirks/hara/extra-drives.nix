@@ -61,25 +61,5 @@
     };
   };
 in {
-  fileSystems = drives;
-
-  # these are noauto + automount, so systemd only mounts (and fscks) one on
-  # first access. fsck.ntfs does a real full MFT scan every time regardless of
-  # dirty state (10-50s+ on the bigger drives here), so whatever happens to
-  # touch /mnt first eats that synchronously -- it used to be zsh validating
-  # its directory-completion cache, but it could be anything. trigger all six
-  # in parallel right after boot instead, so the checks run in the background
-  # (bounded by the slowest single drive, not the sum of all of them) and are
-  # long done before anyone opens a terminal.
-  systemd.services.warm-mnt-automounts = {
-    description = "trigger automount (and one-time fsck) for /mnt drives in the background instead of on first interactive access";
-    wantedBy = ["multi-user.target"];
-    after = ["multi-user.target"];
-    before = lib.mkForce [];
-    serviceConfig.Type = "oneshot";
-    script = ''
-      ${lib.concatMapStringsSep "\n" (path: "stat ${lib.escapeShellArg path} >/dev/null 2>&1 &") (builtins.attrNames drives)}
-      wait
-    '';
-  };
+  fileSystems = lib.mapAttrs (_: drive: drive // {noCheck = true;}) drives;
 }
