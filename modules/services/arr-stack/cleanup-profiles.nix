@@ -1,7 +1,7 @@
 # recyclarr never deletes a profile (destructive when media is assigned), so a renamed
 # or removed profile lingers. cleanup-profiles.sh reassigns everything on an orphaned
-# profile to a managed default then deletes it. runs after recyclarr so it sees the
-# current managed set (from profiles.nix, the same list recyclarr builds from).
+# profile to a managed default then deletes it. runs off recyclarr's OnSuccess so it sees
+# the current managed set (from profiles.nix, the same list recyclarr builds from).
 {
   config,
   lib,
@@ -37,9 +37,6 @@
     name = "${arr}-cleanup-profiles";
     value = {
       description = "delete unmanaged quality profiles from ${arr}";
-      after = ["${arr}.service" "recyclarr.service"];
-      wants = ["recyclarr.service"];
-      wantedBy = ["multi-user.target"];
       environment = {
         APP = arr;
         BASE_URL = "http://${vpn.namespaceAddress}:${toString spec.port}/api/v3";
@@ -48,7 +45,6 @@
       };
       serviceConfig = {
         Type = "oneshot";
-        RemainAfterExit = true;
         LoadCredential = ["${arrKeyCred}:${config.sops.secrets.${spec.apiKeySecret}.path}"];
         ExecStart = lib.getExe cleanup;
       };
@@ -56,6 +52,12 @@
   };
 in {
   config = {
-    systemd.services = lib.mapAttrs' mkUnit arrs;
+    systemd.services =
+      lib.mapAttrs' mkUnit arrs
+      // {
+        # fires only after a completed sync. a wantedBy here would drag a full recyclarr run
+        # into every boot and switch, before the arrs are listening
+        recyclarr.onSuccess = map (arr: "${arr}-cleanup-profiles.service") (lib.attrNames arrs);
+      };
   };
 }
