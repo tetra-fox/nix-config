@@ -18,8 +18,8 @@
 
   vip = "192.168.2.115";
 
-  # nixpkgs' patroni module derives restapi.listen from nodeIp, so the rest api binds the
-  # node's internal ip and never loopback; the leader probe has to address nodes by ip
+  # nixpkgs' patroni module binds both the rest api and postgres to nodeIp, never loopback,
+  # so the leader probe and the per-replica reads address nodes by ip
   dbIps = {
     db1 = "192.168.2.11";
     db2 = "192.168.2.12";
@@ -84,13 +84,13 @@ in {
 
   testScript = ''
     dbs = [db1, db2, db3]
-    rest = {db1: "${dbIps.db1}", db2: "${dbIps.db2}", db3: "${dbIps.db3}"}
+    ips = {db1: "${dbIps.db1}", db2: "${dbIps.db2}", db3: "${dbIps.db3}"}
 
-    def psql(sql, user="app", db="app"):
-        return f"PGPASSWORD=mockpass psql -h ${vip} -U {user} -d {db} -tAc \"{sql}\""
+    def psql(sql, user="app", db="app", host="${vip}"):
+        return f"PGPASSWORD=mockpass psql -h {host} -U {user} -d {db} -tAc \"{sql}\""
 
     def probe(m, endpoint):
-        return f"curl -sf http://{rest[m]}:${toString patroniRestPort}/{endpoint} >/dev/null"
+        return f"curl -sf http://{ips[m]}:${toString patroniRestPort}/{endpoint} >/dev/null"
 
     def leader(candidates):
         for m in candidates:
@@ -116,11 +116,11 @@ in {
         old = leader(dbs)
         assert old is not None, "no node answers /primary"
         survivors = [m for m in dbs if m != old]
-        # the leader answers /primary as soon as it holds the lock, well before the replicas
-        # finish seeding from it with pg_basebackup. crashing it mid-copy strands them at
-        # "not healthy enough for leader race" forever, so gate on both streaming first.
+        # /replica answers as soon as a node runs as a replica, before its walreceiver has
+        # connected (the leader only creates its slot on the next ha loop). crashing the
+        # leader in that window loses the rows with its wal, so gate on the row itself
         for m in survivors:
-            m.wait_until_succeeds(probe(m, "replica"), timeout=300)
+            svc.wait_until_succeeds(psql("SELECT count(*) FROM t", host=ips[m]) + " | grep -qx 1", timeout=300)
         old.crash()
         svc.wait_until_succeeds(psql("INSERT INTO t VALUES ('after-failover')"), timeout=300)
         count = svc.succeed(psql("SELECT count(*) FROM t")).strip()
