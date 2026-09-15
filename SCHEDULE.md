@@ -4,11 +4,13 @@
 
 | utc         | pst   | pdt   | host(s)                            | job                                                                                            |
 | ----------- | ----- | ----- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 12:00       | 4:00a | 5:00a | all nixos servers                  | nix garbage collection, two day window                                                         |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich nightly tasks (db cleanup, face clustering, memories, missing thumbnails, quota sync)   |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich external library scan                                                                   |
 | 12:00       | 4:00a | 5:00a | mesa-svc-01, fairlane-svc-01       | recyclarr sync (plus up to 5m random delay)                                                    |
 | 12:00       | 4:00a | 5:00a | mesa-svc-01, fairlane-svc-01       | podman-auto-update: pulls and restarts containers labelled for auto-update                     |
 | 12:00-13:00 | 4-5a  | 5-6a  | mesa-dns-01/02, fairlane-dns-01/02 | bind RPZ blocklist refresh + graceful reload (1h random spread)                                |
+| 12:30       | 4:30a | 5:30a | all nixos servers                  | fstrim, so blocks gc freed reach the proxmox thin pool the same day                            |
 | 13:00       | 5:00a | 6:00a | mesa-svc-02                        | immich integrity checks (file checksums capped at 1h, missing files, untracked files)          |
 | 14:00       | 6:00a | 7:00a | mesa-svc-02                        | immich pg_dumpall to megamax/immich/backups over nfs (minutes)                                 |
 | 14:00       | 6:00a | 7:00a | mesa-db leader, fairlane-db-01     | postgres pg_dumpall, keep 14: mesa to megamax/backup/postgres over nfs, fairlane to local disk |
@@ -22,10 +24,10 @@ the backup chain is the reason for the ordering: immich dumps its database next 
 
 | utc   | pst   | pdt   | host(s)                                    | job                                             |
 | ----- | ----- | ----- | ------------------------------------------ | ----------------------------------------------- |
-| 12:00 | 4:00a | 5:00a | all nixos                                  | nix garbage collection                          |
+| 12:00 | 4:00a | 5:00a | hara                                       | nix garbage collection (servers run it nightly) |
 | 13:00 | 5:00a | 6:00a | all nixos                                  | nix store optimise                              |
 | 13:00 | 5:00a | 6:00a | mesa-svc-01, fairlane-svc-01, mesa-auth-01 | podman image prune                              |
-| 14:00 | 6:00a | 7:00a | all nixos                                  | fstrim, after gc and optimise have freed blocks |
+| 14:00 | 6:00a | 7:00a | hara                                       | fstrim (servers run it nightly)                 |
 
 hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idle nvme is noise, and `persistent` catches up whenever the box happens to be on. myputer (also local time, launchd) does gc sunday 4a and optimise 5a.
 

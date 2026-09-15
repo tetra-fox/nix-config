@@ -1,7 +1,7 @@
 # nix daemon settings shared by the linux (system.nix) and darwin (darwin.nix)
 # faces of this module; only the gc/optimise schedule and the admin group differ
 # per platform, so those stay in the platform files
-_: {
+{lib, ...}: {
   nix = {
     settings = {
       experimental-features = [
@@ -20,7 +20,7 @@ _: {
     # interval) differs per platform
     gc = {
       automatic = true;
-      options = "--delete-older-than 7d";
+      options = lib.mkDefault "--delete-older-than 7d";
     };
     optimise.automatic = true;
   };

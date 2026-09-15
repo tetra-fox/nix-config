@@ -29,6 +29,14 @@
 
   home-manager.users.${username}.imports = [modules.profiles.server.home];
 
+  # every server disk shares one thin pool with little headroom and each deploy leaves the
+  # previous closure in the store, so gc nightly with a two day window and fstrim nightly so the
+  # freed blocks reach the pool the same day. the booted generation stays until reboot. see SCHEDULE.md
+  nix.gc = {
+    dates = "*-*-* 12:00:00";
+    options = "--delete-older-than 2d";
+  };
+
   environment.variables.BROWSER = "echo";
 
   # safe only because servers are ssh-key only with no physical access
@@ -49,6 +57,7 @@
       RuntimeMaxUse = lib.mkDefault "64M";
       MaxRetentionSec = lib.mkDefault "2week";
     };
+    fstrim.interval = "*-*-* 12:30:00";
   };
 
   zramSwap.enable = lib.mkDefault true;

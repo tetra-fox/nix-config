@@ -1,4 +1,4 @@
-_: {
+{lib, ...}: {
   imports = [./common.nix];
 
   nix = {
@@ -13,7 +13,7 @@ _: {
     # it at noon local instead, which is background noise on nvme
     # see SCHEDULE.md
     gc = {
-      dates = "Mon 12:00";
+      dates = lib.mkDefault "Mon 12:00";
       persistent = true;
     };
     optimise.dates = ["Mon 13:00"]; # an hour after gc so they don't fight over the store
