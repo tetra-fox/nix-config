@@ -9,11 +9,14 @@
   siteData = config.lab.site.dataDir;
   cfg = config.lab.authentik;
 
-  authentikTag = "2026.5";
+  # full patch tag: without podman-auto-update on this host a floating tag never re-pulls, so
+  # the pin would stop describing what runs. bump majors one at a time, latest patch first
+  authentikTag = "2026.8.2";
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
   dbHost = topo.dbEndpointIp;
+  authHost = "auth.${config.lab.site.domain}";
 
   authentikBase = {
     image = "ghcr.io/goauthentik/server:${authentikTag}";
@@ -30,6 +33,8 @@
         lib.concatStringsSep ","
         (["127.0.0.1/32" "::1/128" "10.88.0.0/16"] ++ map (ip: "${ip}/32") topo.edgeHostIps);
       AUTHENTIK_WEB__WORKERS = "4";
+      # scheme and host only, no path. optional in 2026.8, required from 2026.11
+      AUTHENTIK_WEB__BASE_URL = "https://${authHost}";
     };
     environmentFiles = [config.sops.templates."authentik.env".path];
     extraOptions = [
@@ -76,7 +81,7 @@ in {
         provides = [caps.authServer.name caps.authLdap.name];
         routes = [
           {
-            host = "auth.${config.lab.site.domain}";
+            host = authHost;
             inherit (cfg) port;
             # podman's published port DNATs before the input chain; an input allow
             # would be a dead rule
@@ -146,7 +151,9 @@ in {
         };
         ports = ["${config.lab.site.internalIp}:${toString cfg.ldapPort}:3389"];
         environmentFiles = [config.sops.templates."authentik-ldap.env".path];
-        extraOptions = ["--add-host=auth-server:host-gateway"];
+        # the server port is published on the internal vlan address only, so the outpost has
+        # to dial that; host-gateway (the bridge gateway) has no dnat rule for it
+        extraOptions = ["--add-host=auth-server:${config.lab.site.internalIp}"];
       };
     };
 
