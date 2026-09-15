@@ -37,12 +37,19 @@
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;
 
-  # native wine ableton live; consumed via legacyPackages (not the fleet overlay)
-  # so it builds against nurpkgs' own nixpkgs pin, see the tetra-nurpkgs input
-  # comment in flake.nix. pulls in ableton-wine.
+  # native wine ableton live, from upstream's official flake. the ableton-wine
+  # package is the combined runtime plus launcher: it ships bin/ableton-live,
+  # bin/ableton-wine and bin/max9. from-source wine build, see the ableton-linux
+  # input comment in flake.nix.
   environment.systemPackages = [
-    inputs.tetra-nurpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.ableton-live
+    inputs.ableton-linux.packages.${pkgs.stdenv.hostPlatform.system}.ableton-wine
   ];
+
+  # load ntsync so wine uses the kernel fast-wait path for live's short audio
+  # deadlines instead of a wineserver round trip per wait. the mainline misc
+  # device comes up mode 0666, so no udev rule is needed. the launcher warns
+  # when /dev/ntsync is absent.
+  boot.kernelModules = ["ntsync"];
 
   # the launcher's realtime probe (`chrt -r 10`) needs RLIMIT_RTPRIO, which rtkit
   # alone doesn't grant; scoped to @realtime (modules/hardware/pipewire/system.nix
