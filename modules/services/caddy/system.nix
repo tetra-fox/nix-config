@@ -73,7 +73,11 @@
       # simple-regex filter matches it. caddy's default JSON is harder to write a filter against.
       (log) {
       	log {
-      		output file /var/log/caddy/access.log
+      		# caddy's defaults keep ten 100M rolls for 90 days; fail2ban only reads the live file
+      		output file /var/log/caddy/access.log {
+      			roll_keep 3
+      			roll_keep_for 168h
+      		}
       		format transform "{common_log}"
       	}
       }
