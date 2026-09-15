@@ -166,6 +166,13 @@ in {
         initialAdvertisePeerUrls = ["http://${selfIp}:2380"];
         listenClientUrls = ["http://${selfIp}:2379" "http://127.0.0.1:2379"];
         advertiseClientUrls = ["http://${selfIp}:2379"];
+        # patroni rewrites its lease keys every loop and etcd keeps every revision until told
+        # otherwise, against a 2G quota that turns the store read-only. compaction alone does
+        # not shrink the file, see the README
+        extraConf = {
+          AUTO_COMPACTION_MODE = "periodic";
+          AUTO_COMPACTION_RETENTION = "1h";
+        };
       };
 
       patroni = {

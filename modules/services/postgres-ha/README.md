@@ -94,6 +94,22 @@ blind).
 6. If the VIP changed too, restart haproxy and keepalived -- a stale haproxy stays bound to
    the old VIP.
 
+## etcd db size
+
+Patroni rewrites its lease keys every loop and etcd keeps every revision until compacted, so
+the module sets hourly periodic auto-compaction. Compaction frees space inside the bolt file but
+never shrinks it; that takes a defrag, which is per member and blocks that member for the
+duration (sub-second at hundreds of MB). One member at a time, followers first, checking health
+between:
+
+```
+etcdctl --endpoints=http://10.10.0.111:2379 defrag
+etcdctl --endpoints=http://10.10.0.110:2379,http://10.10.0.111:2379,http://10.10.0.112:2379 endpoint health
+```
+
+`etcdctl endpoint status -w table` shows DB SIZE vs IN USE per member; a large gap means a
+defrag is due. Before compaction existed here the file reached 830M for 17 keys in ten weeks.
+
 ## Assumptions / future work
 
 - **No TLS on etcd or the Patroni REST API.** The internal VLAN (10.10.0.0/24) is isolated L2
