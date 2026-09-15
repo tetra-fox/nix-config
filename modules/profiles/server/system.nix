@@ -42,11 +42,13 @@
   services = {
     qemuGuest.enable = lib.mkDefault true;
     udisks2.enable = lib.mkDefault false;
-    journald.extraConfig = lib.mkDefault ''
-      SystemMaxUse=500M
-      RuntimeMaxUse=64M
-      MaxRetentionSec=2week
-    '';
+    # every server ships its journal to the site's loki (31d), so the local copy only has to
+    # cover a loki outage
+    journald.settings.Journal = {
+      SystemMaxUse = lib.mkDefault "200M";
+      RuntimeMaxUse = lib.mkDefault "64M";
+      MaxRetentionSec = lib.mkDefault "2week";
+    };
   };
 
   zramSwap.enable = lib.mkDefault true;
