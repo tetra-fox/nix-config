@@ -43,6 +43,9 @@ in {
           # servers are UTC. monday 13:00 is 5a/6a pacific
           # see SCHEDULE.md
           dates = "Mon 13:00";
+          # without --all, prune only drops dangling layers and every tag podman-auto-update
+          # replaced stays behind
+          flags = ["--all"];
         };
       };
       oci-containers.backend = "podman";
