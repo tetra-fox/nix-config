@@ -6,13 +6,6 @@
 }: let
   cfg = config.lab.ddcci;
 
-  # linux 7.2 removed strncpy, which the sysfs show handlers still used. this is
-  # upstream MR !21 verbatim, converting them to sysfs_emit. drop it once merged:
-  # https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/merge_requests/21
-  driver = config.boot.kernelPackages.ddcci-driver.overrideAttrs (old: {
-    patches = (old.patches or []) ++ [./sysfs-emit.patch];
-  });
-
   attach = pkgs.writeShellApplication {
     name = "ddcci-attach";
     runtimeInputs = [pkgs.i2c-tools pkgs.coreutils]; # i2ctransfer for the 0x50 EDID probe, timeout/sleep around it
@@ -29,7 +22,7 @@ in {
     hardware.i2c.enable = true;
 
     # registers each DDC/CI monitor as /sys/class/backlight/ddcci*
-    boot.extraModulePackages = [driver];
+    boot.extraModulePackages = [config.boot.kernelPackages.ddcci-driver];
     boot.kernelModules = ["ddcci_backlight"];
 
     # its udev rule makes the backlight node video-group-writable, so a user in
