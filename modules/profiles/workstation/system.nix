@@ -28,6 +28,7 @@
     modules.hardware.pipewire.system
     modules.hardware.pipewire-rnnoise.system
     modules.desktop.udiskie.system
+    modules.cli.nix-index.system
     modules.cli.yazi.system
   ];
 
@@ -59,7 +60,6 @@
 
   programs = {
     dconf.enable = true;
-    command-not-found.enable = true;
     # FHS binaries (vscode extensions, some electron apps, precompiled steam tools) want glibc at /lib64/ld-linux
     nix-ld = {
       enable = true;
