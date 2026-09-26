@@ -43,7 +43,7 @@ in {
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
   home.packages = with pkgs; [
-    chromium
+    ungoogled-chromium
 
     signal-desktop
     cinny-desktop
