@@ -13,6 +13,7 @@ in {
     ../_autostart.nix
     ./_hyprpaper
     ./_hyprcursor.nix
+    ./_hypridle.nix
     ./_quickshell
     ./_clipboard.nix
     ./_screen-capture.nix
