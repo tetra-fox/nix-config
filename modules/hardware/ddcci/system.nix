@@ -6,6 +6,13 @@
 }: let
   cfg = config.lab.ddcci;
 
+  # ddcci_remove matches children against client instead of &client->dev, so
+  # deleting an i2c client leaves its ddcciN registered and re-probing hits EEXIST
+  # TODO: drop once upstream fixes it, https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/blob/bbb7553373f815d78e93a4a9f071ce968563694a/ddcci/ddcci.c#L1783
+  driver = config.boot.kernelPackages.ddcci-driver.overrideAttrs (old: {
+    patches = (old.patches or []) ++ [./remove-children.patch];
+  });
+
   attach = pkgs.writeShellApplication {
     name = "ddcci-attach";
     runtimeInputs = [pkgs.i2c-tools pkgs.coreutils]; # i2ctransfer for the 0x50 EDID probe, timeout/sleep around it
@@ -22,7 +29,7 @@ in {
     hardware.i2c.enable = true;
 
     # registers each DDC/CI monitor as /sys/class/backlight/ddcci*
-    boot.extraModulePackages = [config.boot.kernelPackages.ddcci-driver];
+    boot.extraModulePackages = [driver];
     boot.kernelModules = ["ddcci_backlight"];
 
     # its udev rule makes the backlight node video-group-writable, so a user in

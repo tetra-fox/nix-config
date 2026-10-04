@@ -1,0 +1,11 @@
+--- a/ddcci/ddcci.c
++++ b/ddcci/ddcci.c
+@@ -1780,7 +1780,7 @@
+ 
+ 	mutex_lock(&drv_data->lock);
+ 	while (1) {
+-		dev = bus_find_device(&ddcci_bus_type, NULL, client,
++		dev = bus_find_device(&ddcci_bus_type, NULL, &client->dev,
+ 				      ddcci_remove_helper);
+ 		if (!dev)
+ 			break;
