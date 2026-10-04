@@ -7,8 +7,13 @@ state="$XDG_RUNTIME_DIR/idle-dim"
 exec 9>"$state.lock"
 flock 9
 
-shopt -s nullglob
+# each monitor is on its own i2c bus, so the writes run in parallel
 pids=()
+wait_all() {
+  for pid in "${pids[@]}"; do wait "$pid"; done
+}
+
+shopt -s nullglob
 case "${1-}" in
 dim)
   percent=$2
@@ -20,12 +25,17 @@ dim)
     brightnessctl -q -d "$name" set $((level * percent / 100)) &
     pids+=($!)
   done
+  wait_all
   ;;
 restore)
+  # the blank step restores ahead of dpms off, so on wake there's nothing left
+  [ -e "$state" ] || exit 0
   while read -r name level; do
     brightnessctl -q -d "$name" set "$level" &
     pids+=($!)
   done <"$state"
+  # a failed write exits in wait_all, keeping the levels for the next restore
+  wait_all
   rm "$state"
   ;;
 *)
@@ -33,6 +43,3 @@ restore)
   exit 2
   ;;
 esac
-
-# each monitor is on its own i2c bus, so the writes run in parallel
-for pid in "${pids[@]}"; do wait "$pid"; done

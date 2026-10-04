@@ -20,12 +20,14 @@ in {
     settings.listener = [
       {
         timeout = 300;
-        on-timeout = "${idle-dim} dim 66";
+        on-timeout = "${idle-dim} dim 33";
         on-resume = "${idle-dim} restore";
       }
       {
         timeout = 900;
-        on-timeout = "${hyprctl} dispatch 'hl.dsp.dpms({ action = \"off\" })'";
+        # restore while the monitors are still awake: ddc/ci writes get no reply, and a
+        # monitor asleep or waking drops them silently. it keeps the level through standby
+        on-timeout = "${idle-dim} restore; ${hyprctl} dispatch 'hl.dsp.dpms({ action = \"off\" })'";
         on-resume = "${hyprctl} dispatch 'hl.dsp.dpms({ action = \"on\" })'";
       }
     ];
