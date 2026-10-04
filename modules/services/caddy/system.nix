@@ -140,7 +140,7 @@ in {
           "github.com/caddy-dns/cloudflare@v0.2.4"
           "github.com/caddyserver/transform-encoder@v0.0.0-20260423033309-ba4124974830"
         ];
-        hash = "sha256-rqa6N/czOOEpC/x4E88JnJ1iW3y7hdWT9f1y8HKp2bw=";
+        hash = "sha256-H58o/eexwVBet2yI+j1W9KbDCVCMoH+49Np07tQtt9M=";
       };
       description = "the caddy build. the default carries the cloudflare dns plugin (for the default certIssuer) and transform-encoder (fail2ban's log format).";
     };
