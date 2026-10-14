@@ -58,11 +58,6 @@
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    elephant.url = "github:abenz1267/elephant";
-    walker = {
-      url = "github:abenz1267/walker";
-      inputs.elephant.follows = "elephant";
-    };
     zsh-patina = {
       url = "github:michel-kraemer/zsh-patina";
       # only used on 26.05-darwin, which lacks zsh-patina. unstable errors on x86_64-darwin
