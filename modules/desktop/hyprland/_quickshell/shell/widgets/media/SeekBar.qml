@@ -10,8 +10,7 @@ ColumnLayout {
     // position is only writable when both are true (mpris player.hpp)
     readonly property bool seekable: (root.player?.canSeek ?? false) && (root.player?.positionSupported ?? false)
 
-    // clamped drag position: the grab holds past the track edges, where raw
-    // mouseX goes negative or beyond the width
+    // the grab holds past the track edges
     readonly property real dragFraction: Math.max(0, Math.min(1, seekArea.mouseX / seekTrack.width))
 
     Layout.fillWidth: true
@@ -71,7 +70,7 @@ ColumnLayout {
             id: seekArea
             anchors {
                 fill: parent
-                // extend hit area beyond the thin visual track
+                // hit area beyond the thin track
                 topMargin: -6
                 bottomMargin: -6
             }

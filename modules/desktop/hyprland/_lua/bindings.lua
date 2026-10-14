@@ -5,11 +5,9 @@ hl.bind(mod .. " + E", hl.dsp.exec_cmd("@app2unit@ -- @file_manager@"))
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("@menu@"))
 hl.bind(mod .. " + C", hl.dsp.exec_cmd("@hyprpicker@ -a"))
 
--- float the window under the cursor instead of the focused one, so a window
--- on another monitor can be floated without focusing it first. the lua api
--- has no window-at-cursor query (only get_monitor_at_cursor), so hit-test
--- cursor against window geometry: floating renders above tiled, and lower
--- focus_history_id means more recently focused which tracks raise order.
+-- floats the window under the cursor, not the focused one. the lua api has no
+-- window-at-cursor query, so hit-test: floating is above tiled, and a lower
+-- focus_history_id is more recently focused, which tracks raise order
 -- TODO: replace the hit-test if hyprland grows a window-at-cursor query
 local function window_under_cursor()
   local pos = hl.get_cursor_pos()
@@ -39,7 +37,6 @@ end)
 
 hl.bind(mod .. " + Q", hl.dsp.window.close())
 
--- super+[1-9] switch workspace, super+shift+[1-9] move active window to workspace
 for i = 1, 9 do
   hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }))
   hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))

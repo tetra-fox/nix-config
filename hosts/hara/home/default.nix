@@ -4,24 +4,9 @@
   modules,
   ...
 }: let
-  # vrcx's optional OpenVR overlay inits on startup. two runtime dlopen-by-
-  # short-name lookups fail under nix because neither consults a RUNPATH:
-  #   - xrizer (the openvrpaths.vrpath shim, see modules/steam/home.nix)
-  #     dlopens "libopenxr_loader.so" -> needs openxr-loader on the path
-  #   - the .NET overlay thread (VRCXVRElectron.SetupTextures) dlopens
-  #     "libEGL.so.1"/"libGL.so.1" -> needs the glvnd dispatch libs, and
-  #     those in turn dlopen the nvidia vendor driver from the driver link
-  # scope all of it to vrcx instead of polluting the global env. driverLink
-  # is /run/opengl-driver so this tracks driver bumps.
-  #
-  # this gets vrcx running with a working OpenXR session and GL context, but
-  # the overlay still does not render: xrizer 0.5 panics in SetOverlayTexture
-  # (get_real_session_data, overlay.rs:64) because it assumes a compositor
-  # session already exists, and vrcx is overlay-only so it never submits
-  # frames through IVRCompositor. upstream gap, not fixable here. to actually
-  # get the overlay, either wait for xrizer overlay-only support or try
-  # pointing openvrpaths at opencomposite (already scaffolded in
-  # modules/steam/home.nix), weighed against vrchat which is tuned for xrizer.
+  # xrizer and vrcx's overlay thread dlopen openxr_loader and libEGL/libGL by short name,
+  # which ignores RUNPATH. the overlay still won't render: xrizer 0.5 panics in
+  # SetOverlayTexture for overlay-only apps
   vrcx = pkgs.vrcx-nightly.overrideAttrs (old: {
     nativeBuildInputs = (old.nativeBuildInputs or []) ++ [pkgs.makeWrapper];
     postFixup =
@@ -134,9 +119,7 @@ in {
 
   home.packages = with pkgs; [
     cider-2
-    # TODO: re-enable once nixpkgs fetchurl can pass bitwig's new cookie/token CDN gate.
-    # the 6.0.6 .deb download loops (curl error 47, max redirects) because the CDN bounces
-    # any client that doesn't carry the session cookie set during the redirect handshake.
+    # TODO: re-enable once fetchurl passes bitwig's cookie CDN gate (6.0.6 loops, curl error 47)
     # bitwig-studio
     tenacity
     blender
@@ -148,11 +131,7 @@ in {
         javaPackages.compiler.temurin-bin.jre-17
         javaPackages.compiler.temurin-bin.jre-8
       ];
-      # waylandcraft needs libxkbcommon two ways at runtime. its bundled native
-      # lib links libxkbcommon.so.0 (LD_LIBRARY_PATH), and it also shells out to
-      # the xkbcli binary to build a keymap (PATH). nixpkgs ships both the .so
-      # and xkbcli in the same libxkbcommon output, hence the same pkg twice.
-      # the default runtimeLibs already carry wayland (client/cursor/egl)+libGL.
+      # waylandcraft links libxkbcommon.so.0 and also runs xkbcli, both in this one output
       additionalLibs = [libxkbcommon];
       additionalPrograms = [libxkbcommon];
     })

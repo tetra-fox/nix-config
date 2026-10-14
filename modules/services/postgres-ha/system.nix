@@ -20,9 +20,7 @@
   haNodeIps = topo.ipsProviding caps.dbHaNode.name;
   otherNodeIps = lib.filter (ip: ip != selfIp) haNodeIps;
 
-  # etcdInitialCluster and haproxyBackends interpolate each peer's internalIp; a peer
-  # without one would coerce null mid-string. collected here so the assertion below can
-  # name the offending host instead
+  # lets the assertion name the host, instead of a null coercion error mid-string
   haNodesWithoutInternalIp =
     lib.filter (name: nixosConfigurations.${name}.config.lab.site.internalIp == null)
     haNodeNames;
@@ -37,14 +35,10 @@
 
   postgresPkg = cfg.package;
 
-  # patroni's REST port: the haproxy health check, the leader probe, and the firewall
-  # must all agree with the patroni setting
   patroniRestPort = 8008;
 
-  # the per-role reconcile SQL is shared with the single-server module (role-sql.nix)
   roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
-  # so is the dump script (dump.nix); the unit below wraps it in the leader gate
   dumpScript = import modules.services.postgres.dump {
     inherit pkgs postgresPkg;
     inherit (cfg) backup;
@@ -62,16 +56,12 @@
       })
     cfg.roles);
 
-  # neither a psql variable nor an env var can hold a hyphen, so derive both names from a
-  # sanitised role name rather than the raw attr key
+  # neither a psql variable nor an env var can hold a hyphen
   varName = lib.replaceStrings ["-"] ["_"];
   pwVar = name: "pw_${varName name}";
   pwEnv = name: "PGPASS_${lib.toUpper (varName name)}";
 
-  # the passwords reach psql through the environment, read back by the \getenv lines above.
-  # not psql -v: a -v value is assembled by the shell before exec, so every role password
-  # would sit in one argv, and /proc/<pid>/cmdline is world-readable. the environment is
-  # readable only by the process owner and root.
+  # read back by \getenv. not psql -v, argv is world-readable in /proc/<pid>/cmdline
   roleCredEnv =
     lib.concatStringsSep " " (lib.mapAttrsToList (name: _: ''${pwEnv name}="$(cat "$CREDENTIALS_DIRECTORY/${name}")"'')
       cfg.roles);
@@ -80,8 +70,6 @@
     lib.mapAttrsToList (name: role: "${name}:${config.sops.secrets.${role.passwordSecret}.path}")
     cfg.roles;
 
-  # replication + node-to-node auth is scoped to the internal VLAN, whose subnet is a site
-  # fact (lab.site.internalCidr, asserted non-null below)
   internalCidr = config.lab.site.internalCidr;
 
   pgHba =
@@ -146,14 +134,8 @@ in {
       }
     ];
 
-    # etcd + Patroni REST have no TLS/auth; safe only because nothing but db nodes is on
-    # the internal VLAN (enforced in proxmox, not here). add peer/client TLS + REST auth
-    # before anything else lands on the VLAN.
-    #
-    # initialClusterState = "new" is read only on first start of an empty data dir, so
-    # reboots are fine, but a wiped/replaced node re-bootstraps a new cluster and fails to
-    # join. re-add via etcdctl member add + initialClusterState=existing, or wipe all three
-    # and re-bootstrap together. runbook: this module's README
+    # initialClusterState = "new" is only read on an empty data dir, so a wiped node can't
+    # rejoin on its own. runbook in the README
     services = {
       etcd = {
         enable = true;
@@ -166,9 +148,8 @@ in {
         initialAdvertisePeerUrls = ["http://${selfIp}:2380"];
         listenClientUrls = ["http://${selfIp}:2379" "http://127.0.0.1:2379"];
         advertiseClientUrls = ["http://${selfIp}:2379"];
-        # patroni rewrites its lease keys every loop and etcd keeps every revision until told
-        # otherwise, against a 2G quota that turns the store read-only. compaction alone does
-        # not shrink the file, see the README
+        # patroni rewrites its lease keys every loop, uncompacted revisions hit the 2G quota
+        # and etcd goes read-only. compaction doesn't shrink the file, see the README
         extraConf = {
           AUTO_COMPACTION_MODE = "periodic";
           AUTO_COMPACTION_RETENTION = "1h";
@@ -182,8 +163,7 @@ in {
         nodeIp = selfIp;
         otherNodesIps = otherNodeIps;
         postgresqlPackage = postgresPkg;
-        # overriding postgresqlDataDir disables the module's StateDirectory=patroni, so this
-        # dir is created via tmpfiles below instead.
+        # overriding postgresqlDataDir drops the module's StateDirectory, tmpfiles creates it
         dataDir = "${siteData}/patroni";
         postgresqlDataDir = "${siteData}/patroni/pgdata/${postgresPkg.psqlSchema}";
         restApiPort = patroniRestPort;
@@ -220,7 +200,7 @@ in {
               replication.username = "replicator";
               superuser.username = "postgres";
             };
-            # stable socket path so the reconcile oneshot can reach it (tmpfiles creates the dir).
+            # fixed path for the reconcile and dump units
             parameters.unix_socket_directories = "/run/postgresql";
           };
         };
@@ -233,14 +213,13 @@ in {
     };
 
     systemd = {
-      # patroni owns the watchdog; drop systemd's claim so they don't contend for the one VM device.
+      # patroni owns the one watchdog device
       settings.Manager.RuntimeWatchdogSec = lib.mkForce "0";
 
       services = lib.mkMerge [
         {
-          # /dev/watchdog pre-exists at boot so the module's udev rule granting it to patroni
-          # never re-applies; without it patroni's mode=required won't become primary. re-trigger
-          # udev (and chown directly, in case that races) before patroni on every node.
+          # /dev/watchdog exists before the module's udev rule loads, so it never applies and
+          # patroni can't become primary. chown too in case the retrigger races
           patroni-watchdog-perms = {
             description = "Give the patroni user /dev/watchdog (chown + re-apply the udev rule) before patroni";
             before = ["patroni.service"];
@@ -263,20 +242,14 @@ in {
             wantedBy = ["multi-user.target"];
             serviceConfig = {
               Type = "oneshot";
-              # no `postgres` OS user on an HA node; patroni runs the postmaster, and the local
-              # trust line lets this user reach the postgres role over the socket.
+              # no postgres OS user here, the local trust line lets patroni in as the postgres role
               User = "patroni";
               RemainAfterExit = true;
               LoadCredential = roleLoadCreds;
             };
-            # reconcile once this node is leader; exit 0 if it never is (a replica's work is the
-            # leader's own unit's job, not a failure).
             script = ''
-              # only the leader is out of recovery; wait for it. a node can briefly hold the
-              # patroni leader lock (so /primary answers 200) while postgres is still finishing
-              # promotion and read-only, which is what fails the ALTER ROLE below. gate on the
-              # actual recovery state instead of the rest endpoint. replicas never leave
-              # recovery, so they fall through to the exit-0, exactly as the old check did.
+              # not /primary: the leader lock can be held while promotion is still read-only,
+              # which fails ALTER ROLE. replicas never leave recovery and fall through
               for i in $(seq 1 30); do
                 if [ "$(${postgresPkg}/bin/psql -tAqc 'SELECT NOT pg_is_in_recovery()' -h /run/postgresql -U postgres -d postgres 2>/dev/null)" = t ]; then
                   ${roleCredEnv} ${postgresPkg}/bin/psql -v ON_ERROR_STOP=1 -h /run/postgresql -U postgres -d postgres <<'EOF'
@@ -297,10 +270,8 @@ in {
             unitConfig.RequiresMountsFor = [cfg.backup.dir];
             serviceConfig = {
               Type = "oneshot";
-              # patroni runs the postmaster; local trust line lets this user reach postgres
-              # over the socket
               User = "patroni";
-              # a wedged nfs write fails the unit instead of hanging forever
+              # a wedged nfs write fails the unit instead of hanging
               TimeoutStartSec = "15min";
             };
             # every node runs the timer, only the leader dumps. a failover racing the timer
@@ -327,7 +298,6 @@ in {
 
       timers = {
         postgres-dump = lib.mkIf cfg.backup.enable {
-          # bootstrapHold: installed but not scheduled, like the rest of the stack
           wantedBy = lib.optionals (!ha.bootstrapHold) ["timers.target"];
           timerConfig = {
             OnCalendar = cfg.backup.onCalendar;
@@ -335,8 +305,7 @@ in {
           };
         };
 
-        # keepalived.service has no wantedBy of its own in nixpkgs; this timer is what pulls it
-        # in, 5s after network-online, so the hold has to land here.
+        # nixpkgs starts keepalived from this timer, not a wantedBy, so the hold goes here
         keepalived-boot-delay = lib.mkIf ha.bootstrapHold {
           wantedBy = lib.mkForce [];
         };
@@ -344,21 +313,19 @@ in {
 
       tmpfiles.rules = [
         "d ${siteData}/etcd 0700 etcd etcd -"
-        # parents must exist and be patroni-writable; patroni creates the versioned leaf itself.
+        # patroni creates the versioned leaf itself
         "d ${siteData}/patroni 0750 patroni patroni -"
         "d ${siteData}/patroni/pgdata 0750 patroni patroni -"
         "d /run/postgresql 0755 patroni patroni -"
       ];
     };
 
-    # let haproxy bind the VIP on nodes that don't currently hold it, else it can't start
-    # there and isn't ready when the VIP fails over.
+    # haproxy binds the VIP on nodes that don't hold it, so it's ready on failover
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
     lab.vrrp = {
       enable = true;
       inherit (ha) vip;
-      # heartbeat and VIP both live on the internal VLAN (east-west db traffic only)
       vrrpInterface = config.lab.site.internalInterface;
       vipInterface = config.lab.site.internalInterface;
       inherit (ha) virtualRouterId;
@@ -368,13 +335,12 @@ in {
       instanceName = "pgvip";
       healthCheck = {
         name = "chk_haproxy";
-        # haproxy down drops the VIP so it moves to a node that can route to the db.
+        # haproxy down moves the VIP to a node that can route to the db
         script = "${pkgs.procps}/bin/pgrep -x haproxy";
       };
     };
 
-    # patroni reads these directly (environmentFiles) so they must be patroni-owned; the
-    # per-role secrets go through LoadCredential and need no owner override.
+    # patroni reads these directly, per-role secrets go through LoadCredential
     sops.secrets = lib.mkMerge [
       {
         "postgres/superuser_pass" = lib.mkDefault {owner = "patroni";};
@@ -385,17 +351,12 @@ in {
       cfg.roles)
     ];
 
-    # etcd (2379/2380) and the patroni REST api (8008) have no authentication and no TLS,
-    # so the only thing bounding them is who can open the socket. an interface-scoped open
-    # puts that boundary at "anything on the internal VLAN", which is every mesa host, not
-    # the three db nodes the comment above assumes. source-scope them to the cluster
-    # members so the rule matches the assumption the rest of this module is built on.
+    # etcd and the patroni REST api have no auth or TLS, and every mesa host is on the
+    # internal VLAN, so only cluster members get in
     networking.firewall.extraInputRules = allowFrom haNodeIps [2379 2380 patroniRestPort];
 
-    # 5432 stays interface-scoped: db clients (the arrs, authentik) reach the VIP from
-    # across the internal VLAN, and unlike etcd and patroni it sits behind scram auth and
-    # pg_hba, so reachability is not the only control.
+    # clients reach the VIP across the internal VLAN, and 5432 has scram + pg_hba
     networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [5432];
-    # the VRRP accept rule on the internal interface comes from modules.services.vrrp.system.
+    # the VRRP accept rule comes from modules.services.vrrp.system
   };
 }

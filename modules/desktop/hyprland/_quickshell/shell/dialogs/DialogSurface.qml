@@ -4,9 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 
-// overlay window hosting a centered DialogCard with the shared scale+fade
-// open animation. the focus grab stays with the concrete dialogs; its
-// lifecycle is the part that differs between them
+// the focus grab stays with each dialog, its lifecycle differs between them
 PanelWindow { // qmllint disable uncreatable-type
     id: root
 

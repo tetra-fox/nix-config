@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Effects
 
-// pill-shaped status badge with optional ping ring animation
 Rectangle {
     id: root
 
@@ -10,7 +9,7 @@ Rectangle {
     property bool active: false
     property bool pulsing: false
 
-    // ping ring sweep; one value drives the four coordinated animations
+    // shared by the four ring animations
     readonly property int _ringDur: 1200
     property color accentColor: root.active ? Theme.colorGreen : Theme.colorRed
 
@@ -19,8 +18,7 @@ Rectangle {
     implicitWidth: label.implicitWidth + 8
     implicitHeight: label.implicitHeight + 4
 
-    // invisible but rendered to a texture layer so MultiEffect can
-    // blur/scale it as the ping ring source
+    // layer-rendered as the MultiEffect source
     Rectangle {
         id: ringSource
         anchors.centerIn: parent

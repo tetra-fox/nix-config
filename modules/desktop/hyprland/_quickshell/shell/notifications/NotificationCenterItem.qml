@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
-// own-module import: NotifState's singleton flag lives in the generated qmldir,
-// which tooling only reads through a module import, not same-directory lookup
+// self-import: tooling only sees the singleton flag in qmldir through a module import
 import qs.notifications
 import qs.components
 import qs.lib
@@ -14,8 +13,6 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // the persistent wrapper from shell.qml; notif, time, and the pending
-    // dismiss flag all live on it so they survive delegate rebuilds
     required property var wrapper
     readonly property Notification notif: wrapper.notif
     readonly property real time: wrapper.time
@@ -26,10 +23,8 @@ Item {
     readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
     readonly property string title: NotifState.title(notif)
 
-    // whether a left-click can jump to the source (default action, or a window to raise)
     readonly property bool canActivate: {
-        // quickshell's qmltypes reference the QList<NotificationAction*> property
-        // type without exposing it declaratively
+        // qmltypes reference QList<NotificationAction*> without exposing it
         const hasDefault = (notif.actions ?? []).some(a => a.identifier === "default"); // qmllint disable unresolved-type
         return hasDefault || (notif.desktopEntry || notif.appName) !== "";
     }
@@ -80,8 +75,7 @@ Item {
     }
 
     function focusWindow(): bool {
-        // desktopEntry/appName are untrusted dbus Notify fields interpolated
-        // into a lua long-bracket string that hyprland evaluates
+        // untrusted dbus fields, interpolated into lua that hyprland evaluates
         const cls = Hypr.escapeArg(root.notif.desktopEntry || root.notif.appName);
         if (!cls)
             return false;
@@ -89,9 +83,7 @@ Item {
         return true;
     }
 
-    // left-click activation: invoke the spec default action (jump to the source,
-    // e.g. discord opens the message), else raise the app window by class. dismiss
-    // on success since the user has been taken to the source
+    // default action, else raise the app window by class
     function activate(): void {
         if (NotifState.activate(root.notif) || root.focusWindow())
             root.dismiss();
@@ -127,7 +119,7 @@ Item {
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
             cursorShape: root.canActivate ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: mouse => {
-                // middle-click always raises the window, never jumps to the message
+                // middle-click raises the window, never jumps to the message
                 if (mouse.button === Qt.MiddleButton)
                     root.focusWindow();
                 else if (root.canActivate)
@@ -191,7 +183,6 @@ Item {
                         GlyphButton {
                             icon: Icons.expandMore
                             iconSize: Theme.fontSm
-                            // only offer expand when there's hidden text to reveal
                             visible: bodyText.truncated || root.expanded
                             rotation: root.expanded ? 180 : 0
                             Behavior on rotation {
@@ -225,7 +216,6 @@ Item {
                         font.pixelSize: Theme.fontXs
                         font.family: Theme.fontFamily
                         wrapMode: Text.WordWrap
-                        // unlimited when expanded; 99 is effectively unlimited for any realistic body
                         maximumLineCount: root.expanded ? 99 : 2
                         elide: Text.ElideRight
                         textFormat: Text.AutoText

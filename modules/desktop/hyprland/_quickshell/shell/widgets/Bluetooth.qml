@@ -18,9 +18,7 @@ BarPopupButton {
         return d.name || d.deviceName || d.address;
     }
 
-    // live bindings: reading connected/paired/name on each device during
-    // evaluation subscribes to those properties, so the lists re-sort and
-    // re-filter themselves on any device change, not just membership changes
+    // reading connected/paired/name here subscribes to them, so any device change re-sorts
     readonly property var _sortedDevices: root.adapter?.devices.values.slice().sort((a, b) => root.deviceLabel(a).localeCompare(root.deviceLabel(b))) ?? [] // qmllint disable unresolved-type
     readonly property var connectedDevices: _sortedDevices.filter(d => d.connected)
     readonly property var pairedDevices: _sortedDevices.filter(d => d.paired && !d.connected)
@@ -33,9 +31,8 @@ BarPopupButton {
         return adapter.devices.values.find(d => d.state === BluetoothDeviceState.Connecting) ?? null; // qmllint disable unresolved-type
     }
 
-    // discovery is a level derived from popup and accordion state, recomputed on
-    // both edges; edge-only writes left it off when the popup reopened with the
-    // accordion already expanded
+    // recomputed from popup and accordion state, not toggled per edge, so reopening
+    // with the accordion already expanded still scans
     function _updateDiscovery(): void {
         if (root.adapter)
             root.adapter.discovering = availableAccordion.expanded && root.popupVisible && root.powered;
@@ -53,13 +50,11 @@ BarPopupButton {
     iconColor: root.powered ? Theme.textPrimary : Theme.textInactive
 
     onPopupVisibleChanged: {
-        // expansion is set imperatively at open, not bound: Accordion's own
-        // header toggle writes expanded, which would destroy a binding
+        // not bound: Accordion's header writes expanded, which would destroy a binding
         if (popupVisible) {
             pairedAccordion.expanded = root.connectedDevice === null;
             availableAccordion.expanded = root.connectedDevice === null && root.pairedDevices.length === 0;
         }
-        // on close this stops scanning to save power
         root._updateDiscovery();
     }
 
@@ -159,8 +154,7 @@ BarPopupButton {
             maxItems: 6
 
             Repeater {
-                // ScriptModel diffs by device identity, so list updates only
-                // touch rows whose device appeared or vanished
+                // ScriptModel diffs by identity, only added/removed rows rebuild
                 model: ScriptModel {
                     values: root.pairedDevices
                 }

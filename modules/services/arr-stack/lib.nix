@@ -1,5 +1,5 @@
 {lib}: rec {
-  # { _sops = "apps/sonarr_api_key" } marks a value to resolve via placeholderFn
+  # { _sops = "apps/sonarr_api_key"; } resolves via placeholderFn
   isSopsRef = v: builtins.isAttrs v && v ? _sops;
 
   # mkServarrEnv "SONARR" { auth.method = "Forms"; postgres.port = 5432; }

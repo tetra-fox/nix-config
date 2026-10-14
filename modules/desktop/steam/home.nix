@@ -6,10 +6,7 @@
 }: {
   imports = [../_autostart.nix];
 
-  # must be osConfig.programs.steam.package, not pkgs.steam: the system module wraps
-  # it with STEAM_EXTRA_COMPAT_TOOLS_PATHS (see modules/desktop/steam/system.nix),
-  # and that wrapping only lands on the package exposed via programs.steam, not on
-  # the bare pkgs.steam derivation
+  # not pkgs.steam: only the system module's package carries the compat tools wrapping
   my.autostart.apps.steam = {
     exec = "${osConfig.programs.steam.package}/bin/steam -silent";
     tray = true;
@@ -48,8 +45,6 @@
 
         runtime = [
           "${pkgs.xrizer}/lib/xrizer"
-          # OR
-          # "${pkgs.opencomposite}/lib/opencomposite"
         ];
       };
   };

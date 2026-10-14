@@ -8,15 +8,12 @@ Item {
 
     required property var screen
 
-    // workspaces on this monitor, left-to-right; shared by the scroll handler and the pills
     readonly property var monitorWorkspaces: Hyprland.workspaces.values.filter(ws => ws.monitor?.name === root.screen.name).sort((a, b) => a.id - b.id)
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
-    // scroll to switch workspaces on this monitor, wrapping at the ends.
-    // high-res scroll wheels and laggy focusedWorkspace updates can fire many
-    // events per gesture, so rate-limit to one switch per cooldown window.
+    // high-res wheels and laggy focusedWorkspace updates fire many events per gesture
     property double _lastScrollAt: 0
     readonly property int _scrollCooldownMs: 180
 

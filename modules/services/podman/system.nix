@@ -8,7 +8,6 @@
 }: let
   cfg = config.lab.podman;
 in {
-  # lab.podman options live in options.nix so consumers can import the contract alone
   imports = [
     modules.services.podman.options
     modules.services.monitoring.registry
@@ -28,8 +27,7 @@ in {
           port = cfg.cadvisor.port;
         }
       ];
-      # registered with the exporter like every other producer, so the dashboard follows
-      # cadvisor to whichever grafana covers this host (the site fold or local mode)
+      # follows cadvisor to whichever grafana covers this host
       dashboards = [pkgs.grafana-dashboards.cadvisor];
     };
 
@@ -40,29 +38,26 @@ in {
         dockerSocket.enable = true;
         autoPrune = {
           enable = true;
-          # servers are UTC. monday 13:00 is 5a/6a pacific
-          # see SCHEDULE.md
+          # UTC, see SCHEDULE.md
           dates = "Mon 13:00";
-          # without --all, prune only drops dangling layers and every tag podman-auto-update
-          # replaced stays behind
+          # without --all, images podman-auto-update replaced are never pruned
           flags = ["--all"];
         };
       };
       oci-containers.backend = "podman";
     };
 
-    # systemd.packages installs the unit files but not the [Install] section, so enable the timer here
+    # systemd.packages skips the [Install] section
     systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
       wantedBy = ["timers.target"];
-      # upstream fires at midnight utc (4p/5p pacific) and restarts updated containers;
-      # move it into the sleep window. empty string resets the inherited OnCalendar
+      # upstream's midnight UTC restarts containers mid-evening. "" clears the inherited value.
       # see SCHEDULE.md
       timerConfig.OnCalendar = ["" "12:00"];
     };
 
     users.users.${username}.extraGroups = ["podman"];
 
-    # let containers reach native host services over the bridge without exposing those ports to the LAN
+    # containers reach native host services without those ports opening to the LAN
     networking.firewall.trustedInterfaces = ["podman0"];
   };
 }

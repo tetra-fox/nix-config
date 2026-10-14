@@ -24,37 +24,24 @@
     # nvidia doesn't hand the DDC/CI bus to ddcci_backlight, so force the attach
     ddcci.forceProbe = true;
 
-    # gpu metrics + dashboard for the local resource monitor
     nvidia.exporter.enable = true;
 
-    # this room's valve basestations, powered with monado by the steam module
     # steam.lighthouses = ["LHB-460730FA" "LHB-E0CEB24B"];
   };
 
-  # cuda build for the rtx 3090; the ollama module leaves package at the cpu default
   services.ollama.package = pkgs.ollama-cuda;
 
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;
 
-  # native wine ableton live, from upstream's official flake. the ableton-wine
-  # package is the combined runtime plus launcher: it ships bin/ableton-live,
-  # bin/ableton-wine and bin/max9. from-source wine build, see the ableton-linux
-  # input comment in flake.nix.
   environment.systemPackages = [
     inputs.ableton-linux.packages.${pkgs.stdenv.hostPlatform.system}.ableton-wine
   ];
 
-  # load ntsync so wine uses the kernel fast-wait path for live's short audio
-  # deadlines instead of a wineserver round trip per wait. the mainline misc
-  # device comes up mode 0666, so no udev rule is needed. the launcher warns
-  # when /dev/ntsync is absent.
+  # wine sync for live's audio deadlines. the device is 0666, no udev rule needed
   boot.kernelModules = ["ntsync"];
 
-  # the launcher's realtime probe (`chrt -r 10`) needs RLIMIT_RTPRIO, which rtkit
-  # alone doesn't grant; scoped to @realtime (modules/hardware/pipewire/system.nix
-  # already puts the user in that group) so it doesn't touch this machine's
-  # non-audio work.
+  # the ableton launcher probes `chrt -r 10`, rtkit alone doesn't grant RLIMIT_RTPRIO
   security.pam.loginLimits = [
     {
       domain = "@realtime";
@@ -78,15 +65,14 @@
       }
     ];
     defaultGateway = "192.168.20.1";
-    # the UDM's server-VLAN address; hara sits on the trusted VLAN but resolves against it
+    # server-VLAN gateway, hara is on the trusted VLAN
     nameservers = [config.lab.net.gateway];
     search = ["mesa.tetra.cool"];
   };
 
   networking.firewall.allowedUDPPorts = [51820];
 
-  # physical cabling for the topology diagram; the address is on the trusted VLAN, so
-  # attach the interface to that network or it renders detached
+  # without the network it renders detached
   topology.self.interfaces.enp11s0f0np0 = {
     network = "mesa-trusted-vlan";
     physicalConnections = [

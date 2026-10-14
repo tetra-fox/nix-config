@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// menu row for popups; isSeparator: true for a divider line
 Item {
     id: root
 

@@ -26,6 +26,6 @@
       taglib
     ]);
 
-  # no kdeglobals here: plasma owns that file now, and a home-manager symlink
+  # no kdeglobals here: plasma owns that file, and a home-manager symlink
   # would stop systemsettings from writing it
 }

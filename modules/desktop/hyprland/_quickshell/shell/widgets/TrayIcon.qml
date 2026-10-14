@@ -82,8 +82,7 @@ Item {
             }
 
             Repeater {
-                // empty while closed so reopening starts with submenus collapsed
-                // and their dbus openers released
+                // empty while closed, so submenus reopen collapsed and release their dbus openers
                 model: popup.visible ? menuOpener.children : null
 
                 delegate: TrayMenuEntry {

@@ -7,7 +7,7 @@
 }: let
   cfg = config.lab.nvidia;
 in {
-  # options-only, so we can register the gpu exporter without the full monitoring stack
+  # options only, no monitoring stack
   imports = [modules.services.monitoring.registry];
 
   options.lab.nvidia.exporter = {
@@ -23,11 +23,11 @@ in {
     hardware = {
       graphics.enable = true;
       nvidia = {
-        # recommended true for turing+ by nvidia
+        # nvidia recommends it for turing+
         # https://developer.nvidia.com/blog/nvidia-transitions-fully-towards-open-source-gpu-kernel-modules/
         open = lib.mkDefault true;
         modesetting.enable = true;
-        # without this, resume from suspend comes back to garbage framebuffers on turing+
+        # without it resume shows garbage framebuffers on turing+
         powerManagement.enable = lib.mkDefault true;
         nvidiaSettings = true;
       };
@@ -40,7 +40,7 @@ in {
         enable = true;
         port = cfg.exporter.port;
         listenAddress = config.lab.monitoring.bindAddr;
-        # per-process gpu metrics, the dashboard's process panels key on them
+        # the dashboard's process panels need these
         extraFlags = ["--collect.compute-apps"];
       };
     };
@@ -52,7 +52,6 @@ in {
           port = cfg.exporter.port;
         }
       ];
-      # registered here, lands on the site's grafana via the server's dashboard fold
       dashboards = [pkgs.grafana-dashboards.nvidia-gpu];
       alerts = [
         {

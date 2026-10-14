@@ -10,7 +10,7 @@ Item {
     id: root
 
     required property string appName
-    required property var notifs    // list of {notif, time} wrappers, newest first
+    required property var notifs    // wrappers, newest first
 
     signal clearGroup
 
@@ -21,7 +21,6 @@ Item {
         width: parent.width
         spacing: 4
 
-        // header only shown when a group has >1 notif
         RowLayout {
             Layout.fillWidth: true
             visible: root.notifs.length > 1
@@ -54,8 +53,7 @@ Item {
         }
 
         Repeater {
-            // ScriptModel keys delegates on the stable wrapper objects, so a
-            // rebuilt notifs array only touches added or removed items
+            // ScriptModel diffs by identity, only added/removed rows rebuild
             model: ScriptModel {
                 values: root.notifs
             }

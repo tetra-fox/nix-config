@@ -1,7 +1,4 @@
-# provides this host's fleet topology attrset as the `topo` module arg, so consumers read
-# topo.<derive> instead of each re-importing fleet.topology with the same three arguments. lazy:
-# a host that never reads topo never runs the engine. nixos-only -- it needs nixosConfigurations,
-# which the darwin eval doesn't carry.
+# nixos-only: darwin evals don't carry nixosConfigurations
 {
   lib,
   config,

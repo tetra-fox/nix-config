@@ -1,12 +1,7 @@
-// HOSTNAME, LOKI_HOST and LOKI_PORT come from the environment (set by the nixos
-// module) so this file stays pure alloy with no nix interpolation; that keeps
-// `alloy fmt` and the editor extension working against exactly what alloy parses.
-// LOKI_HOST is 127.0.0.1 on the monitoring server (loki is local) and the site
-// server's IP on an agent (ships logs to the server's loki over the network).
+// HOSTNAME, LOKI_HOST and LOKI_PORT come from the nixos module's environment so this
+// file stays plain alloy that `alloy fmt` can parse
 
-// one journal source catches everything: native services log to the journal by
-// definition, and oci-containers run as podman-<name>.service whose conmon output
-// also lands in the journal. no per-service or per-container config
+// oci-containers run as podman-<name>.service, so the journal covers them too
 loki.source.journal "journald" {
 	max_age       = "12h"
 	relabel_rules = loki.relabel.journald.rules
@@ -18,12 +13,9 @@ loki.source.journal "journald" {
 }
 
 loki.relabel "journald" {
-	// rules are consumed by reference above; alloy still requires forward_to,
-	// an empty list is valid
+	// only used for its rules, but alloy requires forward_to
 	forward_to = []
 
-	// _SYSTEMD_UNIT -> unit, so queries are {unit="caddy.service"} or
-	// {unit=~"podman-.*"} for all containers
 	rule {
 		source_labels = ["__journal__systemd_unit"]
 		target_label  = "unit"

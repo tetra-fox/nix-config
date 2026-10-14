@@ -13,19 +13,14 @@ WlSessionLockSurface {
 
     color: "transparent"
 
-    // -- animation state --
-
     property bool active: false
 
     readonly property int lockDuration: 1000
     readonly property int unlockDuration: 200
     property int animDuration: lockDuration
 
-    property int animEasingType: Easing.BezierSpline  // swapped on unlock for a faster exit feel
-    // custom ease-out curve: slow start, fast middle, gentle settle
+    property int animEasingType: Easing.BezierSpline  // swapped on unlock
     readonly property var animBezier: [0.15, 0.7, 0.25, 1.0, 1.0, 1.0]
-
-    // -- background --
 
     Item {
         id: backgroundLayer
@@ -87,8 +82,6 @@ WlSessionLockSurface {
         }
     }
 
-    // -- clock --
-
     property var _now: new Date()
 
     Timer {
@@ -97,8 +90,6 @@ WlSessionLockSurface {
         repeat: true
         onTriggered: root._now = new Date()
     }
-
-    // -- content --
 
     Item {
         id: content
@@ -212,8 +203,7 @@ WlSessionLockSurface {
 
                 Spinner {
                     font.pixelSize: 14
-                    // opacity, not visible: holds the layout slot so the status
-                    // text doesn't shift when authentication starts
+                    // opacity, not visible, so the status text doesn't shift
                     opacity: root.pam.authenticating ? 1 : 0
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -242,14 +232,11 @@ WlSessionLockSurface {
 
         PowerOptions {
             anchors.fill: parent
-            // refocus on any close of the confirm overlay: cancel, or execute of
-            // an action the session survives (suspend)
+            // cancel, or an action the session survives (suspend)
             onConfirmingChanged: if (!confirming)
                 passwordField.forceActiveFocus()
         }
     }
-
-    // -- shake --
 
     Connections {
         target: root.pam
@@ -294,14 +281,11 @@ WlSessionLockSurface {
         }
     }
 
-    // -- unlock --
-
     Connections {
         target: root.lock
 
         function onUnlock() {
-            // swap to shorter/snappier curve before toggling active,
-            // so the exit animations use the unlock timing
+            // before toggling active, so the exit animations use it
             root.animDuration = root.unlockDuration;
             root.animEasingType = Easing.OutExpo;
             root.active = false;
@@ -309,7 +293,7 @@ WlSessionLockSurface {
         }
     }
 
-    // let exit animation finish before actual unlock
+    // let the exit animation finish first
     Timer {
         id: unlockFinish
         interval: root.unlockDuration

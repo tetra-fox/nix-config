@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Services.Notifications
 import QtQuick
 
-// notif image with fallback chain: notif.image -> notif.appIcon -> material icon
+// notif.image, else notif.appIcon, else a material icon
 Item {
     id: root
 
@@ -24,8 +24,7 @@ Item {
         visible: img.status !== Image.Ready
     }
 
-    // dbus appIcon may be a freedesktop icon name (e.g. "discord") rather than a path/URI;
-    // route through iconPath so theme lookup works. notif.image is already a usable URI per Quickshell.
+    // appIcon may be an icon theme name (e.g. "discord") rather than a path
     function _resolveIcon(s: string): string {
         if (!s)
             return "";

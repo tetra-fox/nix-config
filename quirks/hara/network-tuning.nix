@@ -11,7 +11,7 @@ in {
     "net.core.netdev_max_backlog" = 250000;
   };
 
-  # ring buffers + jumbo MTU; bound to device so it survives NM up/down cycles
+  # bound to the device so it reapplies when NM cycles the link
   systemd.services."ethtool-tune@" = {
     description = "Tune %i (ring buffers, MTU)";
     after = ["sys-subsystem-net-devices-%i.device"];

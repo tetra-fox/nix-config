@@ -1,7 +1,5 @@
-# macos ships its own sshd (Remote Login); there is no services.openssh on
-# nix-darwin. the stock /etc/ssh/sshd_config Includes sshd_config.d/* before
-# its own settings and sshd honors the first value it sees, so a 000- drop-in
-# imposes the fleet policy over both macos' 100-macos.conf and the defaults
+# sshd keeps the first value it sees and the stock config Includes sshd_config.d/* first,
+# so a 000- drop-in overrides macos' 100-macos.conf and defaults
 {
   lib,
   shared,
@@ -9,9 +7,7 @@
   ...
 }: let
   common = import ./_common.nix;
-  # no DH-GEX on darwin: the nixos module pairs it with a hardened moduli
-  # file, but macos' stock /etc/ssh/moduli still contains 2048-bit groups,
-  # which would undercut the fleet's crypto floor
+  # no DH-GEX: macos' stock moduli still has 2048-bit groups
   kex = lib.filter (k: k != "diffie-hellman-group-exchange-sha256") common.kexAlgorithms;
 in {
   environment.etc."ssh/sshd_config.d/000-nix-darwin.conf".text = ''
@@ -32,12 +28,8 @@ in {
     PerSourceMaxStartups ${toString common.perSourceMaxStartups}
   '';
 
-  # the same keyring contract as the nixos module. nix-darwin writes these to
-  # /etc/ssh/nix_authorized_keys.d/%u, which its own 101-authorized-keys.conf
-  # drop-in reads back with AuthorizedKeysCommand. writing ~/.ssh/authorized_keys
-  # through home-manager instead does not work: it lands as a symlink into
-  # /nix/store, and the store is group-writable (drwxrwxr-t), so StrictModes
-  # refuses it with "bad ownership or modes for directory /nix/store"
+  # not via home-manager: ~/.ssh/authorized_keys would symlink into the group-writable
+  # store, and StrictModes refuses it
   users.users.${username}.openssh.authorizedKeys.keys =
     common.keyringKeys lib shared.keyring;
 

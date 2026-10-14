@@ -1,14 +1,10 @@
-# megamax is a raidz1 zpool over the four passthrough drives, created by hand
-# (see modules/platform/zfs). datasets, not fileSystems entries: zfs mounts them
-# itself from the pool, so there's nothing to declare here except the consumers.
-#   megamax/media                  library/ + torrents/ + nzb/ as plain DIRS in one dataset:
-#                                  sonarr/radarr hardlink from torrents to library on import,
-#                                  and hardlinks can't cross a dataset boundary (recordsize=1M)
-#   megamax/store                  general-purpose catch-all, per-user %U subdirs (snapshots on)
-#   megamax/backup/homeassistant   gzipped HA backups pushed over NFS by the HAOS box
-#   megamax/backup/timemachine     mac time machine target, per-user %U subdirs (samba, authenticated)
-#   megamax/backup/postgres        cluster dumps, pushed over NFS by the db leader's nightly pg_dumpall
-#   megamax/immich                 immich photo library + inline db (immich task, later)
+# megamax is a hand-created raidz1 pool, zfs mounts its datasets itself:
+#   megamax/media                  library/ torrents/ nzb/ as dirs in ONE dataset, arr hardlinks can't cross datasets
+#   megamax/store                  per-user %U subdirs
+#   megamax/backup/homeassistant   HA backups pushed over NFS by HAOS
+#   megamax/backup/timemachine     per-user %U subdirs
+#   megamax/backup/postgres        pg_dumpall pushed over NFS by the db leader
+#   megamax/immich                 immich library + db dumps
 {
   config,
   lib,
@@ -19,55 +15,36 @@
   ...
 }: let
   allowFrom = import fleet.nft {inherit lib;};
-  # the media host's internal-VLAN IP; the export + firewall scope to it.
   svcIp = topo.mediaHostIp;
-  # the immich host's internal-VLAN IP; it NFS-mounts megamax/immich for the library.
-  # null until a host advertises the immich capability, so the export/firewall/tmpfiles
-  # for immich are all guarded on it being non-null.
+  # null until a host advertises the immich capability
   immichIp = topo.immichHostIp;
-  # haosIp is HAOS's internal-VLAN leg (see the site facts), so the export and firewall
-  # scope to inter-VM traffic. HAOS must mount this box's internal IP or its NFS source
-  # won't match. it connects as root, so the export all_squashes root to admin:users. the
-  # backups are HAOS's private blobs, deliberately NOT group media (not shared media content).
+  # HAOS's internal-VLAN leg, so HAOS must mount this box's internal IP
   haIp = config.lab.appliances.haosIp;
-  # every db node's internal ip; any can be the leader, so the export and firewall admit all
+  # any node can be the leader, so all are admitted
   dbIps = topo.dbHaNodeIps;
 
-  # media is the one tree that's genuinely group-shared (arr services + every samba user
-  # co-write into it), so it's the only one the boot-time recursive reconciler below touches.
-  # store/timemachine now serve per-user %U subdirs (owner-only, 0700, no group grant), which
-  # a recursive chgrp/chmod would fight every boot -- reconciling those is samba's own
-  # "root preexec" job per connection, not a fleet-wide sweep.
+  # store/timemachine are per-user 0700 subdirs owned via samba root preexec, a recursive
+  # chgrp would fight that
   groupSharedTrees = [
     "/mnt/megamax/media"
   ];
 
-  # every tree a share serves, mount-ordering only (no group-reconciliation implication) --
-  # samba/nfs must wait for all of these to actually be mounted before starting.
+  # mount ordering only
   servedTrees = groupSharedTrees ++ ["/mnt/megamax/store" "/mnt/megamax/backup/timemachine"];
 
-  # datasets that get local zfs auto-snapshots (the zfs module runs zfs-auto-snapshot on
-  # com.sun:auto-snapshot=true, opt-in per dataset). media is excluded on purpose: 808G of
-  # re-acquirable content, not worth the snapshot metadata. the property is asserted at boot
-  # by the oneshot below so it's declared here, not hand-set drift on the pool.
+  # media is excluded on purpose, it's re-acquirable
   snapshotDatasets = [
     "megamax/store"
-    "megamax/immich" # library + immich's own db dumps; local history for oops-recovery
-    "megamax/backup/homeassistant" # HA backup tarballs
-    "megamax/backup/timemachine" # time machine image
-    "megamax/backup/postgres" # cluster dumps; snapshots also survive a misbehaving pruner
+    "megamax/immich"
+    "megamax/backup/homeassistant"
+    "megamax/backup/timemachine"
+    "megamax/backup/postgres"
   ];
 
-  # samba's account registry is Linux users (valid users = @users on the media/store shares):
-  # samba needs a Linux user to exist to map uid/gid, but these people never actually log into
-  # this box, so no password, no shell, no home dir. the samba side (the actual secret) is set
-  # once per person with `smbpasswd -a <user>`, run manually over ssh -- never declared here,
-  # so it's never a plaintext-at-rest secret sitting in the repo or decrypted to disk at every
-  # activation for what amounts to a handful of household accounts.
+  # samba needs a linux user to map uids, no login. the samba password is set by hand with
+  # `smbpasswd -a <user>` so it never lives in the repo
   sambaUsers = ["tetra" "melody" "riley"];
 in {
-  # the pool has no fileSystems entry (zfs mounts its own datasets), so nothing would
-  # import it at boot without this. the pool name is host data, not a zfs-module default.
   boot.zfs.extraPools = ["megamax"];
 
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
@@ -79,12 +56,8 @@ in {
     extraGroups = ["users"];
   });
 
-  # these run after zfs-mount (zfs-mount is Before=local-fs.target, tmpfiles is After),
-  # so the datasets are mounted when these fire. `d` not `Z`: create the dir and set its
-  # own mode/owner, but do NOT recurse, service-written files under here keep their own
-  # ownership and we don't re-walk the whole library every activation. setgid so new files
-  # inherit group media, letting the service uids and SMB @users share write. the arrs
-  # hardlink media/torrents -> media/library, which needs them in the same dataset.
+  # `d` not `Z`: don't recurse, service-written files keep their owner.
+  # setgid so new files inherit group media
   systemd = {
     tmpfiles.rules =
       [
@@ -93,15 +66,11 @@ in {
         "d /mnt/megamax/media/nzb 2775 admin media -"
         "d /mnt/megamax/store 2775 admin media -"
         "d /mnt/megamax/backup/timemachine 2775 admin media -"
-        # HA backups: owned admin:users to match the NFS all_squash (anonuid=1000
-        # anongid=100), 0700, deliberately not group media and no setgid
+        # admin:users matches the NFS all_squash anonuid/anongid
         "d /mnt/megamax/backup/homeassistant 0700 admin users -"
-        # postgres dumps: all_squash bc patroni's uid differs per node
         "d /mnt/megamax/backup/postgres 0700 admin users -"
       ]
-      # immich library + its db-dump backups, owned by the immich host's pinned uid so the
-      # NFS export (numeric uids, no squash) lands writes as immich on this box. only when
-      # a host advertises the immich capability.
+      # owned by the immich host's pinned uid, the export doesn't squash
       ++ lib.optionals (immichIp != null) (let
         uid = toString topo.immichUid;
       in [
@@ -110,9 +79,7 @@ in {
         "d /mnt/megamax/immich/backups 0700 ${uid} ${uid} -"
       ]);
 
-    # boot-time perms safety net: re-assert group + setgid on the group-shared trees (media
-    # only) so bad perms get fixed by a reboot. GROUP and mode only, NEVER the per-file user:
-    # the arrs own their files (sonarr writes as sonarr), a chown -R would rip that away every boot
+    # group and mode only, never chown: the arrs own their files
     services.megamax-fix-perms = {
       description = "reassert group ownership + setgid on the megamax group-shared trees";
       wantedBy = ["multi-user.target"];
@@ -122,8 +89,6 @@ in {
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        # chgrp to media, set setgid + group rwx on dirs and group rw on files, leave the
-        # per-file user owner untouched. capital X so only dirs (and already-exec files) get +x.
         ExecStart = [
           "${pkgs.coreutils}/bin/chgrp -R media ${lib.escapeShellArgs groupSharedTrees}"
           "${pkgs.coreutils}/bin/chmod -R g+rwX ${lib.escapeShellArgs groupSharedTrees}"
@@ -132,9 +97,7 @@ in {
       };
     };
 
-    # assert com.sun:auto-snapshot=true on the snapshotted datasets, so the policy is set here
-    # instead of manually set on the pool. runs after the pool mounts, NOT before
-    # zfs-mount. otherwise random shit breaks and sshd dies
+    # runs after the pool mounts, NOT before zfs-mount. otherwise random shit breaks and sshd dies
     services.megamax-snapshot-policy = {
       description = "assert zfs auto-snapshot property on the megamax datasets";
       wantedBy = ["multi-user.target"];
@@ -150,18 +113,11 @@ in {
     };
   };
 
-  # a fsid=0 root per client (media, homeassistant, immich, one per db node). multiple fsid=0
-  # roots is unusual, safe only because each client is a single non-overlapping IP. structural
-  # not luck: the caps engine throws if two hosts share a cap, the rest are literal single IPs.
-  # a CIDR-scoped export breaks it; to grow, export /mnt/megamax once with per-client subtree
-  # perms instead.
-  # media keeps numeric uids so arr imports stay <svc-uid>:media; homeassistant all_squashes
-  # because HAOS connects as root. media is one filesystem, so one export per client.
   lab.topology.provides = [caps.storage.name];
 
-  # immich mounts megamax/immich for its library + db-dump backups. numeric uids (no
-  # squash): the dirs here are owned by the immich host's pinned uid, so writes line up.
-  # its own fsid=0 v4 root scoped to the immich host.
+  # one fsid=0 root per client, only safe because each client is a single ip. a CIDR-scoped
+  # export breaks that, export /mnt/megamax once with per-client subtrees instead.
+  # homeassistant all_squashes because HAOS connects as root
   services.nfs.server = {
     enable = true;
     exports =
@@ -172,7 +128,7 @@ in {
       + lib.optionalString (immichIp != null) ''
         /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
       ''
-      # pg_dump gets patroni's uid (differs per node), so all_squash to admin:users
+      # patroni's uid differs per node
       + lib.optionalString (dbIps != []) ''
         /mnt/megamax/backup/postgres ${lib.concatMapStringsSep " " (ip: "${ip}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)") dbIps}
       '';
@@ -183,7 +139,7 @@ in {
 
   services.samba.settings = {
     global = {
-      "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in Finder :3
+      "fruit:model" = "MacPro7,1@ECOLOR=226,226,224"; # rack pro icon in finder
     };
 
     media = {
@@ -197,7 +153,7 @@ in {
       "force group" = config.lab.media.group;
     };
 
-    # %U -> per-user private subdir (0700, owner-only)
+    # per-user private subdir
     store = {
       path = "/mnt/megamax/store/%U";
       browseable = "yes";

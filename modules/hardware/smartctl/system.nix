@@ -1,14 +1,12 @@
-# smart health metrics for physical disks (smartctl_exporter). import on hosts that own
-# real drives. auto-discovery queries every block device; ones without smart data (virtual
-# disks) just produce no series. scanned scsi types fall back to auto, so sata drives
-# behind virtio-scsi passthrough resolve to sat and report fine
+# import on hosts with real drives. sata drives behind virtio-scsi passthrough
+# resolve to sat and report fine
 {
   config,
   pkgs,
   modules,
   ...
 }: {
-  # options-only, registers the exporter without pulling in the monitoring stack
+  # options only, no monitoring stack
   imports = [modules.services.monitoring.registry];
 
   services.prometheus.exporters.smartctl = {
@@ -34,8 +32,7 @@
         labels.severity = "critical";
       }
       {
-        # nonzero raw counts here are the pre-failure signal for a dying drive,
-        # usually long before the overall self-assessment flips
+        # these usually go nonzero long before the self-assessment flips
         name = "smart sector errors";
         expr = ''smartctl_device_attribute{attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable",attribute_value_type="raw"}'';
         summary = "disk {{ $labels.device }} on {{ $labels.instance }}: {{ $labels.attribute_name }} raw count {{ $values.B }}";

@@ -1,21 +1,12 @@
-# mesa's service-discovery POLICY: the named cross-host derives the mesa modules consume
-# (dbEndpointIp, serverIp, arrDbRole, ...). the generic engine -- site membership, address
-# resolution, the capability primitives, the no-recursion invariant -- lives in engine.nix; this
-# file is just the mesa capability vocabulary mapped onto it.
-#
-# adding a service = one lab.topology.provides line in that service's module + (if consumers need
-# its address) one derive here. adding a HOST needs nothing here. the engine names nothing mesa;
-# everything mesa-specific is below. the capability names + vipPaths live in caps.nix so a provider
-# and its consumer derive share one definition.
+# mesa's derives over the generic engine. a new service needs a provides line in its module, plus a
+# derive here only if something consumes its address. a new host needs nothing here
 {lib}: args: let
   engine = import ./engine.nix {inherit lib;} args;
   caps = import ./caps.nix;
   inherit (engine) ipProviding ipsProviding hostsProviding hostsInSite haEndpointFor optionalHaEndpointFor publicUrlProviding;
 
-  # read a value off the single host advertising `cap`, with ipProviding's arity rule:
-  # nobody -> `absent` (a legitimate lack the caller guards on), two providers is a config
-  # error, not a pick-one. per the invariant, `read` must return an input or a
-  # static-defaulted (readOnly) option, never a peer-derived value.
+  # none -> `absent`, several -> error. `read` must return an input or a static-defaulted
+  # readOnly option, never a peer-derived value
   inputOfProviding = cap: read: absent: let
     hosts = hostsProviding cap;
   in
@@ -27,11 +18,8 @@
 in
   engine
   // {
-    # one DNS A record per same-site host, at its own hostIp (the server-VLAN address, not
-    # ipOf's internal-VLAN preference -- these answer clients reaching a host directly, e.g. a
-    # Mac doing SSH/Samba/NFS, which live on the server VLAN, not the isolated internal fabric).
-    # consumed by the site dns zone files, whose wildcard-to-edge-VIP record only covers HTTP(S);
-    # without a specific record here a direct-protocol hostname silently falls through to it.
+    # hostIp, not ipOf's internal-VLAN pick: direct ssh/smb/nfs clients are on the server VLAN.
+    # without these, host names fall through to the zone's wildcard-to-edge record
     hostRecords =
       lib.concatMapStrings
       (name: let
@@ -41,16 +29,14 @@ in
       hostsInSite;
 
     serverIp = ipProviding caps.monitoring.name;
-    # the monitoring-server hosts in this site (consumers assert exactly one)
+    # consumers assert exactly one
     siteServers = hostsProviding caps.monitoring.name;
     authServerIp = ipProviding caps.authServer.name;
     mediaHostIp = ipProviding caps.media.name;
     storageHostIp = ipProviding caps.storage.name;
     immichHostIp = ipProviding caps.immich.name;
 
-    # authentik's public url (https://auth.<site>), derived from its declared route. the consumer
-    # is immich's oauth issuerUrl: immich resolves authentik's url from the registry instead of
-    # restating the fqdn. safe (cross-service, not fed back into authentik's own config).
+    # for immich's oauth issuerUrl. safe because it never feeds authentik's own config
     authServerUrl = publicUrlProviding caps.authServer.name;
 
     dbEndpointIp = optionalHaEndpointFor {
@@ -67,28 +53,20 @@ in
       vipPath = caps.dns.vipPath;
     };
 
-    # /32 of each client's hostIp; a netns client's traffic is SNAT'd to its hostIp
-    # (lab.arrStack.netnsSnatHosts), so this covers it.
+    # netns clients are SNAT'd to their hostIp (lab.arrStack.netnsSnatHosts)
     dbClientCidrs = map (ip: "${ip}/32") (ipsProviding caps.dbClient.name);
-    # caddy proxies FROM its own box IP, not the VIP, so a backend must allow every edge box's
-    # real IP.
+    # caddy proxies from its own box IP, not the VIP
     edgeHostIps = ipsProviding caps.edge.name;
 
-    # every HA db node's address: any of them can be the Patroni leader, so the store box's
-    # postgres-dump export + firewall admit all of them
+    # any of them can be the patroni leader running the dump
     dbHaNodeIps = ipsProviding caps.dbHaNode.name;
 
-    # the arr postgres role spec {name, passwordSecret, owns}, read off the arr host so the
-    # db host restates none of it. cycle-safe: the published value is readOnly, defaulted
-    # from static attrsets.
+    # cycle-safe: readOnly, defaulted from static attrsets
     arrDbRole = inputOfProviding caps.arr.name (c: c.lab.arrStack.dbRole) null;
 
-    # the immich host's pinned uid (lab.immich.uid, a static-defaulted input, so cycle-safe).
-    # the store box owns the immich dataset dirs with it so NFS writes (numeric uids, no
-    # squash) land as immich on both ends.
+    # the store box owns immich's dataset dirs with this uid, NFS writes are unsquashed
     immichUid = inputOfProviding caps.immich.name (c: c.lab.immich.uid) null;
 
-    # authentik's http port (lab.authentik.port, readOnly), for caddy's forward-auth
-    # upstream; pairs with authServerIp
+    # for caddy's forward-auth upstream
     authServerPort = inputOfProviding caps.authServer.name (c: c.lab.authentik.port) null;
   }

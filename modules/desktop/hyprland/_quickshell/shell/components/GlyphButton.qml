@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// Material icon glyph as a clickable button; hover highlight + extended hit area
 Text {
     id: root
 
@@ -27,7 +26,7 @@ Text {
     MouseArea {
         id: area
         anchors.fill: parent
-        // extend hit area beyond the tiny glyph
+        // hit area beyond the tiny glyph
         anchors.margins: -4
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor

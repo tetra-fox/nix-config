@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// dialog panel: rounded card whose height follows the content column
 Rectangle {
     id: root
 

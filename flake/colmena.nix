@@ -1,9 +1,4 @@
-# the colmena hive, derived from the nixos configs easy-hosts already built. colmena wants two
-# outputs: the raw hive spec as `colmena`, and the evaluated `colmenaHive`.
-#
-# only hosts that declare lab.site.hostIp are deployable (the desktop/darwin hosts have no
-# deploy target). each node reuses the module set easy-hosts assembled rather than re-deriving
-# it, since colmena re-evaluates every node.
+# colmena hive built from the easy-hosts nixos configs
 {
   lib,
   inputs,
@@ -16,14 +11,10 @@
   mkNode = name: c: {
     deployment = {
       targetHost = c.config.lab.site.hostIp;
-      # the deploy user is the same fact as serverUsername; read it off the host's specialArgs
-      # rather than restating "admin" here
       targetUser = c._module.specialArgs.username;
       tags = [(sitePrefix name)];
-      # the deploying machine builds, not the target: these VMs are too small to build their
-      # own closures (the edges are 1 core / 900M). colmena's default, restated because it is
-      # a real constraint on the deploy host, which must be able to build x86_64-linux. see
-      # modules/platform/nix/darwin.nix for how a mac gets that.
+      # the default, stated because targets are too small to build (edges are 1 core / 900M).
+      # the deploy host must build x86_64-linux, see modules/platform/nix/darwin.nix
       buildOnTarget = false;
     };
     imports = c._module.args.modules or [];

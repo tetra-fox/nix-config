@@ -70,7 +70,7 @@ Item {
             font.pixelSize: 10
             font.variableAxes: Theme.fontIconAxes
             color: Theme.colorPink
-            // hidden but layer-rendered so MultiEffect can use it as a source
+            // layer-rendered as the MultiEffect source
             visible: false
             layer.enabled: true
         }

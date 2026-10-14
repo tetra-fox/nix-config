@@ -1,13 +1,5 @@
-# the reconcile SQL a postgres role needs, shared by the single-server module (per-role
-# oneshot after ensureUsers) and the HA module (leader-gated reconcile, no upstream module
-# to lean on). idempotent: CREATE ... IF NOT EXISTS isn't valid SQL, so the creates are
-# guarded with SELECT ... \gexec and everything else is ALTER.
-# pg 15+: the public schema owner must be the role or it can't CREATE TABLE, hence the
-# ALTER SCHEMA per owned db.
-# passwordVar is the psql variable holding the password. callers must populate it with
-# \getenv from an environment variable, not psql -v: a -v value is built by the shell
-# before exec, so it lands in psql's argv and /proc/<pid>/cmdline is world-readable.
-# the environment is only readable by the process owner and root.
+# idempotent: CREATE ROLE/DATABASE have no IF NOT EXISTS, so creates go through \gexec.
+# callers fill passwordVar with \getenv, not psql -v, since argv is world-readable in /proc
 {lib}: {
   name,
   role,
@@ -24,6 +16,7 @@
     ALTER DATABASE "${db}" OWNER TO ${name};
   '';
 
+  # pg 15+: without owning public the role can't CREATE TABLE
   mkSchema = db: ''
     \connect "${db}"
     ALTER SCHEMA public OWNER TO ${name};

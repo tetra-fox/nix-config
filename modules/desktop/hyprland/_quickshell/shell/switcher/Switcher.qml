@@ -12,7 +12,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     property int selectedIndex: 0
     property bool open: false
-    // snapshot window list on open so it doesn't shift while cycling
+    // snapshot on open so it doesn't shift while cycling
     property list<var> windowList: []
 
     function next() {
@@ -30,8 +30,6 @@ PanelWindow { // qmllint disable uncreatable-type
     }
 
     function show() {
-        // snapshot the toplevel list: active window first, then the rest in
-        // model order, skipping minimized windows
         const active = ToplevelManager.activeToplevel;
         const windows = active && !active.minimized ? [active] : [];
         for (const t of ToplevelManager.toplevels.values) {
@@ -43,7 +41,7 @@ PanelWindow { // qmllint disable uncreatable-type
             return;
 
         windowList = windows;
-        // start on the second item (the one we're switching to)
+        // 0 is the current window
         selectedIndex = 1;
         open = true;
     }
@@ -53,8 +51,7 @@ PanelWindow { // qmllint disable uncreatable-type
             return;
         const target = windowList[selectedIndex];
         open = false;
-        // the toplevel may have been closed while the switcher was open; the deleted
-        // C++ object leaves a stale-but-truthy js reference, so re-check it is still live
+        // a closed toplevel leaves a stale but truthy js reference
         if (target && ToplevelManager.toplevels.values.includes(target))
             target.activate();
     }
@@ -74,15 +71,14 @@ PanelWindow { // qmllint disable uncreatable-type
     visible: open
     color: "transparent"
 
-    // guard: key-release from the triggering shortcut can dismiss the grab immediately
+    // the triggering shortcut's key release can clear the grab immediately
     Timer {
         id: grabGuard
         interval: 150
     }
 
-    // quickshell deactivates the grab after ANY clear, including the guarded
-    // one from the triggering shortcut's key release, so bounce active through
-    // false to re-arm it; writing the property directly would kill the binding
+    // quickshell deactivates the grab on any clear, so bounce active through false to
+    // re-arm it. writing active directly would kill its binding
     property bool _grabRearm: false
 
     HyprlandFocusGrab {

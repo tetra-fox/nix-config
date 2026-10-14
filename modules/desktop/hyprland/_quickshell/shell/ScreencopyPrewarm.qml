@@ -2,8 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 
-// prewarms screencopy buffer manager from a proxied window
-// the lock surface can't init it on its own, so its screencopy would silently fail
+// the lock surface can't init the screencopy buffer manager itself, its screencopy would silently fail
 PanelWindow { // qmllint disable uncreatable-type
     anchors {
         top: true

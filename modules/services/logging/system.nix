@@ -14,9 +14,8 @@
 
   inherit (topo) siteServers serverIp;
 
-  # loki binds the east-west address (the registry's bind rule), never every interface;
-  # same-box consumers (alloy below, grafana's datasource) use the same address, which
-  # routes over loopback, so the source-scoped nftables rule only gates remote agents
+  # same-box consumers use this address too, it routes over loopback so the nftables rule
+  # only gates remote agents
   lokiListen = config.lab.monitoring.bindAddr;
 
   lokiHost =
@@ -30,9 +29,6 @@
         else "127.0.0.1"
       );
 
-  # services that log to a file instead of stdout aren't covered by the journald source.
-  # one file_match + source.file per entry, routed through a stage that lifts the level
-  # out of the *arr "timestamp|Level|component|msg" format into a label
   fileSourceBlocks =
     lib.concatMapStrings (s: ''
 
@@ -61,8 +57,7 @@
     }
   '';
 in {
-  # declares lab.monitoring.server.enable, read above; without it this module only evals
-  # on hosts that happen to co-import the monitoring stack (the server profile does today)
+  # declares lab.monitoring.server.enable, so this evals without the monitoring stack
   imports = [modules.services.monitoring.registry];
 
   options.lab.logging = {
@@ -102,7 +97,7 @@ in {
   };
 
   config = lib.mkMerge [
-    # ---- agent: ship logs. runs on every host that opts into logging ----
+    # agent
     (lib.mkIf cfg.enable {
       assertions = [
         {
@@ -111,13 +106,11 @@ in {
         }
       ];
 
-      # alloy is the successor to the EOL'd promtail
       services.alloy.enable = true;
 
       environment.etc."alloy/config.alloy".source = ./config.alloy;
 
-      # alloy merges every *.alloy in the dir into one namespace, so these blocks can
-      # forward to the loki.write defined in config.alloy
+      # alloy merges every *.alloy in the dir, so this can forward to config.alloy's loki.write
       environment.etc."alloy/file-sources.alloy" = lib.mkIf (cfg.fileSources != []) {
         text = fileSourceBlocks + fileProcessBlock;
       };
@@ -128,13 +121,12 @@ in {
           LOKI_HOST = lokiHost;
           LOKI_PORT = toString cfg.lokiPort;
         };
-        # the module already sets SupplementaryGroups = ["systemd-journal"]; this appends,
-        # so alloy keeps journal access
+        # appends to the module's systemd-journal group
         serviceConfig.SupplementaryGroups = cfg.extraGroups;
       };
     })
 
-    # ---- server: receive + store logs (loki) + show them (grafana). one per site ----
+    # server
     (lib.mkIf (cfg.enable && serverEnabled) {
       services = {
         loki = {
@@ -144,7 +136,7 @@ in {
             server = {
               http_listen_address = lokiListen;
               http_listen_port = cfg.lokiPort;
-              # alloy ships over http on the same port, no separate grpc listener needed
+              # alloy ships over http
               grpc_listen_port = 0;
             };
 

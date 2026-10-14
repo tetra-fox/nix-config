@@ -4,15 +4,13 @@ import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
-// icon + slider + readout row for a PwNode. compact=true = inline icon text
-// (for media cards). compact=false = full IconButton (for popup sections).
+// compact: inline text icon for media cards, else an IconButton for popup sections
 RowLayout {
     id: root
 
     property PwNode node: Pipewire.defaultAudioSink // qmllint disable unresolved-type
     property bool compact: true
-    // override the auto-selected icon (e.g. mic vs speaker). lock icon
-    // always wins when _locked so callers don't need to handle it.
+    // overrides the auto-selected icon, the lock icon still wins when _locked
     property string icon: ""
 
     Layout.fillWidth: true
@@ -42,7 +40,6 @@ RowLayout {
         root.node.audio.muted = !root._muted;
     }
 
-    // full variant - IconButton with animated bg
     IconButton {
         visible: !root.compact
         icon: root._icon
@@ -53,7 +50,6 @@ RowLayout {
         onClicked: _ => root._toggleMute()
     }
 
-    // compact variant - inline text icon, no bg
     Text {
         visible: root.compact
         text: root._icon

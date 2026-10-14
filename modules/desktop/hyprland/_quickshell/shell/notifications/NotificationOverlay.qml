@@ -10,8 +10,7 @@ PanelWindow { // qmllint disable uncreatable-type
 
     required property var notifList
 
-    // deliberately pinned to one monitor; popups following focus was considered
-    // and rejected
+    // pinned to one monitor on purpose, not following focus
     screen: Quickshell.screens[0]
 
     WlrLayershell.namespace: "quickshell-notifications"
@@ -19,7 +18,6 @@ PanelWindow { // qmllint disable uncreatable-type
     anchors.top: true
     anchors.right: true
     margins.right: Theme.pillMargin    // qmllint disable unqualified unresolved-type
-    // don't push other surfaces aside, just overlay on top
     exclusiveZone: 0
 
     implicitWidth: Theme.popupWidth + Theme.pillMargin * 2
@@ -40,8 +38,7 @@ PanelWindow { // qmllint disable uncreatable-type
         spacing: 8
 
         Repeater {
-            // ScriptModel preserves delegate identity across array changes; a plain JS array
-            // would have Repeater destroy+recreate every card on prepend, replaying enterAnim
+            // a plain array would recreate every card on prepend, replaying enterAnim
             model: ScriptModel { // qmllint disable unresolved-type
                 values: root.notifList.filter(w => w.popup)    // qmllint disable unqualified
             }

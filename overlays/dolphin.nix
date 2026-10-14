@@ -1,7 +1,5 @@
-# dolphin can't find its own ServiceMenus/actions unless XDG_CONFIG_DIRS includes the
-# kservice etc/xdg path and the sycoca cache is built against it. upstream ships dolphin
-# without that wiring, so wrap the binary to set XDG_CONFIG_DIRS and rebuild the sycoca
-# on launch. the join also pulls in dolphin.dev so the .dev output stays available.
+# dolphin can't find its ServiceMenus unless XDG_CONFIG_DIRS has kservice's etc/xdg
+# and sycoca is built against it
 _inputs: _final: prev: {
   kdePackages = prev.kdePackages.overrideScope (_kfinal: kprev: {
     dolphin = prev.symlinkJoin {

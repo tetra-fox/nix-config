@@ -25,12 +25,8 @@ runs:
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ inputs.github-token }}
 
-    # restore the nix store from a previous run so tool closures (statix, alejandra,
-    # colmena, ...) are a local restore instead of a re-fetch. must run after the nix
-    # install: the action fixes permissions on /nix/var/nix/db, which only exists once
-    # nix is installed. keyed on flake.lock so a hit means inputs are unchanged; a lock
-    # bump falls back to the newest prior store as a base via the prefix. gc-max caps
-    # the saved store so it stays under github's per-repo cache limit.
+    # after the nix install: the action fixes permissions on /nix/var/nix/db. gc-max keeps
+    # the saved store under github's per-repo cache limit
     - name: Cache the nix store
       uses: nix-community/cache-nix-action@v7
       with:

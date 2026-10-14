@@ -6,9 +6,7 @@
 }: {
   imports = [./apikey.nix];
 
-  # upstream services.jellyfin has no port option (8096 is baked into its kestrel config);
-  # published here so the route and co-located consumers (arr-stack's jellyfin-notify)
-  # read one fact instead of restating the number
+  # upstream has no port option, 8096 is baked into its kestrel config
   options.lab.jellyfin.port = lib.mkOption {
     type = lib.types.port;
     readOnly = true;
@@ -24,18 +22,16 @@
       }
     ];
 
-    # pin the uid; the NFS share squashes on uid, not name, and upstream auto-allocates it
+    # pin the uid: NFS squashes on uid, not name
     users.users.jellyfin.uid = 991;
 
-    # declare the group here too, not just in arr-stack: jellyfin must not depend on being
-    # co-deployed with the arrs for its group to exist (equal gid defs merge fine)
+    # also declared by arr-stack, jellyfin shouldn't depend on being co-deployed
     users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
     services.jellyfin = {
       enable = true;
       group = lib.mkDefault config.lab.media.group;
-      # no openFirewall: clients come through the vhost, so the route's derived edge
-      # allow covers 8096 and the UDP autodiscovery ports have nothing to discover for
+      # clients come through caddy, the route opens 8096 to the edge hosts
       openFirewall = false;
       dataDir = "${config.lab.site.dataDir}/jellyfin/data";
       cacheDir = "${config.lab.site.dataDir}/jellyfin/cache";

@@ -2,7 +2,7 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// animated expand/collapse container. set label for a clickable toggle header
+// a label adds a clickable toggle header
 ColumnLayout {
     id: root
 
@@ -42,7 +42,7 @@ ColumnLayout {
                 text: root.label
             }
 
-            // empty-but-visible fills the slack between label and chevron when value is ""
+            // fills the slack between label and chevron even when empty
             Text {
                 Layout.fillWidth: true
                 text: root.value

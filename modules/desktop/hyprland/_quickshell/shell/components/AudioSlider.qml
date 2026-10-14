@@ -1,8 +1,6 @@
 import qs.lib
 import QtQuick
 
-// volume slider - LevelSlider plus the audio-only bits: 150% range, a 100%
-// tick, and double-tap to reset to 100%
 LevelSlider {
     id: root
 
@@ -11,8 +9,7 @@ LevelSlider {
 
     to: 1.5
 
-    // double-tap snaps to 100%: flag is set on double-tap, volume
-    // resets on release so the user doesn't hear the intermediate jump
+    // double-tap resets to 100% on release, so the intermediate jump isn't heard
     property bool _resetOnRelease: false
     suppressAdjust: _resetOnRelease
 
@@ -35,8 +32,7 @@ LevelSlider {
         onDoubleTapped: root._resetOnRelease = true
     }
 
-    // 100% tick mark (slider goes to 150%), parented into the base track so it
-    // positions against the track width
+    // 100% tick, the slider goes to 150%
     Rectangle {
         parent: root.trackItem
         x: parent.width * (1.0 / 1.5) - width / 2

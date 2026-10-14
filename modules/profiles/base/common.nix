@@ -1,5 +1,3 @@
-# the platform-agnostic core of the base profile, shared by the linux
-# (system.nix) and darwin (darwin.nix) faces
 {
   lib,
   modules,
@@ -12,13 +10,11 @@
     modules.cli.nix-purge.system
   ];
 
-  # on every host, workstation or server: what you reach for on a box you ssh'd
-  # into to find out why something broke. situational kit (disk, net, observe,
-  # hardware) stays in modules/toolsets and is imported per host
+  # situational kit lives in modules/toolsets, imported per host
   environment.systemPackages = with pkgs;
     [
-      _7zz # upstream 7-zip, binary is 7zz. the older p7zip fork is unmaintained
-      bind # dig/nslookup for dns debugging
+      _7zz # p7zip is unmaintained
+      bind # dig
       btop
       fd
       file
@@ -32,14 +28,12 @@
       unrar
       unzip
       wget
-      yq-go # jq for yaml, which is the shape sops secrets and most service config come in
+      yq-go
       zellij
       zip
     ]
-    # terminfo for the workstation terminals (kitty on hara, ghostty on the
-    # mac) so ssh sessions from either render right on every fleet host.
-    # linux-only: the terminals ship their own terminfo where they run, and
-    # x86_64-darwin would have to build them from source for it
+    # so ssh sessions from the workstation terminals render. darwin would have
+    # to build them from source, and they ship their own terminfo there
     ++ lib.optionals stdenv.isLinux [
       kitty.terminfo
       ghostty.terminfo

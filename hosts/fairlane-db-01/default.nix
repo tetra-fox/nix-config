@@ -1,7 +1,4 @@
-# fairlane-db-01: SINGLE postgres node (not the mesa 3-node HA cluster). deliberate -- fairlane
-# is the low-maintenance site, and 2 proxmox nodes can't honestly quorum a db anyway. the arrs
-# connect here; the whole arr role spec is derived from the arr host (topo.arrDbRole), not
-# hardcoded. no authentik at fairlane, so that's the only role.
+# single postgres node on purpose, 2 proxmox nodes can't quorum a db
 {
   config,
   lib,
@@ -26,13 +23,10 @@
       server.enable = true;
       admin.enable = true;
       openFirewall = true;
-      # local dumps only (fairlane has no restic): covers a bad migration or a dropped
-      # table, not the disk dying
+      # local dumps only, this host has no restic: covers a bad migration, not the disk dying
       backup.enable = true;
-      # trusted-VLAN direct psql
       extraAllowedCidrs = [config.lab.net.trustedCidr];
 
-      # the arr role spec comes off the arr host via the registry
       roles = lib.optionalAttrs (topo.arrDbRole != null) {
         ${topo.arrDbRole.name} = {inherit (topo.arrDbRole) passwordSecret owns;};
       };

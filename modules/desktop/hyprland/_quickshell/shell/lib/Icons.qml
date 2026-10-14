@@ -2,11 +2,8 @@ pragma Singleton
 
 import QtQuick
 
-// material symbols rounded codepoint aliases
-// ref: https://fonts.google.com/icons?icon.style=Rounded
+// https://fonts.google.com/icons?icon.style=Rounded
 QtObject {
-
-    // network
     readonly property string wifi: "\uF065"
     readonly property string wifiOff: "\uE1DA"
     readonly property string wifiSignal0: "\uF0B0"
@@ -24,13 +21,11 @@ QtObject {
     readonly property string vpnKeyOff: "\uEB7A"
     readonly property string vpnKeyAlert: "\uF6CC"
 
-    // bluetooth
     readonly property string bluetooth: "\uE1A7"
     readonly property string bluetoothConnected: "\uE1A8"
     readonly property string bluetoothDisabled: "\uE1A9"
     readonly property string bluetoothSearching: "\uE1AA"
 
-    // audio
     readonly property string volumeUp: "\uE050"
     readonly property string volumeDown: "\uE04D"
     readonly property string volumeMute: "\uE04E"
@@ -38,7 +33,6 @@ QtObject {
     readonly property string mic: "\uE31D"
     readonly property string micOff: "\uE02B"
 
-    // volume glyph for a level, shared by the bar widget and the slider rows
     function forVolume(volume: real, muted: bool): string {
         if (muted)
             return volumeOff;
@@ -49,20 +43,16 @@ QtObject {
         return volumeMute;
     }
 
-    // brightness. the material brightness_5/6/7 glyphs differ only by their
-    // center detail, which the FILL=1 baked font flattens, so they can't show a
-    // level; use one static sun and let the slider fill + percent convey it
+    // brightness_5/6/7 differ only in center detail, which the baked FILL=1 flattens
     readonly property string brightness: "\uE518"
     readonly property string monitor: "\uEF5B"
 
-    // notifications
     readonly property string notifications: "\uE7F4"
     readonly property string notificationsOff: "\uE7F6"
     readonly property string info: "\uE88E"
     readonly property string warning: "\uE002"
     readonly property string error: "\uE160"
 
-    // system
     readonly property string computer: "\uE31E"
     readonly property string dns: "\uE875"
     readonly property string desktopWindows: "\uE30C"
@@ -78,13 +68,11 @@ QtObject {
     readonly property string deployedCode: "\uF720"
     readonly property string code: "\uE86F"
 
-    // power
     readonly property string logout: "\uE9BA"
     readonly property string restart: "\uF053"
     readonly property string power: "\uF8C7"
     readonly property string sleep: "\uEF44"
 
-    // media
     readonly property string playArrow: "\uE037"
     readonly property string pause: "\uE034"
     readonly property string skipPrevious: "\uE045"
@@ -96,14 +84,12 @@ QtObject {
     readonly property string shuffle: "\uE043"
     readonly property string speed: "\uEBE6"
 
-    // menu check/radio states (tray dbus menus)
     readonly property string checkBox: "\uE834"
     readonly property string checkBoxBlank: "\uE835"
     readonly property string indeterminateCheckBox: "\uE909"
     readonly property string radioChecked: "\uE837"
     readonly property string radioUnchecked: "\uE836"
 
-    // actions
     readonly property string check: "\uE5CA"
     readonly property string close: "\uE5CD"
     readonly property string contentCopy: "\uE14D"

@@ -1,6 +1,4 @@
-# the platform-agnostic core of the workstation home, shared by the linux
-# face (home.nix) and the darwin hosts; keeps the mac's cli experience in
-# lockstep with the linux workstations
+# shared by home.nix and the darwin hosts
 {
   identity,
   modules,
@@ -21,17 +19,13 @@
     modules.desktop.vscode.home
   ];
 
-  # the operator identity from flake.nix, stated once for every workstation
   my.git.identity = identity;
 
   home.packages = with pkgs; [
-    # dev toolchains
     rustup
     pnpm
     nodejs
     python3
-
-    # everyday cli
     sqlite
     gh
     claude-code

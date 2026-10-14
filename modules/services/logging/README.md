@@ -8,8 +8,8 @@ follows the monitoring module's server/agent split:
   grafana datasource, and ships the log dashboards.
 
 an agent finds its site's loki by the same topology derive (`lib/topology.nix`) the monitoring
-module uses: alloy's `loki.write` endpoint (`LOKI_HOST`) is `127.0.0.1` on the server
-(loki is local) and the site server's derived IP on a remote agent. exactly one server
+module uses: alloy's `loki.write` endpoint (`LOKI_HOST`) is the server's own bind address on the server
+(`127.0.0.1` on a single-host site) and the site server's derived IP on a remote agent. exactly one server
 per site is asserted.
 
 one journal source catches everything. native services log to the journal by
@@ -56,8 +56,8 @@ Explore is still faster than touching these.
 
 `config.alloy` is plain alloy, no nix interpolation. hostname and the loki endpoint come
 from the environment via `sys.env("HOSTNAME")` / `sys.env("LOKI_HOST")` /
-`sys.env("LOKI_PORT")`, set on the alloy unit by `system.nix` (`LOKI_HOST` is loopback on
-the server, the derived server IP on an agent). keeping it nix-free means `alloy fmt` and
+`sys.env("LOKI_PORT")`, set on the alloy unit by `system.nix` (`LOKI_HOST` is the server's
+bind address, the derived server IP on an agent). keeping it nix-free means `alloy fmt` and
 the editor extension lint exactly what alloy parses. validate locally with:
 
 ```sh

@@ -13,8 +13,7 @@
         workgroup = lib.mkDefault "WORKGROUP";
         "netbios name" = lib.mkDefault config.networking.hostName;
         "server string" = lib.mkDefault config.networking.hostName;
-        # clients (macs, file managers) live on the routed VLANs and land on the server
-        # VLAN; never listen on the isolated internal fabric
+        # clients arrive on the server VLAN, never listen on the internal fabric
         interfaces = "lo ${config.lab.site.serverInterface}";
         "bind interfaces only" = "yes";
         security = "user";
@@ -22,9 +21,8 @@
         "map to guest" = "Bad User";
 
         "server min protocol" = "SMB3_11";
-        # every client that gets this far already negotiated SMB 3.1.1, which mandates
-        # encryption support, so requiring it locks nobody out. without it the transport
-        # is signed but not encrypted, and time machine images cross the VLAN in clear.
+        # otherwise time machine images cross the VLAN signed but unencrypted.
+        # SMB 3.1.1 mandates encryption support, so this locks nobody out
         "server smb encrypt" = "required";
         "server role" = "standalone server";
 

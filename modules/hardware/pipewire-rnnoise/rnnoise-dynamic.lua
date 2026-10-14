@@ -1,15 +1,5 @@
 ---@diagnostic disable: undefined-global
--- rnnoise-dynamic.lua
---
--- Creates an RNNoise-filtered virtual Audio/Source for every real
--- alsa_input.* source as it appears, and tears it down when the
--- real source goes away.
---
--- Uses an ObjectManager rather than a node-added SimpleEventHook so that
--- sources already present when this script loads also get a filter. UCM
--- profile sources (e.g. the Scarlett's HiFi Mic1/Mic2 nodes) are created by
--- ACP during wireplumber startup, before a node-added hook is live, so a hook
--- would never fire for them.
+-- one RNNoise virtual source per alsa_input.* source, for its lifetime
 
 Log                      = Log.open_topic("s-rnnoise-dynamic")
 
@@ -22,7 +12,7 @@ local vad_threshold      = args["vad.threshold"] or 60.0
 local vad_grace_ms       = args["vad.grace-ms"] or 200
 local vad_retro_grace_ms = args["vad.retro-grace-ms"] or 0
 
--- node.id -> LocalModule. Dropping the reference unloads the module.
+-- node.id -> LocalModule, dropping the reference unloads it
 local filter_modules     = {}
 
 local function sanitize(s)
@@ -66,7 +56,7 @@ local function build_filter_args(node)
       ["node.name"]     = capture_name,
       ["node.passive"]  = true,
       ["target.object"] = node_name,
-      ["audio.rate"]    = 48000, -- must be 48000 per RNNoise documentation
+      ["audio.rate"]    = 48000, -- rnnoise docs require 48k
     },
     ["playback.props"]   = Json.Object {
       ["node.name"]        = playback_name,
@@ -85,7 +75,8 @@ sources_om = ObjectManager {
   },
 }
 
--- fires for sources already present when the OM installs and for later ones
+-- an ObjectManager, not a node-added hook, because UCM sources (the Scarlett's
+-- HiFi Mic1/Mic2) appear during wireplumber startup before any hook is live
 sources_om:connect("object-added", function(_, node)
   local id = node.id
 

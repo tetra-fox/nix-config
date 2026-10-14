@@ -7,14 +7,12 @@ import QtQuick.Layouts
 BarPopupButton {
     id: root
 
-    // pipewire nodes are lazy-loaded; trackers force property
-    // subscriptions so bindings below stay up to date
+    // pipewire node properties only update while tracked
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
     }
     PwObjectTracker {
-        // the full device lists only render in the popup; don't keep every
-        // node's properties subscribed while it is closed
+        // the full lists only render in the popup
         objects: root.popupVisible ? [...root.sinks, ...root.sources] : []
     }
 

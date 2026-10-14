@@ -1,8 +1,4 @@
-# the per-node harness for the VM tests: the same fleet-wide modules every production nixos
-# host gets (the lab.site/lab.topology option contract, the topo module arg, the route
-# firewall), a sops mock, and the adapter that lets the topology engine see the test's nodes
-# as a fleet. hostNames maps node attr names (python-safe, no dashes) to fleet hostnames;
-# each node sets networking.hostName to its fleet name so engine membership works unchanged.
+# hostNames maps python-safe node attrs to fleet hostnames, so the engine sees the nodes as a fleet
 {hostNames}: {
   config,
   lib,
@@ -17,20 +13,16 @@
   ];
 
   config = {
-    # profiles/base turns this on for every production host, and the tests need it too:
-    # networking.firewall.extraInputRules only exists in the nftables backend, so on the
-    # iptables default the route firewall and the vrrp accept rule evaluate fine and then
-    # never reach the ruleset.
+    # extraInputRules only exists in the nftables backend. on iptables the route firewall
+    # and vrrp rules eval fine and never reach the ruleset
     networking.nftables.enable = true;
 
-    # what production gets from inputs.self.nixosConfigurations: every fleet member's config,
-    # keyed by hostname. the test framework's `nodes` carries each node's config already.
+    # production gets this from inputs.self.nixosConfigurations
     _module.args.nixosConfigurations =
       lib.mapAttrs' (attr: hostname: lib.nameValuePair hostname {config = nodes.${attr};})
       hostNames;
 
-    # what _common.nix does on a proxmox VM, minus the mtu/gateway facts that mean nothing
-    # on the test wire: park the site addresses on the shared test vlan (eth1)
+    # sites/_common.nix's addressing, minus mtu and gateway
     networking.interfaces.eth1.ipv4.addresses =
       map (address: {
         inherit address;

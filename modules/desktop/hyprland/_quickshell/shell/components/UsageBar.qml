@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// usage bar with icon, label, detail text, and animated progress bar
 ColumnLayout {
     id: root
 

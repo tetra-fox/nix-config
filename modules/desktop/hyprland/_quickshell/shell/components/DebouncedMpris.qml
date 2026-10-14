@@ -1,8 +1,7 @@
 import Quickshell.Services.Mpris
 import QtQuick
 
-// wraps an MprisPlayer and debounces metadata clearing so track
-// changes don't briefly flash empty state
+// debounces metadata clearing so track changes don't flash empty
 QtObject {
     id: root
 
@@ -11,15 +10,12 @@ QtObject {
     readonly property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing // qmllint disable unresolved-type
     readonly property bool hasMedia: player !== null && title !== ""
 
-    // debounced display values -- update immediately on new data,
-    // delay clearing by 800ms so brief metadata blanks are hidden
     readonly property string _rawTitle: player?.trackTitle ?? ""
     readonly property string _rawArtist: player?.trackArtist ?? ""
     readonly property string _rawAlbum: player?.trackAlbum ?? ""
     readonly property string _rawArtUrl: player?.trackArtUrl ?? ""
 
-    // these initializers are a one-shot seed; the on_RawXChanged handlers and
-    // _clearDelay take over driving them, so the binding is intentionally clobbered
+    // one-shot seed, the handlers below clobber these bindings on purpose
     property string title: _rawTitle
     property string artist: _rawArtist
     property string album: _rawAlbum
@@ -38,7 +34,7 @@ QtObject {
     on_RawArtUrlChanged: _debounce(_rawArtUrl, "artUrl")
 
     property Timer _clearDelay: Timer {
-        // long enough for players that briefly blank metadata between tracks
+        // players briefly blank metadata between tracks
         interval: 800
         onTriggered: {
             root.title = root._rawTitle;

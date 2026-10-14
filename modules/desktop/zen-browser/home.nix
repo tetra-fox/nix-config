@@ -16,16 +16,14 @@ in {
   };
 
   config = {
-    # must be config.programs.zen-browser.finalPackage, not the raw flake package:
-    # home-manager wraps it with the policies/extensions/profile settings configured below
+    # finalPackage, not the flake package: it carries the policies configured below
     my.autostart.apps.zen.exec = lib.getExe config.programs.zen-browser.finalPackage;
 
     programs.zen-browser = {
       enable = true;
 
-      # baked into the launcher wrapper, so it also reaches launches from
-      # systemd units where home.sessionVariables would not: force the native
-      # wayland backend so the fractional-scale workaround below takes effect
+      # in the wrapper so systemd launches get it too. the fractional-scale pref
+      # below only applies on native wayland
       env.MOZ_ENABLE_WAYLAND = "1";
 
       policies.ExtensionSettings = extensionPolicy;
@@ -34,9 +32,7 @@ in {
         id = 0;
         isDefault = true;
 
-        # betterfox prefs from yokoffing's zen-specific user.js. no smoothfox
-        # equivalent here: zen ships its own tuned scrolling prefs, which the
-        # smoothfox sections would fight rather than improve
+        # no smoothfox, zen ships its own scrolling prefs
         presets.betterfox.enable = true;
 
         settings = {
@@ -45,15 +41,13 @@ in {
           "extensions.activeThemeID" = "{f2b832a9-f0f5-4532-934c-74b25eb23fb9}";
           "browser.ml.chat.shortcuts" = false;
 
-          # grant an extension its requested host permissions at install, so
-          # mv3 addons like wappalyzer work everywhere instead of needing a
-          # per-site click. currently zen's default, pinned so it stays true
+          # mv3 addons get their host permissions without a per-site click.
+          # already zen's default, pinned
           "extensions.originControls.grantByDefault" = true;
 
           "devtools.jsonview.enabled" = true;
 
-          # firefox's fractional-scale path renders extension popups oversized and blurry
-          # on hyprland; disabling it makes them render at integer scale and downscale sharp
+          # fractional scaling renders extension popups oversized and blurry on hyprland
           # https://bugzilla.mozilla.org/show_bug.cgi?id=1849109
           "widget.wayland.fractional-scale.enabled" = false;
 

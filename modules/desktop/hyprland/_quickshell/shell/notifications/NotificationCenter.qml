@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
-// own-module import: NotifState's singleton flag lives in the generated qmldir,
-// which tooling only reads through a module import, not same-directory lookup
+// self-import: tooling only sees the singleton flag in qmldir through a module import
 import qs.notifications
 import qs.components
 import qs.lib
@@ -16,10 +15,8 @@ PopupWindow {
 
     readonly property int count: notifList.length
 
-    // group wrappers by appName, sorted newest-first within and across groups.
-    // groups are persistent objects cached by appName and updated in place, so
-    // the Repeater keeps its delegates (and their expanded/reply state) when
-    // the list changes; a binding building fresh js objects would rebuild all
+    // groups are cached by appName and updated in place, so delegates keep their
+    // expanded/reply state. a binding building fresh objects would rebuild them all
     property var groups: []
     property var _groupCache: ({})
     property Component _groupComp: Component {
@@ -63,7 +60,6 @@ PopupWindow {
             }
         }
         out.sort((a, b) => b.time - a.time);
-        // publish only real order or membership changes
         if (out.length !== root.groups.length || out.some((g, i) => g !== root.groups[i]))
             root.groups = out;
     }

@@ -1,8 +1,7 @@
 import qs.lib
 import QtQuick
 
-// indeterminate spinner glyph; spins whenever it can be seen, so gate it with
-// either visible or opacity depending on whether it should keep its layout slot
+// spins whenever it can be seen, gate it with visible or opacity
 Text {
     id: root
 

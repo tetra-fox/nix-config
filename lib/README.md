@@ -41,7 +41,7 @@ hosts in a site each derive from the other (A resolves B's endpoint, B resolves 
 So everything the engine reads across hosts is a plain **input**: `lab.topology.provides` and
 `lab.site.{hostIp,internalIp}` -- values a host sets directly, never computed from a peer.
 
-Consumers must keep the rule: any further cross-host value you resolve (an `endpointFor` vipPath,
+Consumers must keep the rule: any further cross-host value you resolve (a `haEndpointFor` vipPath,
 or reading a published list) must point at an input or a static default, never a peer-derived
 value. The engine can't check a caller's `vipPath`, so that half stays a contract -- but the
 engine itself only ever touches inputs, so a fleet built on these primitives can't cycle.

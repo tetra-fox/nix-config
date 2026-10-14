@@ -1,8 +1,4 @@
-# the db HA claim, exercised for real: three nodes from the actual postgres-ha module
-# (etcd + patroni + haproxy + keepalived), a client resolving the cluster through the
-# capability engine. bootstraps the cluster, writes through the VIP, hard-crashes the
-# leader, and asserts a replica promotes, the VIP follows, and the data survived. also
-# pins the admin.enable-on-HA regression (the role must exist on the cluster).
+# writes through the VIP, crashes the leader, asserts a replica promotes with the data intact
 {
   modules,
   fleet,
@@ -46,8 +42,7 @@
         enable = true;
         inherit vip;
       };
-      # regression pin: admin.enable must reconcile a role on HA nodes (it used to be
-      # silently inert there, mapped only in the single-server module)
+      # exercised by the admin subtest on HA nodes
       admin.enable = true;
       roles.app = {
         passwordSecret = "postgres/app_pass";
@@ -71,8 +66,7 @@ in {
     db2 = mkDb "testsite-db-02" dbIps.db2;
     db3 = mkDb "testsite-db-03" dbIps.db3;
 
-    # a fleet client: client.enable feeds its /32 into the cluster's pg_hba through the
-    # topology derive, the same path the arr/authentik hosts use in production
+    # client.enable reaches the cluster's pg_hba through the topology, as in production
     svc = {pkgs, ...}: {
       imports = [fleetNode modules.services.postgres.options];
       networking.hostName = "testsite-svc-01";
@@ -116,9 +110,8 @@ in {
         old = leader(dbs)
         assert old is not None, "no node answers /primary"
         survivors = [m for m in dbs if m != old]
-        # /replica answers as soon as a node runs as a replica, before its walreceiver has
-        # connected (the leader only creates its slot on the next ha loop). crashing the
-        # leader in that window loses the rows with its wal, so gate on the row itself
+        # /replica answers before the walreceiver connects, and a crash in that window
+        # loses the rows, so gate on the row itself
         for m in survivors:
             svc.wait_until_succeeds(psql("SELECT count(*) FROM t", host=ips[m]) + " | grep -qx 1", timeout=300)
         old.crash()

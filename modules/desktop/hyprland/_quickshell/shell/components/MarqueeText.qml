@@ -1,6 +1,5 @@
 import QtQuick
 
-// scrolls horizontally on hover when text overflows
 Item {
     id: root
 
@@ -31,7 +30,7 @@ Item {
             }
             NumberAnimation {
                 to: -root.scrollDist
-                // 18ms per pixel - constant scroll speed regardless of text length
+                // constant speed regardless of length
                 duration: root.scrollDist * 18
                 easing.type: Easing.Linear
             }

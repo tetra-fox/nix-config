@@ -1,7 +1,5 @@
 #!/bin/sh
-# List controllable backlight devices, one per line:
-#   name<TAB>model<TAB>max<TAB>cur
-# model comes from the ddcci monitor id when present, else the device name.
+# name<TAB>model<TAB>max<TAB>cur per backlight device
 
 for d in /sys/class/backlight/*/; do
     [ -d "$d" ] || continue

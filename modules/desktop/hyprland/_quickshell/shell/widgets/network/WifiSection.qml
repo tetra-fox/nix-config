@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// own-module import: WifiSecurity's singleton flag lives in the generated
-// qmldir, which tooling only reads through a module import
+// self-import: tooling only sees the singleton flag in qmldir through a module import
 import qs.widgets.network
 import qs.components
 import qs.lib
@@ -25,7 +24,7 @@ Item {
             root.showAllNetworks = false;
     }
 
-    // only run hw scans when actually needed: browsing networks or not connected
+    // hw scans only while browsing networks or disconnected
     Binding {
         when: root.wifiDevice !== null
         target: root.wifiDevice
@@ -109,18 +108,17 @@ Item {
     readonly property var otherNetworks: root.sortedNetworks.filter(n => n && !n.connected)
 
     function refreshNetworks() {
-        // skip re-sort while psk prompt is open to avoid yanking it away mid-type
+        // a re-sort would yank the open psk prompt away mid-type
         if (root.expandedNetwork !== null)
             return;
         const nets = root.wifiDevice?.networks.values ?? [];
-        // filter out dangling entries that can appear mid-AP-removal before the sequence updates
+        // dangling entries can appear mid-AP-removal
         const next = nets.slice().filter(n => n && (n.connected || n.signalStrength > 0)).sort((a, b) => {
             if (a.connected !== b.connected)
                 return a.connected ? -1 : 1;
             return b.signalStrength - a.signalStrength;
         });
-        // keep the array identity when membership and order are unchanged, so
-        // dependent filters and models are not republished every poll
+        // keep the array when unchanged so dependents aren't republished every poll
         if (next.length === root.sortedNetworks.length && next.every((n, i) => n === root.sortedNetworks[i]))
             return;
         root.sortedNetworks = next;
@@ -238,8 +236,6 @@ Item {
                 id: scanCycle
                 frames: [Icons.wifiSignal0, Icons.wifiSignal1, Icons.wifiSignal2, Icons.wifiSignal3, Icons.wifi, Icons.wifiSignal3, Icons.wifiSignal2, Icons.wifiSignal1]
                 interval: 400
-                // scannerEnabled gates on the popup being open; no point animating
-                // an icon nobody can see
                 running: root.scannerEnabled && Networking.wifiEnabled && !root.activeNetwork
             }
         }
@@ -295,8 +291,7 @@ Item {
             }
         }
 
-        // flat list when disconnected, accordion when connected. Loader-gated
-        // so each network carries one live delegate, not two
+        // flat list when disconnected, accordion when connected. Loaders keep one delegate per network
         Loader {
             Layout.fillWidth: true
             active: !root.activeNetwork

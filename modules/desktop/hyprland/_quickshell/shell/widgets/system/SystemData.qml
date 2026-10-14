@@ -9,7 +9,7 @@ Item {
 
     required property bool active
 
-    // static - fetched once per activation
+    // fetched once per activation
     property string hostname: ""
     property string kernel: ""
     property string os: ""
@@ -18,7 +18,7 @@ Item {
     property string gpuModel: ""
     property int uid: 0
 
-    // dynamic - polled every 3s while active
+    // polled while active
     property real uptime: 0
     property string procs: ""
     property real memUsed: 0
@@ -102,8 +102,7 @@ Item {
         onLoaded: root.uptime = parseInt(text().trim().split(" ")[0]) || 0
     }
 
-    // interpolate uptime locally so the display updates every second
-    // without re-reading /proc/uptime
+    // ticks uptime locally between polls
     Timer {
         interval: 1000
         repeat: true
@@ -115,7 +114,7 @@ Item {
         id: loadavgFile
         path: "/proc/loadavg"
         onLoaded: {
-            // only the running/total process pair (field 4) is displayed
+            // running/total
             root.procs = text().trim().split(" ")[3] ?? "";
         }
     }
@@ -165,7 +164,7 @@ Item {
                     break;
                 }
             }
-            // /proc/meminfo reports KiB, convert to bytes
+            // KiB
             root.memTotal = mt * 1024;
             root.memUsed = (mt - ma) * 1024;
             root.swapTotal = st * 1024;
@@ -225,8 +224,7 @@ Item {
                     }
                 }
             }
-            // keep the array when contents are unchanged, so the extdisk rows
-            // (and their fill animations) are not rebuilt every poll
+            // keep the array when unchanged so the rows aren't rebuilt every poll
             if (JSON.stringify(_extraDisks) !== JSON.stringify(root.extraDisks))
                 root.extraDisks = _extraDisks;
         }
@@ -236,7 +234,6 @@ Item {
         cpuStatFile.reload();
         loadavgFile.reload();
         meminfoFile.reload();
-        // guard against overlapping invocations if poll-hw.sh is slow
         if (!hwProc.running)
             hwProc.running = true;
     }
@@ -247,8 +244,7 @@ Item {
             uptimeFile.reload();
             pollAll();
         } else {
-            // drop the baseline so the first sample after reopen measures the 3s poll
-            // window, not the whole interval the popup was closed
+            // or the first sample after reopen averages over the whole time closed
             root._prevCpu = null;
         }
     }

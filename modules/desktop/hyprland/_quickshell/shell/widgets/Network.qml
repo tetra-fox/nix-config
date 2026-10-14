@@ -8,12 +8,11 @@ import QtQuick.Layouts
 BarPopupButton {
     id: root
 
-    // a live wg tunnel owns the default route, so the detail/traffic blocks follow it.
-    // device is the enumerate DEVICE column, available without a detail round-trip
+    // a live wg tunnel owns the default route
     readonly property string activeIfname: vpn.anyActive ? vpn.activeTunnel.device : wired.connected ? wired.ifname : (wifi.activeNetwork ? wifi.ifname : "")
     readonly property bool anyConnected: activeIfname !== ""
 
-    // vpn takes icon priority when up (most security-relevant state), tinted to read as secured
+    // vpn wins when up
     icon: vpn.anyActive ? Icons.vpnKey : wired.connected ? Icons.settingsEthernet : wifi.activeNetwork ? Icons.wifi : Icons.wifiOff
     iconColor: vpn.anyActive ? Theme.colorGreen : (wired.connected || wifi.activeNetwork) ? Theme.textPrimary : Theme.textInactive
 

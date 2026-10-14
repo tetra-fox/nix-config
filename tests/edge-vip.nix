@@ -1,8 +1,5 @@
-# the edge HA claim, exercised for real: two caddy nodes from the actual caddy module (vrrp
-# included) fronting a route published by a third node through the topology engine. kills
-# caddy on the VIP holder and asserts the chain the modules promise: pgrep track script ->
-# FAULT -> keepalived releases -> the peer claims -> requests keep working. also pins
-# noPreempt: a recovered node must not steal the VIP back.
+# kills caddy on the VIP holder and asserts the peer takes the VIP and keeps serving,
+# and that the recovered node doesn't take it back (noPreempt)
 {
   modules,
   fleet,
@@ -35,7 +32,7 @@
         enable = true;
         inherit vip;
       };
-      # no internet in the test VM: certs from caddy's internal CA instead of dns-01
+      # no internet in the test VM: caddy's internal CA instead of dns-01
       certIssuer = ''
         {
         	local_certs
@@ -52,8 +49,7 @@ in {
     edge1 = mkEdge "testsite-edge-01" "192.168.2.1";
     edge2 = mkEdge "testsite-edge-02" "192.168.2.2";
 
-    # publishes a route the engine resolves into the edges' Caddyfiles; the route firewall
-    # admits the edge hosts to 8080 without this node writing a rule
+    # the route firewall admits the edges to 8080 without a rule here
     web = {pkgs, ...}: {
       imports = [fleetNode];
       networking.hostName = "testsite-web-01";
@@ -76,9 +72,8 @@ in {
       };
     };
 
-    # hostname "client" has no site prefix, so the engine never counts it as a fleet member.
-    # the test framework only puts it on 192.168.1.0/24, so park a site-subnet address on eth1
-    # by hand -- otherwise the vip is off-link and curl leaves via the qemu nat instead.
+    # no site prefix, so not a fleet member. without a site-subnet address the vip is
+    # off-link and curl leaves via the qemu nat
     client = {
       networking.interfaces.eth1.ipv4.addresses = [
         {
@@ -104,9 +99,8 @@ in {
 
     for m in [edge1, edge2]:
         m.wait_for_unit("caddy.service")
-        # nixpkgs starts keepalived from keepalived-boot-delay.timer (5s after
-        # network-online) rather than multi-user.target, so wait_for_unit hits it while it is
-        # still inactive with no job queued and gives up. poll instead.
+        # started by keepalived-boot-delay.timer, so wait_for_unit sees it inactive with
+        # no job queued and gives up
         m.wait_until_succeeds("systemctl is-active keepalived.service")
     web.wait_for_unit("static-web-server.service")
 

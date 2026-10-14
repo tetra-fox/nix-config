@@ -1,7 +1,4 @@
-# stand-in for sops-nix in the VM tests: declares the option surface the service modules
-# touch (secrets.<n>.path/owner, templates.<n>.content/path, placeholder.<n>) and
-# materializes every secret as a world-readable mock file under /etc. the tests assert
-# behavior, not secrecy; every secret's value is the literal string "mockpass".
+# sops-nix stand-in: every secret is a world-readable /etc file containing "mockpass"
 {
   config,
   lib,

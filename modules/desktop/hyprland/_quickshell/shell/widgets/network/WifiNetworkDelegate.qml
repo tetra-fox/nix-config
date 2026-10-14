@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// own-module import: WifiSecurity's singleton flag lives in the generated
-// qmldir, which tooling only reads through a module import
+// self-import: tooling only sees the singleton flag in qmldir through a module import
 import qs.widgets.network
 import qs.components
 import qs.lib
@@ -22,7 +21,7 @@ Item {
     signal connectWithPsk(string psk)
     signal expandRequested(bool expand)
 
-    // 18 = topMargin*3 (6px gap above pskField + 6px gap above pskActions + 6px bottom pad)
+    // 18: 6px above pskField, 6px above pskActions, 6px bottom pad
     implicitHeight: item.implicitHeight + (root.expanded ? pskField.implicitHeight + pskActions.implicitHeight + 18 : 0)
     clip: true
 
@@ -30,8 +29,7 @@ Item {
         target: root.network
         function onConnectionFailed(reason) {
             pskField.clear();
-            // reopen a fresh psk prompt for unknown networks so the user can retry
-            // (the connect attempt collapsed it)
+            // the connect attempt collapsed the prompt, reopen it to retry
             if (!root.network?.known)
                 root.expandRequested(true);
         }
@@ -45,7 +43,7 @@ Item {
             top: parent.top
         }
         icon: {
-            // guard against transient null: delegate briefly outlives its WifiNetwork during AP removal
+            // the delegate briefly outlives its WifiNetwork during AP removal
             if (!root.network)
                 return Icons.wifiSignal0;
             const secured = !WifiSecurity.isOpen(root.network.security);
@@ -93,8 +91,7 @@ Item {
         placeholderText: "Password"
         password: true
 
-        // the field owns the text (typing would destroy a text binding anyway);
-        // psk mirrors it one way for the connect signal
+        // the field owns the text, typing would destroy a binding
         onTextChanged: root.psk = text
         onAccepted: root.connectWithPsk(root.psk)
         onVisibleChanged: {

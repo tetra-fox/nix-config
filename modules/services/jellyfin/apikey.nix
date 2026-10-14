@@ -1,6 +1,4 @@
-# jellyfin api keys are rows in jellyfin.db (ApiKeys), not config, so there's no startup
-# hook to set one from a secret. a oneshot upserts a row whose AccessToken equals our
-# secret (apikey.sh); jellyfin compares the token verbatim, so it authenticates normally.
+# jellyfin api keys are db rows with no config hook, apikey.sh writes ours in
 {
   config,
   lib,

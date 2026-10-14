@@ -20,16 +20,11 @@
 
   inherit (topo) hostsInSite ipOf siteServers multiHost;
 
-  # grafana's public fqdn. declared once here and used for BOTH the stats route and grafana's
-  # root_url below, so the hostname isn't restated. reads only lab.site.domain (a plain input),
-  # never a topo derive, so it can't cycle.
   statsFqdn = "stats.${config.lab.site.domain}";
 
-  # the registry (registry.nix) owns the bind-address rule; read it, don't recompute it
   inherit (cfg) bindAddr;
 
-  # read only these sibling INPUT options, never a monitoring-derived value, or the
-  # cross-host eval cycles
+  # read only input options from other hosts, a derived value makes the cross-host eval cycle
   exportersOf = name: nixosConfigurations.${name}.config.lab.monitoring.exporters or [];
   alertsOf = name: nixosConfigurations.${name}.config.lab.monitoring.alerts or [];
   dashboardsOf = name: nixosConfigurations.${name}.config.lab.monitoring.dashboards or [];
@@ -39,8 +34,6 @@
     then bindAddr
     else ipOf name;
 
-  # one scrape job per exporter TYPE (node, systemd, ...), not per host: the prometheus-native
-  # shape where a job is a class of target and the hosts are its members
   scrapeTuples =
     lib.concatMap (
       name: let
@@ -68,11 +61,8 @@
     })
     byExporter;
 
-  # this host's own registrations, not a site-wide fold: the firewall should open
-  # exactly the ports something here listens on
   myExporterPorts = map (e: e.port) cfg.exporters;
 
-  # local mode scrapes this host's own registrations only, no cross-host fold
   localScrapes =
     map (e: {
       job_name = e.name;
@@ -88,13 +78,10 @@
   siteAgentIps = lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) hostsInSite));
 
   grafanaPort = 3000;
-  # loki's port is the logging module's fact (lab.logging.lokiPort); the firewall rule
-  # here must track it, not restate it
   lokiPort = config.lab.logging.lokiPort;
 
-  # identical registrations from multiple hosts collapse; a name registered twice with
-  # different bodies survives the unique and is caught by the assertion below.
-  # sorted so the provisioned file doesn't depend on host iteration order
+  # identical registrations collapse, a reused name with a different body trips the assertion.
+  # sorted so the provisioned file doesn't depend on host order
   siteAlerts = lib.sort (a: b: a.name < b.name) (lib.unique (lib.concatMap alertsOf hostsInSite));
 
   dupAlertNames = let
@@ -111,14 +98,12 @@
       else acc ++ [p]
   ) [] (lib.concatMap dashboardsOf hostsInSite);
 
-  # same uid scheme as the dashboard packages (sha256 prefix of the name), so edits to
-  # an existing rule update it in place and a rename is a new rule
+  # keyed on the name: edits update the rule in place, a rename is a new rule
   alertUid = name: builtins.substring 0 14 (builtins.hashString "sha256" name);
 
   promDsUid = "prometheus";
 
-  # everything below is shared by both grafana modes (site server and local resource
-  # monitor) so the datasource uid, plugin set and telemetry opt-out are stated once
+  # shared by the server and local grafana
   analyticsOff = {
     reporting_enabled = false;
     check_for_updates = false;
@@ -138,8 +123,7 @@
         access = "proxy";
         url = "http://localhost:${toString config.services.prometheus.port}";
         isDefault = true;
-        # pinned: the dashboard packages sed their DS_PROMETHEUS var to this
-        # string as a uid, and the alert rules reference it (promDsUid)
+        # pinned: the dashboard packages sed DS_PROMETHEUS to this uid
         uid = promDsUid;
       }
     ];
@@ -207,15 +191,14 @@
     isPaused = false;
   };
 in {
-  # registry is options-only, so an exporter producer can register without pulling in this
-  # whole stack; blackbox carries the server's synthetic probes and gates itself on the role
+  # blackbox gates itself on server.enable
   imports = [
     modules.services.monitoring.registry
     modules.services.monitoring.blackbox
   ];
 
   config = lib.mkMerge [
-    # ---- agent: always on, every host ----
+    # agent, every host
     {
       # without this the systemd_unit_ip_{egress,ingress}_bytes series are all zero
       systemd.settings.Manager.DefaultIPAccounting = true;
@@ -252,8 +235,6 @@ in {
           systemd-exporter
         ];
 
-        # companion alerts for the exporters above. registered by every host identically,
-        # so they collapse to one rule each on the server
         alerts = [
           {
             name = "scrape target down";
@@ -278,8 +259,7 @@ in {
             labels.severity = "warning";
           }
           {
-            # event alert: the 15m increase window keeps it visible, a pending
-            # period would only delay the notification
+            # event alert: the 15m window keeps it visible, a pending period only delays it
             name = "oom kills";
             expr = "round(increase(node_vmstat_oom_kill[15m]))";
             for = "0s";
@@ -314,7 +294,6 @@ in {
       );
     }
 
-    # ---- server: prometheus + grafana, one per site ----
     (lib.mkIf cfg.server.enable {
       assertions = [
         {
@@ -339,25 +318,17 @@ in {
       in {
         "monitoring/grafana_secret_key" = ownedByGrafana;
 
-        # nixpkgs defaults security.admin_password to "admin", so leaving it unset parks
-        # the local admin account on admin/admin. fairlane needs this in particular: it
-        # keeps grafana's native login form (no OAuth there), so that form is the way in
-        # and it has to ask for something real.
-        # setting it is necessary but not sufficient: grafana reads admin_password only
-        # when it CREATES the admin user, so an instance that already has one keeps
-        # whatever password it was first initialised with. the reconcile unit below is
-        # what actually moves an existing account onto this value.
+        # nixpkgs defaults this to "admin", and fairlane keeps the login form (no oauth).
+        # grafana only reads it when creating the admin user, grafana-admin-password applies it after
         "monitoring/grafana_admin_password" = ownedByGrafana;
 
-        # env file with TELEGRAM_BOT_TOKEN= and TELEGRAM_CHAT_ID=, read by systemd as
-        # root; grafana's provisioning interpolates the vars into the contact point
+        # env file with TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, interpolated into the contact point
         "monitoring/telegram_env" = lib.mkIf cfg.telegram.enable {};
       };
       systemd.services.grafana.serviceConfig.EnvironmentFile =
         lib.mkIf cfg.telegram.enable config.sops.secrets."monitoring/telegram_env".path;
 
-      # grafana has no declarative way to change an existing admin password, so reconcile
-      # it through the cli on every start, the same shape as the postgres role units.
+      # grafana can't declaratively change an existing admin password, so reset it on every start
       systemd.services.grafana-admin-password = {
         description = "reconcile the grafana admin password from sops";
         after = ["grafana.service"];
@@ -369,12 +340,11 @@ in {
           Group = "grafana";
           RemainAfterExit = true;
           LoadCredential = "adminpass:${config.sops.secrets."monitoring/grafana_admin_password".path}";
-          # bounds the health wait below; on timeout the unit fails instead of hanging
+          # bounds the health wait loop
           TimeoutStartSec = 180;
         };
-        # /api/health only answers once the db is migrated, which the cli needs. the
-        # password arrives on stdin, never as an argument: an argv password is readable
-        # out of /proc/<pid>/cmdline by any local user, same rule as the postgres units.
+        # /api/health answers only after the db migration the cli needs.
+        # password on stdin, argv is readable from /proc/<pid>/cmdline
         script = ''
           until ${pkgs.curl}/bin/curl -sf http://${bindAddr}:${toString grafanaPort}/api/health >/dev/null; do
             sleep 2
@@ -387,8 +357,7 @@ in {
       };
 
       services = {
-        # every site host's registered dashboards (this host's own included, node/systemd
-        # from the agent block above)
+        # option from tetra-nurpkgs/modules/grafana-dashboards.nix
         grafana-dashboards.community = siteDashboards;
 
         prometheus = {
@@ -413,8 +382,7 @@ in {
             server = {
               http_addr = bindAddr;
               http_port = grafanaPort;
-              # public url grafana generates links/redirects against, from the same statsFqdn the
-              # route uses. trailing slash is what grafana expects.
+              # grafana expects the trailing slash
               root_url = "https://${statsFqdn}/";
             };
             analytics = analyticsOff;
@@ -423,16 +391,13 @@ in {
               admin_password = "$__file{${config.sops.secrets."monitoring/grafana_admin_password".path}}";
             };
 
-            # disable_login_form only hides the browser form, it does not stop basic auth
-            # on /api/*, which is a separate switch that defaults on. without this the
-            # local admin account stays reachable over the api on any published vhost.
+            # basic auth on /api/* is separate from the login form and defaults on, it would
+            # expose the local admin on every published vhost
             "auth.basic".enabled = false;
           };
 
           declarativePlugins = dashboardPlugins;
 
-          # provider wiring: tetra-nurpkgs/modules/grafana-dashboards.nix reads
-          # services.grafana-dashboards.{community,extras}
           provision = {
             enable = true;
             datasources.settings = datasourceSettings;
@@ -455,9 +420,7 @@ in {
                   cfg.retiredAlerts;
               };
 
-              # one section per notification, one bullet per alert instance. the rule
-              # summaries carry the detail, so no label dump, no debug values. html parse
-              # mode, so keep < > & out of summaries
+              # html parse mode, keep < > & out of rule summaries
               templates.settings = {
                 apiVersion = 1;
                 templates = [
@@ -478,9 +441,7 @@ in {
                 ];
               };
 
-              # bottoken/chatid resolve from the env file at provisioning time, so the
-              # values never enter the store. provisioned policy replaces the default
-              # tree: everything routes to telegram, grouped per rule
+              # bottoken/chatid resolve from the env file at provisioning time, never in the store
               contactPoints.settings = lib.mkIf cfg.telegram.enable {
                 apiVersion = 1;
                 contactPoints = [
@@ -504,6 +465,7 @@ in {
                 ];
               };
 
+              # replaces grafana's default policy tree
               policies.settings = lib.mkIf cfg.telegram.enable {
                 apiVersion = 1;
                 policies = [
@@ -522,17 +484,13 @@ in {
         };
       };
 
-      # expose loki to this site's agents only (remote alloy ships logs), never the whole
-      # VLAN. grafana's allow is derived from its route (_route-firewall.nix): only the
-      # edge hosts proxy it, agents have no business on 3000.
+      # loki for this site's agents only. grafana's allow comes from its route (_route-firewall.nix)
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
         allowFrom siteAgentIps [lokiPort]
       );
     })
 
-    # ---- local: loopback prometheus + grafana, a resource monitor for interactive hosts ----
-    # no route, no firewall holes, no site fold: the agent's exporters feed a same-box
-    # prometheus and grafana serves it on localhost only
+    # local: loopback-only resource monitor for interactive hosts
     (lib.mkIf cfg.local.enable {
       assertions = [
         {
@@ -542,15 +500,12 @@ in {
       ];
 
       services = {
-        # only this host's registered dashboards, matching what its exporters produce
         grafana-dashboards.community = cfg.dashboards;
 
         prometheus = {
           enable = true;
-          # nothing remote reads it, only the same-box grafana
           listenAddress = "127.0.0.1";
-          # 5s, not the fleet's 15s: this instance is a task manager, and a spike
-          # shorter than the scrape interval never shows up
+          # used as a task manager, a spike shorter than the scrape interval never shows
           globalConfig.scrape_interval = "5s";
           scrapeConfigs = localScrapes ++ cfg.extraScrapeConfigs;
         };
@@ -564,8 +519,7 @@ in {
               http_port = grafanaPort;
             };
             analytics = analyticsOff;
-            # loopback on a single-user machine: the browser lands straight on the
-            # dashboards with full edit rights, no login
+            # loopback on a single-user machine, no login
             "auth.anonymous" = {
               enabled = true;
               org_role = "Admin";
@@ -574,11 +528,8 @@ in {
               disable_login_form = true;
               disable_signout_menu = true;
             };
-            # the key encrypts datasource credentials at rest and this instance stores
-            # none (anonymous auth, credential-less prometheus datasource), so the
-            # static value nixpkgs suggests for exactly this case is fine
+            # only encrypts stored datasource credentials, and there are none
             security.secret_key = "local-resource-monitor";
-            # open on the machine overview
             dashboards.default_home_dashboard_path = "${pkgs.grafana-dashboards.node-exporter-full}";
           };
 

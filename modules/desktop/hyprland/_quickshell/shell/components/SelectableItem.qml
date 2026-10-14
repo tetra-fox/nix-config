@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// selectable list row with checkmark, marquee label, and hover states
 Item {
     id: root
 

@@ -2,19 +2,14 @@ import qs.lib
 import QtQuick
 import QtQuick.Controls
 
-// styled 0..to slider - shared track/handle look for volume and brightness rows.
-// emits adjusted(value) on user drags; subclasses layer extra gestures on top.
 Slider {
     id: root
 
     property bool compact: false
-    // paints the fill in danger colour (muted audio); brightness never sets it
     property bool alert: false
 
-    // fires on real value changes from the user
     signal adjusted(real value)
-    // subclasses set this to swallow drag emits during a gesture (e.g. the
-    // audio double-tap reset, which snaps on release instead)
+    // swallows drag emits during a subclass gesture
     property bool suppressAdjust: false
 
     hoverEnabled: enabled
@@ -27,8 +22,7 @@ Slider {
     readonly property int _trackH: compact ? 3 : 4
     readonly property int _handleSz: compact ? 10 : 16
 
-    // subclasses parent extra marks (e.g. the 100% tick on the volume slider)
-    // here so they position against the track width
+    // parent extra marks here so they position against the track width
     readonly property alias trackItem: track
 
     background: Item {
@@ -74,7 +68,6 @@ Slider {
             }
         }
 
-        // glow ring (full mode only)
         Rectangle {
             visible: !root.compact
             anchors.centerIn: parent

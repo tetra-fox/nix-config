@@ -41,8 +41,6 @@ Item {
 
     onScrollPhaseChanged: root.graphRepaintNeeded()
 
-    // animates graph sliding left by one sample width between polls,
-    // so new data points appear to scroll in smoothly
     NumberAnimation {
         id: scrollAnim
         target: root
@@ -57,8 +55,7 @@ Item {
         root.samples = [];
         root.displayMax = 1;
         root._scaleInited = false;
-        // clear the readouts and the last-painted curve too, or the old
-        // interface's numbers linger until the first tick of the new one
+        // or the old interface's numbers linger until the first tick
         root.rxRate = -1;
         root.txRate = -1;
         root.rxBytes = 0;
@@ -69,8 +66,7 @@ Item {
     onIfnameChanged: reset()
 
     property int _pendingReloads: 0
-    // set if either read failed this tick (interface vanished mid-poll), so we don't
-    // compute a rate from a partial pair; a FileView fires loaded OR loadFailed, never both
+    // a read failed this tick (interface vanished). a FileView fires loaded or loadFailed, never both
     property bool _tickFailed: false
 
     FileView {
@@ -93,20 +89,15 @@ Item {
         }
     }
 
-    // waits for both rx and tx file reads to finish before computing rates
     function _settle() {
-        // a path change (interface switch) auto-loads and fires its own loaded
-        // events; accept exactly the pair the timer seeded and drop the rest,
-        // which would otherwise compute a rate from a mismatched rx/tx pair over
-        // a near-zero dt. preload stays on: reload() only reads the file when it
-        // is (FileView::updatePath)
+        // an interface switch auto-loads and fires extra loaded events, accept only the
+        // pair the timer seeded. preload stays on, reload() only reads when it is (FileView::updatePath)
         if (_pendingReloads === 0)
             return;
         if (--_pendingReloads > 0)
             return;
 
-        // a failed read leaves no usable byte count; skip this tick rather than freeze
-        // the barrier (the timer reseeds _pendingReloads on the next tick)
+        // skip the tick, the timer reseeds _pendingReloads
         if (_tickFailed) {
             _tickFailed = false;
             return;

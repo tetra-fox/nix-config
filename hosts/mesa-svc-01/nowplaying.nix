@@ -17,8 +17,7 @@ in {
   services.nowplaying = {
     enable = true;
     lastfmUser = "tetrafox_";
-    # bind the internal-VLAN IP: caddy proxies to this host's internal IP, so binding the
-    # server IP instead 502s (caddy hits the internal IP with nothing listening).
+    # caddy proxies to the internal IP
     host = config.lab.site.internalIp;
     inherit port;
     environmentFile = config.sops.templates."nowplaying.env".path;

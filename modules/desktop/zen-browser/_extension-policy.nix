@@ -1,7 +1,4 @@
-# the addon set shared by every host that runs zen, as an ExtensionSettings
-# policy. kept out of home.nix because the mac installs zen from the homebrew
-# cask and cannot evaluate the home-manager module, but a policy applies to a
-# stock app bundle just as well (see darwin.nix)
+# separate from home.nix so darwin.nix can use it without the hm module
 {
   pkgs,
   lib,
@@ -23,17 +20,12 @@
       scam
     ]);
 
-  # every addon package puts its xpi under the firefox application id
+  # addon packages install under firefox's app id
   firefoxAppId = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
 in
-  # let the browser's own installer pull each xpi out of the store instead of
-  # symlinking them into <profile>/extensions. XPIProvider decides a sideloaded
-  # addon changed from its mtime and path alone, and every store file has mtime
-  # 1 at a fixed profile path, so a version bump that way is invisible to the
-  # addon database: it keeps the old manifest and cached content scripts while
-  # loading the new xpi. installAddonFromURL compares versions instead, and
-  # refuses downgrades. updates_disabled stops the browser downloading its own
-  # xpi over ours, which is what made the two writers fight.
+  # installed by url instead of symlinked into the profile: XPIProvider detects
+  # sideloaded changes by mtime and path, store files are all mtime 1, so version
+  # bumps go unseen. updates_disabled stops the browser fetching its own xpi
   lib.listToAttrs (map (pkg:
     lib.nameValuePair pkg.addonId {
       installation_mode = "normal_installed";

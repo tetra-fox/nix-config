@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// dual-image container that crossfades + slides on source change
 Rectangle {
     id: root
 
@@ -40,9 +39,7 @@ Rectangle {
             root._transition()
     }
 
-    // one animation for both directions; _transition() assigns the roles
-    // before restarting, so the flip of _showingA right after cannot retarget
-    // a running animation the way bound targets would
+    // targets assigned in _transition(), bound targets would retarget mid-run when _showingA flips
     ParallelAnimation {
         id: transition
         NumberAnimation {
@@ -96,9 +93,7 @@ Rectangle {
             return;
         }
         const hidden = root._showingA ? artB : artA;
-        // returning to art the hidden image already holds (track x -> y -> x)
-        // makes the assignment below a no-op, so statusChanged never fires;
-        // transition directly when it is already loaded
+        // the hidden image may already hold this art (x, y, x), then statusChanged never fires
         if (String(hidden.source) === root.source) {
             if (hidden.status === Image.Ready)
                 root._transition();

@@ -1,8 +1,5 @@
-# black-box probes from the site's monitoring server, testing the chains users actually
-# hit rather than per-box health: https through the edge for every route the site
-# publishes (derived from the route registry, no hand-kept list), a dns query against
-# the resolver endpoint, a tcp connect to the db endpoint. imported by system.nix,
-# active wherever the server role is
+# probes the paths users hit rather than per-box health: https through the edge for every
+# published route, dns against the resolver endpoint, tcp to the db endpoint
 {
   config,
   lib,
@@ -21,8 +18,7 @@
   # a name the resolver must answer; every monitored site publishes its stats vhost
   dnsProbeName = "stats.${config.lab.site.domain}";
 
-  # the standard blackbox indirection: prometheus scrapes the exporter, the real
-  # target travels as a query param and becomes the instance label
+  # prometheus scrapes the exporter, the real target travels as a query param
   probeJob = {
     name,
     module,
@@ -41,8 +37,7 @@
         source_labels = ["__param_target"];
         target_label = "instance";
       }
-      # the community dashboard (14928) filters its panels and template variable on a
-      # `target` label, instance alone leaves its legends as raw series identities
+      # the community dashboard (14928) filters on a `target` label
       {
         source_labels = ["__param_target"];
         target_label = "target";
@@ -82,7 +77,6 @@
     };
   };
 in {
-  # options-only dependency, same seam as every other producer
   imports = [modules.services.monitoring.registry];
 
   config = lib.mkIf cfg.server.enable {
@@ -105,7 +99,7 @@ in {
           module = "dns";
           targets = ["${dnsEndpointIp}:53"];
         })
-        # 5432 is the postgres wire port, also what the ha haproxy listens on
+        # 5432 for both plain postgres and the ha haproxy
         ++ lib.optional (dbEndpointIp != null) (probeJob {
           name = "blackbox-tcp";
           module = "tcp";
@@ -122,8 +116,7 @@ in {
           labels.severity = "critical";
         }
         {
-          # acme renews certs 30 days out, so at 14 the renewal has been broken
-          # for over two weeks already
+          # acme renews 30 days out, so at 14 renewal has been broken for two weeks
           name = "tls certificate expiring";
           expr = "round((probe_ssl_earliest_cert_expiry - time()) / 86400, 0.1)";
           condition = {

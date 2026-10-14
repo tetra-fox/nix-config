@@ -1,6 +1,4 @@
 _: {
-  # acpitz thermal_zone0 (PCT0) reports bad values on resume from suspend
-  # baseline reads as 17C, then trips "critical" and triggers an emergency
-  # poweroff
+  # acpitz thermal_zone0 (PCT0) reads garbage after resume, trips "critical" and powers off
   boot.kernelParams = ["thermal.off=1"];
 }

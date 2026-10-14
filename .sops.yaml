@@ -1,25 +1,14 @@
-# sops-nix recipients. encrypted files live under ./secrets/.
-# generate the user age key once with `age-keygen -o ~/.config/sops/age/keys.txt`
-# and replace the placeholder below with the resulting public key. sops only looks
-# there by default on linux; on darwin its default is ~/Library/Application Support,
-# so modules/cli/sops/home.nix sets SOPS_AGE_KEY_FILE to the path above on both. on a
-# fresh mac, before home-manager has run, pass it in the environment by hand.
-#
-# host age keys are derived from the vm's ssh ed25519 host key:
-#   ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
-#
-# after editing this file, re-encrypt every yaml under secrets/ with:
-#   sops updatekeys secrets/<path>.yaml
+# user key: `age-keygen -o ~/.config/sops/age/keys.txt`. modules/cli/sops/home.nix sets
+# SOPS_AGE_KEY_FILE there since darwin's default differs; on a fresh mac export it by hand
+# host key: ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+# after editing: sops updatekeys secrets/<path>.yaml
 
 keys:
-  # users. one key per operator machine rather than one key copied around, so a
-  # lost machine is revoked by dropping its anchor and re-running `sops updatekeys`
-  # instead of rotating every secret. both decrypt every file: an operator key is
-  # fleet-wide by design, unlike the per-host keys below.
+  # one key per operator machine, so a lost one is revoked by dropping its anchor and
+  # running `sops updatekeys` instead of rotating every secret
   - &user_tetra age1en4ycn72qkfzqge4exkxe6jjzuxtp5090zr6z3wqhgf0qsha8e4s8dhgs8
   - &user_myputer age1l6yt4ftjlgcvyfyppkcm9htv7l2rd4x783drauedqm6jkqqrhsfq0l2wxn
 
-  # hosts
   - &host_mesa_svc_01 age1jwvvwvzlvqrxhyy5y84ltn7w6gtq52ss5ek93whlvx3hxezkjejqaxylpj
   - &host_fairlane_svc_01 age14760cr4x8zzd5tuf3w8ff2auyhjxju20mp88w5ackqlsrlal4s9s6m4qyz
   - &host_mesa_mon_01 age17h8yezx0j8sqmpwuxc836pzd386u59x6wfh8m02f48v8ycyrhvxq8v9avd
@@ -38,11 +27,8 @@ keys:
   - &host_fairlane_edge_02 age10mq5ck0szwfv2hv78ytjnkhvywra2v8nqw8s5hthq9fm3s0z93mst8jtnt
 
 creation_rules:
-  # per-host file, encrypted to that host's key only (plus the user). a host must
-  # not be able to decrypt another host's secrets, so don't collapse these into one
-  # broad rule. there is deliberately no catch-all rule at the end: sops errors out
-  # when no creation_rule matches, so a secrets file for a host that was never added
-  # here fails closed instead of being encrypted to some broad default key set.
+  # one rule per host so no host decrypts another's secrets. no catch-all on purpose:
+  # a file for an unlisted host fails closed
   - path_regex: secrets/mesa-svc-01\.yaml$
     key_groups:
       - age:

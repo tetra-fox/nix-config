@@ -12,7 +12,6 @@
   ];
 
   stylix.targets = {
-    # font targets stay on so fonts.fontconfig.defaultFonts stays populated (kitty/vscode read it via lib.head)
     font-packages.enable = true;
     fontconfig.enable = true;
   };
@@ -24,7 +23,7 @@
 
     image = shared.wallpapers + "/sleepytime.jpg";
     base16Scheme = "${inputs.stylix.inputs.tinted-schemes}/base24/catppuccin-mocha.yaml";
-    # catppuccin puts blue at base0D (primary accent) and mauve at base0E; swap for mauve-accented ui
+    # swap blue and mauve so the primary accent is mauve
     override = {
       base0D = "cba6f7";
       base0E = "89b4fa";
@@ -55,7 +54,6 @@
       size = 38;
     };
 
-    # vscode editor font size is derived as sizes.terminal * 4/3, so 10.5 -> 14pt
     fonts.sizes.terminal = 10.5;
   };
 }

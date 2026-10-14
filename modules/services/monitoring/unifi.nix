@@ -8,8 +8,7 @@
   cfg = config.lab.monitoring.unifi;
   hn = config.networking.hostName;
 in {
-  # declares lab.monitoring.{server.enable,extraScrapeConfigs}, which this file reads and
-  # extends; without it the module only evals when the host co-imports monitoring.system
+  # declares the lab.monitoring options read here, so this evals without monitoring.system
   imports = [modules.services.monitoring.registry];
 
   options.lab.monitoring.unifi = {
@@ -35,7 +34,7 @@ in {
       group = "unpoller-exporter";
     };
 
-    # unifi controller side: "Local Only User", limited admin / view only
+    # controller side: "Local Only User", limited admin / view only
     services.prometheus.exporters.unpoller = {
       enable = true;
       listenAddress = "127.0.0.1";

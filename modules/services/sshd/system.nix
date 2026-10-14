@@ -7,8 +7,6 @@
 }: let
   common = import ./_common.nix;
 in {
-  # the directory is the contract, so changing who has access means changing
-  # the keyring, not this module
   users.users.${username}.openssh.authorizedKeys.keys =
     common.keyringKeys lib shared.keyring;
 
@@ -29,9 +27,8 @@ in {
     ];
 
     settings = {
-      # remove small diffie-hellman moduli, floor derived from requiredRSASize (the moduli
-      # size column stores bits minus one). ModuliFile is types.path, not types.package,
-      # so it won't coerce a derivation; interpolate to a string path
+      # drop DH moduli under requiredRSASize, the size column is bits minus one.
+      # ModuliFile is types.path and won't coerce a derivation
       ModuliFile = "${pkgs.runCommand "ssh-moduli-hardened" {} ''
         awk '$5 >= ${toString (common.requiredRSASize - 1)}' ${pkgs.openssh}/etc/ssh/moduli > $out
       ''}";

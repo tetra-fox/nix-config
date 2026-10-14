@@ -2,7 +2,6 @@ import qs.lib
 import Quickshell
 import QtQuick
 
-// text that copies to clipboard on click; right-aligned by default, leftAligned for column layouts
 Item {
     id: root
 

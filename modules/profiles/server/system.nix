@@ -7,21 +7,14 @@
   imports = [
     modules.profiles.base.system
 
-    # every server in the fleet is a proxmox VM with the standard single-disk layout -- that's
-    # not a per-host choice, it's what "server" means here. folded in so host files don't repeat
-    # the proxmox-vm + disko trio. a host that's somehow not this can still override.
     modules.platform.proxmox-vm.system
     modules.platform.disko.proxmox-vm
 
-    # the monitoring/logging AGENT (node+systemd exporters, journal shipping to the site's mon
-    # box) is on every server unconditionally -- self-observability is an invariant. the mon
-    # box's own server flag (lab.monitoring.server.enable) is what makes it ALSO scrape; the
-    # agent half is universal, so it lives here instead of a per-host monitoring.nix.
+    # agent half only, lab.monitoring.server.enable makes the mon box also scrape
     modules.services.monitoring.system
     modules.services.logging.system
 
-    # sops on every server: the secrets file defaults to secrets/<hostname>.yaml, so a
-    # host needs no per-host wiring (null on the hosts that have no secrets)
+    # defaults to secrets/<hostname>.yaml, null on hosts without one
     modules.platform.sops.system
   ];
 
@@ -29,9 +22,8 @@
 
   home-manager.users.${username}.imports = [modules.profiles.server.home];
 
-  # every server disk shares one thin pool with little headroom and each deploy leaves the
-  # previous closure in the store, so gc nightly with a two day window and fstrim nightly so the
-  # freed blocks reach the pool the same day. the booted generation stays until reboot. see SCHEDULE.md
+  # every server disk shares one thin pool with little headroom, so gc and fstrim nightly
+  # to hand freed blocks back the same day. see SCHEDULE.md
   nix.gc = {
     dates = "*-*-* 12:00:00";
     options = "--delete-older-than 2d";
@@ -50,8 +42,7 @@
   services = {
     qemuGuest.enable = lib.mkDefault true;
     udisks2.enable = lib.mkDefault false;
-    # every server ships its journal to the site's loki (31d), so the local copy only has to
-    # cover a loki outage
+    # journals ship to loki, the local copy only has to cover an outage
     journald.settings.Journal = {
       SystemMaxUse = lib.mkDefault "200M";
       RuntimeMaxUse = lib.mkDefault "64M";
@@ -100,7 +91,7 @@
   hardware.nvidia.powerManagement.enable = false;
 
   systemd = {
-    # emergency mode hangs waiting for console input we'll never see; let the watchdog reboot instead
+    # emergency mode waits on a console nobody watches, let the watchdog reboot instead
     enableEmergencyMode = false;
 
     settings.Manager = {

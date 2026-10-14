@@ -1,7 +1,4 @@
-# VM integration tests for the fleet's runtime claims (failover, promotion, data
-# survival) -- fleet-test.nix's fictional-fleet philosophy, one level up: the real service
-# modules on a fictional site, in VMs. `just vm-test <name>` runs one locally; CI runs
-# them per test in its own job.
+# real service modules on a fictional site, in VMs. `just vm-test <name>` runs one
 {
   pkgs,
   modules,

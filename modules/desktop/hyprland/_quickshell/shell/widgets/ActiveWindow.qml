@@ -7,8 +7,7 @@ Text {
 
     property var screen
 
-    // remember last focused toplevel on this screen so we don't blank
-    // when focus moves to a different monitor
+    // so the bar doesn't blank when focus moves to another monitor
     property var lastToplevel: null
 
     Connections {
@@ -20,8 +19,7 @@ Text {
         }
     }
 
-    // drop the remembered toplevel when it closes, or the bar keeps showing a
-    // dead window's name until focus next lands on this screen
+    // or the bar keeps a closed window's name until focus returns to this screen
     Connections {
         target: root.lastToplevel
         function onClosed() {
@@ -33,7 +31,6 @@ Text {
         const t = ToplevelManager.activeToplevel;
         if (t?.screens.includes(screen)) // qmllint disable unresolved-type
             return t;
-        // fall back to last known toplevel on this screen
         if (lastToplevel?.screens.includes(screen))
             return lastToplevel;
         return null;

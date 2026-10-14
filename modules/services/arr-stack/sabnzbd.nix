@@ -10,14 +10,10 @@
   sabnzbdStateDir = "${lib.removePrefix "/var/lib/" siteData}/sabnzbd";
   hostVethIp = config.vpnNamespaces.wg.bridgeAddress;
 
-  # under the state dir so the sabnzbd user (which runs preStart) can write it
+  # under the state dir so the sabnzbd user can write it from preStart
   serversIni = "/var/lib/${sabnzbdStateDir}/.servers-rendered.ini";
 
-  # turn the JSON array of server objects into sabnzbd's [servers] ini section
-  # create the file 0600 before writing, rather than letting `>` create it 0644 and
-  # chmod'ing after: the contents are the usenet provider username and password, and the
-  # after-the-fact chmod leaves them world-readable for the length of the write on first
-  # render. later runs truncate an existing 0600 file, so only the first was exposed.
+  # created 0600 before writing, it holds the usenet credentials
   renderServersCmd = ''
     install -m 0600 /dev/null ${serversIni}
     {
@@ -31,10 +27,8 @@ in {
     sops.secrets = {
       "apps/sabnzbd_api_key" = {};
       "apps/sabnzbd_nzb_key" = {};
-      # JSON array of server objects mirroring sabnzbd's server config keys verbatim,
-      # edit this secret to add/remove a server with no nix change. e.g.:
-      #   [{"host":"news.example.com","port":563,"ssl":1,"ssl_verify":2,
-      #     "username":"<u>","password":"<p>","connections":50,"priority":0}]
+      # json array of objects keyed like sabnzbd's server config, e.g.
+      #   [{"host":"news.example.com","port":563,"ssl":1,"username":"<u>","password":"<p>"}]
       "apps/sabnzbd_servers" = {owner = "sabnzbd";};
     };
 
@@ -47,15 +41,11 @@ in {
       '';
     };
 
-    # mkBefore so the servers ini is rendered before config_merge.py reads secretFiles,
-    # which would fail on the missing file. in sabnzbd's own preStart so it runs as the
-    # sabnzbd user, where the sops secret is readable
+    # mkBefore: config_merge.py fails if a secretFile is missing
     systemd.services.sabnzbd.preStart = lib.mkBefore renderServersCmd;
 
-    # the upstream sabnzbd module sets no hardening at all, which leaves the service that
-    # parses untrusted usenet content and shells out to par2/unrar running with the full
-    # ambient set. ProtectSystem is "full" rather than "strict" because sabnzbd writes to
-    # its state dir and the media paths; strict would need every one of those enumerated.
+    # upstream sets no hardening. "full" not "strict": strict would need every media
+    # path enumerated
     systemd.services.sabnzbd.serviceConfig = {
       NoNewPrivileges = true;
       PrivateTmp = true;
@@ -76,8 +66,7 @@ in {
     # pin the uid: NFS squashes on uid, not name
     users.users.sabnzbd.uid = 992;
 
-    # the arrs live in the vpn netns and reach sabnzbd at the veth bridge address, so
-    # they need an explicit accept now that openFirewall no longer opens 8080 wholesale
+    # the arrs reach sabnzbd from the netns over the veth bridge
     networking.firewall.extraInputRules = ''
       ip saddr ${config.vpnNamespaces.wg.namespaceAddress} tcp dport ${toString config.services.sabnzbd.settings.misc.port} accept
     '';
@@ -87,10 +76,7 @@ in {
       group = mediaGroup;
       stateDir = sabnzbdStateDir;
       allowConfigWrite = true;
-      # false: openFirewall opens 8080 on every interface from any source, which skips
-      # caddy's lan_only/forward_auth. the route below carries openFirewall instead, so
-      # _route-firewall.nix admits only the site's edge IPs, and the netns rule covers
-      # the arrs reaching sabnzbd over the veth bridge.
+      # would open 8080 to any source. the caddy route opens it to the edge hosts instead
       openFirewall = false;
       secretFiles = [
         config.sops.templates."sabnzbd-secrets.ini".path
@@ -135,8 +121,7 @@ in {
             dir = "";
             priority = 0;
           };
-          # empty dir on purpose: downloads land in complete_dir and the arrs move them
-          # to the library, so a per-category subdir buys nothing
+          # empty dir: the arrs move downloads out of complete_dir anyway
           radarr = {
             name = "radarr";
             order = 6;

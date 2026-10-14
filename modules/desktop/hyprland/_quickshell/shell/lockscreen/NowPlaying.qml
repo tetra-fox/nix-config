@@ -4,7 +4,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// compact media card for the lock screen
 Item {
     id: root
 
@@ -18,8 +17,6 @@ Item {
         id: mpris
         player: sel.player
     }
-
-    // -- layout --
 
     implicitWidth: Theme.popupWidth
     implicitHeight: mpris.hasMedia ? card.height : 0
@@ -69,7 +66,6 @@ Item {
                     id: contentSlide
                 }
 
-                // compact header: small art + title/artist
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
@@ -81,7 +77,6 @@ Item {
                         radius: Theme.radiusMd
                         source: mpris.artUrl
 
-                        // fallback icon when no art available
                         Text {
                             anchors.centerIn: parent
                             text: Icons.musicNote
@@ -130,8 +125,6 @@ Item {
                 VolumeSlider {}
             }
 
-            // -- switch animation --
-
             SequentialAnimation {
                 id: switchAnim
 
@@ -176,8 +169,6 @@ Item {
                     }
                 }
             }
-
-            // -- bottom row: speed + player switching --
 
             RowLayout {
                 Layout.fillWidth: true

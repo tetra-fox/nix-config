@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// section header: icon + title + optional subtitle + status badge
 RowLayout {
     id: root
 

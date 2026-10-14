@@ -12,8 +12,7 @@ DialogSurface {
     property string icon: ""
     property string actionLabel: "Confirm"
     property int countdown: 30
-    // owned by open() and the countdown timer, not bound to countdown: both
-    // write it imperatively, which would destroy a binding on the first open
+    // not bound, open() and the timer write it
     property int remaining: 0
 
     signal confirmed
@@ -25,15 +24,14 @@ DialogSurface {
         visible = true;
     }
 
-    // guard: key-release from shortcut can dismiss the grab immediately
+    // the triggering shortcut's key release can clear the grab immediately
     Timer {
         id: grabGuard
         interval: 150
     }
 
-    // quickshell deactivates the grab after ANY clear, including the guarded
-    // one from the triggering shortcut's key release, so bounce active through
-    // false to re-arm it; writing the property directly would kill the binding
+    // quickshell deactivates the grab on any clear, so bounce active through false to
+    // re-arm it. writing active directly would kill its binding
     property bool _grabRearm: false
 
     HyprlandFocusGrab {
@@ -56,7 +54,7 @@ DialogSurface {
         interval: 1000
         repeat: true
         running: root.visible
-        // auto-confirm when countdown reaches 0 (e.g. logout proceeds if user walks away)
+        // auto-confirms at 0
         onTriggered: {
             root.remaining -= 1;
             if (root.remaining <= 0) {

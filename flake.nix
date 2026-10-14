@@ -1,8 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
-    # separate pin for x86_64-darwin: unstable (26.11) dropped the platform
-    # entirely, 26.05 keeps it deprecated-but-working until end of 2026
+    # x86_64-darwin pin: unstable dropped the platform, 26.05 keeps it until end of 2026
     nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixpkgs-26.05-darwin";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
@@ -32,12 +31,8 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # separate pin for x86_64-darwin, same reason as nixpkgs-darwin above. upstream
-    # dropped the platform from nix/systemPlatform.nix in 435c758 (2026-07-22), and the
-    # overlay resolves `systemPlatform.${system}` unguarded, so on this platform it is a
-    # missing-attribute error rather than an empty extension set. 1c7bb95 is the commit
-    # right before that, the last one that still carries x86_64-darwin. it pins the
-    # extension data at that date too, which is the cost of keeping the platform working.
+    # x86_64-darwin pin: later revs drop the platform and the overlay indexes
+    # systemPlatform.${system} unguarded
     nix-vscode-extensions-darwin = {
       url = "github:nix-community/nix-vscode-extensions?rev=1c7bb95446387973178363916a51b14515fa5ee4";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -70,9 +65,7 @@
     };
     zsh-patina = {
       url = "github:michel-kraemer/zsh-patina";
-      # follows the darwin pin: this flake's package is only used where nixpkgs
-      # doesn't carry zsh-patina (26.05-darwin); linux takes it from nixpkgs
-      # unstable, which hard-errors if this flake evals x86_64-darwin against it
+      # only used on 26.05-darwin, which lacks zsh-patina. unstable errors on x86_64-darwin
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     yazi = {
@@ -102,11 +95,8 @@
 
     colmena = {
       url = "github:zhaofengli/colmena";
-      # follows the darwin pin, same reason as zsh-patina: the devshell pulls
-      # colmena's package on x86_64-darwin, and unstable hard-errors on that
-      # platform. the deploy CLI and the lib.makeHive that builds the hive
-      # (flake/colmena.nix) have to come from one input, so this can't be split
-      # per-platform without risking a version skew between the two.
+      # darwin pin: the devshell pulls colmena on x86_64-darwin. the CLI and makeHive
+      # (flake/colmena.nix) must come from one input, so it isn't split per platform
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
@@ -130,8 +120,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # flake = false to skip the upstream flake-utils.eachDefaultSystem which
-    # eagerly evaluates x86_64-darwin and fires the 26.05 deprecation warning
+    # upstream's eachDefaultSystem evals x86_64-darwin and fires the 26.05 deprecation warning
     claude-code-nix = {
       url = "github:sadjow/claude-code-nix";
       flake = false;
@@ -143,29 +132,21 @@
     flake-parts.lib.mkFlake {inherit inputs;} (let
       inherit (inputs.nixpkgs) lib;
       username = "tetra";
-      # the unix user servers run as; per-host specialArgs reference this so the fact
-      # is stated once (rebuild.sh's remote-deploy user is substituted from it too)
       serverUsername = "admin";
-      # the operator's identity, shared by every machine the user drives (hara and
-      # myputer). the signing key is the 1password ssh signing key, a different key
-      # from shared/keyring/tetra.pub (fleet shell access).
+      # signingKey is the 1password ssh signing key, not shared/keyring/tetra.pub
       identity = {
         name = username;
         email = "me@tetra.cool";
         signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
       };
 
-      # local overlays live one-per-file in overlays/; each is `inputs: final: prev: {...}`.
-      # loaded as paths (like modules/fleet) so we import and apply inputs ourselves rather
-      # than relying on haumea's argument injection.
+      # each overlays/ file is `inputs: final: prev: {...}`
       localOverlays = map (p: import p inputs) (lib.attrValues (inputs.haumea.lib.load {
         src = ./overlays;
         loader = inputs.haumea.lib.loaders.path;
       }));
 
-      # every server VM has the same shape. the tag (which imports the site facts file)
-      # derives from the hostname prefix, the same rule the discovery engine groups sites
-      # by, so facts-file membership and engine membership can't disagree.
+      # the site tag uses the discovery engine's prefix rule, so the two can't disagree
       sitePrefix = import ./lib/site-prefix.nix {inherit lib;};
       serverHost = name: extra: {
         path = ./hosts + "/${name}";
@@ -175,13 +156,9 @@
         specialArgs = {username = serverUsername;};
         modules = [inputs.disko.nixosModules.disko] ++ extra;
       };
-      # extras maps a host name to the extra modules only that host wants (e.g. nowplaying on
-      # mesa-svc-01); every other host gets []. keeps the one-off out of the call site.
       serverHosts = names: extras: lib.genAttrs names (n: serverHost n (extras.${n} or []));
 
-      # every fleet server, stated once: the hosts attrset builds from this
-      # list, and the ssh client module derives its per-site Host blocks from
-      # it (via sitePrefix), so client config follows the fleet automatically
+      # also feeds fleetSites, which the ssh client turns into per-site Host blocks
       serverNames = [
         "mesa-svc-01"
         "mesa-svc-02"
@@ -212,16 +189,11 @@
           src = ./modules;
           loader = inputs.haumea.lib.loaders.path;
         };
-        # pure helper functions (the fleet discovery engine, the site-prefix), loaded the same
-        # way as modules (paths, imported+applied by callers). separate from `modules` because
-        # these are plain `{lib}: ...` functions, not NixOS modules -- they don't belong under
-        # modules/. exposed as `fleet` so call sites read fleet.engine / fleet.topology.
+        # plain `{lib}: ...` functions, not modules
         fleet = inputs.haumea.lib.load {
           src = ./lib;
           loader = inputs.haumea.lib.loaders.path;
         };
-        # the mesa capability vocabulary (lib/caps.nix): one record per capability so provider
-        # modules and the topology consumer both read caps.<x>.name instead of restating the string.
         caps = import ./lib/caps.nix;
         shared = {
           wallpapers = ./shared/wallpapers;
@@ -246,11 +218,7 @@
         system,
         ...
       }: {
-        # x86_64-darwin resolves pkgs from the 26.05 pin, same reason hosts.myputer does:
-        # unstable dropped the platform and now throws on any eval of its package set, which
-        # takes the devshell, formatter and packages down with it (the host configs were
-        # unaffected because they already pick their own nixpkgs). flake-parts defaults this
-        # to inputs.nixpkgs for every entry in `systems`, so it has to be stated here too.
+        # flake-parts defaults pkgs to inputs.nixpkgs, which throws on x86_64-darwin
         _module.args.pkgs =
           if system == "x86_64-darwin"
           then inputs.nixpkgs-darwin.legacyPackages.${system}
@@ -258,15 +226,13 @@
 
         formatter = pkgs.alejandra;
 
-        # runtime checks: VM tests exercising the real service modules on a fictional site
-        # (tests/). x86_64-linux only: they need kvm, and the fleet is x86_64.
+        # vm tests need kvm
         checks = lib.mkIf (system == "x86_64-linux") (import ./tests {
           inherit pkgs;
           inherit (commonSpecialArgs) modules fleet caps;
         });
-        # `or {}`, not inputs': nurpkgs has no x86_64-darwin output, and the throwing
-        # accessor would break every `nix <cmd> .#...` on the mac (the CLI resolves
-        # attrs through packages.<system> first)
+        # not inputs': nurpkgs has no x86_64-darwin output and the throwing accessor
+        # breaks every `nix <cmd> .#...` on the mac
         packages = inputs.tetra-nurpkgs.packages.${system} or {};
 
         devShells.default = pkgs.mkShell {
@@ -276,8 +242,7 @@
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
-            # fmt/lint/task tools; ci pulls the same three from the flake.lock
-            # nixpkgs pin via --inputs-from, without evaluating this flake (see ci.yml)
+            # ci pulls these three via --inputs-from (ci.yml)
             pkgs.just
             pkgs.statix
             pkgs.alejandra
@@ -292,23 +257,19 @@
 
       easy-hosts = {
         perTag = tag: {
-          # no pathExists guard: a tag without a site facts file is a config error and
-          # should fail loudly at eval, not silently import nothing
+          # no pathExists guard: a tag without a facts file should fail eval
           modules = [(./modules/sites + "/${tag}.nix")];
         };
 
         shared = {
           specialArgs = commonSpecialArgs;
           modules = [
-            # via _module.args (NixOS-only), not commonSpecialArgs, so `self` doesn't leak
-            # into the home-manager eval.
+            # not commonSpecialArgs, so `self` doesn't leak into home-manager
             {_module.args.nixosConfigurations = inputs.self.nixosConfigurations;}
             ({config, ...}: {
               nixpkgs.overlays =
                 [
-                  # x86_64-darwin takes the pinned revision; every other system tracks
-                  # upstream. reads hostPlatform rather than pkgs, which would need the
-                  # overlays this is defining
+                  # hostPlatform, not pkgs: pkgs would depend on these overlays
                   (
                     if config.nixpkgs.hostPlatform.system == "x86_64-darwin"
                     then inputs.nix-vscode-extensions-darwin.overlays.default
@@ -317,8 +278,7 @@
                   inputs.quickshell.overlays.default
                   inputs.nix-yazi-plugins.overlays.default
                   inputs.tetra-nurpkgs.overlays.default
-                  # every host, not just the nixos ones: the mac's zen gets its
-                  # addons from nur.repos.rycee too (modules/desktop/zen-browser)
+                  # the mac's zen addons come from nur.repos.rycee too
                   inputs.nur.overlays.default
                 ]
                 ++ localOverlays;
@@ -341,20 +301,13 @@
                 inputs.home-manager.nixosModules.home-manager
                 inputs.nix-topology.nixosModules.default
                 inputs.tetra-nurpkgs.nixosModules.grafana-dashboards
-                # fleet-wide so every nixos host has the `sops` option without a per-host
-                # import; modules can't reach `inputs` to pull it in themselves.
+                # modules can't reach `inputs` to import sops themselves
                 inputs.sops-nix.nixosModules.sops
-                # lab.site.* declarations fleet-wide: the topology layer + the deploy output
-                # read them as a contract regardless of which site a host is in.
                 ./modules/sites/_options.nix
-                # provides the per-host `topo` module arg (the fleet topology attrset), so
-                # consumers read topo.<derive> instead of re-importing fleet.topology each time.
+                # provides the `topo` module arg
                 ./modules/sites/_topology.nix
-                # firewall allows for published routes (edge hosts -> route port), so a
-                # service that declares a route never hand-writes its ingress rule.
                 ./modules/sites/_route-firewall.nix
-                # fleet-wide so adding arr-stack to a host doesn't silently fail for want of
-                # the `vpnNamespaces` option; inert on hosts that declare no namespace.
+                # vpnNamespaces option for arr-stack; inert without a namespace
                 inputs.vpn-confinement.nixosModules.default
               ];
               darwin = [inputs.home-manager.darwinModules.home-manager];

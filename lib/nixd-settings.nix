@@ -1,9 +1,5 @@
-# the nix.serverSettings.nixd block for editor LSP config, shared by vscode and helix so the
-# nixpkgs/options exprs live in one place. host-aware: hara is nixos, myputer is nix-darwin, and
-# each needs its own options tree plus the nixpkgs input that host actually builds against
-# (myputer uses nixpkgs-darwin, see flake.nix). the `expr` strings are evaluated by nixd itself
-# against the flake root, not by this file, so `./.` resolves correctly regardless of where the
-# resulting settings attrset gets assembled.
+# nixd settings shared by vscode and helix. nixd evaluates the `expr` strings from the flake
+# root, so `./.` is the flake
 {
   pkgs,
   osConfig,

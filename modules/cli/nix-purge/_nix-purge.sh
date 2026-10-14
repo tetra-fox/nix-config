@@ -80,8 +80,8 @@ if [ -x /run/current-system/bin/switch-to-configuration ]; then
   "${sudo[@]}" /run/current-system/bin/switch-to-configuration boot
 fi
 
-echo "nix-purge: optimising the store" >&2
-"${sudo[@]}" nix store optimise
+echo "nix-purge: optimizing the store" >&2
+"${sudo[@]}" nix store optimise -vvv
 
 if [ "$failed" -ne 0 ]; then
   echo "nix-purge: one or more profiles failed to collect" >&2

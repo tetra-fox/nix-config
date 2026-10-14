@@ -37,16 +37,9 @@ in {
       hyprshutdown
     ];
 
-    # uwsm sources this into the systemd --user activation env specifically
-    # for XDG_CURRENT_DESKTOP=Hyprland (uwsm/env-${desktop,,}, see prepare-env.sh),
-    # and restores the prior env on session stop. this is what actually reaches
-    # apps launched via app2unit (systemd units), unlike hl.env/home.sessionVariables.
-    # QT_* values mirror what stylix.targets.qt.enable computes for platform "qtct"
-    # (modules/desktop/stylix/home.nix pins the global default back to plasma's kde+breeze).
-    # SSH_ASKPASS: plasma6.nix sets the global default to ksshaskpass (mkDefault,
-    # nothing else in this repo overrides it), fine for plasma but only correct
-    # there by accident; pin the same binary here explicitly so it's an intentional
-    # hyprland choice too, not an inherited one
+    # uwsm sources this for the hyprland session only, and unlike hl.env or
+    # home.sessionVariables it reaches app2unit-launched units. stylix/home.nix pins the
+    # global QT_* to plasma's, SSH_ASKPASS is otherwise only set by plasma6.nix's mkDefault
     xdg.configFile."uwsm/env-hyprland".text = ''
       export QT_QPA_PLATFORMTHEME=qt5ct
       export QT_STYLE_OVERRIDE=kvantum

@@ -1,6 +1,4 @@
-# shared by mesa-db-01/02/03. all three nodes declare the same lab.postgres.ha config
-# and roles on purpose: any node can be the leader, so each must be able to bootstrap
-# and own the databases. host files keep only their IPs and sops yaml.
+# identical on all three nodes, any one can be leader and must be able to bootstrap
 {
   config,
   lib,
@@ -15,8 +13,7 @@
     modules.services.postgres-ha.system
   ];
 
-  # the store box exports megamax/backup/postgres to each db node, so the store mount
-  # surfaces the dump dir here. no gatedServices: the dump unit orders on the mount itself
+  # no gatedServices, the dump unit orders on the mount itself
   lab.storage.mediaMount = {
     enable = true;
     mountpoint = "/mnt/pgbackup";
@@ -30,17 +27,13 @@
     };
     admin.enable = true;
 
-    # nightly leader dump onto the store box, restic ships it offsite at 14:30
     backup = {
       enable = true;
       dir = "/mnt/pgbackup";
     };
 
-    # trusted-VLAN direct psql; fleet clients are derived from their client.enable flag.
     extraAllowedCidrs = [config.lab.net.trustedCidr];
 
-    # the arr role spec comes off the arr host via the registry, so nothing arr-shaped
-    # is restated here
     roles =
       {
         authentik = {

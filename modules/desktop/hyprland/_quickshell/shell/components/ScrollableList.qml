@@ -1,12 +1,11 @@
 import qs.lib
 import QtQuick
 
-// scrollable column with gradient fade edges on overflow
 Item {
     id: root
 
     property int maxItems: 8
-    // pixel cap; when > 0 overrides maxItems (for lists with non-uniform row heights)
+    // overrides maxItems when > 0, for non-uniform row heights
     property int maxHeight: 0
     property int spacing
     default property alias content: contentCol.data
@@ -14,8 +13,7 @@ Item {
     implicitHeight: Math.min(contentCol.implicitHeight, maxHeight > 0 ? maxHeight : maxItems * Theme.popupItemHeight)
 
     function ensureVisible(item) {
-        // Column defers relayout to a polish pass; flush it so positions and
-        // contentHeight are current before measuring
+        // Column defers relayout to a polish pass
         contentCol.forceLayout();
         const mapped = item.mapToItem(contentCol, 0, 0);
         const itemBottom = mapped.y + item.height;
@@ -48,7 +46,7 @@ Item {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => {
                 const maxY = flick.contentHeight - flick.height;
-                // 0.4 converts angle delta (120 per notch) to ~48px per scroll notch
+                // angleDelta is 120 per notch, so ~48px
                 const step = event.pixelDelta.y !== 0 ? -event.pixelDelta.y : -event.angleDelta.y * 0.4;
                 flick.scrollTarget = Math.max(0, Math.min(maxY, flick.scrollTarget + step));
                 scrollAnim.restart();

@@ -1,31 +1,21 @@
-# lab.site.* + lab.topology.* + the shared lab.net/lab.appliances facts. fleet-wide (not in a
-# site's facts file) because the topology layer + the colmena deploy output read them on every
-# host, not just one site's.
+# fleet-wide, not per site: the topology layer and colmena read these on every host
 {
   config,
   lib,
   caps,
   ...
 }: {
-  # capabilities this host advertises for same-site service discovery. each service module
-  # appends its own capability string when its enable flag is on (gated on a plain input, never
-  # a derived value -- see the no-recursion rule in topology.nix). the topology layer reads this
-  # across hosts to answer "which host in my site provides X".
   options.lab = {
     topology = {
+      # gate on a plain input, never a derived value, or the cross-host read can cycle
       provides = lib.mkOption {
-        # enum over the caps registry: a name outside caps.nix fails at the producer, matching
-        # the consumer side where a caps.<x> typo is already a missing-attribute error
+        # a name outside caps.nix fails here at the producer
         type = lib.types.listOf (lib.types.enum (map (c: c.name) (lib.attrValues caps)));
         default = [];
         example = ["db-server" "db-client"];
       };
 
-      # the caddy vhosts this host serves. the edge host folds every same-site host's routes into a
-      # rendered Caddyfile, resolving each publisher's address with ipOf (so a route carries no IP --
-      # the host that declares a route IS the upstream; caddy resolves where). must be a plain input
-      # (each service module appends its own route, gated on a plain flag) so the cross-host fold can't
-      # cycle, same rule as lab.topology.provides.
+      # same plain-input rule as provides. the declaring host is the upstream, so no ip here
       routes = lib.mkOption {
         type = lib.types.listOf (lib.types.submodule {
           options = {
@@ -90,9 +80,6 @@
         example = "10.10.0.130";
       };
 
-      # NIC names are a proxmox convention (virtio slot order), so they get fleet-wide
-      # defaults here; a site with different naming overrides in its facts file. service
-      # modules read these instead of hardcoding ens18/ens19.
       serverInterface = lib.mkOption {
         type = lib.types.str;
         default = "ens18";
@@ -129,8 +116,6 @@
         description = "group owning the dataDir root; media hosts set the shared media group so services co-write";
       };
 
-      # the site's public domain, set in the per-site facts file. service modules build their vhost
-      # FQDNs as <service>.<domain> so a route declaration stays site-agnostic.
       domain = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
@@ -138,9 +123,6 @@
         example = "mesa.tetra.cool";
       };
 
-      # the proxmox node this VM runs on, for the topology diagram's parent edge. single-node
-      # sites (mesa/milkfish) can ignore it and hardcode the parent; multi-node sites (fairlane:
-      # plush/pooltoy) set it per host so the diagram shows which physical node hosts each VM.
       proxmoxParent = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
@@ -149,9 +131,7 @@
       };
     };
 
-    # addresses of the routers and the private address plan, shared by both sites on purpose
-    # (physically separate networks built to the same layout). a site with a different plan
-    # overrides these in its facts file.
+    # both sites use this plan on purpose; a site with a different one overrides in its facts file
     net = {
       gateway = lib.mkOption {
         type = lib.types.str;
@@ -172,21 +152,16 @@
       };
     };
 
-    # addresses of the site's non-nix appliances (things the fleet proxies or scrapes but
-    # doesn't configure). per-site values, set in the site facts file.
     appliances = {
-      # HAOS is the one thing behind the edge that nix doesn't configure, so the contract
-      # authentik gets for free (topo.edgeHostIps -> trusted proxies) has to be kept by hand
-      # there: its configuration.yaml http.trusted_proxies must list the edge hosts' internal
-      # addresses, or every proxied request comes back "400: Bad Request"
+      # HAOS isn't nix-managed: its http.trusted_proxies must list the edge hosts' internal
+      # addresses by hand, or every proxied request gets "400: Bad Request"
       haosIp = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
         description = "the address services reach Home Assistant OS at; null = site has no HAOS box";
       };
 
-      # names match the lab.site.proxmoxParent each host declares, so the topology's
-      # parent links and monitoring's scrape targets can't name different sets of nodes
+      # keys match lab.site.proxmoxParent
       proxmoxNodes = lib.mkOption {
         type = lib.types.attrsOf lib.types.str;
         default = {};
@@ -196,8 +171,6 @@
 
       proxmoxIp = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        # derived so a single-node site states its address once, in proxmoxNodes. a
-        # multi-node site has no one node to proxy or draw, so it lands null
         default = let
           addrs = builtins.attrValues config.lab.appliances.proxmoxNodes;
         in
@@ -208,9 +181,6 @@
       };
     };
 
-    # the shared media group. the gid is one fleet constant because NFS group-write squashes
-    # on gid (not name), so the store host (NFS server) and every client must agree; the name
-    # is here so every module that creates or joins the group reads the same one.
     media = {
       gid = lib.mkOption {
         type = lib.types.int;

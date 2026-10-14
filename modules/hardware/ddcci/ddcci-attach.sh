@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-# bind ddcci-backlight to each nvidia i2c bus that holds a real EDID at 0x50.
-# never write to a bus that isn't a monitor: a DDC/CI write to the valve index's
-# DP port wedges it. the index's i2c ignores the seek and can pass a check by
-# luck on a single read, so a bus must pass the full EDID check twice before it
-# sees a 0x37 write.
+# a DDC/CI write to the valve index's DP bus wedges it, and its i2c ignores the
+# seek so a single EDID read can pass by luck. a bus must pass twice before any write
 edid_header="0x00 0xff 0xff 0xff 0xff 0xff 0xff 0x00"
 
-# a real EDID is 128 bytes at 0x50: fixed 8-byte header, block sums to 0 mod 256
+# 128 bytes at 0x50, fixed 8-byte header, block sums to 0 mod 256
 edid_ok() {
   local raw bytes sum=0 b
   raw=$(timeout 5 i2ctransfer -y "$1" w1@0x50 0x00 r128 2>/dev/null) || return 1
@@ -19,7 +16,7 @@ edid_ok() {
 
 shopt -s nullglob
 for dev in /sys/class/i2c-dev/i2c-*; do
-  # name read can race an unplug; a vanished adapter reads empty and is skipped
+  # an adapter unplugged mid-loop reads empty
   case "$(cat "$dev/name" 2>/dev/null || true)" in "NVIDIA i2c adapter"*) ;; *) continue ;; esac
   bus=$(basename "$dev")
   n=${bus#i2c-}

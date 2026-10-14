@@ -1,9 +1,4 @@
-# the site-specific Caddyfile blocks the route engine can't derive: the root vhost and the two
-# appliances with no capability publisher (HAOS, proxmox). the arrs now render from
-# lab.topology.routes (arr-stack declares them). appended after the engine-rendered route vhosts
-# via lab.caddy.staticTail; edge-host.nix imports it with the host's lab config, so the site
-# facts (domain, appliance addresses) substitute instead of being restated. shared by both edge
-# hosts: they're stateless clones behind the same VIP serving the identical vhost set.
+# vhosts the route engine can't derive
 {lab}: ''
   # public
   ${lab.site.domain} {
@@ -16,13 +11,8 @@
   	reverse_proxy ${lab.appliances.haosIp}:8123
   }
 
-  # lan_only only, no forward_auth: proxmox authenticates with its own OIDC realm against
-  # authentik, so an authentik proxy outpost in front would double-gate every request
-  # (including the OIDC callback) and break the noVNC console and /api2 token access.
-  # lan_only is the network floor, identity is proxmox's own job.
-  # tls_insecure_skip_verify stays for now: proxmox serves its own self-signed cert, and
-  # trusting it properly means pinning its CA here. the hop is edge -> proxmox on the
-  # server VLAN.
+  # no forward_auth: proxmox has its own authentik OIDC realm, a proxy outpost would
+  # double-gate the callback and break noVNC and /api2 tokens. proxmox's cert is self-signed
   pve.${lab.site.domain} {
   	route {
   		import lan_only

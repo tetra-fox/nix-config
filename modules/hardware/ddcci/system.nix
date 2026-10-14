@@ -25,7 +25,6 @@ in {
   '';
 
   config = {
-    # /dev/i2c-* nodes plus the i2c group and udev access
     hardware.i2c.enable = true;
 
     # registers each DDC/CI monitor as /sys/class/backlight/ddcci*
@@ -45,12 +44,11 @@ in {
 
     systemd.services.ddcci-attach = lib.mkIf cfg.forceProbe {
       description = "bind ddcci to each nvidia i2c bus that answers DDC/CI";
-      # boot run alongside the hotplug rule. after (not before) multi-user.target,
-      # auto-added Before cleared, so it never holds up login
+      # after multi-user with the implicit Before cleared, so it never holds up login
       wantedBy = ["multi-user.target"];
       after = ["multi-user.target"];
       before = lib.mkForce [];
-      # a hotplug flood fires many starts; don't let the burst trip the limit
+      # hotplug bursts fire many starts
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "oneshot";

@@ -1,27 +1,9 @@
 #!/usr/bin/env bash
-# delete quality profiles that recyclarr no longer manages. recyclarr creates and
-# updates the profiles you declare but never deletes one (deleting a profile that
-# media is assigned to is destructive, so it refuses). when you rename or drop a
-# profile, the old one lingers. this reconciles that: any profile whose name isn't in
-# the managed set has all its media reassigned to a default managed profile, then the
-# now-empty profile is deleted.
+# recyclarr never deletes quality profiles, so renamed or dropped ones linger. move
+# everything off each unmanaged profile onto a managed one, then delete it. a failed
+# reassignment leaves the profile in place.
 #
-# the reassignment covers everything that can hold a profile, which is the part the
-# obvious "reassign movies" approach misses:
-#   sonarr: series        (PUT /series/editor)
-#   radarr: movies        (PUT /movie/editor)
-#   radarr: collections   (PUT /collection)   <-- invisible in the movie list; a
-#                                                 collection on the old profile blocks
-#                                                 the delete with "still in use"
-#
-# fail-closed: if any reassignment for an orphan fails, that profile is NOT deleted,
-# so media is never left pointing at a deleted profile.
-#
-# config from the environment (set by the systemd unit):
-#   APP            "sonarr" | "radarr"
-#   BASE_URL       arr api base, e.g. http://10.0.0.1:7878/api/v3
-#   ARR_KEY_FILE   file holding the arr's api key
-#   MANAGED_FILE   file holding a json array of managed profile names to keep
+# env: APP (sonarr|radarr), BASE_URL, ARR_KEY_FILE, MANAGED_FILE (json array of names)
 set -euo pipefail
 
 arr_curl() {
@@ -31,7 +13,7 @@ arr_curl() {
     "$@"
 }
 
-# PUT a json body without putting it in argv (temp file + --data-binary). body stdin.
+# body on stdin, kept out of argv
 arr_put() {
   local url="$1" f rc
   f=$(mktemp)
@@ -48,7 +30,6 @@ arr_curl --retry 30 --retry-delay 2 --retry-connrefused -o /dev/null "${BASE_URL
 managed=$(cat "$MANAGED_FILE")
 profiles=$(arr_curl -Sf "${BASE_URL}/qualityprofile")
 
-# orphans: profiles whose name isn't in the managed set
 orphans=$(echo "$profiles" | jq -c --argjson m "$managed" '[.[] | select(.name as $n | $m | index($n) | not)]')
 orphan_count=$(echo "$orphans" | jq 'length')
 
@@ -58,7 +39,7 @@ if [ "$orphan_count" -eq 0 ]; then
 fi
 echo "found ${orphan_count} orphaned quality profile(s) in ${APP}"
 
-# default profile to reassign onto: the first managed name that exists in this arr
+# first managed name that exists in this arr
 default_id=""
 default_name=""
 while IFS= read -r name; do
@@ -77,15 +58,13 @@ if [ -z "$default_id" ]; then
 fi
 echo "reassigning onto default profile ${default_name} (id ${default_id})"
 
-# ids of items at GET ${BASE_URL}/$1 whose qualityProfileId == $2. fails (non-zero)
-# if the fetch fails, so callers can fail-closed instead of treating it as "empty".
+# ids of items at $1 on profile $2. a failed fetch returns non-zero, not an empty list
 ids_on_profile() {
   local endpoint="$1" from_id="$2" items
   items=$(arr_curl -Sf "${BASE_URL}/${endpoint}") || return 1
   echo "$items" | jq -c --argjson p "$from_id" '[.[] | select(.qualityProfileId == $p) | .id]'
 }
 
-# reassign every series/movie on $1 (orphan profile id) to the default, in bulk.
 reassign_media() {
   local from_id="$1" endpoint ids
   [ "$APP" = "sonarr" ] && endpoint="series" || endpoint="movie"
@@ -97,16 +76,14 @@ reassign_media() {
       '{seriesIds: $ids, qualityProfileId: $q}' \
       | arr_put "${BASE_URL}/series/editor" >/dev/null
   else
-    # no applyTags: the field is a strict enum (add/remove/replace), and "noChange"
-    # is rejected with a 400. we send no tags, so omitting applyTags leaves tags
-    # untouched, which is what we want.
+    # no applyTags: "noChange" is rejected with a 400, omitting it leaves tags alone
     jq -n --argjson ids "$ids" --argjson q "$default_id" \
       '{movieIds: $ids, qualityProfileId: $q}' \
       | arr_put "${BASE_URL}/movie/editor" >/dev/null
   fi
 }
 
-# radarr only: reassign collections on $1 to the default via the collection editor.
+# radarr collections aren't in the movie list but still block the delete as "still in use"
 reassign_collections() {
   local from_id="$1" ids
   ids=$(ids_on_profile "collection" "$from_id") || return 1
@@ -122,9 +99,6 @@ while IFS= read -r profile; do
   pname=$(echo "$profile" | jq -r '.name')
   echo "processing orphan ${pname} (id ${pid})"
 
-  # reassign everything off this profile; if any step fails, don't delete it (so we
-  # never leave media pointing at a deleted profile). set -e turns a failed reassign
-  # into a script exit, but we want to skip just this profile, so guard explicitly.
   if ! reassign_media "$pid"; then
     echo "  WARNING: media reassignment failed for ${pname}; leaving profile in place" >&2
     continue

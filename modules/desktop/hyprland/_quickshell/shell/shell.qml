@@ -1,9 +1,7 @@
 pragma ComponentBehavior: Bound
 
-// quickshell omits qml module DEPENDENCIES on purpose (upstream cmake/util.cmake),
-// so base types like GlobalShortcut's PostReloadHook resolve at runtime but not for
-// qmllint, which reports the miss at a bogus line (the qmltypes-internal header line
-// number). suppress import warnings file-wide; a broken import still fails at load
+// quickshell omits qml module dependencies on purpose (upstream cmake/util.cmake), so
+// qmllint can't resolve base types like PostReloadHook and reports it at a bogus line
 // qmllint disable import
 import qs.dialogs
 import qs.lockscreen
@@ -27,8 +25,6 @@ ShellRoot {
         sessionLock.locked = true;
     }
 
-    // -- session lock --
-
     WlSessionLock {
         id: sessionLock
 
@@ -46,8 +42,6 @@ ShellRoot {
         id: pam
         lock: sessionLock
     }
-
-    // -- global shortcuts --
 
     // qmllint disable unresolved-type
     GlobalShortcut {
@@ -95,7 +89,7 @@ ShellRoot {
         onConfirmed: Power.session(Power.logout)
     }
 
-    // wrappers attach per-notif metadata (receive time, popup-suppression) that Quickshell's Notification doesn't carry
+    // wrappers carry metadata Notification doesn't (receive time, popup state)
     property var notifList: []
 
     readonly property bool inFullscreen: Hyprland.focusedWorkspace?.hasFullscreen ?? false    // qmllint disable unresolved-type
@@ -130,11 +124,9 @@ ShellRoot {
         QtObject {
             property Notification notif
             property real time
-            // true while the notif should be visible in the overlay; the card flips this
-            // false on timer expire so the wrapper survives in the center after fade-out
+            // the card clears this on expire, the wrapper stays in the center
             property bool popup
-            // set by NotifState.dismissLater while the center's collapse animation
-            // plays; lives here so delegate churn cannot reset it
+            // set by NotifState.dismissLater, lives here so delegate churn can't reset it
             property bool dismissing: false
         }
     }
@@ -151,20 +143,18 @@ ShellRoot {
         persistenceSupported: true
 
         onNotification: notification => {
-            // transient = don't persist to history. drop entirely if popup also suppressed,
-            // and never resurrect a transient notif on quickshell reload (its contract is gone)
+            // transient notifs skip history, so drop them if they can't pop or survived a reload
             if (notification.transient && (notification.lastGeneration || !root.popupsEnabled))
                 return;
             notification.tracked = true;
             const wrapper = notifDataComp.createObject(root, {
                 "notif": notification,
                 "time": Date.now(),
-                // lastGeneration = quickshell reloaded; restored notifs go straight to the
-                // center without re-popping. fresh notifs pop unless DND/fullscreen suppress
+                // lastGeneration: restored across a reload, don't pop again
                 "popup": !notification.lastGeneration && root.popupsEnabled
             });
             root.notifList = [wrapper, ...root.notifList];
-            // history cap; dismiss oldest overflow. closed handler will filter notifList in place.
+            // the closed handler below shrinks notifList
             while (root.notifList.length > 100) {
                 root.notifList[root.notifList.length - 1].notif.dismiss();
             }

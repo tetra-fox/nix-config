@@ -5,13 +5,9 @@
   lib,
   ...
 }: let
-  # vscode's default fontFamily asks for "Droid Sans Mono" before the generic
-  # monospace. that font isn't installed, but fontconfig substitutes rather than
-  # failing, so vscode gets handed Noto Sans Mono and never falls through to the
-  # generic, losing the nerd font glyphs. name the font instead of relying on
-  # substitution. stylix owns the value where it runs; on darwin there is no
-  # stylix and the fontconfig list is empty, so fall back to the fleet mono
-  # (the fonts module installs it there)
+  # vscode's default font list starts with "Droid Sans Mono", which fontconfig
+  # substitutes with noto sans mono, losing nerd font glyphs. darwin has no stylix,
+  # so the fontconfig list is empty there
   monospace =
     if config.fonts.fontconfig.defaultFonts.monospace != []
     then lib.head config.fonts.fontconfig.defaultFonts.monospace

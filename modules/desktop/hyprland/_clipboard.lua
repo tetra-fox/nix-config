@@ -1,6 +1,5 @@
 local mod = "@main_mod@"
 
--- toggle: close the clipse window if one exists, otherwise open it
 hl.bind(mod .. " + V", function()
   local w = hl.get_windows({ class = "clipse" })[1]
   if w then

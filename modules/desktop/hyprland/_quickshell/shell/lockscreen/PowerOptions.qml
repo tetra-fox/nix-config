@@ -5,12 +5,9 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// power buttons + inline confirm overlay for the lock screen
 Item {
     id: root
 
-    // watched by LockSurface to restore password-field focus when the overlay
-    // closes by either path (cancel, or execute when the session survives)
     readonly property bool confirming: _confirming
 
     property bool _confirming: false
@@ -34,10 +31,8 @@ Item {
     }
 
     function _executeConfirm(): void {
-        // re-entry guard: the overlay stays visible and clickable during its
-        // fade-out, and suspend doesn't tear down the session, so a second
-        // Return press or button click would fire the action again. clearing
-        // _confirming here also stops the countdown timer from re-firing
+        // the overlay stays clickable while fading out and suspend keeps the session,
+        // so a second press would fire the action again
         if (!root._confirming)
             return;
         root._confirming = false;
@@ -54,8 +49,6 @@ Item {
                 root._executeConfirm();
         }
     }
-
-    // -- buttons --
 
     component PowerButton: Column {
         id: btn
@@ -130,8 +123,6 @@ Item {
         }
     }
 
-    // -- confirm overlay --
-
     Item {
         id: confirmOverlay
         anchors.fill: parent
@@ -148,15 +139,12 @@ Item {
         Keys.onEscapePressed: root._cancelConfirm()
         Keys.onReturnPressed: root._executeConfirm()
 
-        // dim backdrop
         Rectangle {
             anchors.fill: parent
             color: "black"
             opacity: 0.5
         }
 
-        // the backdrop dims everything beneath, so also block clicks from
-        // reaching it; clicking outside the card cancels
         MouseArea {
             anchors.fill: parent
             onClicked: root._cancelConfirm()

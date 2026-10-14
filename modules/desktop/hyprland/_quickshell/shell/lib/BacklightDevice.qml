@@ -1,8 +1,7 @@
 import Quickshell.Io
 import QtQuick
 
-// one /sys/class/backlight device. persists across polls (matched by name) so
-// the Repeater delegate and its slider keep stable identity instead of churning.
+// one /sys/class/backlight device, kept across polls so its slider keeps identity
 QtObject {
     id: root
 
@@ -10,26 +9,19 @@ QtObject {
     property string model: name
     property int max: 100
 
-    // 0..1. `value` is what the slider drives and reads; the poll only writes it
-    // through when the user is not actively dragging, so an in-flight brightnessctl
-    // write (slow on DDC/CI) can't yank the handle back to a stale reading
+    // 0..1. polls don't write it mid-drag, a slow DDC/CI write would yank the handle back
     property real value: 0
     property bool interacting: false
 
-    // whole-percent step, matching brightnessctl's granularity
     function pct(frac: real): int {
         return Math.max(0, Math.min(100, Math.round(frac * 100)));
     }
 
-    // the percent the monitor is believed to hold, used to skip duplicate writes;
-    // -1 until the first write or poll reading
+    // percent the monitor is believed to hold, skips duplicate writes. -1 means unknown
     property int _wrotePct: -1
 
-    // called on user drag: move the handle immediately and stream the value to the
-    // monitor as fast as the DDC/CI bus allows. a write takes ~85ms on these Dells,
-    // so rather than guess a throttle interval, self-pace: issue one write now if
-    // none is in flight, and when it finishes issue the next only if the value moved.
-    // this tracks the finger as live as the hardware permits without queueing writes
+    // self-paced instead of throttled: one write in flight at a time (~85ms on these
+    // dells), the next goes out when it finishes if the value moved
     function set(frac: real): void {
         root.value = frac;
         if (!writeProc.running)
@@ -45,42 +37,31 @@ QtObject {
         stallKill.restart();
     }
 
-    // called by the poll with the device's real current value
     function syncFromDevice(frac: real): void {
-        // a write we just issued may not have landed on the monitor yet, so ignore
-        // the poll while dragging or while a write is still in flight
+        // an in-flight write may not have landed yet
         if (root.interacting || writeProc.running)
             return;
         root.value = frac;
-        // adopt the reading, so a drag back to a percent we wrote earlier is not
-        // skipped as a duplicate after something else moved the monitor
+        // so a drag back to an earlier percent isn't skipped after something else moved it
         root._wrotePct = root.pct(frac);
     }
 
     property Process _writeProc: Process {
         id: writeProc
-        // as soon as one write lands, send the next if the drag moved on. on the
-        // final release this fires once more with no pending change and stops.
-        // exec() during a run would sigterm it and queue the new command (see
-        // Process::exec in quickshell src/io/process.cpp), but set() only flushes
-        // from idle, so every exec here starts with no process alive
+        // exec() while running would sigterm the write, set() only flushes from idle
         onRunningChanged: if (!running) {
             stallKill.stop();
             root._flush();
         }
     }
 
-    // ddc/ci on this machine has wedged an i2c bus before (see modules/hardware/
-    // ddcci). a write stuck far past the ~85ms norm freezes both the flush chain
-    // and the poll sync, so kill it and let the false edge of running resume the
-    // chain. brightnessctl only writes sysfs, the kernel finishes the i2c
-    // transaction on its own, so the kill cannot tear a transfer
+    // ddc/ci can wedge the i2c bus (modules/hardware/ddcci), a stuck write stalls flush and
+    // poll sync. brightnessctl only writes sysfs, so killing it can't tear a transfer
     property Timer _stallKill: Timer {
         id: stallKill
         interval: 5000
         onTriggered: {
-            // the killed write may not have landed; forget it so the retry is not
-            // skipped as a duplicate
+            // the killed write may not have landed
             root._wrotePct = -1;
             writeProc.signal(9);
         }

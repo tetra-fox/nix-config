@@ -1,8 +1,6 @@
-# sshd policy shared by the nixos module (system.nix) and the darwin
-# sshd_config.d drop-in (darwin.nix); plain data, not a module
+# shared by system.nix and darwin.nix
 {
-  # every .pub in the shared keyring gets shell. both platforms feed this to
-  # sshd, so the directory stays the one place that decides who has access
+  # every .pub in the shared keyring gets shell
   keyringKeys = lib: keyring:
     map (f: lib.fileContents (keyring + "/${f}"))
     (lib.filter (lib.hasSuffix ".pub")

@@ -19,14 +19,12 @@ Item {
     readonly property bool hasIpv6: ip6 !== ""
     readonly property bool hasAny: hasIpv4 || hasIpv6
 
-    // shared poll gate for all four fetchers
     readonly property bool _live: polling && ifname !== ""
 
     implicitHeight: col.implicitHeight
     visible: root.hasAny
 
-    // immediate refetch for changes the poll gate can't see (interface switch
-    // while the popup stays open)
+    // for an interface switch while the popup stays open, which the poll gate can't see
     function fetch() {
         if (root.ifname === "")
             return;
@@ -51,15 +49,12 @@ Item {
     function prefixToMask(p) {
         if (p <= 0 || p > 32)
             return "-";
-        // >>> 0 coerces to unsigned 32-bit so high bits don't produce negative
+        // >>> 0 keeps it unsigned
         const m = (-1 << (32 - p)) >>> 0;
         return `${(m >>> 24) & 0xFF}.${(m >>> 16) & 0xFF}.${(m >>> 8) & 0xFF}.${m & 0xFF}`;
     }
 
-    // handlers drop results that land after the interface cleared: a running
-    // process keeps its old argv, so its output would repopulate the fields of
-    // a dead interface with no poll left to correct them. results from an
-    // interface-to-interface switch self-heal on the next 2s poll
+    // a running process keeps its old argv, so drop results that land after the interface cleared
     PolledProcess {
         id: routeProc
         polling: root._live

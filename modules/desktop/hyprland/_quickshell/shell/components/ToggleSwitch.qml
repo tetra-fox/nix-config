@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// pill-shaped toggle switch with click and drag support
 Rectangle {
     id: root
 
@@ -24,7 +23,6 @@ Rectangle {
     color: {
         const active = hover.hovered;
         const pressed = root._dragging || tap.pressed;
-        // blend between off/on colors based on knob position during drag
         const t = root._dragging ? Math.max(0, Math.min(1, (knob.x - root._minX) / (root._maxX - root._minX))) : root.checked ? 1.0 : 0.0;
         const offColor = pressed ? Theme.withAlpha(Theme.white, 0.2) : active ? Theme.withAlpha(Theme.white, 0.16) : Theme.withAlpha(Theme.white, 0.12);
         const onColor = pressed ? Theme.withAlpha(Theme.colorGreen, 0.5) : active ? Theme.withAlpha(Theme.colorGreen, 0.45) : Theme.withAlpha(Theme.colorGreen, 0.35);
@@ -94,7 +92,7 @@ Rectangle {
                 const shouldBeChecked = knob.x > root._midX;
                 if (shouldBeChecked !== root.checked)
                     root.toggled();
-                // defer so x binding sees new checked state before drag ends
+                // so the x binding sees the new checked state before the drag ends
                 Qt.callLater(() => root._dragging = false);
             }
         }

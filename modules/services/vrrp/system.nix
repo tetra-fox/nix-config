@@ -1,7 +1,5 @@
-# peer-list and index derivation is NOT here on purpose: callers differ (db indexes by
-# hostname, edge/dns sort by IP; db/dns peer on internalIp, edge on hostIp), and folding it in
-# would change the default VIP holder. each caller resolves unicastSrcIp/unicastPeers and its
-# own priorityIndex; only the index-to-priority formula lives here.
+# callers resolve their own peers and priorityIndex: db indexes by hostname, edge/dns by IP,
+# and unifying them would change the default VIP holder
 {
   config,
   lib,
@@ -30,10 +28,7 @@ in {
       description = "prefix length for the v6 VIP's on-link route.";
     };
 
-    # keepalived can't mix v4 and v6 VIPs in one vrrp_instance, so an optional v6 VIP gets its
-    # own second instance (its own vrid, heartbeat over v6 link-local on vipInterface). null =
-    # v4-only, the common case. used by fairlane's dual-stack dns; a ULA is the right choice when
-    # the ISP prefix rotates (a GUA VIP would break on every prefix change).
+    # use a ULA when the ISP prefix rotates, a GUA VIP breaks on every prefix change
     vip6 = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -58,8 +53,6 @@ in {
       description = "the other nodes' v6 heartbeat sources (link-locals) for the v6 instance.";
     };
 
-    # keepalived allows the VRRP heartbeat interface and the VIP's interface to differ (dns runs
-    # VRRP on an isolated ens19 but parks its VIP on ens18 where clients reach it).
     vrrpInterface = lib.mkOption {
       type = lib.types.str;
       description = "interface the VRRP instance runs on (the heartbeat path).";
@@ -75,13 +68,9 @@ in {
     virtualRouterId = lib.mkOption {
       type = lib.types.int;
       description = ''
-        VRRP router id, unique per L2 segment. the mesa allocations: 51 = db, 52 = edge, 53 = dns.
-        two instances sharing a vrid on the same segment will fight over the VIP.
-
-        SITE SEAM: uniqueness is per SEGMENT, not global. a second site on its own L2 can reuse
-        51/52/53 freely -- callers pass the vrid, so no change needed. only if two sites ever
-        share a segment do the allocations need to diverge (then key the vrid off the site, or
-        offset per-site). the per-cluster literals in the service modules assume separate segments.
+        VRRP router id, unique per L2 segment (mesa: 51 db, 52 edge, 53 dns). instances sharing
+        a vrid on one segment fight over the VIP. sites on separate segments can reuse ids, two
+        sites sharing a segment would need distinct ones.
       '';
     };
 
@@ -121,8 +110,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # two hosts sharing an IP get the same priority and fight over the VIP; that surfaces here
-    # as unicastSrcIp landing in its own peer list, so catch it at eval instead of runtime.
     assertions = [
       {
         assertion = !(lib.elem cfg.unicastSrcIp cfg.unicastPeers);
@@ -134,8 +121,8 @@ in {
       }
     ];
 
-    # nixpkgs writes enable_script_security without creating the keepalived_script user it needs;
-    # missing that user, keepalived silently ignores the track and the VIP never moves. create it.
+    # nixpkgs sets enable_script_security without creating this user, and without it keepalived
+    # silently ignores the track script so the VIP never moves
     users.users.keepalived_script = {
       isSystemUser = true;
       group = "keepalived_script";
@@ -152,8 +139,7 @@ in {
         interval = 2;
         fall = 2;
         rise = 2;
-        # weight 0 forces FAULT (releases the VIP) on failure; a weighted script only nudges
-        # priority and fails to fail over when the holder still outranks the peer.
+        # 0 forces FAULT on failure, a weight only nudges priority and the holder can still outrank
         weight = 0;
       };
 
@@ -163,10 +149,10 @@ in {
             interface = cfg.vrrpInterface;
             inherit (cfg) virtualRouterId;
             inherit priority;
-            # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back and flap.
+            # all-BACKUP + noPreempt: a recovered node doesn't steal the VIP back
             state = "BACKUP";
             noPreempt = true;
-            # unicast VRRP -- no reliance on L2 multicast on the SDN bridge.
+            # no L2 multicast on the SDN bridge
             inherit (cfg) unicastSrcIp;
             inherit (cfg) unicastPeers;
             virtualIps = [
@@ -178,9 +164,8 @@ in {
             trackScripts = [cfg.healthCheck.name];
           };
         }
-        # the v6 VIP as its own instance (keepalived forbids mixing families). heartbeat runs
-        # over v6 on vipInterface (the client-facing NIC that has the v6 addresses), sourced
-        # from the link-local. same track script so a bind failure drops both VIPs together.
+        # keepalived can't mix families in one instance. heartbeat on vipInterface since it has
+        # the v6 addresses, same track script so both VIPs drop together
         // lib.optionalAttrs (cfg.vip6 != null) {
           "${cfg.instanceName}6" = {
             interface = cfg.vipInterface;
@@ -205,7 +190,6 @@ in {
       ''
         iifname "${cfg.vrrpInterface}" ip protocol vrrp accept
       ''
-      # the v6 heartbeat rides vipInterface, so accept VRRP there too when a v6 VIP exists.
       + lib.optionalString (cfg.vip6 != null) ''
         iifname "${cfg.vipInterface}" ip6 nexthdr vrrp accept
       '';

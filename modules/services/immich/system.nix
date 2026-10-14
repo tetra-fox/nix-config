@@ -1,20 +1,6 @@
-# immich (self-hosted photo library), native services.immich.
-#
-# data layout, and the reasoning behind it:
-#   the photo library lives on megamax/immich (the store box's raidz1), NFS-mounted
-#   here at /mnt/immich. postgres runs LOCALLY on this box, not over NFS: running
-#   $PGDATA on nfs breaks postgres's fsync/locking assumptions and corrupts on a
-#   network blip. so the db is local, the library is remote, and they'd normally
-#   drift on restore.
-#
-#   the fix is immich's own backup: the server runs pg_dumpall|gzip on a schedule and
-#   writes it to <mediaLocation>/backups, i.e. onto megamax/immich next to the photos.
-#   a single restic snapshot of megamax/immich (taken on the store box) therefore
-#   captures the library AND the db dump together, consistent by construction. on
-#   restore you load the dump and immich re-indexes the photos, which is immich's
-#   designed recovery path. no cross-box atomic snapshot, no postgres on nfs.
-#
-#   the vectorchord vector extension is enabled automatically by the nixpkgs module.
+# library is NFS from megamax/immich, postgres is local (PGDATA on nfs corrupts).
+# immich's own db dump lands in <mediaLocation>/backups, so one restic snapshot of
+# megamax/immich holds a consistent library and db
 {
   config,
   lib,
@@ -23,8 +9,6 @@
   ...
 }: let
   cfg = config.lab.immich;
-  # the public FQDN, declared once. the caddy route and immich's externalDomain (for
-  # share links) both derive from it, so the hostname lives in one place.
   fqdn = "immich.${config.lab.site.domain}";
 in {
   options.lab.immich = {
@@ -32,8 +16,7 @@ in {
       type = lib.types.path;
       default = "/mnt/immich";
       description = ''
-        where immich stores the library and its db-dump backups. an NFS mount of
-        megamax/immich from the store box. immich writes library/ and backups/ under here.
+        library and db-dump location, an NFS mount of megamax/immich
       '';
     };
 
@@ -41,9 +24,8 @@ in {
       type = lib.types.int;
       default = 990;
       description = ''
-        pinned immich uid. the NFS export squashes on uid not name, so this must line
-        up with the owner the store box gives /mnt/megamax/immich. one below jellyfin's
-        991 to avoid collision.
+        pinned uid, must match the store box's owner of /mnt/megamax/immich since NFS
+        squashes on uid
       '';
     };
 
@@ -51,8 +33,7 @@ in {
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = ''
-        the oauth client id authentik assigned to the immich application; a deployment
-        fact, set per host. null disables oauth (password login stays on either way).
+        authentik's client id for immich. null disables oauth, password login stays on
       '';
     };
   };
@@ -70,13 +51,12 @@ in {
     ];
 
     lab.topology.provides = [caps.immich.name];
-    # immich uploads whole photos/videos in one request. caddy applies no body limit unless
-    # max_size is set, so this is the only cap in the path; keep it past any single asset.
+    # uploads are one request per asset, this is the only body cap in the path
     lab.topology.routes = [
       {
         host = fqdn;
         port = config.services.immich.port;
-        maxBodySize = "128GB"; # mmmm prores log :woozy:
+        maxBodySize = "128GB";
       }
     ];
 
@@ -85,29 +65,21 @@ in {
       group = config.services.immich.group;
     };
 
-    # pin the uid: the NFS export squashes on uid, and the module otherwise
-    # auto-allocates it, which would drift from the store box's export owner
     users.users.immich.uid = cfg.uid;
 
     services.immich = {
       enable = true;
       inherit (cfg) mediaLocation;
-      # listen on the same address peers resolve for this host (ipOf: internalIp when
-      # present, hostIp otherwise), so the caddy upstream and the listener can't diverge
+      # same address caddy resolves for this host
       host = topo.myIp;
       openFirewall = false;
-      # database.enable + redis.enable default true: both run locally on this box.
-      # vectorchord is enabled automatically by the module.
-      machine-learning.enable = true; # cpu inference, no accelerationDevices set
-      # keep models resident (<= 0 disables the idle unload), the clip model is
-      # ~4gb and reloading it costs several seconds on the first search after idle
+      machine-learning.enable = true;
+      # never unload, the ~4gb clip model takes seconds to reload on the first search
       machine-learning.environment.MACHINE_LEARNING_MODEL_TTL = "0";
 
       settings = {
         backup.database = {
-          # server is UTC. dump at 14:00 (6a/7a pacific), half an hour before the
-          # store box's restic run uploads it
-          # see SCHEDULE.md
+          # UTC, before the store box's 14:30 restic run. see SCHEDULE.md
           cronExpression = "0 14 * * *";
           enabled = true;
           keepLastAmount = 14;
@@ -165,8 +137,7 @@ in {
           };
         };
 
-        # server is UTC. 13:00 is 5a/6a pacific, between the nightly tasks and the db dump
-        # see SCHEDULE.md
+        # UTC, see SCHEDULE.md
         integrityChecks = {
           checksumFiles = {
             cronExpression = "0 13 * * *";
@@ -204,8 +175,7 @@ in {
 
         library = {
           scan = {
-            # server is UTC. 12:00 is 4a/5a pacific
-            # see SCHEDULE.md
+            # UTC, see SCHEDULE.md
             cronExpression = "0 12 * * *";
             enabled = true;
           };
@@ -267,8 +237,7 @@ in {
           databaseCleanup = true;
           generateMemories = true;
           missingThumbnails = true;
-          # see SCHEDULE.md
-          startTime = "12:00"; # server is UTC. 4a/5a pacific
+          startTime = "12:00"; # UTC, see SCHEDULE.md
           syncQuotaUsage = true;
         };
 
@@ -286,19 +255,12 @@ in {
           };
         };
 
-        # oauth via the site's authentik, on when a clientId is configured. issuerUrl: the base
-        # auth url is resolved from authentik's declared route (topo.authServerUrl ->
-        # https://auth.<site domain>), then the authentik application path is appended. the
-        # client secret comes from sops via _secret (read from a file at runtime, never in the
-        # nix store). password login stays on as a fallback (passwordLogin.enabled = true),
-        # autoRegister on per the design.
         oauth = {
           allowInsecureRequests = false;
           autoLaunch = false;
           autoRegister = true;
           buttonText = "Login with Authentik";
-          # empty strings when oauth is off: immich ignores them, and the settings export
-          # style here uses "" over null for unset fields
+          # "" when oauth is off, matching immich's settings export
           clientId =
             if cfg.oauth.clientId != null
             then cfg.oauth.clientId
@@ -332,7 +294,7 @@ in {
         reverseGeocoding.enabled = true;
 
         server = {
-          externalDomain = "https://${fqdn}"; # was empty in export; derived from the route's fqdn
+          externalDomain = "https://${fqdn}";
           loginPageMessage = "";
           publicUsers = true;
         };

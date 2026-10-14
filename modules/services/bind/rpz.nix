@@ -1,9 +1,3 @@
-# RPZ blocklist refresh: fetch each configured list, write it as an RPZ zone file, reload named.
-# an RPZ is a policy zone whose records rewrite answers; `domain CNAME .` means NXDOMAIN.
-#
-# per-list `format`:
-#   rpz   -- already an RPZ zone, fetched verbatim.
-#   hosts -- a 0.0.0.0 hosts file, converted to `domain CNAME .` + `*.domain CNAME .` per entry.
 {
   config,
   lib,
@@ -13,16 +7,15 @@
   cfg = config.lab.bind;
   inherit (import ./_rpz-common.nix) rpzDir rpzStubText;
 
-  # fetch to a temp file first so a failed download (curl --fail + set -e aborts before the mv)
-  # leaves the previous good file in place.
+  # a failed fetch aborts before the mv, keeping the previous good file
   mkFetch = l: let
     convert =
       if l.format == "rpz"
       then ''curl --fail --silent --show-error --location --max-time 60 "${l.url}" -o "$tmp/${l.name}"''
       else ''
         {
-          # the shared seed stub ($TTL etc is zone-file syntax; escapeShellArg keeps it literal)
           printf '%s' ${lib.escapeShellArg rpzStubText}
+          # `CNAME .` answers NXDOMAIN
           curl --fail --silent --show-error --location --max-time 60 "${l.url}" \
             | awk '$1 == "0.0.0.0" && NF >= 2 { printf "%s CNAME .\n*.%s CNAME .\n", $2, $2 }'
         } > "$tmp/${l.name}"
@@ -36,7 +29,7 @@
   refresh = pkgs.writeShellApplication {
     name = "bind-rpz-refresh";
     runtimeInputs = [pkgs.curl pkgs.gawk pkgs.bind];
-    # SC2016 fires on the single-quoted `$TTL` printf above, which is intentional (see there).
+    # the stub's `$TTL` is zone-file syntax, meant to stay unexpanded
     excludeShellChecks = ["SC2016"];
     text = ''
       set -euo pipefail
@@ -56,7 +49,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         ExecStart = lib.getExe refresh;
-        # run as named: the rndc key is named-readable and the zone files must be named-owned.
+        # the rndc key is named-readable and the zone files must be named-owned
         User = "named";
         Group = "named";
         ReadWritePaths = [rpzDir];
@@ -67,11 +60,9 @@ in {
       description = "daily RPZ blocklist refresh";
       wantedBy = ["timers.target"];
       timerConfig = {
-        # servers are UTC. 12:00 plus the random hour is 4a-6a pacific
-        # see SCHEDULE.md
+        # 12:00 UTC plus the random hour, see SCHEDULE.md
         OnCalendar = "12:00";
-        # run after boot too, else a freshly-booted resolver (empty stubs) blocks nothing until
-        # the next daily tick. 3min so network + named are up first.
+        # a fresh boot has only empty stubs, so don't wait for the daily tick
         OnBootSec = "3min";
         RandomizedDelaySec = "1h";
         Persistent = true;

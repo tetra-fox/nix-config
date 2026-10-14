@@ -38,7 +38,7 @@
     dbus.implementation = "broker";
   };
 
-  # NixOS enables oomd by default; disable it so earlyoom is the only oom killer
+  # earlyoom is the only oom killer
   systemd.oomd.enable = lib.mkForce false;
 
   boot.tmp.cleanOnBoot = true;

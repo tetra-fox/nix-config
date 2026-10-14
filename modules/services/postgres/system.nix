@@ -13,11 +13,9 @@
 
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
-  # the role SQL is shared with the HA module (role-sql.nix); idempotent, so running it
-  # after ensureUsers has already created the role is fine
+  # idempotent, so running it after ensureUsers is fine
   roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
-  # the dump script is shared with the HA module too (dump.nix); there it runs leader-gated
   dumpScript = import modules.services.postgres.dump {
     inherit pkgs;
     postgresPkg = cfg.package;
@@ -35,11 +33,7 @@
       RemainAfterExit = true;
       LoadCredential = "pgpass:${config.sops.secrets.${role.passwordSecret}.path}";
     };
-    # the password goes in via the environment and \getenv, not psql -v: a -v value is
-    # assembled by the shell before exec and so ends up in psql's argv, which any local
-    # user can read out of /proc/<pid>/cmdline.
-    # heredoc quoted so the SQL reaches psql literally (db names may contain hyphens);
-    # $CREDENTIALS_DIRECTORY is expanded by the shell on the assignment line instead.
+    # quoted heredoc so the SQL reaches psql literally (db names may contain hyphens)
     script = ''
       PGROLEPASS="$(cat "$CREDENTIALS_DIRECTORY/pgpass")" ${cfg.package}/bin/psql <<'EOF'
       \getenv pass PGROLEPASS
@@ -59,8 +53,7 @@ in {
     }
 
     (lib.mkIf cfg.server.enable {
-      # nix-topology's postgresql extractor prints 0.0.0.0 whenever enableTCPIP is set
-      # (it never reads listen_addresses); mkForce replaces its line with the real listeners
+      # nix-topology prints 0.0.0.0 whenever enableTCPIP is set, it never reads listen_addresses
       topology.self.services.postgresql.details.listen.text =
         lib.mkForce "${config.services.postgresql.settings.listen_addresses}:${toString config.services.postgresql.settings.port}";
 
@@ -69,8 +62,8 @@ in {
         inherit (cfg) package;
         dataDir = "${siteData}/postgresql/${cfg.package.psqlSchema}";
         enableTCPIP = true;
-        # mkForce: enableTCPIP hard-sets the wildcard upstream. fleet clients hit the
-        # east-west address, admin psql the server-VLAN one; nothing needs a wildcard
+        # enableTCPIP hard-sets the wildcard. fleet clients use the east-west address,
+        # admin psql the server-VLAN one
         settings.listen_addresses = lib.mkForce (lib.concatStringsSep ", " (lib.unique (
           ["127.0.0.1"]
           ++ lib.filter (a: a != null) [config.lab.site.internalIp config.lab.site.hostIp]
@@ -89,8 +82,7 @@ in {
         ensureDatabases = lib.unique (lib.concatMap (r: r.owns) (lib.attrValues cfg.roles));
       };
 
-      # the unit bind-mounts the versioned dataDir, which must already exist or namespace
-      # setup fails (226/NAMESPACE); create both parent and leaf.
+      # the unit bind-mounts dataDir, missing it fails with 226/NAMESPACE
       systemd.tmpfiles.rules = [
         "d ${siteData}/postgresql 0700 postgres postgres -"
         "d ${config.services.postgresql.dataDir} 0700 postgres postgres -"
@@ -124,7 +116,7 @@ in {
           serviceConfig = {
             Type = "oneshot";
             User = "postgres";
-            # a wedged write (unreachable nfs dir) fails the unit instead of hanging forever
+            # a wedged nfs write fails the unit instead of hanging
             TimeoutStartSec = "15min";
           };
           script = dumpScript;

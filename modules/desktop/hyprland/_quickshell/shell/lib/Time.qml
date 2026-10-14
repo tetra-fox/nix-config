@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 
-// shared monotonic clock for "time ago" rendering; 30s resolution is fine since smallest unit is minutes
+// for "time ago" rendering, 30s is enough when the smallest unit is minutes
 QtObject {
     id: root
 

@@ -10,9 +10,7 @@
 }: let
   siteData = config.lab.site.dataDir;
 
-  # the site's authentik outpost, used by forward_auth routes. loopback if authentik runs on
-  # this box, else the derived auth-server address. null when the site has no authentik
-  # (fairlane), which is what makes those sites lan-only by construction.
+  # null on a site without authentik (fairlane), which keeps it lan-only
   authOutpost =
     if (config.lab.authentik.enable or false)
     then "http://127.0.0.1:${toString config.lab.authentik.port}"
@@ -22,16 +20,12 @@
 
   anyForwardAuth = lib.any (r: lib.elem "forward_auth" r.middlewares) topo.routesInSite;
 
-  # middleware -> caddy snippet name, emitted inside a route{} block so they run in order:
-  # lan_only aborts non-LAN first, then forward_auth (the authentik snippet) gates.
+  # emitted inside a route{} block so they run in list order
   mwSnippet = {
     lan_only = "lan_only";
     forward_auth = "authentik";
   };
 
-  # render one reverse-proxy vhost per same-site route. the engine resolved each route's upstream
-  # (ipOf the declaring host + its port), so this only emits Caddy syntax. vhosts sorted by host
-  # for a stable render (no diff churn when a host reorders its routes).
   renderRoute = r: let
     bodyBlock =
       if r.maxBodySize != null
@@ -59,9 +53,6 @@
     renderRoute
     (lib.sort (a: b: a.host < b.host) topo.routesInSite);
 
-  # generic edge preamble: the reusable snippets every site imports + the ACME cert issuer. no
-  # vhosts here -- the resolvable ones come from renderedRoutes, the site-specific ones from
-  # lab.caddy.staticTail.
   preamble =
     ''
       (lan_only) {
@@ -69,8 +60,7 @@
       	abort @notlan
       }
 
-      # apache-style access log (transform-encoder plugin), imported by every vhost so fail2ban's
-      # simple-regex filter matches it. caddy's default JSON is harder to write a filter against.
+      # apache-style, for fail2ban's regex filters
       (log) {
       	log {
       		# caddy's defaults keep ten 100M rolls for 90 days; fail2ban only reads the live file
@@ -82,10 +72,8 @@
       	}
       }
     ''
-    # only when the site has an outpost. trusted_proxies lets it trust caddy's X-Forwarded-*
-    # so it resolves the app by the original Host; copy_headers passes identity to the backend.
-    # no Authorization: the arrs skip auth for local addresses (all traffic is lan_only), so
-    # nothing injects basic-auth
+    # trusted_proxies so the outpost resolves the app by the original Host.
+    # no Authorization header: the arrs skip auth for local addresses
     + lib.optionalString (authOutpost != null) ''
 
       (authentik) {
@@ -104,7 +92,7 @@
   );
 
   ha = config.lab.caddy.ha;
-  # peers are the other edge hosts' server-VLAN IPs (hostIp, not internalIp).
+  # server-VLAN IPs (hostIp), not internalIp
   selfServerIp = config.lab.site.hostIp;
   allEdgeServerIps =
     lib.sort (a: b: a < b)
@@ -117,10 +105,7 @@ in {
   imports = [modules.services.vrrp.system];
 
   options.lab.caddy = {
-    # the acme issuer, a raw Caddyfile global-options block appended to the preamble. the
-    # default does dns-01 via cloudflare, whose token rides in through environmentSecrets;
-    # a site on another dns provider overrides both (and needs a package built with the
-    # matching dns plugin).
+    # another dns provider overrides this, environmentSecrets and package together
     certIssuer = lib.mkOption {
       type = lib.types.lines;
       default = ''
@@ -151,8 +136,6 @@ in {
       description = "env var name -> sops secret name, rendered into caddy's EnvironmentFile. the default carries the cloudflare acme token.";
     };
 
-    # site-specific Caddyfile blocks appended after the rendered routes: the root vhost and
-    # appliances with no capability publisher (HAOS, proxmox). everything derivable is a route.
     staticTail = lib.mkOption {
       type = lib.types.lines;
       default = "";
@@ -208,8 +191,7 @@ in {
         };
 
         fail2ban = {
-          # the caddy-status jail bans on 401/403/429 only (see caddy-status.conf), not any 4xx
-          # StateDirectory is relative to /var/lib; must resolve to the same dir as the fail2ban dbfile
+          # relative to /var/lib, must match the dbfile's dir
           serviceConfig.StateDirectory = lib.mkForce "${lib.removePrefix "/var/lib/" siteData}/fail2ban";
 
           after = ["caddy.service"];
@@ -217,12 +199,11 @@ in {
         };
       };
 
-      # upstream only creates dataDir when it's the default /var/lib/caddy; overriding to
-      # siteData means we create it ourselves or the ReadWritePaths bind-mount fails 226/NAMESPACE.
-      # pre-create access.log too: fail2ban's caddy-status jail won't start with its logpath missing.
+      # upstream only creates the default dataDir, without it ReadWritePaths fails 226/NAMESPACE.
+      # fail2ban won't start with its logpath missing
       tmpfiles.rules = [
         "d ${config.services.caddy.dataDir} 0700 caddy caddy -"
-        # own the log dir before the file rule, else tmpfiles creates the parent root-owned and caddy can't rotate
+        # before the file rule, else tmpfiles makes the dir root-owned and caddy can't rotate
         "d /var/log/caddy 0750 caddy caddy -"
         "f /var/log/caddy/access.log 0644 caddy caddy -"
       ];
@@ -230,11 +211,11 @@ in {
 
     networking.firewall.allowedTCPPorts = [80 443];
 
-    # caddy binds :80/:443 on all interfaces, so it catches VIP traffic with no ip_nonlocal_bind.
+    # caddy binds all interfaces, so the VIP needs no ip_nonlocal_bind
     lab.vrrp = lib.mkIf ha.enable {
       enable = true;
       inherit (ha) vip;
-      # heartbeat and VIP both on the server VLAN (clients and the router reach the VIP there)
+      # heartbeat on the server VLAN too, where the router reaches the VIP
       vrrpInterface = config.lab.site.serverInterface;
       vipInterface = config.lab.site.serverInterface;
       inherit (ha) virtualRouterId;
@@ -267,7 +248,7 @@ in {
         maxtime = "168h";
         overalljails = true;
       };
-      # the LAN ranges plus loopback and the rest of private space; banning any of it is never right
+      # all private space, not just the LAN
       ignoreIP =
         config.lab.net.privateRanges
         ++ [
@@ -284,9 +265,7 @@ in {
         findtime = "10m";
         maxretry = 5;
       };
-      # instaban known-probe paths (wp-login, .env, .git, phpunit, shells). the filter matches on
-      # path, not status, so it fires on the 404s these generate. maxretry=1 because a single hit is
-      # unambiguous; 24h base ban (the jail default is 1h) since there's no legit reason to be here.
+      # a single probe-path hit is unambiguous
       jails.caddy-probe.settings = {
         enabled = true;
         filter = "caddy-probe";

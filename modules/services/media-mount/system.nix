@@ -1,7 +1,4 @@
-# NFS client mount of the site's media library, exported by the store host (its own fsid=0 v4 root,
-# mounted as `:/`). the store host's address comes from the topology engine (storageHostIp), so this
-# names no host. gates the services that read the mount so they don't start on the empty mountpoint
-# before the automount pulls it up.
+# the store host exports the media library as its fsid=0 v4 root, hence `:/`
 {
   config,
   lib,
@@ -33,7 +30,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # automount + idle-timeout + nofail so a store reboot doesn't wedge boot here.
+    # a store reboot must not wedge boot here
     fileSystems.${cfg.mountpoint} = {
       device = "${topo.storageHostIp}:/";
       fsType = "nfs";

@@ -9,8 +9,7 @@
 
     defaultEditor = true;
 
-    # helix's built-in languages.toml assumes `nixd` is on PATH; point at the store path
-    # directly instead, matching how the vscode module resolves it (see nix.nix)
+    # helix's built-in languages.toml expects nixd on PATH
     languages.language-server.nixd = {
       command = "${pkgs.nixd}/bin/nixd";
       config = import fleet.nixd-settings {inherit pkgs osConfig;};

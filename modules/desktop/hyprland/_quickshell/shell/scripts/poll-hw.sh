@@ -1,8 +1,5 @@
 #!/bin/sh
-# Poll hardware metrics. Output: key=value lines.
-# Covers: CPU temp/freq, GPU, VRAM, disk.
-
-# ── CPU ─────────────────────────────────────────────────────────────────
+# key=value lines
 
 # k10temp (AMD) or coretemp (Intel), fall back to thermal_zone0
 cputemp=""
@@ -19,12 +16,10 @@ done
 freq=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq 2>/dev/null)
 [ -n "$freq" ] && echo "cpufreq=$freq"
 
-# ── GPU ─────────────────────────────────────────────────────────────────
-
 gpu=$(cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -1)
 
 if [ -n "$gpu" ]; then
-    # AMD - read sysfs directly
+    # amd
     echo "gpu=$gpu"
     vram_u=0; vram_t=0
     for f in /sys/class/drm/card*/device/mem_info_vram_used; do
@@ -36,7 +31,7 @@ if [ -n "$gpu" ]; then
     echo "vram=$vram_u $vram_t"
 
 elif command -v nvidia-smi >/dev/null 2>&1; then
-    # NVIDIA - single nvidia-smi call
+    # nvidia
     nvidia-smi \
         --query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu \
         --format=csv,noheader,nounits \
@@ -50,8 +45,6 @@ elif command -v nvidia-smi >/dev/null 2>&1; then
 else
     echo "gpu=-1"
 fi
-
-# ── Disk ────────────────────────────────────────────────────────────────
 
 df -B1 / | awk 'NR==2 { print "disk=" $3 " " $2 }'
 df -B1 -x tmpfs -x devtmpfs -x efivarfs -x squashfs -x overlay | awk 'NR>1 && $6 != "/" { print "extdisk=" $6 " " $3 " " $2 }'

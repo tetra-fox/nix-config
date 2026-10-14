@@ -1,7 +1,4 @@
-{
-  config,
-  ...
-}: {
+{config, ...}: {
   services.ollama = {
     enable = true;
     # package left at the upstream (cpu) default; a gpu host overrides it

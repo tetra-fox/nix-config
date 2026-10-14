@@ -26,7 +26,6 @@ see `quirks/mesa-svc-01/gtx-1080.nix`.
 
 - `lab.nvidia.exporter.enable` (default `false`) - run nvidia-gpu-exporter, contribute scrape job + dashboard 14574
 - `lab.nvidia.exporter.port` (default `9835`) - upstream default
-- `lab.nvidia.exporter.openFirewall` (default `false`) - local prometheus doesn't need it; flip on for a remote scrape
 
 ## gotchas
 

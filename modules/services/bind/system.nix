@@ -1,8 +1,4 @@
-# bind over unbound: unbound's redirect zone can't hold per-name overrides (a wildcard plus one
-# exception), bind's split-horizon `view` can.
-#
-# the NixOS services.bind module models a flat zone list, not views, so we hand it a full
-# named.conf via configFile. that skips the module's named-checkconf, so we run it ourselves below.
+# services.bind has no views, so it gets a whole named.conf via configFile
 {
   config,
   lib,
@@ -22,10 +18,7 @@
     })
     cfg.rpzLists;
 
-  # with views in play every zone must live inside a view, so these (and the response-policy
-  # referencing them) go in the internal view, not at top level.
-  # no allow-query { none; }: the RPZ engine does an internal lookup against the policy zone and
-  # that ACL refuses it too (symptom: "query '<name>.<zone>/CNAME/IN' denied" + zero rewrites).
+  # no allow-query { none; }: it also refuses the rpz engine's own lookups into the zone
   rpzZoneClauses =
     lib.concatMapStrings (z: ''
       zone "${z.name}" {
@@ -50,8 +43,8 @@
   '';
 
   namedConf = pkgs.writeText "named.conf" ''
-    # configFile drops the controls clause the module adds, so the rpz refresh's `rndc reload`
-    # fails with "connection closed". the module's ExecStartPre still generates rndc.key.
+    # configFile drops the module's controls clause, which `rndc reload` needs.
+    # the module still generates rndc.key
     include "/etc/bind/rndc.key";
     controls {
       inet 127.0.0.1 allow { localhost; } keys { "rndc-key"; };
@@ -66,24 +59,20 @@
       listen-on { any; };
       listen-on-v6 { any; };
 
-      # no forwarders: the router points its upstream DNS back here, so forwarding would loop.
+      # no forwarders: the router's upstream DNS is this host, forwarding would loop
       recursion yes;
       dnssec-validation auto;
 
-      # bind defaults allow-transfer to any, and the internal view's match-clients is all
-      # of RFC1918, so without this any private-range client could AXFR the whole zone and
-      # get the fleet inventory (one A record per host, per lib/topology.nix). both dns
-      # hosts are masters of the same nix-generated zone file and neither replicates from
-      # the other, so nothing legitimately transfers.
+      # default is any, letting every RFC1918 client AXFR the fleet inventory.
+      # both hosts are masters of the same generated zone, nothing transfers
       allow-transfer { none; };
 
-      # rescan interfaces so a freshly-floated keepalived VIP gets a listening socket without a restart.
+      # picks up a newly floated VIP without a restart
       interface-interval 60;
     };
 
-    # allow-recursion + allow-query-cache go here, not options: at options level they conflict with
-    # the external view's `recursion no`, and their default (localhost) makes internal clients get
-    # "query (cache) denied" + recursion timeouts.
+    # allow-recursion and allow-query-cache belong here: in options they conflict with the
+    # external view's `recursion no`, and their localhost default denies internal clients
     view "internal" {
       match-clients { internal; };
       recursion yes;
@@ -186,7 +175,7 @@ in {
         default = null;
         description = ''
           optional floating IPv6 VIP for dual-stack sites (fairlane). use a ULA (fd00:...) not a
-          GUA -- a residential ISP prefix rotates, and a GUA VIP would break on every rotation.
+          GUA, a residential ISP prefix rotates, and a GUA VIP would break on every rotation.
           each resolver host also needs a static ULA on ens18 (lab.bind.ha.hostV6) to source the
           v6 VRRP heartbeat + hold the VIP. null = v4-only (mesa).
         '';
@@ -217,18 +206,13 @@ in {
     services.bind = {
       enable = true;
       configFile = namedConf;
-      # -4 (default): a v4-only WAN (mesa) makes bind try v6 root/auth servers over the non-
-      # routable LAN ULA, hit "network unreachable", and stall recursion until the deadline. a
-      # dual-stack site (fairlane) MUST NOT force -4, or bind refuses every v6 socket -- including
-      # the v6 VIP. so this follows lab.bind.dualStack.
+      # on a v4-only WAN bind tries v6 servers over the LAN ULA and stalls recursion.
+      # -4 on a dual-stack site refuses every v6 socket, the v6 VIP included
       ipv4Only = !cfg.dualStack;
     };
 
-    # run named-checkconf at build so a broken named.conf fails the build, not the box. no -z: it
-    # would load every zone incl the RPZ files, which don't exist at build; we only want the syntax
-    # check. two sandbox fixups, inert on the box: repoint `directory` at the sandbox cwd (the
-    # runtime /run/named isn't writable here, our zone paths are absolute anyway), and swap the
-    # rndc.key include for a throwaway key (the real one only exists at runtime).
+    # configFile skips the module's own check. no -z: the rpz files don't exist at build.
+    # directory and rndc.key are swapped for sandbox-local stand-ins
     system.checks = lib.mkIf config.services.bind.checkConfig [
       (pkgs.runCommand "named-checkconf" {} ''
         ${lib.getExe' pkgs.bind "rndc-confgen"} -a -c rndc.key >/dev/null 2>&1
@@ -239,7 +223,7 @@ in {
       '')
     ];
 
-    # C seeds the stub only if the target is absent, so a real fetched list is never clobbered.
+    # C only copies when absent, never clobbering a fetched list
     systemd.tmpfiles.rules =
       ["d ${rpzDir} 0755 named named -"]
       ++ map (z: "C ${z.file} 0644 named named - ${rpzStub}") rpzZones;

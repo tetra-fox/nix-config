@@ -6,18 +6,13 @@
   serverUsername,
   ...
 }: let
-  # 1P agent socket: darwin stores it in a Group Container, linux under $HOME
   opAgent =
     if pkgs.stdenv.isDarwin
     then "${config.home.homeDirectory}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
     else "${config.home.homeDirectory}/.1password/agent.sock";
 
-  # per-site Host blocks: hostnames follow <host>.<site>.tetra.cool and servers
-  # only allow the deploy user, so `ssh mesa-db-01` works from any workstation.
-  # fleetSites is derived in flake.nix from the server host names, so a new
-  # site reaches the client config automatically. `!*.*` keeps fqdn/.local
-  # targets out of the block: they already carry a domain, and rewriting them
-  # would double-append it
+  # `ssh mesa-db-01` works from any workstation. `!*.*` skips targets that
+  # already carry a domain
   fleetBlocks = lib.listToAttrs (map (site: {
       name = "${site}-* !*.*";
       value = {
@@ -46,12 +41,8 @@ in {
         fleetBlocks
         // {
           "*" = {
-            # off: with one operator key authorizing every fleet host and passwordless
-            # sudo on all of them, a forwarded socket lets root on any host you connect
-            # to authenticate as you everywhere else, and to github for nix-secrets.
-            # nothing here needs it: deploys authenticate from this machine, and flake
-            # inputs are evaluated locally, so no fleet host reaches onward over ssh.
-            # set forwardAgent per-host if some future target genuinely needs it.
+            # one key opens every fleet host and every host has passwordless sudo, so a
+            # forwarded agent would let root anywhere act as you everywhere. nothing needs it
             forwardAgent = false;
             addKeysToAgent = "no";
             compression = false;
@@ -62,8 +53,7 @@ in {
             controlMaster = "no";
             controlPath = "~/.ssh/master-%r@%n:%p";
             controlPersist = "no";
-            # quoted: the darwin socket path contains spaces, and an unquoted
-            # value makes ssh reject the whole config file at parse time
+            # the darwin path has spaces, unquoted ssh rejects the whole config
             identityAgent = ''"${opAgent}"'';
           };
         };

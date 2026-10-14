@@ -1,5 +1,5 @@
 {username, ...}: {
-  # we need this here, i want browser integration to work >.<
+  # needed for browser integration
   programs._1password.enable = true;
   programs._1password-gui = {
     enable = true;

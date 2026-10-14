@@ -36,7 +36,6 @@ PanelWindow { // qmllint disable uncreatable-type
             }
         }
 
-        // left - workspaces
         Pill {
             anchors {
                 left: parent.left
@@ -59,7 +58,6 @@ PanelWindow { // qmllint disable uncreatable-type
             }
         }
 
-        // center - active window
         Pill {
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -81,7 +79,6 @@ PanelWindow { // qmllint disable uncreatable-type
             }
         }
 
-        // right - tray + controls + clock
         Pill {
             anchors {
                 right: parent.right

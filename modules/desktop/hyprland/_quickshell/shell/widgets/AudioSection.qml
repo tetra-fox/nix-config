@@ -7,7 +7,6 @@ import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Layouts
 
-// volume slider + device selector for one audio direction
 ColumnLayout {
     id: root
 

@@ -1,5 +1,4 @@
-# nixpkgs' ghostty is linux-only so darwin gets the upstream release
-# repackaged as ghostty-bin
+# nixpkgs' ghostty is linux-only, darwin gets ghostty-bin
 {pkgs, ...}: {
   programs.ghostty = {
     enable = true;

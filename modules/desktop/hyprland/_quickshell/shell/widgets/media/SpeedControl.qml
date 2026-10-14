@@ -12,7 +12,7 @@ Item {
 
     readonly property var rates: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
     readonly property real currentRate: root.player?.rate ?? 1.0
-    // epsilon match: a player may report 1.0 as 0.999..., which exact compare would style as non-default
+    // players may report 1.0 as 0.999...
     readonly property bool isDefaultRate: Math.abs(root.currentRate - 1.0) <= 0.01
 
     function cycleRate() {
@@ -20,7 +20,6 @@ Item {
             return;
         const cur = root.currentRate;
         for (const r of root.rates) {
-            // epsilon avoids float equality issues (e.g. 1.0 stored as 0.999...)
             if (r > cur + 0.01) {
                 root.player.rate = r;
                 return;

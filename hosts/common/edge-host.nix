@@ -1,7 +1,4 @@
-# host-role boilerplate shared by every site's edge (mesa-edge-01/02, fairlane-edge-01/02): a
-# stateless caddy node in a keepalived HA pair, each with its own ACME certs, behind a shared VIP.
-# heartbeat and VIP both ride the server VLAN (see the caddy module); -01 and -02 pin to different
-# proxmox hosts so a node death leaves one edge alive. the host file sets only its sops file + IPs.
+# each node has its own ACME certs
 {
   config,
   lib,
@@ -18,8 +15,7 @@ in {
     modules.services.caddy.system
   ];
 
-  # the site's Caddyfile tail, templated over the host's lab facts. no pathExists guard,
-  # same rule as the flake's perTag: an edge site without a tail file should fail loudly
+  # no pathExists guard, an edge site without a tail file should fail loudly
   lab.caddy.staticTail = import (./. + "/${site}-caddy-tail.nix") {inherit (config) lab;};
 
   lab.caddy.ha = {

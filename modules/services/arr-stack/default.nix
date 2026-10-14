@@ -19,10 +19,9 @@
   vpnNs = "wg";
   vpn = config.vpnNamespaces.${vpnNs};
 
-  # the single db server's IP, or the HA cluster's VIP. null until a host enables either
   inherit (topo) dbEndpointIp;
 
-  # local db is reached over the veth bridge, remote db at its LAN endpoint
+  # local db is reached over the veth bridge
   defaultPostgresHost =
     if config.lab.postgres.server.enable
     then vpn.bridgeAddress
@@ -46,7 +45,7 @@
     prowlarr = {
       port = cfg.lanProxyPorts.prowlarr;
       inNetns = true;
-      # services.prowlarr has no environmentFiles option, so we define the unit ourselves
+      # services.prowlarr has no environmentFiles option
       apiKey = null;
       hasNixosModule = false;
       user = "prowlarr";
@@ -57,12 +56,8 @@
   baseSettings = {
     auth = {
       method = "Forms";
-      # stays DisabledForLocalAddresses on purpose: caddy dials from the site's edge IP,
-      # which the arrs count as local, so authentik's forward_auth is the single login
-      # the user sees. setting this to Enabled would stack each arr's own form on top of
-      # authentik. the exposure that comes with it (any private-range client reaching the
-      # port directly can read the api key from /initialize.json) is closed at the network
-      # layer instead, by accessibleFrom below.
+      # caddy dials from a local address, so forward_auth stays the only login. direct
+      # LAN access (api key readable via /initialize.json) is blocked by accessibleFrom
       required = "DisabledForLocalAddresses";
     };
     log.level = "info";
@@ -95,13 +90,11 @@
 
   arrDbs = lib.flatten (lib.mapAttrsToList (n: _: ["${n}-main" "${n}-log"]) arrServices);
 
-  # gate the arrs on the password oneshot when the db is local, avoiding a bad-creds
-  # crash-loop during the boot race. remote db has no such unit, the arrs just retry
+  # local db only: avoids a bad-creds crash-loop while the password oneshot runs
   dbIsLocal = config.lab.postgres.server.enable;
   pgPasswordUnit = lib.optional dbIsLocal config.lab.postgres.passwordUnits.${arrPgUser};
 
-  # vpnConfinement already binds the arrs to the wg unit; the extra `requires` is a
-  # redundant fail-closed guard, keep it
+  # vpnConfinement already binds to the wg unit, `requires` is a redundant fail-closed guard
   arrDeps = svc: {
     after = pgPasswordUnit;
     requires =
@@ -111,18 +104,13 @@
       enable = true;
       vpnNamespace = vpnNs;
     };
-    # servarr modules hardcode UMask 0022, making library dirs group-unwritable so a
-    # later import by another media-group service hits UnauthorizedAccessException.
-    # 0002 keeps dirs 0775 / files 0664 for the whole media group
+    # servarr modules hardcode UMask 0022, which makes library dirs unwritable to the
+    # rest of the media group (UnauthorizedAccessException on import)
     serviceConfig = {UMask = lib.mkForce "0002";} // arrHardening;
   };
 
-  # systemd hardening for the arr units. sonarr and radarr inherit a decent set from their
-  # nixpkgs modules, but prowlarr (hand-defined below, no upstream module) and sabnzbd
-  # (whose module sets none) were running with none of it. mkDefault so wherever an
-  # upstream module already made a call, that call still wins.
-  # no MemoryDenyWriteExecute on purpose: these are .NET and python runtimes that JIT,
-  # and it would kill them.
+  # mkDefault so upstream module settings win. no MemoryDenyWriteExecute: .NET and
+  # python JIT
   arrHardening = lib.mapAttrs (_: lib.mkDefault) {
     NoNewPrivileges = true;
     PrivateTmp = true;
@@ -136,20 +124,13 @@
     RestrictNamespaces = true;
     RestrictRealtime = true;
     LockPersonality = true;
-    # they bind ports above 1024 and run as their own uid, so no capability is needed
     CapabilityBoundingSet = "";
     SystemCallArchitectures = "native";
   };
 
-  # the arrs don't retry a failed initial db connection: on a db that isn't up yet they log
-  # "Non-recoverable failure, waiting for user intervention" and park with the process still
-  # alive, so Restart=on-failure never fires and a boot race against the db -- or a leader
-  # failover -- leaves them down until a manual restart. gate startup on the primary answering.
-  # pg_isready does the real startup handshake, so it reports not-ready even when haproxy
-  # accepts the tcp connection with no healthy backend; postgresHost is the VIP, which only
-  # routes to the read-write primary, so a ready answer means promoted and writable.
-  # TimeoutStartSec bounds the wait: on timeout the unit fails cleanly and Restart retries,
-  # instead of the app parking with no exit for systemd to act on.
+  # the arrs don't retry a failed initial db connection, they park alive ("Non-recoverable
+  # failure") so Restart never fires. pg_isready does a real handshake, so haproxy accepting
+  # tcp with no healthy backend still reads as not ready
   waitForDb = pkgs.writeShellScript "arr-wait-for-postgres" ''
     until ${config.lab.postgres.package}/bin/pg_isready -q -h ${cfg.postgresHost} -p 5432 -t 3; do
       sleep 2
@@ -182,10 +163,8 @@ in {
     ./downloadclients.nix
     ./jellyfin-notify.nix
     ./cleanup-profiles.nix
-    # the client options contract, not the server module: the arrs are a pg client. the host
-    # imports postgres.system itself when it also runs the server (co-located single-box site)
+    # options only, a host running the server imports postgres.system itself
     modules.services.postgres.options
-    # options-only, registers the vpn-down alert without pulling in the monitoring stack
     modules.services.monitoring.registry
   ];
 
@@ -194,9 +173,7 @@ in {
       lib.mkEnableOption "DNAT host ports into the vpn netns for LAN access"
       // {default = true;};
 
-    # published so the db host reads the whole role spec (name, secret, dbs) off this host
-    # via topo.arrDbRole instead of restating any of it. readOnly with a static default,
-    # so the cross-host read can't cycle.
+    # read by the db host via topo.arrDbRole. static default so the cross-host read can't cycle
     dbRole = lib.mkOption {
       readOnly = true;
       default = {
@@ -213,13 +190,9 @@ in {
       type = lib.types.listOf lib.types.str;
       default = map (ip: "${ip}/32") topo.edgeHostIps;
       description = ''
-        sources allowed to reach the namespace via portMappings. the site's edge hosts
-        only: caddy is the intended way in, and it already gates every arr vhost on
-        lan_only plus (where the site has authentik) forward_auth. opening these to all
-        of privateRanges, as this used to, let any LAN client hit the arr ports directly
-        and skip both gates. the on-host helpers (recyclarr, cleanup-profiles,
-        jellyfin-notify) are unaffected: they reach the arrs at the netns address, not
-        through these host-side mappings.
+        sources allowed to reach the namespace via portMappings. edge hosts only, so
+        LAN clients can't skip caddy's lan_only and forward_auth. on-host helpers use
+        the netns address and aren't affected.
       '';
     };
 
@@ -227,23 +200,17 @@ in {
       type = lib.types.str;
       default = defaultPostgresHost;
       description = ''
-        host the arrs connect to for postgres. auto-derived: the veth bridge address
-        when this host runs the db (postgres is local), else the site's derived
-        db-server IP. when the db is remote, add that IP to netnsSnatHosts so the netns
-        gets its return path. override only for a non-fleet target.
+        host the arrs connect to for postgres. defaults to the veth bridge address
+        for a local db, else the site's db endpoint.
       '';
     };
 
     netnsSnatHosts = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      # a remote db needs SNAT so its replies route back; a local db has nothing to SNAT
       default = lib.optional (!dbIsLocal && dbEndpointIp != null) dbEndpointIp;
       description = ''
-        LAN IPs the arrs initiate connections to outside the tunnel. fed into
-        vpn-confinement's allowedEgress, which routes them via the bridge and
-        masquerades them to this host's LAN address so replies route back.
-        defaults to the remote db's IP; populate with extra dests when another
-        off-box service (jellyfin) is added.
+        LAN IPs the arrs reach outside the tunnel, masqueraded to this host's LAN
+        address via allowedEgress. defaults to the remote db's IP.
       '';
     };
 
@@ -266,8 +233,7 @@ in {
     torrentingPort = lib.mkOption {
       type = lib.types.port;
       description = ''
-        qbittorrent's incoming (listen) port. the VPN provider assigns this per account
-        when port forwarding is set up, so it's a deployment fact with no sane default.
+        qbittorrent's listen port, assigned per account by the VPN provider
       '';
     };
 
@@ -275,10 +241,8 @@ in {
       type = lib.types.listOf lib.types.str;
       default = [];
       description = ''
-        extra hostnames to add to sabnzbd's host_whitelist. sabnzbd rejects requests
-        whose Host header isn't whitelisted (dns-rebinding protection), so the public
-        hostname caddy proxies it under (e.g. sabnzbd.<site>.tetra.cool) must be listed
-        here or you get "Hostname verification failed".
+        extra hostnames for sabnzbd's host_whitelist. the hostname caddy proxies it
+        under must be listed or requests fail with "Hostname verification failed".
       '';
     };
   };
@@ -289,11 +253,8 @@ in {
         topology = {
           provides = [caps.arr.name];
 
-          # the arr web UIs, folded into the edge Caddyfile. lan_only always; forward_auth too
-          # when the site has an authentik outpost (mesa), so a site without one (fairlane) is
-          # lan-only by construction. the netns arrs take openFirewall false because they are
-          # DNAT'd (forward path, not the input chain) and scoped by accessibleFrom instead;
-          # sabnzbd is outside the netns, so its route carries the source-scoped input rule.
+          # netns arrs are DNAT'd (forward chain), scoped by accessibleFrom instead of the
+          # input firewall. sabnzbd is outside the netns
           routes = let
             mw = ["lan_only"] ++ lib.optional (topo.authServerIp != null) "forward_auth";
             arrRoute = openFirewall: sub: port: {
@@ -322,9 +283,8 @@ in {
           }
         ];
 
-        # the arrs log more to their <name>.txt than to stdout, so ship those to the site
-        # loki too; the media group grants alloy read on the 0644/0664 files. sabnzbd and
-        # qbittorrent logs are 0600 and stay journal-only.
+        # the arrs log more to <name>.txt than stdout. sabnzbd and qbittorrent logs are
+        # 0600 and stay journal-only
         logging = {
           extraGroups = [mediaGroup];
           fileSources =
@@ -341,8 +301,6 @@ in {
         anyArrInNetns = netnsArrs != [];
       in [
         {
-          # the arrs run in a wg netns; the host must wire vpn-confinement (fleet-wide via
-          # perClass.nixos today) or the vpnNamespaces option below doesn't exist
           assertion = config ? vpnNamespaces;
           message = "arr-stack needs the vpn-confinement module (vpnNamespaces option) wired on this host.";
         }
@@ -409,20 +367,16 @@ in {
         // lib.mapAttrs' (name: svc:
           lib.nameValuePair "${name}.env" {
             content = mkEnvFileContent name svc;
-            # sops-nix's default (root 0400) is what we want: systemd reads
-            # EnvironmentFile as root before dropping privileges, so widening these to
-            # the media group only handed the arr postgres password to every other
-            # media member (jellyfin, sabnzbd, alloy, the admin user).
+            # default root 0400 on purpose: systemd reads EnvironmentFile as root, and a
+            # media-group mode would leak the pg password to every media member
           })
         arrServices;
     }
 
-    # only contribute the arr role/cidr when the db is local; the remote db box declares
-    # them itself and this host is a pure client
+    # a remote db box declares the role itself
     (lib.mkIf dbIsLocal {
       lab.postgres = {
-        # netns reaches local pg over the veth bridge, not a fleet hostIp, so it can't be
-        # derived from client.enable. /24 spans both ends of the bridge
+        # the veth bridge isn't a fleet hostIp, so client.enable can't derive it
         extraAllowedCidrs = ["${vpn.bridgeAddress}/24"];
         roles.${arrPgUser} = {
           passwordSecret = arrPgPassSecret;
@@ -439,7 +393,7 @@ in {
             group = mediaGroup;
             dataDir = "${siteData}/${name}";
             environmentFiles = [config.sops.templates."${name}.env".path];
-            # mirror the env-injected values so the module's defaults don't override them
+            # mirror the env-injected values so the module defaults don't override them
             settings = {
               auth.method = "Forms";
               auth.required = "DisabledForLocalAddresses";
@@ -461,15 +415,13 @@ in {
             home = "${siteData}/${name}";
           }) (lib.filterAttrs (_: svc: !svc.hasNixosModule) arrServices))
 
-        # upstream module already creates the user, pin only its uid
         (lib.mapAttrs' (name: svc:
           lib.nameValuePair (svc.user or name) {inherit (svc) uid;})
         (lib.filterAttrs (_: svc: svc.hasNixosModule && svc ? uid) arrServices))
       ];
 
-      # upstream sets StateDirectory (which creates the dir) only when dataDir is the
-      # default; we override it, so we create the dir or the unit fails "Cannot create
-      # AppFolder"
+      # upstream only sets StateDirectory for the default dataDir, without it the unit
+      # fails "Cannot create AppFolder"
       systemd.tmpfiles.rules = lib.mapAttrsToList (name: svc: let
         owner = svc.user or name;
       in "d ${siteData}/${name} 0750 ${owner} ${mediaGroup} -")
@@ -482,8 +434,7 @@ in {
           if svc.hasNixosModule
           then arrDeps svc
           else
-            # recursiveUpdate, not //: a shallow merge would replace arrDeps' serviceConfig
-            # wholesale and silently drop both the UMask and the hardening set
+            # recursiveUpdate, // would drop arrDeps' serviceConfig
             lib.recursiveUpdate (arrDeps svc) {
               description = lib.toSentenceCase name;
               wantedBy = ["multi-user.target"];
@@ -502,8 +453,6 @@ in {
           qbittorrent = arrDeps {inNetns = true;};
         }
 
-        # block each arr's startup until its postgres primary answers (see waitForDb).
-        # qbittorrent is excluded here: it has no database.
         (lib.mapAttrs (_: _: arrDbGate) arrServices)
       ];
     }

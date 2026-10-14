@@ -117,8 +117,7 @@ entries:
             [name, default-password-change-password-policy],
           ]
 
-  # internal, not external: external users are refused the user interface, so they could not
-  # see their apps or change their password
+  # external users are refused the user interface, so no apps or password change
   - model: authentik_stages_user_write.userwritestage
     id: write
     identifiers: { name: enroll-user-write }

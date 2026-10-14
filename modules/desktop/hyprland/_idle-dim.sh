@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# dim each backlight (the ddcci monitors, see modules/hardware/ddcci) to a
-# percent of its current level, and put the saved levels back on restore.
-# hypridle spawns dim and restore independently, so a resume that lands while a
-# dim is still writing waits on the lock instead of restoring first
+# hypridle spawns dim and restore independently, the lock keeps a resume from
+# restoring before an in-flight dim finishes
 state="$XDG_RUNTIME_DIR/idle-dim"
 exec 9>"$state.lock"
 flock 9

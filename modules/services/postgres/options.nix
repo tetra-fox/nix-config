@@ -1,4 +1,4 @@
-# split from the server module so a pure client can import just these options.
+# split out so a pure client can import just the options
 {
   config,
   lib,
@@ -10,16 +10,13 @@
   cfg = config.lab.postgres;
   sitePrefix = import fleet.site-prefix {inherit lib;};
 in {
-  # advertise the db capabilities from the plain enable flags, so the topology layer discovers this
-  # host without importing the server or HA module. imported by server, HA, and pure clients
-  # alike, so it's the one place every db-role host passes through.
+  # from the plain enable flags, so topology finds db hosts without importing the server or HA module
   config.lab.topology.provides =
     lib.optional cfg.server.enable caps.dbServer.name
     ++ lib.optional cfg.ha.enable caps.dbHaNode.name
     ++ lib.optional cfg.client.enable caps.dbClient.name;
 
-  # admin.enable maps to a role here so both the single-server password unit and the HA
-  # leader reconcile create it (living in the server module left it inert on HA nodes)
+  # a role, so both the single-server unit and the HA reconcile create it
   config.lab.postgres.roles = lib.mkIf cfg.admin.enable {
     admin = {
       passwordSecret = cfg.admin.passwordSecret;
@@ -39,8 +36,7 @@ in {
 
     openFirewall = lib.mkEnableOption "5432/tcp in the host firewall";
 
-    # declared here, not in the HA module, so the topology derive can read ha.enable/ha.vip
-    # without importing that module.
+    # here, not in the HA module, so topology can read ha.enable/ha.vip without importing it
     ha = {
       enable = lib.mkEnableOption "run the Patroni HA postgres stack on this host (instead of server.enable)";
 
@@ -57,7 +53,6 @@ in {
 
       scope = lib.mkOption {
         type = lib.types.str;
-        # <site>-pg, so a second site gets its own cluster name without setting anything
         default = "${sitePrefix config.networking.hostName}-pg";
         description = "Patroni cluster name (scope). shared by every node in the cluster. also names the etcd cluster token (<scope>-etcd).";
       };
@@ -91,8 +86,7 @@ in {
       readOnly = true;
     };
 
-    # shared by single-server and HA. replication isn't backup: the cluster copies a dropped
-    # db to every standby, this is what gets it back
+    # replication isn't backup: a dropped db is dropped on every standby too
     backup = {
       enable = lib.mkEnableOption "a nightly pg_dumpall of every database + globals into backup.dir";
 

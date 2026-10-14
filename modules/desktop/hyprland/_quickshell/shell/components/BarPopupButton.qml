@@ -2,9 +2,7 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// bar widget scaffold: icon button + anchored popup with a content column.
-// declared children land in the popup column; left click toggles the popup,
-// right click only fires rightClicked
+// declared children land in the popup column. right click only fires rightClicked
 Item {
     id: root
 

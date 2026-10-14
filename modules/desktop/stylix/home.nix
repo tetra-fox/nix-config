@@ -1,11 +1,10 @@
 {lib, ...}: {
-  # stylix's cursor module sets home.pointerCursor.{name,package,size,...} but
-  # not enable; newer home-manager deprecated inferring enable from their presence
+  # stylix's cursor module sets home.pointerCursor's fields but not enable
   home.pointerCursor.enable = true;
 
   # no browser target: stylix has no zen-browser module, zen themes itself
   stylix.targets = {
-    # keep on so fonts.fontconfig.defaultFonts stays populated (vscode reads it via lib.head)
+    # vscode/home.nix reads fonts.fontconfig.defaultFonts
     fontconfig.enable = true;
     hyprpaper.enable = true;
 
@@ -16,13 +15,8 @@
     helix.enable = true;
   };
 
-  # qt.enable writes QT_QPA_PLATFORMTHEME/QT_STYLE_OVERRIDE into both the shell
-  # env and the systemd --user manager's env, and the latter is shared across
-  # every session for this user (there's one systemd --user instance per UID,
-  # not per login), so left alone it leaks stylix's qt5ct/kvantum choice into
-  # the plasma session and fights systemsettings over qt theming. pin the
-  # shared/global value back to plasma's own kde+breeze; hyprland gets qt5ct
-  # session-scoped instead, via ~/.config/uwsm/env-hyprland (hyprland/home.nix)
+  # qt.enable also writes these into the systemd --user env, which every session of
+  # this uid shares. hyprland gets qt5ct through uwsm/env-hyprland (hyprland/home.nix)
   home.sessionVariables = {
     QT_QPA_PLATFORMTHEME = lib.mkForce "kde";
     QT_STYLE_OVERRIDE = lib.mkForce "breeze";

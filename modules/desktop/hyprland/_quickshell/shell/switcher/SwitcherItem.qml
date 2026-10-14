@@ -47,7 +47,6 @@ Item {
         }
         spacing: Theme.buttonGap
 
-        // accent bar for selected item
         Rectangle {
             implicitWidth: 2
             implicitHeight: 14

@@ -28,12 +28,8 @@ jobs:
       - name: Update flake inputs
         run: nix flake update
 
-      # opens a PR rather than pushing to main. flake.lock pins ~91 inputs, a good number
-      # of them small personal repos and one self-hosted forge, and whatever lands here
-      # gets run as root across the fleet on the next rebuild. a PR puts CI and a human
-      # between an upstream compromise and that.
-      # gh is preinstalled on the runner, so this adds no new action dependency, which
-      # would be self-defeating for a supply-chain fix.
+      # a PR puts CI and a human between an upstream input compromise and root on the fleet.
+      # gh is preinstalled, so this adds no action dependency
       - name: Open bump PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,8 +41,7 @@ jobs:
           branch=flake-bump
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # -B and --force so a rerun refreshes the existing branch (and its open PR)
-          # instead of failing on a branch that is already there
+          # -B and --force so a rerun refreshes the existing branch and its PR
           git checkout -B "$branch"
           git add flake.lock
           git commit -m "chore(flake): bump flake inputs"

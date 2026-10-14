@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
-// own-module import: NotifState's singleton flag lives in the generated qmldir,
-// which tooling only reads through a module import, not same-directory lookup
+// self-import: tooling only sees the singleton flag in qmldir through a module import
 import qs.notifications
 import qs.components
 import qs.lib
@@ -13,17 +12,14 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // wrapper carries the popup flag; flipping it false removes us from the overlay
-    // while leaving the notif in the center
     required property var wrapper
     readonly property Notification notif: wrapper.notif
 
     readonly property color accentColor: NotifState.urgencyColor(notif.urgency)
     readonly property string title: NotifState.title(notif)
-    // hide the appName subtitle when it's already used as the title to avoid duplication
     readonly property bool showAppNameSubtitle: notif.appName !== "" && notif.summary !== ""
 
-    // _hiding drives the collapse+fade; _closing guards against double-trigger (timer + click)
+    // _closing stops the timer and a click both closing
     property bool _hiding: false
     property bool _closing: false
 
@@ -79,7 +75,6 @@ Item {
         }
     }
 
-    // whether the pending close dismisses the notif or only hides the popup
     property bool _dismissOnClose: false
 
     function dismiss() {
@@ -100,8 +95,7 @@ Item {
         closeTimer.start();
     }
 
-    // wait for the collapse Behavior to finish before mutating state, otherwise the
-    // delegate is destroyed mid-animation and the column snaps shut
+    // mutating state destroys the delegate, so wait out the collapse animation
     Timer {
         id: closeTimer
         interval: Theme.animSlow + 30
@@ -116,17 +110,16 @@ Item {
     Timer {
         id: expireTimer
         interval: {
-            // expireTimeout is MILLISECONDS not SECONDS per dbus spec: >0 explicit, 0 never, -1 server default
+            // milliseconds, not seconds: >0 explicit, 0 never, -1 server default
             if (root.notif.expireTimeout > 0)
                 return root.notif.expireTimeout;
-            // critical notifs stay until manually dismissed (interval 0 = never fires)
             if (root.notif.urgency === NotificationUrgency.Critical)
                 return 0;
             return 5000;
         }
         running: interval > 0 && !cardHover.hovered && !root._closing
         onTriggered: {
-            // transient notifs shouldn't persist in the center; others just hide from overlay
+            // transient notifs skip the center
             if (root.notif.transient)
                 root.dismiss();
             else
@@ -149,7 +142,6 @@ Item {
         }
         transformOrigin: Item.Right
 
-        // accent strip
         Rectangle {
             anchors.left: parent.left
             anchors.top: parent.top
@@ -159,15 +151,12 @@ Item {
             color: root.accentColor
         }
 
-        // HoverHandler tracks hover regardless of child MouseAreas (action buttons, close);
-        // a plain MouseArea would lose hover the moment the cursor crosses a button
+        // a MouseArea would lose hover over the child buttons
         HoverHandler {
             id: cardHover
         }
 
-        // body click invokes the spec's "default" action and dismisses; child buttons (close,
-        // actions) are above this in the QML tree so their MouseAreas take precedence.
-        // hovered link takes priority over default action so <a> tags in markup-bodies work.
+        // a hovered link wins over the default action so <a> in bodies works
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor

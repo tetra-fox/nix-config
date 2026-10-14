@@ -9,8 +9,6 @@
     modules.profiles.base.system
     modules.cli.rebuild.system
 
-    # the monitoring agent (node + systemd exporters) plus local mode below: a
-    # loopback grafana as the machine's resource monitor
     modules.services.monitoring.system
 
     modules.toolsets.disk.system
@@ -20,7 +18,6 @@
 
     modules.desktop.avahi.system
     modules.hardware.bluetooth.system
-    # smart metrics for the machine's physical drives, shown by the resource monitor
     modules.hardware.smartctl.system
     modules.services.podman.system
     modules.desktop.obs-studio.system
@@ -32,21 +29,19 @@
     modules.cli.yazi.system
   ];
 
-  # the resource monitor at http://localhost:3000
+  # loopback grafana at http://localhost:3000 as a resource monitor
   lab.monitoring.local.enable = lib.mkDefault true;
 
   users.users.${username} = {
     isNormalUser = true;
-    # video: write access to backlight brightness nodes (brightnessctl)
+    # video: backlight brightness nodes
     extraGroups = ["networkmanager" "wheel" "video"];
   };
 
   time.timeZone = "America/Los_Angeles";
 
   networking.networkmanager.enable = true;
-  # nixpkgs ships NetworkManager with connectivity checking compiled off, so it
-  # can never report "full" and desktop applets nag with a false-positive
-  # "Limited Connectivity" notification even when the network is fine
+  # nixpkgs ships connectivity checking off, so applets report false "limited connectivity"
   networking.networkmanager.settings.connectivity = {
     uri = "http://fedoraproject.org/static/hotspot.txt";
     response = "OK";
@@ -60,7 +55,7 @@
 
   programs = {
     dconf.enable = true;
-    # FHS binaries (vscode extensions, some electron apps, precompiled steam tools) want glibc at /lib64/ld-linux
+    # prebuilt FHS binaries (vscode extensions, steam tools) want /lib64/ld-linux
     nix-ld = {
       enable = true;
       libraries = [pkgs.glibc];

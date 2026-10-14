@@ -1,7 +1,3 @@
-# host-role boilerplate shared by the arr/jellyfin compute boxes (mesa-svc-01,
-# fairlane-svc-01): media services + podman, NFS client of the site store, postgres
-# client of the site db. per-host facts (paths, IPs) and one-offs (asf, nowplaying,
-# nvidia) stay in the host files.
 {
   config,
   username,
@@ -17,7 +13,7 @@
   ];
 
   lab = {
-    # gets this host's hostIp into the db's pg_hba; the arrs' netns traffic is SNAT'd to it
+    # the arrs' netns traffic is SNAT'd to hostIp, which this puts in the db's pg_hba
     postgres.client.enable = true;
 
     podman.autoUpdate.enable = true;

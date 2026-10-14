@@ -5,19 +5,10 @@
 }: let
   nsVethIp = config.vpnNamespaces.wg.namespaceAddress;
 
-  # arr scores are a single summed integer, so each quality axis lives in its own
-  # magnitude band to keep orthogonal axes from cancelling (great audio +X vs bad
-  # encode -X netting 0). each band's full range is below one step of the band above:
-  #   ban          x -1_000_000
-  #   HDR family   x    100_000  (any HDR beats an SDR remux)
-  #   group tier   x      1_000
-  #   audio        x          1
-  # TRaSH HDR formats stack additively: every HDR release matches base "HDR", DV and
-  # HDR10+ add their own boost, so DV(300000) > HDR10+(200000) > HDR(100000) > SDR(0).
-  # resolution is enforced by each profile's hard quality cap, not scored here.
-  #
-  # to re-verify trash_ids: clone TRaSH-Guides/Guides and grep
-  # docs/json/{sonarr,radarr}/cf/*.json for the format name -> trash_id.
+  # scores sum to one integer, so each axis gets a magnitude band that can't cancel
+  # another: ban 1e6, HDR 1e5, group tier 1e3, audio 1. HDR formats stack, so
+  # DV > HDR10+ > HDR > SDR. resolution is capped per profile, not scored.
+  # trash_ids come from TRaSH-Guides/Guides docs/json/{sonarr,radarr}/cf/*.json
 
   profiles = import ./profiles.nix;
   mkScore = score: ids: {
@@ -56,15 +47,13 @@
     (mkScore 30 ids.repack3)
     (mkScore 20 ids.repack2)
     (mkScore 10 ids.repackProper)
-    # -20000 sits below the tier band but above min_format_score (-50000) so a demoted
-    # release ranks below any clean one yet survives as a fallback
+    # below any clean release, above min_format_score so it survives as a fallback
     (mkScore (-20000) ids.demotes)
     # below min_format_score so bans are hard-rejected, not just unpreferred
     (mkScore (-1000000) ids.bans)
   ];
 
-  # hard-capped at its top rung, but every lower rung stays enabled so it can still grab
-  # something when nothing at the cap exists
+  # capped at the top rung, lower rungs stay enabled as fallbacks
   mkProfile = name: rungs: {
     inherit name;
     qualities = rungs;
@@ -73,10 +62,8 @@
       until_quality = (builtins.head rungs).name;
       until_score = 10000000;
     };
-    # below one or two stacked demotes (-40000) so a flagged-but-fine release survives,
-    # above the ban band so broken ones are rejected
+    # survives two stacked demotes, rejects bans
     min_format_score = -50000;
-    # zero out unmanaged formats so a stale manual score in the arr can't skew selection
     reset_unmatched_scores.enabled = true;
   };
 
@@ -119,7 +106,6 @@
     ];
   };
 
-  # radarr uses different quality names than sonarr (Remux-1080p vs Bluray-1080p Remux)
   radarrLadder = {
     "2160p" = [
       {name = "Remux-2160p";}
@@ -166,16 +152,12 @@
     ];
   };
 
-  # one resolution's rungs from the WEB group down, dropping the disc tiers above it.
-  # the webdl profiles apply it at every resolution, not just their own, so a fallback
-  # never lands on a remux
+  # applied at every resolution so a webdl fallback never lands on a remux
   fromWeb = rungs: let
     web = lib.lists.findFirstIndex (q: lib.hasPrefix "WEB " q.name) null rungs;
   in
     lib.sublist web (lib.length rungs) rungs;
 
-  # each resolution gets a best-* and a webdl-*, both stacking that resolution's rungs
-  # with every lower resolution's
   mkProfiles = ladder:
     lib.concatMap (
       res: let
@@ -217,8 +199,7 @@
     repack3 = "44e7c4de10ae50265753082e5dc76047";
     repack2 = "eb3d5cc0a2be0db205fb823640db6a3c";
     repackProper = "ec8fa7296b64e8cd390a1600981f3923";
-    # x265 demoted not banned: jellyfin clients direct-play hevc and lots of animated
-    # 1080p is x265-only
+    # x265 not banned: jellyfin clients direct-play hevc, lots of animated 1080p is x265-only
     demotes = [
       "47435ece6b99a0b477caf360e79ba0bb" # x265 (HD)
       "e1a997ddb54e3ecbfe06341ad323c458" # Obfuscated
@@ -286,8 +267,7 @@
 in {
   services.recyclarr = {
     enable = true;
-    # see SCHEDULE.md
-    schedule = "12:00"; # servers are UTC. 4a/5a pacific
+    schedule = "12:00"; # UTC, see SCHEDULE.md
     configuration = {
       sonarr.sonarr = {
         base_url = "http://${nsVethIp}:8989";
@@ -308,21 +288,16 @@ in {
     };
   };
 
-  # order after the netns + arrs so it doesn't fire on boot before they can accept
-  # connections. wants not requires: a missing arr shouldn't permanently block recyclarr
+  # wants, not requires: a missing arr shouldn't block recyclarr
   systemd.services.recyclarr = {
     after = ["wg.service" "sonarr.service" "radarr.service"];
     wants = ["sonarr.service" "radarr.service"];
-    # the upstream module builds /var/lib/recyclarr/config.yml with a bare `>` redirect
-    # and sets no UMask, so it lands 0644 with both arr api keys in plaintext. the file
-    # persists between timer runs, so this is not a narrow window.
+    # upstream renders config.yml (both api keys in plaintext) with a bare `>` and no
+    # UMask, so it lands 0644
     serviceConfig.UMask = "0077";
 
-    # UMask only governs files created from here on, and `>` truncates an existing file
-    # without touching its mode, so a config.yml already created 0644 would keep that
-    # mode forever. chmod it before upstream's preStart renders into it. mkBefore because
-    # that render is itself a preStart fragment. the path is not exposed as an option;
-    # upstream hardcodes it from StateDirectory.
+    # `>` keeps an existing file's mode, so fix files created before the UMask. path is
+    # hardcoded upstream
     preStart = lib.mkBefore ''
       if [ -e /var/lib/recyclarr/config.yml ]; then
         chmod 0600 /var/lib/recyclarr/config.yml

@@ -8,11 +8,10 @@ Rectangle {
 
     required property var workspace
 
-    // native live properties; lastIpcObject has no urgent key and only updates
-    // when the workspace is re-fetched
+    // not lastIpcObject, which has no urgent key and only updates on re-fetch
     readonly property bool focused: workspace.focused
     readonly property bool urgent: workspace.urgent
-    // cap at 3 so a hoarder workspace doesn't blow out the bar width
+    // capped so a busy workspace doesn't widen the bar
     readonly property int windowCount: Math.min(workspace.toplevels?.values?.length ?? 0, 3)
 
     implicitWidth: content.implicitWidth + Theme.workspacePillHPad

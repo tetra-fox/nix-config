@@ -1,9 +1,5 @@
-# register jellyfin as a "Connect" notification in sonarr/radarr so on import/upgrade/
-# rename the arr tells jellyfin to rescan the library. same reconcile.sh as the download
-# clients, against /notification. the arr reaches jellyfin (outside the netns) at the
-# host-side bridge address. the api key is the shared apps/jellyfin_api_key secret, the
-# same value jellyfin-apikey writes into jellyfin's ApiKeys table, so one secret drives
-# both sides.
+# arrs tell jellyfin to rescan on import/upgrade/rename. apps/jellyfin_api_key is the
+# same key jellyfin-apikey writes into jellyfin's ApiKeys table
 {
   config,
   lib,
@@ -22,8 +18,7 @@
   jfKeyCred = "jellyfin-api-key";
   jfKeyFile = arr: "/run/credentials/${arr}-jellyfin-notify.service/${jfKeyCred}";
 
-  # the completed-import toggle is named per arr: sonarr onImportComplete, radarr
-  # onDownload (its name for the same event)
+  # same event, different names
   importToggle = {
     sonarr = "onImportComplete";
     radarr = "onDownload";
@@ -42,8 +37,7 @@
       secretFile = jfKeyFile arr;
       fields = {
         host = vpn.bridgeAddress;
-        # the jellyfin module's published fact; eval fails loud if the arr host
-        # doesn't also run jellyfin, which this notification assumes anyway
+        # fails eval if this host doesn't run jellyfin
         port = config.lab.jellyfin.port;
         updateLibrary = true;
       };
@@ -92,8 +86,7 @@
   };
 in {
   config = {
-    # also declared by jellyfin-apikey; sops merges identical decls, so declaring it here
-    # too makes it available regardless of import order
+    # also declared by jellyfin-apikey, identical decls merge
     sops.secrets."apps/jellyfin_api_key" = {};
 
     systemd.services = lib.mapAttrs' mkUnit arrs;

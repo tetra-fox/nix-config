@@ -3,23 +3,15 @@ pragma Singleton
 import qs.components
 import QtQuick
 
-// backlight model. quickshell has no native brightness service, so enumerate
-// /sys/class/backlight via a script and drive brightnessctl to set levels.
-// on this desktop the only backlight devices are the ddcci monitors (see
-// modules/hardware/ddcci), so each device is one external display.
-//
-// devices are persistent BacklightDevice objects, matched by name across polls,
-// so the per-display Repeater and its sliders keep stable identity. the poll
-// only updates a device's value when the user is not dragging it.
+// quickshell has no brightness service, so read /sys/class/backlight and write via brightnessctl.
+// here every backlight device is a ddcci monitor (modules/hardware/ddcci)
 QtObject {
     id: root
 
-    // list<BacklightDevice>, created once and reused
+    // list<BacklightDevice>, matched by name across polls
     property var devices: []
     readonly property bool hasDevices: devices.length > 0
 
-    // mean level across all displays, drives the global slider. recomputed
-    // whenever any device's value changes (wired up per device on creation)
     property real average: 0
     function _recomputeAverage(): void {
         if (devices.length === 0) {
@@ -32,9 +24,7 @@ QtObject {
         average = sum / devices.length;
     }
 
-    // poll while any brightness UI is open; ref-counted so multiple popups share
-    // one timer. also refreshed once at startup so hasDevices (which gates the
-    // bar button) is known before any popup can open
+    // ref-counted popups, polling runs while any is open
     property int _watchers: 0
     function addWatcher(): void {
         if (_watchers === 0)
@@ -47,6 +37,7 @@ QtObject {
 
     readonly property string _scriptsDir: Qt.resolvedUrl("../scripts").toString().replace("file://", "")
 
+    // hasDevices gates the bar button, so it has to be known before any popup opens
     Component.onCompleted: root.refresh()
 
     function refresh(): void {
@@ -87,20 +78,17 @@ QtObject {
                     dev.max = max;
                     dev.syncFromDevice(cur / max);
                 } else {
-                    // new device: create a persistent object for it
                     dev = root._deviceComp.createObject(root, {
                         name: name,
                         model: model,
                         max: max,
                         value: cur / max
                     });
-                    // keep the running average current as any device moves.
                     // the linter types createObject results as plain QObject
                     dev.valueChanged.connect(root._recomputeAverage); // qmllint disable missing-property
                     root.devices = [...root.devices, dev];
                 }
             }
-            // drop devices that disappeared (monitor unplugged)
             const survivors = root.devices.filter(d => seen[d.name]);
             if (survivors.length !== root.devices.length) {
                 for (const d of root.devices)
@@ -112,8 +100,6 @@ QtObject {
         }
     }
 
-    // re-read every 3s while a brightness popup is open, so external changes
-    // (keyboard keys, other tools) reflect in the sliders
     property Timer _poll: Timer {
         interval: 3000
         repeat: true
@@ -121,14 +107,11 @@ QtObject {
         onTriggered: root.refresh()
     }
 
-    // global slider: drive every display to the same level at once
     function setAll(frac: real): void {
         for (const d of root.devices)
             d.set(frac);
     }
 
-    // global slider drag: hold off poll syncs on every device, same as a
-    // per-display drag does for its one device
     function setAllInteracting(active: bool): void {
         for (const d of root.devices)
             d.interacting = active;

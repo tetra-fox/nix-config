@@ -4,10 +4,7 @@
   inputs,
   ...
 }: let
-  # obsidian's git plugin shells out to git, which runs the sops clean/smudge
-  # filter for the notes vault. that git subprocess inherits obsidian's PATH,
-  # so sops and age have to be on it. wrap obsidian to prefix them rather than
-  # installing sops globally.
+  # obsidian's git plugin runs the vault's sops clean/smudge filter with obsidian's PATH
   obsidian-with-sops = pkgs.symlinkJoin {
     name = "obsidian-with-sops";
     paths = [pkgs.obsidian];
@@ -31,12 +28,9 @@ in {
   ];
 
   my = {
-    # personal 1password vaults the ssh agent may serve keys from
     ssh.opVaults = ["Private" "mesa" "homelab_DTW"];
 
-    # bookmark data lives in the private nix-secrets input; referenced here (the personal
-    # profile) so the browser module itself works without that input. the secrets attr
-    # keeps its firefox- name, the format is home-manager's either way
+    # set here so the browser module works without the private nix-secrets input
     zen-browser.bookmarks = inputs.nix-secrets.lib.firefox-bookmarks;
   };
 

@@ -24,8 +24,7 @@
       SteamTokenDumperPluginEnabled = true;
     };
 
-    # KnownNetworks gates auth-free web UI access by subnet; bind the server-VLAN address
-    # (trusted-VLAN clients route to it), not every interface
+    # KnownNetworks makes the web ui auth-free for that subnet
     ipcSettings = {
       Kestrel = {
         Endpoints.HTTP.Url = "http://${config.lab.site.hostIp}:1242";
@@ -36,7 +35,7 @@
     };
   };
 
-  # the asf module's `username` is a plain string (no usernameFile), so render the whole bot json via sops
+  # the asf module has no usernameFile, so the whole bot json goes through sops
   sops.templates."asf-tetra.json" = {
     content = builtins.toJSON {
       Enabled = true;
@@ -61,17 +60,14 @@
     mode = "0400";
   };
 
-  # asf derives StateDirectory from basename(dataDir), so dataDir=/var/lib/mesa/asf yields a stray /var/lib/asf.
-  # pin it under mesa, and widen ReadWritePaths so the pre-start cp of ASF.json into the custom dataDir succeeds.
+  # asf derives StateDirectory from basename(dataDir), which leaves a stray /var/lib/asf.
+  # ReadWritePaths lets the pre-start cp of ASF.json into dataDir succeed
   systemd.services.archisteamfarm.serviceConfig = {
     StateDirectory = lib.mkForce "mesa/asf";
     ReadWritePaths = ["${config.lab.site.dataDir}/asf"];
   };
 
-  # asf web ui. KnownNetworks above is what makes it auth-free, and it is scoped to the
-  # trusted VLAN, so scope the port to the same range instead of opening it on every
-  # interface: without this the only thing standing between any routable source and the
-  # IPC api is asf's own check, and no IPCPassword is set behind it.
+  # match KnownNetworks, there's no IPCPassword behind asf's own subnet check
   networking.firewall.extraInputRules = ''
     ip saddr ${config.lab.net.trustedCidr} tcp dport 1242 accept
   '';

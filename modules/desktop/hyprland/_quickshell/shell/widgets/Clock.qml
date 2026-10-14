@@ -11,7 +11,7 @@ Item {
     implicitWidth: timeTextProp.implicitWidth + Theme.iconPadH
     implicitHeight: timeTextProp.implicitHeight + Theme.iconPadV
 
-    // local 1s tick; the Time singleton ticks at 30s so it can't drive the seconds field
+    // the Time singleton ticks at 30s, too slow for seconds
     property double now: Date.now()
 
     Timer {

@@ -10,8 +10,7 @@ hl.config({
 
   general = {
     gaps_in = 4,
-    -- top=1 since Bar already adds its own vertical padding,
-    -- but 0 looks uneven because of window border_size
+    -- the bar pads itself, but top=0 looks uneven next to the border
     gaps_out = { top = 1, right = 8, bottom = 8, left = 8 },
 
     border_size = 1,

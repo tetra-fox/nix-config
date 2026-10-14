@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// bar icon button; isOpen highlights when popup is visible
 Item {
     id: root
 

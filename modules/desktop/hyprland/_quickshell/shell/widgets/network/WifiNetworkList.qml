@@ -17,8 +17,7 @@ ScrollableList {
     signal expandRequested(var network)
 
     Repeater {
-        // ScriptModel diffs by object identity, so a rebuilt networks array only
-        // touches delegates whose network actually appeared or vanished
+        // ScriptModel diffs by identity, only added/removed rows rebuild
         model: ScriptModel {
             values: root.networks
         }
@@ -32,8 +31,7 @@ ScrollableList {
             expanded: root.expandedNetwork === modelData
             showSeparator: index > 0
 
-            // scroll when the expansion has actually landed in geometry; keying
-            // off the expandedNetwork property edge would measure the old height
+            // the expandedNetwork edge would measure the old height
             onImplicitHeightChanged: {
                 if (expanded)
                     root.ensureVisible(delegateItem);

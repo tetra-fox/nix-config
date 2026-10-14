@@ -2,7 +2,6 @@ import qs.lib
 import QtQuick
 import QtQuick.Layouts
 
-// label + copyable value row for popup detail sections
 RowLayout {
     id: root
 

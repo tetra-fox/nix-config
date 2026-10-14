@@ -42,8 +42,6 @@
     };
   };
 
-  # home.file."${config.programs.nixcord.discord.configDir}/settings.json".force = true;
-
   my.autostart.apps.discord = {
     exec = "${config.programs.nixcord.finalPackage.discord}/bin/discord --start-minimized";
     tray = true;

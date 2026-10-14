@@ -1,20 +1,5 @@
-# restic -> backblaze b2. generic across hosts: import the module, drop in the
-# credentials via sops, and set lab.backup.restic.{bucket,datasets,paths}.
-#
-# two ways to say what to back up, mix as needed:
-#   datasets  zfs datasets. each is snapshotted under one shared name, restic
-#             reads the frozen tree from <mount>/.zfs/snapshot/<name>, snapshot
-#             destroyed after. consistent point-in-time, no torn files.
-#   paths     plain directories, backed up live. for hosts with no zfs. a file
-#             changing mid-run is captured torn, so use for mostly-static trees.
-# at least one of the two must be non-empty.
-#
-# credentials (per consuming host, in that host's sops file):
-#   backup/b2_env           B2_ACCOUNT_ID=... / B2_ACCOUNT_KEY=... (b2 app key)
-#   backup/restic_password  the repo encryption password. lose it, lose the
-#                           backups. keep a copy off-box (sops is that copy).
-# the bucket name is plain config, not a secret. the repo is b2:<bucket>:<host>,
-# so one bucket holds many hosts, each under its own path.
+# per-host sops secrets: backup/b2_env (B2_ACCOUNT_ID, B2_ACCOUNT_KEY) and
+# backup/restic_password (the repo key, lose it and the backups are gone)
 {
   config,
   lib,
@@ -24,11 +9,9 @@
   cfg = config.lab.backup.restic;
   hn = config.networking.hostName;
 
-  # one snapshot name shared across every dataset in a run, so the whole set is a
-  # single consistent moment.
+  # one name across every dataset, so a run is a single point in time
   snapName = "restic-backup";
 
-  # the .zfs/snapshot path restic reads for a given dataset mountpoint
   snapshotPath = ds: "${ds.mountpoint}/.zfs/snapshot/${snapName}";
 
   zfs = "${config.boot.zfs.package}/bin/zfs";
@@ -72,15 +55,14 @@ in {
       default = [];
       description = ''
         plain directories to back up live (no snapshot). for hosts without zfs.
-        combine with datasets or use alone.
+        a file changing mid-run is captured torn. combine with datasets or use alone.
       '';
     };
 
     timerConfig = lib.mkOption {
       type = lib.types.attrs;
       default = {
-        # servers are UTC. 6:30a/7:30a pacific, after the nightly db dumps land
-        # see SCHEDULE.md
+        # UTC, after the nightly db dumps, see SCHEDULE.md
         OnCalendar = "14:30";
         Persistent = true;
       };
@@ -98,7 +80,6 @@ in {
     };
   };
 
-  # options-only, registers the staleness alert without pulling in the monitoring stack
   imports = [modules.services.monitoring.registry];
 
   config = lib.mkIf cfg.enable {
@@ -111,8 +92,7 @@ in {
 
     lab.monitoring.alerts = [
       {
-        # stronger than watching the service fail: also fires when the timer never
-        # ran at all. 26h not 24h so a persistent catch-up after downtime has slack
+        # also fires when the timer never ran. 26h gives a Persistent catch-up slack
         name = "restic backup stale";
         expr = ''round((time() - systemd_timer_last_trigger_seconds{name=~"restic-backups-.+"}) / 3600, 0.1)'';
         condition.value = 26;
@@ -121,10 +101,7 @@ in {
       }
     ];
 
-    # B2_ACCOUNT_ID / B2_ACCOUNT_KEY for the b2 backend, decrypted to a root-only
-    # file, which is who the restic service runs as.
     sops.secrets."backup/b2_env" = {};
-    # the restic repository password. losing it loses the backups.
     sops.secrets."backup/restic_password" = {};
 
     services.restic.backups.b2 = {
@@ -132,22 +109,20 @@ in {
       environmentFile = config.sops.secrets."backup/b2_env".path;
       passwordFile = config.sops.secrets."backup/restic_password".path;
 
-      # create the repo on first run if it doesn't exist yet
       initialize = true;
 
       paths = (map snapshotPath cfg.datasets) ++ cfg.paths;
 
       inherit (cfg) pruneOpts timerConfig;
 
-      # snapshot machinery only when there are datasets. a non-zfs host (paths
-      # only) never references zfs, so the module stays importable without it.
+      # a paths-only host never references zfs
       backupPrepareCommand = lib.mkIf hasDatasets (lib.concatMapStringsSep "\n" (ds: ''
           ${zfs} destroy "${ds.name}@${snapName}" 2>/dev/null || true
           ${zfs} snapshot "${ds.name}@${snapName}"
         '')
         cfg.datasets);
 
-      # tear the snapshots down whether the run succeeded or failed
+      # runs whether the backup succeeded or failed
       backupCleanupCommand = lib.mkIf hasDatasets (lib.concatMapStringsSep "\n" (ds: ''
           ${zfs} destroy "${ds.name}@${snapName}" || true
         '')

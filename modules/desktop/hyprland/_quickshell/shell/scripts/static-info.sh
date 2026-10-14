@@ -1,5 +1,5 @@
 #!/bin/sh
-# Gather static system info. Output: key=value lines.
+# key=value lines
 
 echo "hostname=$(hostname)"
 echo "kernel=$(uname -r)"

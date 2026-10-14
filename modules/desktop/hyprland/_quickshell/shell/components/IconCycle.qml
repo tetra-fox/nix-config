@@ -1,7 +1,6 @@
 import QtQuick
 
-// cycles frame through a list of icon glyphs while running; resets to the
-// first frame on stop so a restart is deterministic
+// resets to the first frame on stop
 QtObject {
     id: root
 

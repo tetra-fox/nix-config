@@ -1,8 +1,6 @@
 import QtQuick
 
-// BufferedProcess that reruns on an interval while polling is true. the first
-// run fires on the polling edge itself, not one interval later, which also
-// covers the "kick it immediately when the gate opens" call sites
+// first run fires on the polling edge, not one interval later
 BufferedProcess {
     id: root
 

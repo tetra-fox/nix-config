@@ -1,8 +1,7 @@
 # render: `just update-topology`
 {config, ...}: let
   inherit (config.lib.topology) mkInternet mkRouter mkSwitch mkConnection;
-  # appliance addresses come from the site facts (lab.appliances). every host of a site
-  # carries them; the store hosts are just an arbitrary stable anchor each
+  # every host of a site carries lab.appliances, the store hosts are an arbitrary anchor
   mesaAppliances = config.nixosConfigurations.mesa-store-01.config.lab.appliances;
   fairlaneAppliances = config.nixosConfigurations.fairlane-store-01.config.lab.appliances;
 in {
@@ -21,7 +20,7 @@ in {
       name = "mesa IoT VLAN";
       cidrv4 = "192.168.30.0/24";
     };
-    # isolated east-west fabric (postgres, NFS, monitoring); no gateway/WAN/inter-vlan
+    # no gateway, WAN or inter-vlan routing
     mesa-internal-vlan = {
       name = "mesa Internal VLAN (1010, isolated)";
       cidrv4 = "10.10.0.0/24";
@@ -32,7 +31,6 @@ in {
       cidrv4 = "192.168.10.0/24";
     };
 
-    # same isolated east-west fabric as mesa's, physically separate. no gateway/WAN/inter-vlan.
     fairlane-internal-vlan = {
       name = "fairlane Internal VLAN (1010, isolated)";
       cidrv4 = "10.10.0.0/24";
@@ -46,8 +44,6 @@ in {
         (mkConnection "fairlane-udm" "eth8")
       ];
     };
-
-    # ---- mesa site ----
 
     udm-pro-se = mkRouter "PuppygirlPlaypen" {
       info = "UDM-SE";
@@ -130,8 +126,6 @@ in {
           virtual = true;
           physicalConnections = [(mkConnection "milkfish" "vmbr0.10")];
         };
-        # the internal-VLAN leg: inter-VM traffic (NFS backups to store-01, the edge's
-        # home.* vhost, prometheus scrapes) uses this address exclusively
         enp0s19 = {
           addresses = [mesaAppliances.haosIp];
           network = "mesa-internal-vlan";
@@ -153,8 +147,6 @@ in {
       };
     };
 
-    # ---- fairlane site ----
-
     fairlane-udm = mkRouter "Fairlane" {
       info = "UDM-SE";
       interfaceGroups = [
@@ -163,7 +155,6 @@ in {
         ["sfp0" "sfp1"]
       ];
       interfaces = {
-        # sfp port 10 on the udm uplinks to the switch (sfp port 27 on the pro hd 24)
         "port10" = {
           addresses = ["192.168.10.1"];
           network = "fairlane-server-vlan";
@@ -174,22 +165,17 @@ in {
 
     fairlane-usw = mkSwitch "USW Pro HD 24 PoE" {
       info = "USW-Pro-HD-24-PoE";
-      # 24 rj45 ports plus 4 sfp ports on top
       interfaceGroups = [
         ["port1" "port2" "port3" "port4" "port5" "port6" "port7" "port8" "port9" "port10" "port11" "port12" "port13" "port14" "port15" "port16" "port17" "port18" "port19" "port20" "port21" "port22" "port23" "port24"]
         ["port25" "port26" "port27" "port28"]
       ];
       connections = {
-        # udm uplink lands on sfp port 27
         "port27" = mkConnection "fairlane-udm" "port10";
-        # plush's trunk nic is on rj45 port 17
         "port17" = mkConnection "plush" "nic0";
-        # pooltoy's trunk nic is on rj45 port 20
         "port20" = mkConnection "pooltoy" "enp89s0";
       };
     };
 
-    # db-01, dns-01, edge-01 run here; the rest of the fleet is on pooltoy.
     plush = {
       name = "plush";
       deviceType = "server";
@@ -235,9 +221,7 @@ in {
       };
     };
 
-    # the fairlane-* fleet (store/db/svc/mon/edge/dns) comes from each host's topology.self via
-    # modules/sites/fairlane.nix, which reads lab.site.proxmoxParent to attach the VM to plush or
-    # pooltoy's vmbr0.10 (+ vmbr0.1010 for hosts with an internalIp), same as mesa-svc-01.
+    # fairlane VMs come from each host's topology.self (modules/sites/_common.nix)
 
     fairlane-homeassistant = {
       name = "homeassistant";

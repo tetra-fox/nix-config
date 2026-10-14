@@ -5,14 +5,13 @@ import qs.lib
 import Quickshell
 import QtQuick
 
-// one tray menu row: plain trigger, checkbox/radio item, or an inline-expanding
-// submenu. children are only fetched from dbus while expanded
+// submenu children are only fetched from dbus while expanded
 Column {
     id: root
 
     required property var entry
 
-    // a leaf entry was triggered somewhere in this subtree; the popup closes on it
+    // a leaf in this subtree was triggered
     signal activated
 
     property bool expanded: false
@@ -66,8 +65,7 @@ Column {
                 delegate: Loader {
                     required property var modelData
                     width: parent.width - parent.leftPadding
-                    // loading by file name breaks the self-reference cycle a
-                    // direct TrayMenuEntry declaration would be
+                    // by file name, a direct TrayMenuEntry would be a self-reference cycle
                     Component.onCompleted: {
                         setSource("TrayMenuEntry.qml", {
                             entry: modelData

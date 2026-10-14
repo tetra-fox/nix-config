@@ -14,10 +14,8 @@
     arrStack = {
       torrentsPath = "/mnt/store/torrents";
       nzbPath = "/mnt/store/nzb";
-      # the forwarded port AirVPN assigned to this account
+      # AirVPN's forwarded port
       torrentingPort = 42924;
-      # netnsSnatHosts defaults to [dbEndpointIp], which SNATs the arrs' netns traffic to
-      # the remote db so replies route back; no need to set it.
     };
 
     site.hostIp = "192.168.10.130";

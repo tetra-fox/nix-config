@@ -1,16 +1,13 @@
 import Quickshell.Services.Mpris
 import QtQuick
 
-// selection state over the mpris player list, shared by the bar media popup
-// and the lock screen card. non-visual: the owner provides the slide animation,
-// restarts it from switchRequested, and calls commit() once slid out
+// the owner runs the slide animation on switchRequested and calls commit() once slid out
 QtObject {
     id: root
 
     readonly property var players: Mpris.players.values // qmllint disable unresolved-type
     readonly property int playerCount: players.length
     property int selectedIndex: 0
-    // the switch animation slides out first, then commits the swap
     property int targetIndex: 0
     property int switchDir: 0
 
@@ -33,8 +30,7 @@ QtObject {
         root.selectedIndex = root.targetIndex;
     }
 
-    // follow the selected player object across list changes; a plain index
-    // would silently show a different player when an earlier one vanishes
+    // an index alone would jump to another player when an earlier one vanishes
     property var _lastPlayer: null
     onPlayerChanged: _lastPlayer = player
     onPlayersChanged: {
@@ -49,8 +45,7 @@ QtObject {
             root.targetIndex = Math.max(0, root.playerCount - 1);
     }
 
-    // mpris doesn't push position updates, so poll while the owner says the
-    // seek bar is visible and moving
+    // mpris doesn't push position updates
     property bool pollPosition: false
     property Timer _positionPoll: Timer {
         running: root.pollPosition && (root.player?.positionSupported ?? false)

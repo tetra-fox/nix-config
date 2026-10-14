@@ -1,7 +1,3 @@
-# recyclarr never deletes a profile (destructive when media is assigned), so a renamed
-# or removed profile lingers. cleanup-profiles.sh reassigns everything on an orphaned
-# profile to a managed default then deletes it. runs off recyclarr's OnSuccess so it sees
-# the current managed set (from profiles.nix, the same list recyclarr builds from).
 {
   config,
   lib,
@@ -55,8 +51,7 @@ in {
     systemd.services =
       lib.mapAttrs' mkUnit arrs
       // {
-        # fires only after a completed sync. a wantedBy here would drag a full recyclarr run
-        # into every boot and switch, before the arrs are listening
+        # not wantedBy: that would pull a full recyclarr run into every boot and switch
         recyclarr.onSuccess = map (arr: "${arr}-cleanup-profiles.service") (lib.attrNames arrs);
       };
   };

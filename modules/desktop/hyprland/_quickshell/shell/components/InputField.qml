@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// text input with placeholder + optional password reveal toggle
 Rectangle {
     id: root
 
@@ -46,8 +45,7 @@ Rectangle {
         visible: !input.text
     }
 
-    // sets IBeamCursor over the whole field; accepted=false passes the
-    // press through so TextInput still gets focus/selection events
+    // accepted=false passes the press through to TextInput
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.IBeamCursor

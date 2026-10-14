@@ -3,15 +3,15 @@
     ./storage.nix
 
     modules.profiles.server.system
-    modules.platform.zfs.system # pool over the four passthrough drives
+    modules.platform.zfs.system
 
     modules.services.samba.system
-    modules.services.restic.system # offsite backup of the small datasets to backblaze b2
-    modules.desktop.avahi.system # mDNS so the SMB share shows up in Finder/file managers
-    modules.toolsets.disk.system # smartctl etc for the passthrough drives
-    modules.toolsets.hardware.system # lspci, to confirm the guest sees the passthrough controller
-    modules.toolsets.observe.system # iostat/iotop, for chasing nfs latency to its disk-side source
-    modules.hardware.smartctl.system # smart metrics + pre-failure alerts for those drives
+    modules.services.restic.system
+    modules.desktop.avahi.system
+    modules.toolsets.disk.system
+    modules.toolsets.hardware.system
+    modules.toolsets.observe.system
+    modules.hardware.smartctl.system
   ];
 
   lab = {
@@ -23,16 +23,12 @@
     backup.restic = {
       enable = true;
       bucket = "mesa-512e3904";
-      # each child dataset listed explicitly: a zfs snapshot of the parent
-      # megamax/backup does NOT capture child datasets (verified: children appear
-      # as empty dirs in the parent snapshot), so restic must snapshot each one.
+      # a snapshot of megamax/backup doesn't capture its child datasets
       datasets = [
-        # user facing general purpose samba shares
         {
           name = "megamax/store";
           mountpoint = "/mnt/megamax/store";
         }
-        # backups
         {
           name = "megamax/backup/homeassistant";
           mountpoint = "/mnt/megamax/backup/homeassistant";
@@ -41,12 +37,10 @@
           name = "megamax/backup/timemachine";
           mountpoint = "/mnt/megamax/backup/timemachine";
         }
-        # immich (backups, db, encoded-video, library, profile, thumbs, upload)
         {
           name = "megamax/immich";
           mountpoint = "/mnt/megamax/immich";
         }
-        # cluster dumps from the db leader at 14:00, shipped offsite here at 14:30
         {
           name = "megamax/backup/postgres";
           mountpoint = "/mnt/megamax/backup/postgres";

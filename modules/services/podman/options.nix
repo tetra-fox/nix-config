@@ -1,6 +1,4 @@
-# options-only, so a consumer (authentik's containers read autoUpdate.containerLabels)
-# can import the lab.podman contract without dragging in the podman backend itself.
-# same pattern as postgres/options.nix and monitoring/registry.nix.
+# options only, so consumers (authentik's containers) can read containerLabels without the podman backend
 {
   config,
   lib,

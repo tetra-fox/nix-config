@@ -3,10 +3,8 @@ QML_DIR="$(dirname "$0")/shell"
 
 systemctl --user stop quickshell.service
 
-# quickshell replaces .qmlls.ini with a symlink into its runtime vfs, whose
-# hash-named dir under /run provides the qs.* modules. mirror it at a stable
-# path so codium's qmlls finds it (qt-qml.qmlls.additionalImportPaths in the
-# vscode qml.nix) without anything hardcoding the hash
+# quickshell symlinks .qmlls.ini into a hash-named vfs dir under /run. mirror it at a
+# stable path for codium's qmlls (additionalImportPaths in the vscode qml.nix)
 refresh_vfs_link() {
     if [ -L "$QML_DIR/.qmlls.ini" ]; then
         mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"

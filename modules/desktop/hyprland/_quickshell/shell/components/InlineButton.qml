@@ -1,7 +1,6 @@
 import qs.lib
 import QtQuick
 
-// small inline action button. set accentColor to tint hover (e.g. colorRed for destructive)
 Rectangle {
     id: root
 

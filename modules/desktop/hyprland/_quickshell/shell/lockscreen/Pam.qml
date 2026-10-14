@@ -2,7 +2,6 @@ import Quickshell.Services.Pam
 import Quickshell.Wayland
 import QtQuick
 
-// auth logic, separated from UI
 Item {
     id: root
     visible: false
@@ -21,9 +20,7 @@ Item {
         _password = password;
         authenticating = true;
         failed = false;
-        // start() returns false if the conversation never opens; in that case neither
-        // completed nor the message handler ever fires, so recover here or the field
-        // stays disabled forever (inputEnabled binds to !authenticating)
+        // if the conversation never opens no handler fires, and the field stays disabled
         if (!_pam.start()) {
             authenticating = false;
             failed = true;
@@ -37,7 +34,6 @@ Item {
     PamContext {
         id: _pam
 
-        // Qt.resolvedUrl returns a file:// URI, but PamContext needs a filesystem path
         configDirectory: Qt.resolvedUrl("pam.d").toString().replace("file://", "")
         config: "quickshell"
 

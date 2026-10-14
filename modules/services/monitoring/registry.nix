@@ -1,5 +1,4 @@
-# options-only, so a host can run an exporter (register into lab.monitoring.exporters,
-# read lab.monitoring.bindAddr) without pulling in the whole prometheus/grafana stack.
+# options-only, so an exporter host can register without pulling in prometheus/grafana
 {
   lib,
   topo,
@@ -84,8 +83,7 @@ in {
             default = {};
             example = {severity = "critical";};
           };
-          # OK not NoData: a vanished series usually means the exporter died, which the
-          # target-down alert already catches; NoData would fire both
+          # a vanished series usually means the exporter died, which "scrape target down" already catches
           noDataState = lib.mkOption {
             type = lib.types.enum ["OK" "NoData" "Alerting"];
             default = "OK";
@@ -96,9 +94,6 @@ in {
       description = "grafana alert rules this host wants evaluated by its site's grafana. the server folds every site host's list into one provisioned rule group";
     };
 
-    # the bot token + chat id stay out of the repo: the secret is an env file
-    # (TELEGRAM_BOT_TOKEN=... / TELEGRAM_CHAT_ID=...) grafana's unit loads, and the
-    # provisioned contact point references the vars
     telegram.enable =
       lib.mkEnableOption "declaratively provisioned telegram contact point + notification policy (needs the monitoring/telegram_env sops secret)"
       // {default = false;};

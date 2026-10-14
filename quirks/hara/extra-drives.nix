@@ -13,14 +13,12 @@
     baseOptions
     ++ [
       "ro"
-      # "x-systemd.idle-timeout=60"
     ];
   rwOptions =
     baseOptions
     ++ [
       "rw"
       "windows_names"
-      # "x-systemd.idle-timeout=0"
     ];
 
   drives = {

@@ -15,10 +15,7 @@
         "*.qrc" = "qt-core.qrcEditor";
       };
       "qt-qml.qmlls.useQmlImportPathEnvVar" = true;
-      # the quickshell qs.* modules live in a hash-named runtime vfs under /run;
-      # debug.sh in the quickshell module mirrors it at this stable path. the
-      # Quickshell/Qt modules themselves resolve through the session's
-      # QML2_IMPORT_PATH (per-user profile qml dir), which qmlls reads natively
+      # qs.* modules live in a hash-named vfs under /run, debug.sh mirrors it here
       "qt-qml.qmlls.additionalImportPaths" = ["${config.xdg.stateHome}/quickshell/qmlls-vfs"];
       "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
       "qt-qml.doNotAskForQmllsDownload" = true;

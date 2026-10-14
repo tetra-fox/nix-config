@@ -1,16 +1,6 @@
-# the lan_only claim, exercised for real. fairlane's arr vhosts have no authentik outpost,
-# so lan_only is the only thing standing between a LAN client and an unauthenticated
-# sonarr/radarr/prowlarr/qbittorrent UI. nothing asserted that it actually rejects anything.
-#
-# the matcher is caddy's `remote_ip ... private_ranges`, which reads the real TCP peer, so
-# the only honest way to test it is to connect from an address outside RFC1918. both edge
-# and client carry a second address in TEST-NET-3 (203.0.113.0/24, deliberately not a
-# private range) alongside the site subnet, and the assertions drive each path by which of
-# the edge's two addresses the request is aimed at.
-#
-# the un-gated control route matters as much as the gated one: without it, a failing
-# request from the non-LAN address proves only that the wire is broken, not that the
-# middleware did anything.
+# fairlane's arr vhosts have no authentik, so lan_only is their only gate.
+# remote_ip reads the real TCP peer, so edge and client also carry a TEST-NET-3 (non-RFC1918)
+# address, and each request picks its source by which edge address it targets
 {
   modules,
   fleet,
@@ -41,8 +31,7 @@ in {
 
   node.specialArgs = {inherit modules fleet caps;};
 
-  # caddy, a static file server and a curl client need very little; the nixos-test default
-  # of 1G per node is three times what this uses and prices the test out of small runners
+  # the 1G default is 3x what this uses, too much for small runners
   defaults.virtualisation.memorySize = 512;
 
   nodes = {
@@ -109,8 +98,7 @@ in {
   };
 
   testScript = ''
-    # aiming at the edge's LAN address makes the kernel pick the client's LAN source, and
-    # likewise for the outside pair, so the source address follows the target
+    # the kernel picks the client source address on the target's subnet
     def req(host, via):
         return (
             "curl -skf --max-time 5 "
@@ -130,9 +118,8 @@ in {
         client.wait_until_succeeds(req("${openRoute}", "${edgeOutsideIp}"), timeout=60)
 
     with subtest("lan_only rejects the same client from outside RFC1918"):
-        # the control above proves the wire and the vhost work from this source, so a
-        # failure here is the middleware and nothing else. caddy's `abort` tears down the
-        # connection rather than answering, so curl fails instead of returning a status.
+        # the control proved the wire from this source, so this failure is the middleware.
+        # `abort` drops the connection, so curl fails rather than seeing a status
         client.fail(req("${lanRoute}", "${edgeOutsideIp}"))
   '';
 }

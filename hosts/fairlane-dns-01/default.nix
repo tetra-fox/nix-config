@@ -11,8 +11,7 @@
       proxmoxParent = "plush";
     };
 
-    # hostV6 is this box's static ULA on ens18 (the v6 heartbeat source); the shared v6 VIP lives
-    # in modules/sites/fairlane-dns.nix.
+    # v6 heartbeat source
     bind.ha.hostV6 = "fd00:10::160";
   };
 }
