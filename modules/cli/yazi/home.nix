@@ -6,7 +6,9 @@
 }: {
   programs.yazi = {
     enable = true;
-    package = inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    # yazi's flake pins its own nixpkgs, which no longer evaluates on x86_64-darwin.
+    # darwin falls back to the module default, pkgs.yazi from the 26.05-darwin pin
+    package = lib.mkIf pkgs.stdenv.hostPlatform.isLinux inputs.yazi.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     plugins =
       {
