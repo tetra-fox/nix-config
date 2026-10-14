@@ -34,6 +34,11 @@ in {
     };
   };
 
+  # nixpkgs only puts the default-gateway iface into network-online. without this the internal
+  # address races nfs mounts and cluster daemons at boot and is removed before them at shutdown
+  systemd.services."network-addresses-${config.lab.site.internalInterface}".wantedBy =
+    lib.mkIf (config.lab.site.internalIp != null) ["network-online.target"];
+
   systemd.tmpfiles.rules = lib.mkIf (config.lab.site.dataDir != null) [
     "d ${config.lab.site.dataDir} 0755 root ${config.lab.site.dataDirGroup} -"
   ];
