@@ -13,7 +13,7 @@
       "nix.serverPath" = "${pkgs.nixd}/bin/nixd";
       # nix.formatterPath is ignored once nixd.formatting.command is set
       "nix.serverSettings".nixd =
-        (import fleet.nixd-settings {inherit pkgs osConfig;})
+        (fleet.nixd-settings {inherit pkgs osConfig;})
         // {
           formatting.command = ["${pkgs.alejandra}/bin/alejandra"];
         };

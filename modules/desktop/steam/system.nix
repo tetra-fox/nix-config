@@ -2,9 +2,11 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
+    inputs.nixpkgs-xr.nixosModules.nixpkgs-xr
     ./_proton-max-map-count.nix
   ];
 

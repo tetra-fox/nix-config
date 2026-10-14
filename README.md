@@ -10,6 +10,8 @@ each module contains `system.nix`, `home.nix`, or both; modules that behave diff
 
 files and directories prefixed with `_` are treated as internal (haumea convention)
 
+a module that needs a flake input's module imports it itself through the `inputs` module arg. only input modules that modules across the fleet write to (home-manager, sops-nix, nix-topology) are wired per class in `flake/hosts.nix`
+
 ### 🗂️ profiles
 
 `modules/profiles/` holds opinionated bundles that compose individual modules into ready-to-use roles:
@@ -36,7 +38,7 @@ machine-specific configuration that doesn't fit as a module - hardware config, d
 lives in `quirks/<hostname>/`
 
 > [!NOTE]
-> quirks are automatically imported for the matching host - if `quirks/<host>/` exists, `flake.nix` appends it to that host's module list with no per-host wiring
+> quirks are automatically imported for the matching host - if `quirks/<host>/` exists, `flake/hosts.nix` appends it to that host's module list with no per-host wiring
 
 ## 🗺️ topology
 

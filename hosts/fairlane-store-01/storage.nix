@@ -3,13 +3,11 @@
 # /mnt/bigdisk/backup/homeassistant HA backups pushed over NFS by HAOS
 {
   config,
-  lib,
   fleet,
   topo,
   caps,
   ...
 }: let
-  allowFrom = import fleet.nft {inherit lib;};
   svcIp = topo.mediaHostIp;
   # HAOS's internal-VLAN leg, so HAOS must mount this box's internal IP
   haIp = config.lab.appliances.haosIp;
@@ -47,5 +45,5 @@ in {
     '';
   };
 
-  networking.firewall.extraInputRules = allowFrom [svcIp haIp] [2049];
+  networking.firewall.extraInputRules = fleet.allow-from [svcIp haIp] [2049];
 }

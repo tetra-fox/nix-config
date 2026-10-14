@@ -8,7 +8,6 @@
   ...
 }: let
   cfg = config.lab.postgres;
-  sitePrefix = import fleet.site-prefix {inherit lib;};
 in {
   # from the plain enable flags, so topology finds db hosts without importing the server or HA module
   config.lab.topology.provides =
@@ -53,7 +52,7 @@ in {
 
       scope = lib.mkOption {
         type = lib.types.str;
-        default = "${sitePrefix config.networking.hostName}-pg";
+        default = "${fleet.site-prefix config.networking.hostName}-pg";
         description = "Patroni cluster name (scope). shared by every node in the cluster. also names the etcd cluster token (<scope>-etcd).";
       };
 

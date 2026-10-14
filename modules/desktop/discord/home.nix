@@ -1,5 +1,12 @@
-{config, ...}: {
-  imports = [../_autostart.nix];
+{
+  config,
+  inputs,
+  ...
+}: {
+  imports = [
+    inputs.nixcord.homeModules.default
+    ../_autostart.nix
+  ];
 
   programs.nixcord = {
     enable = true;

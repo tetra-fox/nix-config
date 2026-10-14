@@ -9,7 +9,6 @@
   caps,
   ...
 }: let
-  allowFrom = import fleet.nft {inherit lib;};
   siteData = config.lab.site.dataDir;
   cfg = config.lab.postgres;
   inherit (cfg) ha;
@@ -353,7 +352,7 @@ in {
 
     # etcd and the patroni REST api have no auth or TLS, and every mesa host is on the
     # internal VLAN, so only cluster members get in
-    networking.firewall.extraInputRules = allowFrom haNodeIps [2379 2380 patroniRestPort];
+    networking.firewall.extraInputRules = fleet.allow-from haNodeIps [2379 2380 patroniRestPort];
 
     # clients reach the VIP across the internal VLAN, and 5432 has scram + pg_hba
     networking.firewall.interfaces.${config.lab.site.internalInterface}.allowedTCPPorts = [5432];

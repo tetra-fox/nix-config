@@ -1,11 +1,14 @@
 # options-only, so an exporter host can register without pulling in prometheus/grafana
 {
   lib,
+  inputs,
   topo,
   ...
 }: let
   inherit (topo) multiHost myIp;
 in {
+  imports = [inputs.tetra-nurpkgs.nixosModules.grafana-dashboards];
+
   options.lab.monitoring = {
     server.enable =
       lib.mkEnableOption "the monitoring server (prometheus + grafana). one per site"

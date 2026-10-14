@@ -3,11 +3,15 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: let
   extensionPolicy = import ./_extension-policy.nix {inherit pkgs lib;};
 in {
-  imports = [../_autostart.nix];
+  imports = [
+    inputs.zen-browser.homeModules.beta
+    ../_autostart.nix
+  ];
 
   options.my.zen-browser.bookmarks = lib.mkOption {
     type = with lib.types; listOf anything;

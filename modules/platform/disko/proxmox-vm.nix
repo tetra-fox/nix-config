@@ -1,7 +1,9 @@
 # boot drive must be at scsi0 (use "VirtIO SCSI single" controller in pve)
 # nixos-anywhere consumes this on first install:
 #   nix run github:nix-community/nixos-anywhere -- --flake .#<host> root@<ip>
-{
+{inputs, ...}: {
+  imports = [inputs.disko.nixosModules.disko];
+
   disko.devices.disk.main = {
     type = "disk";
     device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0";

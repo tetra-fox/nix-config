@@ -14,7 +14,6 @@
   caps,
   ...
 }: let
-  allowFrom = import fleet.nft {inherit lib;};
   svcIp = topo.mediaHostIp;
   # null until a host advertises the immich capability
   immichIp = topo.immichHostIp;
@@ -135,7 +134,7 @@ in {
   };
 
   networking.firewall.extraInputRules =
-    allowFrom ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp ++ dbIps) [2049];
+    fleet.allow-from ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp ++ dbIps) [2049];
 
   services.samba.settings = {
     global = {

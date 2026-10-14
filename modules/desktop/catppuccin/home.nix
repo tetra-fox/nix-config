@@ -1,4 +1,10 @@
-{lib, ...}: {
+{
+  lib,
+  inputs,
+  ...
+}: {
+  imports = [inputs.catppuccin.homeModules.catppuccin];
+
   catppuccin = {
     # stylix does the theming
     autoEnable = false;

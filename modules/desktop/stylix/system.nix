@@ -4,6 +4,8 @@
   inputs,
   ...
 }: {
+  imports = [inputs.stylix.nixosModules.stylix];
+
   # without plasma enabled, nixos skips these and dolphin can't find CatppuccinMocha.colors
   environment.pathsToLink = [
     "/share/color-schemes"

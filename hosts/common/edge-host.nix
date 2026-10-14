@@ -1,13 +1,11 @@
 # each node has its own ACME certs
 {
   config,
-  lib,
   modules,
   fleet,
   ...
 }: let
-  sitePrefix = import fleet.site-prefix {inherit lib;};
-  site = sitePrefix config.networking.hostName;
+  site = fleet.site-prefix config.networking.hostName;
 in {
   imports = [
     modules.profiles.server.system

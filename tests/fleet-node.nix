@@ -2,13 +2,12 @@
 {hostNames}: {
   config,
   lib,
+  modules,
   nodes,
   ...
 }: {
   imports = [
-    ../modules/sites/_options.nix
-    ../modules/sites/_topology.nix
-    ../modules/sites/_route-firewall.nix
+    modules.platform.fleet.system
     ./mock-sops.nix
   ];
 

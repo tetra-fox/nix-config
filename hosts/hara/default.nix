@@ -3,6 +3,7 @@
   modules,
   pkgs,
   inputs,
+  username,
   ...
 }: {
   imports = [
@@ -19,6 +20,8 @@
 
     modules.services.ollama.system
   ];
+
+  home-manager.users.${username}.imports = [./home];
 
   lab = {
     # nvidia doesn't hand the DDC/CI bus to ddcci_backlight, so force the attach

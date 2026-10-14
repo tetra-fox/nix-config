@@ -9,6 +9,8 @@
     modules.desktop.zen-browser.darwin
   ];
 
+  home-manager.users.${username}.imports = [./home];
+
   networking.applicationFirewall = {
     enable = true;
     allowSigned = true;

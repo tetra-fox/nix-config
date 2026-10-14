@@ -1,6 +1,6 @@
 # nixd settings shared by vscode and helix. nixd evaluates the `expr` strings from the flake
 # root, so `./.` is the flake
-{
+_: {
   pkgs,
   osConfig,
 }: let

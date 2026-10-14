@@ -14,8 +14,6 @@ sonarr/radarr/prowlarr/qbittorrent run inside a wireguard netns via `vpnNamespac
 }
 ```
 
-needs `inputs.vpn-confinement.nixosModules.default` on the host's module list (wired fleet-wide in `flake.nix` perClass).
-
 ## options
 
 - `torrentsPath`, `nzbPath` (required) - download dirs

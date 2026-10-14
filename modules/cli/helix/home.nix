@@ -12,7 +12,7 @@
     # helix's built-in languages.toml expects nixd on PATH
     languages.language-server.nixd = {
       command = "${pkgs.nixd}/bin/nixd";
-      config = import fleet.nixd-settings {inherit pkgs osConfig;};
+      config = fleet.nixd-settings {inherit pkgs osConfig;};
     };
 
     settings = {

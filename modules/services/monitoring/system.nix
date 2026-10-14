@@ -11,7 +11,6 @@
 }: let
   siteData = config.lab.site.dataDir;
   cfg = config.lab.monitoring;
-  allowFrom = import fleet.nft {inherit lib;};
   hn = config.networking.hostName;
   promStateDir = "${lib.removePrefix "/var/lib/" siteData}/prometheus";
 
@@ -288,7 +287,7 @@ in {
 
       # open this host's exporter ports to this site's server only
       networking.firewall.extraInputRules = lib.mkIf (multiHost && myExporterPorts != []) (
-        allowFrom
+        fleet.allow-from
         (lib.filter (ip: ip != null) (map ipOf (lib.filter (name: name != hn) siteServers)))
         myExporterPorts
       );
@@ -484,9 +483,9 @@ in {
         };
       };
 
-      # loki for this site's agents only. grafana's allow comes from its route (_route-firewall.nix)
+      # loki for this site's agents only. grafana's allow comes from its route (modules/platform/fleet/_route-firewall.nix)
       networking.firewall.extraInputRules = lib.mkIf (siteAgentIps != []) (
-        allowFrom siteAgentIps [lokiPort]
+        fleet.allow-from siteAgentIps [lokiPort]
       );
     })
 

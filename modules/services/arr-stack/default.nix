@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   modules,
   topo,
   caps,
@@ -157,6 +158,7 @@
   '';
 in {
   imports = [
+    inputs.vpn-confinement.nixosModules.default
     ./qbittorrent.nix
     ./sabnzbd.nix
     ./recyclarr.nix
@@ -300,10 +302,6 @@ in {
         netnsArrs = lib.filter (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
         anyArrInNetns = netnsArrs != [];
       in [
-        {
-          assertion = config ? vpnNamespaces;
-          message = "arr-stack needs the vpn-confinement module (vpnNamespaces option) wired on this host.";
-        }
         {
           assertion = anyArrInNetns -> lib.all (n: arrServices.${n}.inNetns) (lib.attrNames arrServices);
           message = ''

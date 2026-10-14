@@ -1,6 +1,12 @@
-{config, ...}: let
+{
+  config,
+  inputs,
+  ...
+}: let
   port = 8090;
 in {
+  imports = [inputs.nowplaying.nixosModules.default];
+
   lab.topology.routes = [
     {
       host = "np.${config.lab.site.domain}";

@@ -2,9 +2,8 @@
 {
   lib,
   inputs,
+  fleet,
 }: let
-  sitePrefix = import ../lib/site-prefix.nix {inherit lib;};
-
   cfgs = inputs.self.nixosConfigurations;
   deployable = lib.filterAttrs (_: c: (c.config.lab.site.hostIp or null) != null) cfgs;
 
@@ -12,7 +11,7 @@
     deployment = {
       targetHost = c.config.lab.site.hostIp;
       targetUser = c._module.specialArgs.username;
-      tags = [(sitePrefix name)];
+      tags = [(fleet.site-prefix name)];
       # the default, stated because targets are too small to build (edges are 1 core / 900M).
       # the deploy host must build x86_64-linux, see modules/platform/nix/darwin.nix
       buildOnTarget = false;
