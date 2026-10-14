@@ -12,9 +12,10 @@ fmt:
 fmt-check:
     alejandra --check .
 
-# lint with statix
+# lint with statix and deadnix
 lint:
     statix check .
+    deadnix --fail .
 
 # assert the fleet discovery engine stays generic (lib/fleet-test.nix)
 fleet-test:

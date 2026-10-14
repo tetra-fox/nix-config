@@ -24,7 +24,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # --inputs-from pins nixpkgs from flake.lock without evaluating the flake, so this
       # fetches one input instead of all of them and skips the ~8G devshell
-      - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#statix nixpkgs#just -c just fmt-check
+      - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#just -c just fmt-check
 
   lint:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: nix shell --inputs-from . nixpkgs#alejandra nixpkgs#statix nixpkgs#just -c just lint
+      - run: nix shell --inputs-from . nixpkgs#statix nixpkgs#deadnix nixpkgs#just -c just lint
 
   secrets-encrypted:
     runs-on: ubuntu-latest

@@ -242,9 +242,10 @@
             pkgs.sops
             pkgs.age
             pkgs.ssh-to-age
-            # ci pulls these three via --inputs-from (ci.yml)
+            # ci pulls these via --inputs-from (ci.yml)
             pkgs.just
             pkgs.statix
+            pkgs.deadnix
             pkgs.alejandra
           ];
         };
