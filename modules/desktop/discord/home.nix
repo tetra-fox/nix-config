@@ -13,7 +13,7 @@
         BACKGROUND_COLOR = "#000000";
         openasar = {
           setup = true;
-          cmdPreset = "perf";
+          cmdPreset = "balanced";
           noTrack = true;
           noTyping = true;
           themeSync = true;
