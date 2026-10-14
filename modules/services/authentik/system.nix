@@ -134,10 +134,13 @@ in {
         authentikBase
         // {
           cmd = ["worker"];
+          # the worker discovers and applies blueprints; the image ships its own under
+          # /blueprints, so ours go in a subdir
           volumes = [
             authentikDataVol
             "${siteData}/authentik/certs:/certs"
             authentikTemplatesVol
+            "${./blueprints}:/blueprints/custom:ro"
           ];
         };
 
