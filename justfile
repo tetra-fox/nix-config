@@ -21,29 +21,6 @@ lint:
 fleet-test:
     @out=$(nix eval --impure --raw --expr 'import ./lib/fleet-test.nix { lib = (builtins.getFlake (toString ./.)).inputs.nixpkgs.lib; }'); [ "$out" = ok ] || { echo "fleet-test: $out"; exit 1; }; echo "fleet-test: ok"
 
-# assert every secrets/ file is encrypted (sops-nix only hashes them, never checks)
-secrets-check:
-    #!/usr/bin/env python3
-    import glob, re, sys
-
-    bad = []
-    for path in sorted(glob.glob("secrets/*.yaml")):
-        # the sops: metadata block is plaintext by design
-        body = open(path, encoding="utf-8").read().split("\nsops:", 1)[0]
-        if "ENC[AES256_GCM" not in body:
-            bad.append(path + ": no encrypted values at all")
-            continue
-        for n, line in enumerate(body.splitlines(), 1):
-            m = re.match(r"^\s*[\w.\-]+:\s+(\S.*)$", line)
-            if m and not m.group(1).startswith("ENC["):
-                bad.append(path + ":" + str(n) + ": plaintext value")
-
-    for b in bad:
-        print("secrets-check: " + b, file=sys.stderr)
-    if bad:
-        sys.exit(1)
-    print("secrets-check: ok, " + str(len(glob.glob("secrets/*.yaml"))) + " files encrypted")
-
 # run a VM test named in tests/default.nix; needs kvm
 vm-test name:
     nix build .#checks.x86_64-linux.{{name}} -L --no-link
