@@ -380,7 +380,7 @@ in {
         "postgres/superuser_pass" = lib.mkDefault {owner = "patroni";};
         "postgres/replication_pass" = lib.mkDefault {owner = "patroni";};
       }
-      (lib.mapAttrs' (name: role:
+      (lib.mapAttrs' (_name: role:
         lib.nameValuePair role.passwordSecret (lib.mkDefault {}))
       cfg.roles)
     ];

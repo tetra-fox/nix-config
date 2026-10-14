@@ -73,7 +73,7 @@ in {
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
   lab.site.dataDirGroup = config.lab.media.group;
 
-  users.users = lib.genAttrs sambaUsers (name: {
+  users.users = lib.genAttrs sambaUsers (_name: {
     isSystemUser = true;
     group = config.lab.media.group;
     extraGroups = ["users"];

@@ -1,14 +1,9 @@
 {
-  config,
   lib,
   pkgs,
   inputs,
-  username,
   ...
 }: let
-  profiler = lib.mkBefore ''
-    zmodload zsh/zprof
-  '';
   zinput = lib.mkOrder 500 ''
     source ${./zinputrc}
   '';

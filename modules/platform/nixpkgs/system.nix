@@ -4,7 +4,7 @@
       allowUnfree = true;
     };
     overlays = [
-      (final: prev: {
+      (_final: prev: {
         inherit
           (prev.lixPackageSets.stable)
           nixpkgs-review

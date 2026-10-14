@@ -101,7 +101,7 @@ in {
       # mkDefault so a consumer redeclaring the same secret (e.g. for owner/group) wins
       sops.secrets =
         lib.mapAttrs' (
-          name: role:
+          _name: role:
             lib.nameValuePair role.passwordSecret (lib.mkDefault {})
         )
         cfg.roles;

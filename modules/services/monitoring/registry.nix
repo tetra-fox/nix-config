@@ -1,9 +1,7 @@
 # options-only, so a host can run an exporter (register into lab.monitoring.exporters,
 # read lab.monitoring.bindAddr) without pulling in the whole prometheus/grafana stack.
 {
-  config,
   lib,
-  modules,
   topo,
   ...
 }: let

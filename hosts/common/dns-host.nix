@@ -3,7 +3,6 @@
 # dual-stack knobs live in the site module (modules.sites.{mesa,fairlane}-dns), which the host
 # imports alongside this; the host file keeps only its IPs (and fairlane's v6 VIP/host addresses).
 {
-  config,
   lib,
   modules,
   ...
