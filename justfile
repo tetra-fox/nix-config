@@ -60,7 +60,12 @@ update-topology:
     install -m 644 "$out"/network.svg images/topology/network.svg && \
     echo "wrote images/topology/main.svg and images/topology/network.svg"
 
-# refresh lab.caddy.package's vendor hash from the mismatch error after a caddy/plugin bump
+# bump flake inputs, then the caddy hash that moves with nixpkgs' go
+update:
+    nix flake update
+    just update-caddy-hash
+
+# refresh lab.caddy.package's vendor hash from the mismatch error after a nixpkgs, caddy or plugin bump
 update-caddy-hash:
     #!/usr/bin/env bash
     set -euo pipefail

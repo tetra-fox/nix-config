@@ -4,6 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  # update-flake.yml runs this against the bump commit before opening its PR.
+  # on push and pull_request inputs.ref is empty, so checkout uses the event's commit
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -30,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -40,6 +51,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -50,6 +63,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -63,6 +78,8 @@ jobs:
       tests: ${{ steps.list.outputs.tests }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -88,6 +105,8 @@ jobs:
         host: ${{ fromJSON(needs.discover.outputs.hosts) }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
@@ -105,6 +124,8 @@ jobs:
         test: ${{ fromJSON(needs.discover.outputs.tests) }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-nix
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}

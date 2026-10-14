@@ -6,14 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-flake-inputs:
+  bump:
     name: Update flake inputs
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
-      pull-requests: write # the bump lands as a PR, not a push to main
       actions: write # cache-nix-action purges stale nix-store caches
+
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
 
     steps:
       - name: Checkout repository
@@ -25,31 +27,53 @@ jobs:
           ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update flake inputs
-        run: nix flake update
+      - name: Update flake inputs and the caddy hash
+        run: nix shell --inputs-from . nixpkgs#just -c just update
 
-      # a PR puts CI and a human between an upstream input compromise and root on the fleet.
-      # gh is preinstalled, so this adds no action dependency
-      - name: Open bump PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push bump branch
+        id: push
         run: |
-          if git diff --quiet HEAD -- flake.lock; then
-            echo "flake.lock unchanged, nothing to propose"
+          if git diff --quiet HEAD; then
+            echo "nothing changed, nothing to propose"
             exit 0
           fi
-          branch=flake-bump
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # -B and --force so a rerun refreshes the existing branch and its PR
-          git checkout -B "$branch"
-          git add flake.lock
-          git commit -m "chore(flake): bump flake inputs"
-          git push --force --set-upstream origin "$branch"
-          if [ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
-            gh pr create --base main --head "$branch" \
-              --title "chore(flake): bump flake inputs" \
-              --body "Automated weekly \`nix flake update\`. Review the input diff before merging."
-          else
-            echo "PR already open for $branch, force-push refreshed it"
+          git checkout -B flake-bump
+          git commit -am "chore(flake): bump flake inputs"
+          git push --force --set-upstream origin flake-bump
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows, so CI runs here
+  ci:
+    needs: bump
+    if: needs.bump.outputs.sha
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.bump.outputs.sha }}
+    secrets: inherit
+
+  # a PR puts a human between an upstream input compromise and root on the fleet
+  pr:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Open bump PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -n "$(gh pr list --head flake-bump --state open --json number --jq '.[].number')" ]; then
+            echo "PR already open for flake-bump, force-push refreshed it"
+            exit 0
           fi
+          gh pr create --base main --head flake-bump \
+            --title "chore(flake): bump flake inputs" \
+            --body "Automated weekly \`just update\`. CI passed in $RUN_URL. Review the input diff before merging."
