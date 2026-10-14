@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
     # separate pin for x86_64-darwin: unstable (26.11) dropped the platform
     # entirely, 26.05 keeps it deprecated-but-working until end of 2026
     nixpkgs-darwin.url = "github:nixos/nixpkgs?ref=nixpkgs-26.05-darwin";
@@ -117,25 +117,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # no nixpkgs.follows: nurpkgs builds its packages against its own nixpkgs pin
-    # and caches them to cachix, so following this config's nixpkgs would miss
-    # that cache and rebuild from source. same reasoning as apple-fonts above.
     tetra-nurpkgs.url = "github:tetra-fox/nurpkgs";
 
-    # upstream's official flake (patched wine + pipeasio + link anchor). no
-    # nixpkgs.follows: it is a from-source wine build with no binary cache
-    # anywhere, so it should rebuild only when this input is bumped, not every
-    # time this config's nixpkgs moves.
     ableton-linux.url = "github:shibco/ableton-linux";
 
     nixcord = {
-      url = "github:FlameFlag/nixcord";
+      url = "github:4evy/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nowplaying = {
       url = "github:tetra-fox/nowplaying";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     # flake = false to skip the upstream flake-utils.eachDefaultSystem which
     # eagerly evaluates x86_64-darwin and fires the 26.05 deprecation warning
     claude-code-nix = {
