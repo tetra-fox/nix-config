@@ -25,6 +25,7 @@ in {
     modules.desktop.discord.home
     modules.desktop.telegram.home
     modules.desktop.vicinae.home
+    modules.desktop.artcraft.home
   ];
 
   my = {

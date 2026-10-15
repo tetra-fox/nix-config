@@ -110,6 +110,10 @@
       url = "github:tetra-fox/nowplaying";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    artcraft = {
+      url = "github:olafkfreund/nix-craftapps";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # upstream's eachDefaultSystem evals x86_64-darwin and fires the 26.05 deprecation warning
     claude-code-nix = {
       url = "github:sadjow/claude-code-nix";
