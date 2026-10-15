@@ -3,10 +3,12 @@
 
   programs.craftapps = {
     enable = true;
-    apps.photocraft.enable = true;
-    apps.lightcraft.enable = true;
-    apps.filmcraft.enable = true;
-    apps.vectorcraft.enable = true;
-    apps.effectcraft.enable = true;
+    apps = {
+      photocraft.enable = true;
+      lightcraft.enable = true;
+      filmcraft.enable = true;
+      vectorcraft.enable = true;
+      effectcraft.enable = true;
+    };
   };
 }
