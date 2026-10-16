@@ -16,6 +16,7 @@
     modules.toolsets.net.system
     modules.toolsets.observe.system
 
+    modules.desktop.ableton-live.system
     modules.desktop.avahi.system
     modules.hardware.bluetooth.system
     modules.hardware.smartctl.system

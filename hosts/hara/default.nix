@@ -2,7 +2,6 @@
   config,
   modules,
   pkgs,
-  inputs,
   username,
   ...
 }: {
@@ -17,7 +16,6 @@
     # modules.hardware.openrgb.system
     modules.desktop.steam.system
     modules.desktop.stylix.system
-
     modules.services.ollama.system
   ];
 
@@ -36,29 +34,6 @@
 
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;
-
-  environment.systemPackages = [
-    inputs.ableton-linux.packages.${pkgs.stdenv.hostPlatform.system}.ableton-wine
-  ];
-
-  # wine sync for live's audio deadlines. the device is 0666, no udev rule needed
-  boot.kernelModules = ["ntsync"];
-
-  # the ableton launcher probes `chrt -r 10`, rtkit alone doesn't grant RLIMIT_RTPRIO
-  security.pam.loginLimits = [
-    {
-      domain = "@realtime";
-      item = "rtprio";
-      type = "-";
-      value = "99";
-    }
-    {
-      domain = "@realtime";
-      item = "memlock";
-      type = "-";
-      value = "unlimited";
-    }
-  ];
 
   networking = {
     interfaces.enp11s0f0np0.ipv4.addresses = [
