@@ -5,15 +5,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1791056897,
-        "narHash": "sha256-be3tn4FY7Nl7ITw7+/XyjuR59q0uWrTLUQOtIyNGhNA=",
-        "owner": "shibco",
+        "lastModified": 1792119887,
+        "narHash": "sha256-z8RBmG9NYELQA7q/OF/5zm6ZYFkHfkXSqVdae/L00SU=",
+        "owner": "tetra-fox",
         "repo": "ableton-linux",
-        "rev": "aceb236a81656c609274afbf27fd54eb5017e5e2",
+        "rev": "d064b6d865b3d3967115481fc9f41fbb76b00bcd",
         "type": "github"
       },
       "original": {
-        "owner": "shibco",
+        "owner": "tetra-fox",
+        "ref": "fix/fractional-config-rounding",
         "repo": "ableton-linux",
         "type": "github"
       }

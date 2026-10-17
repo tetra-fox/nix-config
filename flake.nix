@@ -119,7 +119,8 @@
       url = "github:sadjow/claude-code-nix";
       flake = false;
     };
-    ableton-linux.url = "github:shibco/ableton-linux";
+    # TODO: revert to shibco/ableton-linux once #342 merges
+    ableton-linux.url = "github:tetra-fox/ableton-linux/fix/fractional-config-rounding";
   };
 
   outputs = inputs @ {flake-parts, ...}:
