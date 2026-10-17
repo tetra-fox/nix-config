@@ -56,8 +56,9 @@ in {
   # one dotenv block per NM profile in secrets/hara.yaml
   sops.secrets = lib.genAttrs nmSecrets (_: {});
 
-  # NM profiles rather than networking.interfaces, so NM activates the link and
-  # plasma-nm sees a primary connection. secrets are $VARS filled by envsubst
+  # prevent NM from autogenerating profiles, we declare them
+  networking.networkmanager.settings.main.no-auto-default = "*";
+
   networking.networkmanager.ensureProfiles = {
     environmentFiles = map (s: config.sops.secrets.${s}.path) nmSecrets;
 
