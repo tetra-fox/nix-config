@@ -108,7 +108,7 @@ in {
             };
             wireguard.private-key = "$FAIRLANE_WG_PRIVATE_KEY";
             "wireguard-peer.ftaCyjMGvM5td69yufR94zSL92ZxUiRrRRtJkfmC7wc=" = {
-              endpoint = "fairlane.mesa.tetra.cool:51820";
+              endpoint = "fairlane.tetra.cool:51820";
               allowed-ips = "0.0.0.0/0;";
             };
             ipv4 = {
