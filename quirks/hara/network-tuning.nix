@@ -1,5 +1,5 @@
 {pkgs, ...}: let
-  iface = ["enp11s0f0np0" "enp11s0f1np1"]; # MCX4121A-ACAT
+  iface = ["sfp0" "sfp1"]; # MCX4121A-ACAT
 in {
   boot.kernel.sysctl = {
     "net.core.rmem_max" = 134217728;

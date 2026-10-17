@@ -25,6 +25,7 @@ keys:
   - &host_fairlane_mon_01 age1ukcvclrgq92n2va348jrhkklgqzw4mj9slc547pxxrdjahqsfy9s0a2smk
   - &host_fairlane_edge_01 age1tajr9rgru6qama0cm4nyhguee43sy08edh7da4nsmgfkwxxjreps39zztk
   - &host_fairlane_edge_02 age10mq5ck0szwfv2hv78ytjnkhvywra2v8nqw8s5hthq9fm3s0z93mst8jtnt
+  - &host_hara age1yujve706cu0tpx3z7h5gpp5nsncz4zcrytvmh0es652qfsl4u99s0y6jjf
 
 creation_rules:
   # one rule per host so no host decrypts another's secrets. no catch-all on purpose:
@@ -125,3 +126,9 @@ creation_rules:
           - *user_tetra
           - *user_myputer
           - *host_mesa_store_01
+  - path_regex: secrets/hara\.yaml$
+    key_groups:
+      - age:
+          - *user_tetra
+          - *user_myputer
+          - *host_hara

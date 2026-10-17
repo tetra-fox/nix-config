@@ -66,7 +66,7 @@ in {
       interfaceGroups = [["eth0" "eth1" "eth2" "eth3" "eth4" "eth5" "eth6" "eth7" "eth8" "eth9"] ["sfp0" "sfp1"]];
       connections = {
         eth0 = mkConnection "xg-8" "sfp0";
-        eth1 = mkConnection "hara" "enp11s0f0np0";
+        eth1 = mkConnection "hara" "sfp0";
       };
     };
 
