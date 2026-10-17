@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   ...
 }: let
@@ -75,7 +76,7 @@ in {
             };
           }
           "org.kde.plasma.pager"
-          "org.kde.plasma.icontasks"
+          {iconTasks.launchers = ["preferred://browser"];}
           "org.kde.plasma.marginsseparator"
           {
             systemTray.items = {
@@ -124,6 +125,11 @@ in {
       };
       # frees Meta+Q for Kill Window
       plasmashell."manage activities" = [];
+    };
+
+    hotkeys.commands.vicinae = {
+      key = "Meta+Space";
+      command = "${lib.getExe config.programs.vicinae.package} toggle";
     };
 
     powerdevil.AC.autoSuspend.action = "nothing";
