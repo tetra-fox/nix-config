@@ -1,13 +1,15 @@
 {
+  config,
   pkgs,
   lib,
   ...
-}: {
+}: let
+  targets = config.my.autostart.targets;
+in {
+  imports = [../_autostart.nix];
+
   programs.vicinae = {
-    systemd = {
-      enable = true;
-      target = "wayland-session@hyprland.desktop.target";
-    };
+    systemd.enable = true;
     enable = true;
     settings = {
       close_on_focus_loss = false;
@@ -31,5 +33,15 @@
         sponsor.enabled = false;
       };
     };
+  };
+
+  # hm's unit takes one systemd.target; kept over a my.autostart app for its restart
+  # triggers, so rebind it to every session target
+  systemd.user.services.vicinae = {
+    Unit = {
+      After = lib.mkForce targets;
+      PartOf = lib.mkForce targets;
+    };
+    Install.WantedBy = lib.mkForce targets;
   };
 }

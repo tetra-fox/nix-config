@@ -6,6 +6,13 @@
 }: let
   sans = config.stylix.fonts.sansSerif.name;
   mono = config.stylix.fonts.monospace.name;
+  trayShown = [
+    "org.kde.plasma.volume"
+    "org.kde.plasma.bluetooth"
+    "org.kde.plasma.brightness"
+    "org.kde.plasma.networkmanagement"
+    "org.kde.plasma.clipboard"
+  ];
 in {
   imports = [
     ../_autostart.nix
@@ -57,16 +64,69 @@ in {
         height = 46;
         floating = true;
         widgets = [
-          "org.kde.plasma.kickoff"
+          {
+            kickoff = {
+              sortAlphabetically = true;
+              compactDisplayStyle = true;
+              settings.General = {
+                highlightNewlyInstalledApps = false;
+                switchCategoryOnHover = true;
+              };
+            };
+          }
           "org.kde.plasma.pager"
           "org.kde.plasma.icontasks"
           "org.kde.plasma.marginsseparator"
-          "org.kde.plasma.systemtray"
-          "org.kde.plasma.digitalclock"
+          {
+            systemTray.items = {
+              shown = trayShown;
+              # without weather. shown items have to be listed here too
+              extra =
+                trayShown
+                ++ [
+                  "org.kde.plasma.cameraindicator"
+                  "org.kde.plasma.notifications"
+                  "org.kde.plasma.manage-inputmethod"
+                  "org.kde.plasma.mediacontroller"
+                  "org.kde.plasma.devicenotifier"
+                  "org.kde.kscreen"
+                  "org.kde.plasma.keyboardlayout"
+                  "org.kde.plasma.printmanager"
+                  "org.kde.plasma.battery"
+                  "org.kde.plasma.keyboardindicator"
+                ];
+            };
+          }
+          {
+            digitalClock = {
+              date = {
+                format = "isoDate";
+                position = "belowTime";
+              };
+              font = {
+                family = sans;
+                weight = 400;
+                style = "Regular";
+                size = 10;
+              };
+            };
+          }
           "org.kde.plasma.showdesktop"
         ];
       }
     ];
+
+    shortcuts = {
+      kwin = {
+        "Kill Window" = "Meta+Q";
+        Overview = "Meta+Tab";
+        "Walk Through Windows" = "Alt+Tab";
+      };
+      # frees Meta+Q for Kill Window
+      plasmashell."manage activities" = [];
+    };
+
+    powerdevil.AC.autoSuspend.action = "nothing";
 
     kwin = {
       nightLight.enable = true;
