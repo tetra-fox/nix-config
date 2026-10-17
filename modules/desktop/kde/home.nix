@@ -62,6 +62,8 @@ in {
     panels = [
       {
         location = "bottom";
+        # plasma numbers screens by kwin output priority, 0 is the primary
+        screen = 0;
         height = 46;
         floating = true;
         widgets = [
