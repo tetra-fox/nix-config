@@ -32,7 +32,13 @@
       After = targets;
     };
     Service =
-      {ExecStart = app.exec;}
+      {
+        ExecStart = app.exec;
+        # vrcx and discord ignore SIGTERM, and a session target can't restart until its
+        # units finish stopping, so a relogin inside the default 90s timeout fails.
+        # TODO: drop once both exit on SIGTERM
+        TimeoutStopSec = 5;
+      }
       // lib.optionalAttrs app.tray {ExecStartPre = "${waitForTray}";};
     Install.WantedBy = targets;
   };
