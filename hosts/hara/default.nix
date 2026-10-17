@@ -56,68 +56,74 @@ in {
   # one dotenv block per NM profile in secrets/hara.yaml
   sops.secrets = lib.genAttrs nmSecrets (_: {});
 
-  # prevent NM from autogenerating profiles, we declare them
-  networking.networkmanager.settings.main.no-auto-default = "*";
+  networking = {
+    networkmanager = {
+      # prevent NM from autogenerating profiles, we declare them
+      settings.main.no-auto-default = "*";
 
-  networking.networkmanager.ensureProfiles = {
-    environmentFiles = map (s: config.sops.secrets.${s}.path) nmSecrets;
+      ensureProfiles = {
+        environmentFiles = map (s: config.sops.secrets.${s}.path) nmSecrets;
 
-    profiles.ethernet = {
-      connection = {
-        id = "Ethernet";
-        type = "ethernet";
-        interface-name = "sfp0";
+        profiles = {
+          ethernet = {
+            connection = {
+              id = "Ethernet";
+              type = "ethernet";
+              interface-name = "sfp0";
+            };
+            ipv4 = {
+              method = "manual";
+              address1 = "192.168.20.86/24,192.168.20.1";
+              # server-VLAN gateway, hara is on the trusted VLAN
+              dns = "${config.lab.net.gateway};";
+              dns-search = "mesa.tetra.cool;";
+            };
+            ipv6.method = "auto";
+          };
+
+          puppygirlplaypen = {
+            connection = {
+              id = "PuppygirlPlaypen";
+              type = "wifi";
+              interface-name = "wifi0";
+            };
+            wifi = {
+              ssid = "PuppygirlPlaypen";
+              mode = "infrastructure";
+            };
+            wifi-security = {
+              key-mgmt = "sae";
+              psk = "$PUPPYGIRLPLAYPEN_PSK";
+            };
+            ipv4.method = "auto";
+            ipv6.method = "auto";
+          };
+
+          fairlane = {
+            connection = {
+              id = "fairlane";
+              type = "wireguard";
+              interface-name = "fairlane";
+              autoconnect = false;
+            };
+            wireguard.private-key = "$FAIRLANE_WG_PRIVATE_KEY";
+            "wireguard-peer.ftaCyjMGvM5td69yufR94zSL92ZxUiRrRRtJkfmC7wc=" = {
+              endpoint = "fairlane.mesa.tetra.cool:51820";
+              allowed-ips = "0.0.0.0/0;";
+            };
+            ipv4 = {
+              method = "manual";
+              address1 = "192.168.100.5/32";
+              dns = "192.168.100.1;";
+            };
+            ipv6.method = "disabled";
+          };
+        };
       };
-      ipv4 = {
-        method = "manual";
-        address1 = "192.168.20.86/24,192.168.20.1";
-        # server-VLAN gateway, hara is on the trusted VLAN
-        dns = "${config.lab.net.gateway};";
-        dns-search = "mesa.tetra.cool;";
-      };
-      ipv6.method = "auto";
     };
 
-    profiles.puppygirlplaypen = {
-      connection = {
-        id = "PuppygirlPlaypen";
-        type = "wifi";
-        interface-name = "wifi0";
-      };
-      wifi = {
-        ssid = "PuppygirlPlaypen";
-        mode = "infrastructure";
-      };
-      wifi-security = {
-        key-mgmt = "sae";
-        psk = "$PUPPYGIRLPLAYPEN_PSK";
-      };
-      ipv4.method = "auto";
-      ipv6.method = "auto";
-    };
-
-    profiles.fairlane = {
-      connection = {
-        id = "fairlane";
-        type = "wireguard";
-        interface-name = "fairlane";
-        autoconnect = false;
-      };
-      wireguard.private-key = "$FAIRLANE_WG_PRIVATE_KEY";
-      "wireguard-peer.ftaCyjMGvM5td69yufR94zSL92ZxUiRrRRtJkfmC7wc=" = {
-        endpoint = "fairlane.mesa.tetra.cool:51820";
-        allowed-ips = "0.0.0.0/0;";
-      };
-      ipv4 = {
-        method = "manual";
-        address1 = "192.168.100.5/32";
-        dns = "192.168.100.1;";
-      };
-      ipv6.method = "disabled";
-    };
+    firewall.allowedUDPPorts = [51820];
   };
-
-  networking.firewall.allowedUDPPorts = [51820];
 
   # without the network it renders detached
   topology.self.interfaces.sfp0 = {
