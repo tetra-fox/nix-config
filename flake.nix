@@ -37,6 +37,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     nix-darwin = {
       # release branch matching the nixpkgs-darwin pin; nix-darwin asserts they agree
       url = "github:nix-darwin/nix-darwin?ref=nix-darwin-26.05";

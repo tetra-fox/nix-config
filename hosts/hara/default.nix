@@ -8,6 +8,7 @@
   imports = [
     modules.profiles.workstation.system
 
+    modules.desktop.drkonqi.system
     modules.desktop.greetd.system
     modules.desktop.hyprland.system
     modules.desktop.kde.system

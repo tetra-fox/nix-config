@@ -1,23 +1,34 @@
-{pkgs, ...}: {
+{
+  inputs,
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}: {
+  imports = [inputs.plasma-manager.homeModules.plasma-manager];
+
   home.packages =
-    [pkgs.kdePackages.dolphin]
-    ++ (with pkgs.kdePackages; [
+    # plasma6 installs these system-wide
+    lib.optionals (!osConfig.services.desktopManager.plasma6.enable) (with pkgs.kdePackages; [
+      dolphin
       qtsvg
       kio
       kio-fuse
       kio-extras
       ark
-      audiocd-kio
       baloo
       dolphin-plugins # git/hg/dropbox/mount integration
       kio-admin
-      kio-gdrive
-      kompare
       konsole
       ffmpegthumbs
       kdegraphics-thumbnailers
       kimageformats # GIMP .xcf, .heic
       qtimageformats # .webp, .tiff, .tga, .jp2
+    ])
+    ++ (with pkgs.kdePackages; [
+      audiocd-kio
+      kio-gdrive
+      kompare
     ])
     ++ (with pkgs; [
       icoutils # .ico, .cur, embedded .exe icons
@@ -26,6 +37,58 @@
       taglib
     ]);
 
-  # no kdeglobals here: plasma owns that file, and a home-manager symlink
-  # would stop systemsettings from writing it
+  # plasma-manager writes keys in place, so dolphin's own settings dialog keeps working.
+  # enabled here too because dolphin runs under hyprland without the kde module
+  programs.plasma = {
+    enable = true;
+
+    configFile = {
+      dolphinrc = {
+        General.DoubleClickViewAction = "none";
+        MainWindow.MenuBar = "Disabled";
+        UiSettings.ColorScheme = "BreezeDark";
+        DetailsMode = {
+          PreviewSize = 80;
+          LeftPadding = 0;
+          RightPadding = 0;
+        };
+        IconsMode = {
+          PreviewSize = 48;
+          TextWidthIndex = 0;
+        };
+        "KFileDialog Settings" = {
+          "Places Icons Auto-resize" = false;
+          "Places Icons Static Size" = 22;
+        };
+        PreviewSettings.Plugins = builtins.concatStringsSep "," [
+          "appimagethumbnail"
+          "audiothumbnail"
+          "comicbookthumbnail"
+          "cursorthumbnail"
+          "djvuthumbnail"
+          "ebookthumbnail"
+          "exrthumbnail"
+          "directorythumbnail"
+          "imagethumbnail"
+          "jpegthumbnail"
+          "kraorathumbnail"
+          "windowsexethumbnail"
+          "windowsimagethumbnail"
+          "opendocumentthumbnail"
+          "svgthumbnail"
+        ];
+      };
+
+      kservicemenurc.Show = {
+        forgetfileitemaction = true;
+        hidefileitemaction = false;
+        kactivitymanagerd_fileitem_linking_plugin = true;
+        movetonewfolderitemaction = true;
+        setfoldericonitemaction = true;
+        tagsfileitemaction = true;
+      };
+
+      arkrc.MainWindow.StatusBar = "Disabled";
+    };
+  };
 }

@@ -23,8 +23,10 @@ in {
   # config lives in the read-only nix store, nothing for the file watcher to do
   systemd.user.services.quickshell.Service.Environment = ["QS_DISABLE_FILE_WATCHER=1"];
 
+  # try-restart leaves it stopped outside hyprland. errors are ignored because boot-time
+  # activation runs before the user manager exists
   home.activation.restartQuickshell = lib.hm.dag.entryAfter ["reloadSystemd"] ''
-    ${pkgs.systemd}/bin/systemctl --user restart quickshell.service 2>/dev/null || true
+    ${pkgs.systemd}/bin/systemctl --user try-restart quickshell.service 2>/dev/null || true
   '';
 
   home.packages = with pkgs; [
