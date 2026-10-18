@@ -2,6 +2,7 @@
   config,
   inputs,
   lib,
+  osConfig,
   pkgs,
   ...
 }: let
@@ -119,14 +120,26 @@ in {
         "Kill Window" = "Meta+Q";
         Overview = "Meta+Tab";
         "Walk Through Windows" = "Alt+Tab";
+        # frees Meta+Shift+Esc for the system monitor. nothing here uses the input capture portal
+        disableInputCapture = [];
       };
       # frees Meta+Q for Kill Window
       plasmashell."manage activities" = [];
+      ksmserver."Lock Session" = ["Screensaver" "Meta+Esc"];
+      # its default is Meta+Esc, which the lock takes
+      "services/org.kde.plasma-systemmonitor.desktop"._launch = "Meta+Shift+Esc";
     };
 
-    hotkeys.commands.vicinae = {
-      key = "Meta+Space";
-      command = "${lib.getExe config.programs.vicinae.package} toggle";
+    hotkeys.commands = {
+      vicinae = {
+        key = "Meta+Space";
+        command = "${lib.getExe config.programs.vicinae.package} toggle";
+      };
+      # 1password's own portal shortcut only registers with the session it started in
+      onepassword-quick-access = {
+        key = "Ctrl+Shift+Space";
+        command = "${lib.getExe' osConfig.programs._1password-gui.package "1password"} --quick-access";
+      };
     };
 
     powerdevil.AC.autoSuspend.action = "nothing";
