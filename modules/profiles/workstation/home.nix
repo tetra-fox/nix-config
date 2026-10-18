@@ -24,6 +24,7 @@ in {
     modules.desktop.udiskie.home
     modules.desktop.discord.home
     modules.desktop.telegram.home
+    modules.desktop.signal.home
     modules.desktop.vicinae.home
     modules.desktop.artcraft.home
   ];
@@ -40,7 +41,6 @@ in {
   home.packages = with pkgs; [
     ungoogled-chromium
 
-    signal-desktop
     cinny-desktop
 
     vlc
