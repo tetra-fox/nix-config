@@ -21,6 +21,7 @@ in {
     modules.hardware.ddcci.system
     # modules.hardware.openrgb.system
     modules.desktop.steam.system
+    modules.desktop.sunshine.system
     modules.desktop.stylix.system
     modules.services.ollama.system
   ];
