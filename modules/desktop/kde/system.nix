@@ -18,8 +18,8 @@
 
   programs.kde-pim.enable = false;
 
-  # meta+middle click toggles maximize, kwin finds it through QT_PLUGIN_PATH
-  environment.systemPackages = [(pkgs.callPackage ./_maximize-toggle {})];
+  # meta+middle maximize toggle and meta+right raise, kwin finds it through QT_PLUGIN_PATH
+  environment.systemPackages = [(pkgs.callPackage ./_meta-click {})];
 
   environment.plasma6.excludePackages = with pkgs.kdePackages; [
     elisa

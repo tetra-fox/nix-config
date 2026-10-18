@@ -7,7 +7,7 @@
   kdePackages,
 }:
 stdenv.mkDerivation {
-  pname = "kwin-maximize-toggle";
+  pname = "kwin-meta-click";
   version = kdePackages.kwin.version;
   src = ./.;
 

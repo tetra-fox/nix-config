@@ -173,6 +173,10 @@ in {
 
       baloofilerc."Basic Settings"."Indexing-Enabled" = false;
 
+      # meta+drag raises the window it moves. meta+right raise and meta+middle maximize
+      # live in the meta-click kwin plugin (system.nix)
+      kwinrc.MouseBindings.CommandAll1 = "Activate, raise and move";
+
       # pam_kwallet is off in system.nix, this stops the first-use wizard
       kwalletrc.Wallet = {
         Enabled = false;
