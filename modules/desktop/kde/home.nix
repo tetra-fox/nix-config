@@ -102,15 +102,10 @@ in {
           }
           {
             digitalClock = {
+              # no font set, so plasma sizes both lines to the panel height
               date = {
-                format = "isoDate";
+                format.custom = "ddd d MMM";
                 position = "belowTime";
-              };
-              font = {
-                family = sans;
-                weight = 400;
-                style = "Regular";
-                size = 10;
               };
             };
           }
