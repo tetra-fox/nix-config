@@ -28,6 +28,7 @@ in {
     modules.hardware.nvidia.home
     # modules.hardware.openrgb.home
     modules.desktop.steam.home
+    modules.desktop.sunshine.home
     modules.desktop.stylix.home
     modules.desktop.surge-dm.home
   ];
