@@ -20,6 +20,13 @@ in {
   };
 
   config = {
+    # the nixos cuda team's hydra cache, cache.nixos.org skips unfree cuda builds
+    # https://wiki.nixos.org/wiki/Cuda
+    nix.settings = {
+      substituters = ["https://cache.nixos-cuda.org"];
+      trusted-public-keys = ["cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="];
+    };
+
     hardware = {
       graphics.enable = true;
       nvidia = {
