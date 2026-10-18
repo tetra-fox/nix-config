@@ -2,6 +2,7 @@
   config,
   lib,
   modules,
+  nixosConfigurations,
   pkgs,
   username,
   ...
@@ -54,8 +55,30 @@ in {
     wifi0 = "8c:c6:81:9e:a8:c2"; # iwlwifi
   };
 
-  # one dotenv block per NM profile in secrets/hara.yaml
-  sops.secrets = lib.genAttrs nmSecrets (_: {});
+  # one dotenv block per NM profile in secrets/hara.yaml, plus the mount.cifs credentials file
+  sops.secrets = lib.genAttrs (nmSecrets ++ ["smb/store"]) (_: {});
+
+  # the per-user `store` samba share. by IP because hara's resolver isn't the site's bind, so
+  # the host name falls through to the public record
+  fileSystems."/mnt/store" = {
+    device = "//${nixosConfigurations.mesa-store-01.config.lab.site.hostIp}/store";
+    fsType = "cifs";
+    options = [
+      "credentials=${config.sops.secrets."smb/store".path}"
+      "vers=3.1.1"
+      # the server requires encryption
+      "seal"
+      "uid=${username}"
+      "gid=users"
+      "nofail"
+      # caps mount and unmount, so a dead store box can't hold up an access or a shutdown for
+      # the default 90s
+      "x-systemd.mount-timeout=10s"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=600"
+      "_netdev"
+    ];
+  };
 
   networking = {
     networkmanager = {
