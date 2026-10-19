@@ -29,6 +29,8 @@
         };
       };
     };
+    userPlugins.noH265Decode = ./plugins/noH265Decode;
+    extraConfig.plugins.NoH265Decode.enable = true;
     config = {
       plugins = {
         clearUrls.enable = true;
