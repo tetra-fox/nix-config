@@ -14,5 +14,8 @@
       persistent = true;
     };
     optimise.dates = ["Mon 13:00"]; # after gc
+
+    # flakes only, NIX_PATH gets nixpkgs from the flake registry
+    channel.enable = false;
   };
 }
