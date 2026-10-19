@@ -56,6 +56,8 @@
 
   # the nixpkgs default minus perl
   environment.defaultPackages = [pkgs.rsync pkgs.strace];
+  # perl, and disko + proxmox-vm stand in for the hardware config it writes
+  system.tools.nixos-generate-config.enable = false;
 
   # also replaces su with sudo-rs's
   security.sudo-rs.enable = true;
