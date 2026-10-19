@@ -42,6 +42,8 @@
   time.timeZone = "America/Los_Angeles";
 
   networking.networkmanager.enable = true;
+  # per-link dns, so a vpn's resolver only answers for the vpn
+  networking.networkmanager.dns = "systemd-resolved";
   # nixpkgs ships connectivity checking off, so applets report false "limited connectivity"
   networking.networkmanager.settings.connectivity = {
     uri = "http://fedoraproject.org/static/hotspot.txt";

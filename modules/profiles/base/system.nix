@@ -39,6 +39,18 @@
     dbus.implementation = "broker";
     # imports the old perl script's uid-map on first run, so allocated ids don't move
     userborn.enable = true;
+
+    resolved = {
+      enable = true;
+      settings.Resolve = {
+        # unset, resolved falls back to its built-in public resolvers and skips split-horizon
+        # and the rpz blocklists
+        FallbackDNS = [];
+        # avahi answers mdns where it's wanted
+        LLMNR = false;
+        MulticastDNS = false;
+      };
+    };
   };
 
   # the nixpkgs default minus perl
