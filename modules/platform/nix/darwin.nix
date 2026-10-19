@@ -11,10 +11,14 @@ _: {
     linux-builder.enable = true;
 
     # the mac keeps pacific time. see SCHEDULE.md
-    gc.interval = {
-      Weekday = 0;
-      Hour = 4;
-      Minute = 0;
+    gc = {
+      automatic = true;
+      options = "--delete-older-than 7d";
+      interval = {
+        Weekday = 0;
+        Hour = 4;
+        Minute = 0;
+      };
     };
 
     optimise.interval = {

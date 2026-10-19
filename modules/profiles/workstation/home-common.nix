@@ -12,6 +12,7 @@
     modules.cli.fastfetch.home
     modules.cli.git.home
     modules.cli.helix.home
+    modules.cli.nh.home
     modules.cli.sops.home
     modules.cli.ssh.home
     modules.cli.yazi.home

@@ -10,6 +10,7 @@
     modules.platform.fstrim.system
     modules.platform.nix.system
     modules.services.sshd.system
+    modules.cli.nh.system
     modules.platform.systemd-boot.system
   ];
 

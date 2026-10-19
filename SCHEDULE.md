@@ -4,7 +4,7 @@
 
 | utc         | pst   | pdt   | host(s)                            | job                                                                                            |
 | ----------- | ----- | ----- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 12:00       | 4:00a | 5:00a | all nixos servers                  | nix garbage collection, two day window                                                         |
+| 12:00       | 4:00a | 5:00a | all nixos servers                  | nh clean, two day window                                                                       |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich nightly tasks (db cleanup, face clustering, memories, missing thumbnails, quota sync)   |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich external library scan                                                                   |
 | 12:00       | 4:00a | 5:00a | mesa-svc-01, fairlane-svc-01       | recyclarr sync (plus up to 5m random delay)                                                    |
@@ -24,7 +24,7 @@ the backup chain is the reason for the ordering: immich dumps its database next 
 
 | utc   | pst   | pdt   | host(s)                                    | job                                             |
 | ----- | ----- | ----- | ------------------------------------------ | ----------------------------------------------- |
-| 12:00 | 4:00a | 5:00a | hara                                       | nix garbage collection (servers run it nightly) |
+| 12:00 | 4:00a | 5:00a | hara                                       | nh clean (servers run it nightly)               |
 | 13:00 | 5:00a | 6:00a | all nixos                                  | nix store optimise                              |
 | 13:00 | 5:00a | 6:00a | mesa-svc-01, fairlane-svc-01, mesa-auth-01 | podman image prune, including replaced tags     |
 | 14:00 | 6:00a | 7:00a | hara                                       | fstrim (servers run it nightly)                 |

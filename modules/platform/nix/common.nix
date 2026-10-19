@@ -1,4 +1,4 @@
-{lib, ...}: {
+_: {
   nix = {
     settings = {
       experimental-features = [
@@ -14,10 +14,6 @@
     };
 
     # schedules live in the platform files
-    gc = {
-      automatic = true;
-      options = lib.mkDefault "--delete-older-than 7d";
-    };
     optimise.automatic = true;
   };
 }

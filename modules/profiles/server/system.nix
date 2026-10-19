@@ -24,9 +24,9 @@
 
   # every server disk shares one thin pool with little headroom, so gc and fstrim nightly
   # to hand freed blocks back the same day. see SCHEDULE.md
-  nix.gc = {
+  programs.nh.clean = {
     dates = "*-*-* 12:00:00";
-    options = "--delete-older-than 2d";
+    extraArgs = "--keep-since 2d";
   };
 
   environment.variables.BROWSER = "echo";
