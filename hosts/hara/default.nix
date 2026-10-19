@@ -43,6 +43,12 @@ in {
   # is a no-op on a fresh tmpfs
   boot.tmp.useTmpfs = true;
 
+  # sched_ext scheduler tuned for interactive and game threads under load
+  services.scx = {
+    enable = true;
+    scheduler = "scx_lavd";
+  };
+
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;
 
