@@ -58,6 +58,8 @@ in {
 
     vlc
     qview
+    picard
+    strawberry
 
     kicad
 
