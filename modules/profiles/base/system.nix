@@ -1,6 +1,7 @@
 {
   lib,
   modules,
+  pkgs,
   username,
   ...
 }: {
@@ -36,7 +37,12 @@
   services = {
     earlyoom.enable = true;
     dbus.implementation = "broker";
+    # imports the old perl script's uid-map on first run, so allocated ids don't move
+    userborn.enable = true;
   };
+
+  # the nixpkgs default minus perl
+  environment.defaultPackages = [pkgs.rsync pkgs.strace];
 
   # earlyoom is the only oom killer
   systemd.oomd.enable = lib.mkForce false;
