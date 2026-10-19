@@ -5,7 +5,7 @@
       name = "nix-purge";
       # nix and sudo come from the system PATH: a pinned nix can disagree with the
       # daemon, and only the system sudo is setuid
-      runtimeInputs = [pkgs.coreutils pkgs.gawk];
+      runtimeInputs = [pkgs.coreutils pkgs.nh];
       text = builtins.readFile ./_nix-purge.sh;
     })
   ];
