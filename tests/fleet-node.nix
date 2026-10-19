@@ -15,6 +15,8 @@
     # extraInputRules only exists in the nftables backend. on iptables the route firewall
     # and vrrp rules eval fine and never reach the ruleset
     networking.nftables.enable = true;
+    # matches sites/_common.nix, keepalived's vip has to hold up under networkd
+    networking.useNetworkd = true;
 
     # production gets this from inputs.self.nixosConfigurations
     _module.args.nixosConfigurations =

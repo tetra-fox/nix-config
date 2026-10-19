@@ -186,6 +186,10 @@ in {
         };
     };
 
+    # networkd strips addresses it didn't configure whenever it (re)configures a link, which
+    # takes the vip off the holder on a networkd restart. static keeps foreign static addresses
+    systemd.network.networks."40-${cfg.vipInterface}".networkConfig.KeepConfiguration = "static";
+
     networking.firewall.extraInputRules =
       ''
         iifname "${cfg.vrrpInterface}" ip protocol vrrp accept

@@ -8,8 +8,12 @@
   iface = config.lab.site.serverInterface;
 in {
   networking = {
+    useNetworkd = true;
     useDHCP = false;
-    defaultGateway = lib.mkDefault config.lab.net.gateway;
+    defaultGateway = lib.mkDefault {
+      address = config.lab.net.gateway;
+      interface = iface;
+    };
     nameservers = lib.mkDefault [config.lab.net.gateway];
 
     interfaces.${iface} = {
@@ -33,11 +37,6 @@ in {
       ];
     };
   };
-
-  # nixpkgs only puts the default-gateway iface into network-online. without this the internal
-  # address races nfs mounts and cluster daemons at boot and is removed before them at shutdown
-  systemd.services."network-addresses-${config.lab.site.internalInterface}".wantedBy =
-    lib.mkIf (config.lab.site.internalIp != null) ["network-online.target"];
 
   systemd.tmpfiles.rules = lib.mkIf (config.lab.site.dataDir != null) [
     "d ${config.lab.site.dataDir} 0755 root ${config.lab.site.dataDirGroup} -"

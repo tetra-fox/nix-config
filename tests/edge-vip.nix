@@ -1,5 +1,6 @@
 # kills caddy on the VIP holder and asserts the peer takes the VIP and keeps serving,
-# and that the recovered node doesn't take it back (noPreempt)
+# that the recovered node doesn't take it back (noPreempt), and that a networkd restart
+# doesn't drop the VIP
 {
   modules,
   fleet,
@@ -108,6 +109,12 @@ in {
         client.wait_until_succeeds(curl, timeout=180)
         first = holder()
         assert first is not None, "no edge holds the vip"
+
+    with subtest("restarting networkd leaves the vip on the holder"):
+        first.succeed("systemctl restart systemd-networkd")
+        first.wait_until_succeeds("networkctl status eth1 | grep -q 'State: routable (configured)'", timeout=30)
+        assert holder() == first, "networkd dropped the vip"
+        client.succeed(curl)
 
     with subtest("killing caddy on the holder moves the vip to the peer"):
         first.succeed("systemctl stop caddy")
