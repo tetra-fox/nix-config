@@ -34,8 +34,9 @@
 
   users.users.${username} = {
     isNormalUser = true;
-    # video: backlight brightness nodes
-    extraGroups = ["networkmanager" "wheel" "video"];
+    # video: backlight brightness nodes. dialout: usb serial for flashing microcontrollers,
+    # uaccess doesn't tag tty devices
+    extraGroups = ["networkmanager" "wheel" "video" "dialout"];
   };
 
   time.timeZone = "America/Los_Angeles";

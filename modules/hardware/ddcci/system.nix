@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  username,
   ...
 }: let
   cfg = config.lab.ddcci;
@@ -26,6 +27,8 @@ in {
 
   config = {
     hardware.i2c.enable = true;
+    # the seat's uaccess acl only covers an active local session, not ssh or pre-login
+    users.users.${username}.extraGroups = [config.hardware.i2c.group];
 
     # registers each DDC/CI monitor as /sys/class/backlight/ddcci*
     boot.extraModulePackages = [driver];
