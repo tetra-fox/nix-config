@@ -55,7 +55,15 @@ in {
   };
 
   # one dotenv block per NM profile in secrets/hara.yaml, plus the mount.cifs credentials file
-  sops.secrets = lib.genAttrs (nmSecrets ++ ["smb/store"]) (_: {});
+  sops.secrets =
+    lib.genAttrs (nmSecrets ++ ["smb/store"]) (_: {})
+    // {
+      # flake evaluation runs as the user, so the user has to read it
+      "nix/access-tokens".owner = username;
+    };
+
+  # a github token lifts the 60/hour unauthenticated api limit. !include skips a missing file
+  nix.extraOptions = "!include ${config.sops.secrets."nix/access-tokens".path}";
 
   # the per-user `store` samba share. fully qualified because only the wired profile sets the
   # mesa search domain
