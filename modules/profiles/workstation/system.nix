@@ -36,7 +36,7 @@
     isNormalUser = true;
     # video: backlight brightness nodes. dialout: usb serial for flashing microcontrollers,
     # uaccess doesn't tag tty devices
-    extraGroups = ["networkmanager" "wheel" "video" "dialout"];
+    extraGroups = ["networkmanager" "video" "dialout"];
   };
 
   time.timeZone = "America/Los_Angeles";
