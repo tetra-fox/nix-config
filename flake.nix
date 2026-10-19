@@ -119,11 +119,6 @@
       url = "github:olafkfreund/nix-craftapps";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # upstream's eachDefaultSystem evals x86_64-darwin and fires the 26.05 deprecation warning
-    claude-code-nix = {
-      url = "github:sadjow/claude-code-nix";
-      flake = false;
-    };
     # TODO: revert to shibco/ableton-linux once #342 merges
     ableton-linux.url = "github:tetra-fox/ableton-linux/fix/fractional-config-rounding";
   };

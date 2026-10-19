@@ -202,22 +202,6 @@
         "type": "github"
       }
     },
-    "claude-code-nix": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792364479,
-        "narHash": "sha256-HZ/ssK2bqVxSRVm6MoIcdLSAYZ4s67vcl7rbeoPiv90=",
-        "owner": "sadjow",
-        "repo": "claude-code-nix",
-        "rev": "c932f70402686f018d829534d71f9e8ba7859cfb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "sadjow",
-        "repo": "claude-code-nix",
-        "type": "github"
-      }
-    },
     "colmena": {
       "inputs": {
         "nix-github-actions": "nix-github-actions",
@@ -1127,7 +1111,6 @@
         "apple-fonts": "apple-fonts",
         "artcraft": "artcraft",
         "catppuccin": "catppuccin",
-        "claude-code-nix": "claude-code-nix",
         "colmena": "colmena",
         "disko": "disko",
         "easy-hosts": "easy-hosts",
