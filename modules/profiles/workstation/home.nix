@@ -38,6 +38,19 @@ in {
 
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
 
+  # claude-code re-registers its claude-cli:// handler when this file lacks Exec="<its store
+  # path>", rewriting mimeapps.list under home-manager. this matches its check, so it never does
+  xdg.dataFile."applications/claude-code-url-handler.desktop".text = ''
+    [Desktop Entry]
+    Name=Claude Code URL Handler
+    Comment=Handle claude-cli:// deep links for Claude Code
+    Exec="${pkgs.claude-code}/bin/.claude-wrapped" --handle-uri %u
+    Type=Application
+    NoDisplay=true
+    MimeType=x-scheme-handler/claude-cli;
+  '';
+  xdg.mimeApps.defaultApplications."x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+
   home.packages = with pkgs; [
     ungoogled-chromium
 
