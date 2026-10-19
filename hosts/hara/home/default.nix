@@ -127,7 +127,38 @@ in {
         "image/sgi"
         "image/x-tga"
         "image/x-xcf"
-      ] (_: "com.interversehq.qView.desktop"));
+      ] (_: "com.interversehq.qView.desktop"))
+      # kate claims text/plain at InitialPreference=9, which wins every text subtype left undeclared
+      // (lib.genAttrs [
+        "text/plain"
+        "application/x-zerosize"
+        "text/markdown"
+        "text/x-log"
+        "text/x-patch"
+        "application/json"
+        "application/yaml"
+        "application/toml"
+        "application/xml"
+        "application/sql"
+        "text/css"
+        "text/javascript"
+        "text/x-shellscript"
+        "text/x-python"
+        "text/x-python3"
+        "text/x-nix"
+        "text/rust"
+        "text/x-go"
+        "text/x-lua"
+        "text/x-java"
+        "text/x-csrc"
+        "text/x-chdr"
+        "text/x-c++src"
+        "text/x-c++hdr"
+        "text/x-cmake"
+        "text/x-makefile"
+        "text/x-qml"
+        "text/x-tex"
+      ] (_: "codium.desktop"));
   };
 
   home.packages = with pkgs; [
