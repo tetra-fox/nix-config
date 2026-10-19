@@ -9,16 +9,12 @@
   imports = [
     modules.profiles.server.system
 
-    modules.services.media-mount.system
+    modules.services.store-mount.system
     modules.services.postgres-ha.system
   ];
 
-  # no gatedServices, the dump unit orders on the mount itself
-  lab.storage.mediaMount = {
-    enable = true;
-    mountpoint = "/mnt/pgbackup";
-    gatedServices = [];
-  };
+  # the dump unit orders on the mount itself
+  lab.storage.mounts."backup/postgres".mountpoint = "/mnt/pgbackup";
 
   lab.postgres = {
     ha = {

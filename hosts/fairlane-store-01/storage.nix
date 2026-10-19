@@ -1,4 +1,4 @@
-# /mnt/bigdisk/media                svc-01's NFS root. inner media/torrents/nzb names are baked
+# /mnt/bigdisk/media                svc-01's media share. inner media/torrents/nzb names are baked
 #                                   into svc-01's arr DBs
 # /mnt/bigdisk/backup/homeassistant HA backups pushed over NFS by HAOS
 {
@@ -11,6 +11,18 @@
   svcIp = topo.mediaHostIp;
   # HAOS's internal-VLAN leg, so HAOS must mount this box's internal IP
   haIp = config.lab.appliances.haosIp;
+
+  nfs = fleet.nfs-exports "/mnt/bigdisk" {
+    media = {
+      ips = [svcIp];
+      options = "rw,sync,no_subtree_check";
+    };
+    # HAOS connects as root
+    "backup/homeassistant" = {
+      ips = [haIp];
+      options = "rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=100";
+    };
+  };
 in {
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
@@ -36,14 +48,10 @@ in {
 
   lab.topology.provides = [caps.storage.name];
 
-  # one fsid=0 root per client, only safe because each is scoped to a single ip
   services.nfs.server = {
     enable = true;
-    exports = ''
-      /mnt/bigdisk/media ${svcIp}(rw,sync,no_subtree_check,fsid=0)
-      /mnt/bigdisk/backup/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
-    '';
+    inherit (nfs) exports;
   };
 
-  networking.firewall.extraInputRules = fleet.allow-from [svcIp haIp] [2049];
+  networking.firewall.extraInputRules = fleet.allow-from nfs.ips [2049];
 }

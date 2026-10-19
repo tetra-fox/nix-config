@@ -266,14 +266,15 @@ in {
               middlewares = mw;
             };
             netnsRoute = arrRoute false;
-          in [
-            (netnsRoute "qb" cfg.lanProxyPorts.qbittorrent)
-            (netnsRoute "sonarr" cfg.lanProxyPorts.sonarr)
-            (netnsRoute "radarr" cfg.lanProxyPorts.radarr)
-            (netnsRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
-            (arrRoute true "sabnzbd" config.services.sabnzbd.settings.misc.port)
-          ]
-          ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" config.services.slskd.settings.web.port);
+          in
+            [
+              (netnsRoute "qb" cfg.lanProxyPorts.qbittorrent)
+              (netnsRoute "sonarr" cfg.lanProxyPorts.sonarr)
+              (netnsRoute "radarr" cfg.lanProxyPorts.radarr)
+              (netnsRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
+              (arrRoute true "sabnzbd" config.services.sabnzbd.settings.misc.port)
+            ]
+            ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" config.services.slskd.settings.web.port);
         };
 
         # bindsTo takes the arrs down with the netns unit: they end up stopped, not

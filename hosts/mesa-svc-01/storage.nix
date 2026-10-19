@@ -1,13 +1,10 @@
-{
-  config,
-  modules,
-  ...
-}: {
-  imports = [modules.services.media-mount.system];
-
-  lab.storage.mediaMount = {
-    enable = true;
-    mountpoint = "/mnt/store";
+{config, ...}: {
+  lab.storage.mounts = {
+    media.mountpoint = "/mnt/store";
+    music = {
+      mountpoint = "/mnt/music";
+      gatedServices = ["jellyfin"];
+    };
   };
 
   # so service uids can co-write

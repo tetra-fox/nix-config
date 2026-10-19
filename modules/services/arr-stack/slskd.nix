@@ -6,6 +6,8 @@
   cfg = config.lab.arrStack;
   vpnNs = "wg";
   webPort = config.services.slskd.settings.web.port;
+  media = config.lab.storage.mounts.media.mountpoint;
+  music = config.lab.storage.mounts.music.mountpoint;
 in {
   options.lab.arrStack.slskd = {
     enable = lib.mkEnableOption "slskd, a soulseek client with a web ui, in the vpn netns";
@@ -39,7 +41,23 @@ in {
       group = config.lab.media.group;
       environmentFile = config.sops.templates."slskd.env".path;
       settings = {
-        shares.directories = [];
+        # the upstream unit mounts shares read-only
+        shares.directories = [music];
+        # sidecars and analysis files that aren't music
+        shares.filters = [
+          "\\.DS_Store$"
+          "(^|/)\\._"
+          "Thumbs\\.db$"
+          "\\.asd$"
+          "\\.json$"
+        ];
+        directories = {
+          downloads = "${media}/slskd/downloads";
+          incomplete = "${media}/slskd/incomplete";
+        };
+        # upstream leaves it unset, and then slskd restores its cached share list on start
+        # instead of picking up library changes
+        flags.force_share_scan = true;
         soulseek.listen_port = cfg.slskd.soulseekPort;
         # same model as the arrs: only the edge hosts can reach the web port (accessibleFrom),
         # and caddy's lan_only and forward_auth are the login
@@ -68,6 +86,8 @@ in {
         enable = true;
         vpnNamespace = vpnNs;
       };
+      # don't race the automount and scan the empty mountpoint underneath
+      unitConfig.RequiresMountsFor = [media music];
       # group-writable downloads for the rest of the media group
       serviceConfig.UMask = "0002";
     };

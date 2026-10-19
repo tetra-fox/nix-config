@@ -1,8 +1,7 @@
 {modules, ...}: {
-  imports = [modules.services.media-mount.system];
+  imports = [modules.services.store-mount.system];
 
-  lab.storage.mediaMount = {
-    enable = true;
+  lab.storage.mounts.immich = {
     mountpoint = "/mnt/immich";
     gatedServices = ["immich-server"];
   };

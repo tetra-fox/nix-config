@@ -23,29 +23,6 @@
     backup.restic = {
       enable = true;
       bucket = "mesa-512e3904";
-      # a snapshot of megamax/backup doesn't capture its child datasets
-      datasets = [
-        {
-          name = "megamax/store";
-          mountpoint = "/mnt/megamax/store";
-        }
-        {
-          name = "megamax/backup/homeassistant";
-          mountpoint = "/mnt/megamax/backup/homeassistant";
-        }
-        {
-          name = "megamax/backup/timemachine";
-          mountpoint = "/mnt/megamax/backup/timemachine";
-        }
-        {
-          name = "megamax/immich";
-          mountpoint = "/mnt/megamax/immich";
-        }
-        {
-          name = "megamax/backup/postgres";
-          mountpoint = "/mnt/megamax/backup/postgres";
-        }
-      ];
     };
   };
 

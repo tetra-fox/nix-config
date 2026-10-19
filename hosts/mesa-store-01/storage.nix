@@ -1,5 +1,6 @@
 # megamax is a hand-created raidz1 pool, zfs mounts its datasets itself:
-#   megamax/media                  library/ torrents/ nzb/ as dirs in ONE dataset, arr hardlinks can't cross datasets
+#   megamax/media                  library/ torrents/ nzb/ slskd/ as dirs in ONE dataset, arr hardlinks can't cross datasets
+#   megamax/music                  hand-curated library, edited over samba, read by services over NFS
 #   megamax/store                  per-user %U subdirs
 #   megamax/backup/homeassistant   HA backups pushed over NFS by HAOS
 #   megamax/backup/timemachine     per-user %U subdirs
@@ -12,6 +13,7 @@
   fleet,
   topo,
   caps,
+  username,
   ...
 }: let
   svcIp = topo.mediaHostIp;
@@ -26,19 +28,57 @@
   # chgrp would fight that
   groupSharedTrees = [
     "/mnt/megamax/media"
+    "/mnt/megamax/music"
   ];
 
   # mount ordering only
   servedTrees = groupSharedTrees ++ ["/mnt/megamax/store" "/mnt/megamax/backup/timemachine"];
 
-  # media is excluded on purpose, it's re-acquirable
-  snapshotDatasets = [
-    "megamax/store"
-    "megamax/immich"
-    "megamax/backup/homeassistant"
-    "megamax/backup/timemachine"
-    "megamax/backup/postgres"
-  ];
+  # zfs snapshots and the b2 backup. media is excluded on purpose, it's re-acquirable. a
+  # snapshot of megamax/backup doesn't capture its child datasets, so each is listed
+  protectedDatasets =
+    map (name: {
+      inherit name;
+      mountpoint = "/mnt/${name}";
+    }) [
+      "megamax/store"
+      "megamax/music"
+      "megamax/immich"
+      "megamax/backup/homeassistant"
+      "megamax/backup/timemachine"
+      "megamax/backup/postgres"
+    ];
+
+  # on top of the pool's zstd, atime=off, xattr=sa. recordsize only applies to new writes
+  datasetProperties = {
+    # large audio files read start to finish
+    "megamax/music".recordsize = "1M";
+  };
+
+  nfs = fleet.nfs-exports "/mnt/megamax" {
+    media = {
+      ips = [svcIp];
+      options = "rw,sync,no_subtree_check";
+    };
+    # services only read the library, writes go through samba
+    music = {
+      ips = [svcIp];
+      options = "ro,sync,no_subtree_check";
+    };
+    immich = {
+      ips = lib.optional (immichIp != null) immichIp;
+      options = "rw,sync,no_subtree_check";
+    };
+    # HAOS connects as root, and patroni's uid differs per node
+    "backup/homeassistant" = {
+      ips = [haIp];
+      options = "rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=100";
+    };
+    "backup/postgres" = {
+      ips = dbIps;
+      options = "rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=100";
+    };
+  };
 
   # samba needs a linux user to map uids, no login. the samba password is set by hand with
   # `smbpasswd -a <user>` so it never lives in the repo
@@ -63,6 +103,10 @@ in {
         "d /mnt/megamax/media/library 2775 admin media -"
         "d /mnt/megamax/media/torrents 2775 admin media -"
         "d /mnt/megamax/media/nzb 2775 admin media -"
+        "d /mnt/megamax/media/slskd 2775 admin media -"
+        "d /mnt/megamax/media/slskd/downloads 2775 admin media -"
+        "d /mnt/megamax/media/slskd/incomplete 2775 admin media -"
+        "d /mnt/megamax/music 2775 admin media -"
         "d /mnt/megamax/store 2775 admin media -"
         "d /mnt/megamax/backup/timemachine 2775 admin media -"
         # admin:users matches the NFS all_squash anonuid/anongid
@@ -97,8 +141,8 @@ in {
     };
 
     # runs after the pool mounts, NOT before zfs-mount. otherwise random shit breaks and sshd dies
-    services.megamax-snapshot-policy = {
-      description = "assert zfs auto-snapshot property on the megamax datasets";
+    services.megamax-dataset-properties = {
+      description = "assert zfs properties on the megamax datasets";
       wantedBy = ["multi-user.target"];
       after = ["zfs-mount.service"];
       before = ["nfs-server.service" "samba-smbd.service"];
@@ -106,35 +150,25 @@ in {
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart =
-          map (ds: "${config.boot.zfs.package}/bin/zfs set com.sun:auto-snapshot=true ${ds}") snapshotDatasets;
+        ExecStart = let
+          zfsSet = ds: prop: value: "${config.boot.zfs.package}/bin/zfs set ${prop}=${value} ${ds}";
+        in
+          map (ds: zfsSet ds.name "com.sun:auto-snapshot" "true") protectedDatasets
+          ++ lib.concatLists (lib.mapAttrsToList (ds: lib.mapAttrsToList (zfsSet ds)) datasetProperties);
       };
     };
   };
 
   lab.topology.provides = [caps.storage.name];
 
-  # one fsid=0 root per client, only safe because each client is a single ip. a CIDR-scoped
-  # export breaks that, export /mnt/megamax once with per-client subtrees instead.
-  # homeassistant all_squashes because HAOS connects as root
+  lab.backup.restic.datasets = protectedDatasets;
+
   services.nfs.server = {
     enable = true;
-    exports =
-      ''
-        /mnt/megamax/media ${svcIp}(rw,sync,no_subtree_check,fsid=0)
-        /mnt/megamax/backup/homeassistant ${haIp}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)
-      ''
-      + lib.optionalString (immichIp != null) ''
-        /mnt/megamax/immich ${immichIp}(rw,sync,no_subtree_check,fsid=0)
-      ''
-      # patroni's uid differs per node
-      + lib.optionalString (dbIps != []) ''
-        /mnt/megamax/backup/postgres ${lib.concatMapStringsSep " " (ip: "${ip}(rw,sync,no_subtree_check,fsid=0,all_squash,anonuid=1000,anongid=100)") dbIps}
-      '';
+    inherit (nfs) exports;
   };
 
-  networking.firewall.extraInputRules =
-    fleet.allow-from ([svcIp haIp] ++ lib.optional (immichIp != null) immichIp ++ dbIps) [2049];
+  networking.firewall.extraInputRules = fleet.allow-from nfs.ips [2049];
 
   services.samba.settings = {
     global = {
@@ -150,6 +184,21 @@ in {
       "create mask" = "0664";
       "directory mask" = "0775";
       "force group" = config.lab.media.group;
+    };
+
+    # the library you curate. group media and group-readable so services can read what you add
+    music = {
+      path = "/mnt/megamax/music";
+      browseable = "yes";
+      "read only" = "no";
+      "valid users" = "@users";
+      "write list" = username;
+      "create mask" = "0664";
+      "directory mask" = "0775";
+      "force group" = config.lab.media.group;
+      # finder litter, it would also end up shared on soulseek
+      "veto files" = "/.DS_Store/._*/Thumbs.db/";
+      "delete veto files" = "yes";
     };
 
     # per-user private subdir
