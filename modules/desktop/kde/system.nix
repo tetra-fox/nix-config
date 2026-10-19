@@ -28,7 +28,6 @@
     plasma-keyboard
     qtvirtualkeyboard
     union
-    kwin-x11
     aurorae
     qrca
   ];
