@@ -79,27 +79,28 @@ in {
   # a github token lifts the 60/hour unauthenticated api limit. !include skips a missing file
   nix.extraOptions = "!include ${config.sops.secrets."nix/access-tokens".path}";
 
-  # the per-user `store` samba share. fully qualified because only the wired profile sets the
-  # mesa search domain
-  fileSystems."/mnt/store" = {
-    device = "//mesa-store-01.mesa.tetra.cool/store";
-    fsType = "cifs";
-    options = [
-      "credentials=${config.sops.secrets."smb/store".path}"
-      "vers=3.1.1"
-      # the server requires encryption
-      "seal"
-      "uid=${username}"
-      "gid=users"
-      "nofail"
-      # caps mount and unmount, so a dead store box can't hold up an access or a shutdown for
-      # the default 90s
-      "x-systemd.mount-timeout=10s"
-      "x-systemd.automount"
-      "x-systemd.idle-timeout=600"
-      "_netdev"
-    ];
-  };
+  # samba shares on mesa-store-01, mounted at /mnt/mesa/<share>. fully qualified because only the
+  # wired profile sets the mesa search domain
+  fileSystems = lib.genAttrs' ["store" "music" "media"] (share:
+    lib.nameValuePair "/mnt/mesa/${share}" {
+      device = "//mesa-store-01.mesa.tetra.cool/${share}";
+      fsType = "cifs";
+      options = [
+        "credentials=${config.sops.secrets."smb/store".path}"
+        "vers=3.1.1"
+        # the server requires encryption
+        "seal"
+        "uid=${username}"
+        "gid=users"
+        "nofail"
+        # caps mount and unmount, so a dead store box can't hold up an access or a shutdown for
+        # the default 90s
+        "x-systemd.mount-timeout=10s"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=600"
+        "_netdev"
+      ];
+    });
 
   networking = {
     networkmanager = {
