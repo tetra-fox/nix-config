@@ -85,14 +85,17 @@ in {
           ]
           ++ localOverlays;
       })
-      {
+      ({pkgs, ...}: {
         home-manager = {
           extraSpecialArgs = specialArgs // {inherit inputs;};
           useGlobalPkgs = true;
           useUserPackages = true;
-          backupFileExtension = "bak";
+          # a fixed suffix aborts the whole activation once that backup exists
+          backupCommand = pkgs.writeShellScript "hm-backup" ''
+            ${pkgs.coreutils}/bin/mv -- "$1" "$1.$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S).bak"
+          '';
         };
-      }
+      })
     ];
   };
 
