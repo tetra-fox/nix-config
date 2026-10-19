@@ -39,6 +39,10 @@ in {
 
   services.ollama.package = pkgs.ollama-cuda;
 
+  # 125G of ram, and nix builds in /nix/var/nix/b not /tmp. the base profile's cleanOnBoot
+  # is a no-op on a fresh tmpfs
+  boot.tmp.useTmpfs = true;
+
   # TODO: temporary
   hardware.nvidia-container-toolkit.enable = true;
 
