@@ -47,6 +47,7 @@ in {
         "x-scheme-handler/about"
         "x-scheme-handler/unknown"
         "text/html"
+        "application/xhtml+xml"
       ] (_: "zen-beta.desktop"))
       // (lib.genAttrs [
         "audio/mpeg"
@@ -73,6 +74,10 @@ in {
         "audio/vnd.rn-realaudio"
         "audio/x-mpegurl"
         "audio/x-scpls"
+        "audio/x-dsf"
+        "audio/x-tak"
+        "audio/x-speex+ogg"
+        "audio/x-flac+ogg"
         "video/mp4"
         "video/x-matroska"
         "video/webm"
@@ -81,12 +86,14 @@ in {
         "video/mpeg"
         "video/x-flv"
         "video/3gpp"
+        "video/mp2t"
+        "application/mxf"
       ] (_: "vlc.desktop"))
       // (lib.genAttrs [
         "image/bmp"
         "image/x-win-bitmap"
         "image/gif"
-        "image/icns"
+        "image/x-icns"
         "image/x-icon"
         "image/jpeg"
         "image/jpg"
@@ -127,6 +134,20 @@ in {
         "image/sgi"
         "image/x-tga"
         "image/x-xcf"
+        "image/qoi"
+        "image/x-portable-anymap"
+        "image/x-eps"
+        "image/svg+xml-compressed"
+        "image/x-adobe-dng"
+        "image/x-canon-cr2"
+        "image/x-canon-cr3"
+        "image/x-nikon-nef"
+        "image/x-sony-arw"
+        "image/x-fuji-raf"
+        "image/x-olympus-orf"
+        "image/x-panasonic-rw"
+        "image/x-panasonic-rw2"
+        "image/x-pentax-pef"
       ] (_: "com.interversehq.qView.desktop"))
       # kate claims text/plain at InitialPreference=9, which wins every text subtype left undeclared
       // (lib.genAttrs [
@@ -158,7 +179,8 @@ in {
         "text/x-makefile"
         "text/x-qml"
         "text/x-tex"
-      ] (_: "codium.desktop"));
+      ] (_: "codium.desktop"))
+      // {"application/epub+zip" = "okularApplication_epub.desktop";};
   };
 
   home.packages = with pkgs; [
