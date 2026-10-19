@@ -12,6 +12,9 @@ _: {
       min-free = 536870912;
       max-free = 3221225472;
 
+      # only the nixpkgs entry the flake pins, no fetching the global registry
+      flake-registry = "";
+
       # nix-community serves nixpkgs-xr, sops-install-secrets and the home-manager manual,
       # nurpkgs serves tetra-nurpkgs. both deployers build server closures, so not hara only
       substituters = [
