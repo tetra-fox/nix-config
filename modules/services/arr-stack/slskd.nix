@@ -50,6 +50,8 @@ in {
           "Thumbs\\.db$"
           "\\.asd$"
           "\\.json$"
+          # picard's saved session at the share root
+          "^${lib.escapeRegex music}/picard\\.mbps\\.gz$"
         ];
         directories = {
           downloads = "${media}/slskd/downloads";
