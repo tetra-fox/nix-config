@@ -150,7 +150,10 @@ in {
     };
 
     input = {
-      keyboard.repeatRate = 60;
+      keyboard = {
+        repeatRate = 60;
+        numlockOnStartup = "on";
+      };
       mice = [
         {
           name = "Logitech G502";
