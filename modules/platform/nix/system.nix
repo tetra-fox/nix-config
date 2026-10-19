@@ -5,8 +5,8 @@ _: {
     settings = {
       auto-optimise-store = true;
 
-      # wheel pushes unsigned paths on remote deploys
-      trusted-users = ["root" "@wheel"];
+      # wheel pushes unsigned paths on remote deploys. root is already in the nixpkgs default
+      trusted-users = ["@wheel"];
     };
     # after nh-clean. see SCHEDULE.md
     optimise.dates = ["Mon 13:00"];

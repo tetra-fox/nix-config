@@ -4,7 +4,8 @@ _: {
   imports = [./common.nix];
 
   nix = {
-    settings.trusted-users = ["root" "@admin"];
+    # root is already in the nix-darwin default
+    settings.trusted-users = ["@admin"];
 
     # colmena builds fleet closures on the deployer. stock config: a custom one changes
     # the VM image derivation, which nothing substitutes
