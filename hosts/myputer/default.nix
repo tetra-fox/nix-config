@@ -39,7 +39,6 @@
       "hatch" # ditto
       "libimobiledevice" # ios device pairing wants the brew build
       "rhettbull/osxphotos/osxphotos"
-      "nicotine-plus" # gui app shipped as a formula, not a cask
       "podman" # backs podman-desktop
       "portaudio" # native build dep for audio tooling
       "carthage"

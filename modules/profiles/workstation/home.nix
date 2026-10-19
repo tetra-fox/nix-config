@@ -66,7 +66,6 @@ in {
 
     parsec-bin
 
-    nicotine-plus
     qbittorrent
 
     vulkan-tools
