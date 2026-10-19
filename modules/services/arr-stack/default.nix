@@ -161,6 +161,7 @@ in {
     inputs.vpn-confinement.nixosModules.default
     ./qbittorrent.nix
     ./sabnzbd.nix
+    ./slskd.nix
     ./recyclarr.nix
     ./downloadclients.nix
     ./jellyfin-notify.nix
@@ -271,7 +272,8 @@ in {
             (netnsRoute "radarr" cfg.lanProxyPorts.radarr)
             (netnsRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
             (arrRoute true "sabnzbd" config.services.sabnzbd.settings.misc.port)
-          ];
+          ]
+          ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" config.services.slskd.settings.web.port);
         };
 
         # bindsTo takes the arrs down with the netns unit: they end up stopped, not
