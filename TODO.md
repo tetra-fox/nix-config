@@ -22,6 +22,12 @@
 - fairlane-mon-01: HA has no node exporter yet, so it isn't scraped. mesa points its
   node-haos job at lab.appliances.haosIp; do the same here once the addon is installed
 
+- /etc overlay on the servers. hara runs it, the servers are still classic /etc
+  - per host: enable it, `colmena apply boot`, seed /.rw-etc/upper, reboot with the proxmox console open
+  - seed = `cp -a --parents` from /etc: ssh_host_ed25519_key(.pub), passwd group shadow subuid subgid, machine-id
+  - skip the seed and it boots with a fresh host key, sops can't decrypt anything
+  - mon first, db + vrrp pairs last. nixos-init after that
+
 - more alerts: db tier internals. etcd needs listen-metrics-urls on a separate port, and
   patroni's rest api is unauthed incl switchover -- think before opening either to mon
 - loki-based alert rules need a per-rule datasource field in mkRule first
