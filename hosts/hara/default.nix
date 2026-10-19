@@ -2,7 +2,6 @@
   config,
   lib,
   modules,
-  nixosConfigurations,
   pkgs,
   username,
   ...
@@ -58,10 +57,10 @@ in {
   # one dotenv block per NM profile in secrets/hara.yaml, plus the mount.cifs credentials file
   sops.secrets = lib.genAttrs (nmSecrets ++ ["smb/store"]) (_: {});
 
-  # the per-user `store` samba share. by IP because hara's resolver isn't the site's bind, so
-  # the host name falls through to the public record
+  # the per-user `store` samba share. fully qualified because only the wired profile sets the
+  # mesa search domain
   fileSystems."/mnt/store" = {
-    device = "//${nixosConfigurations.mesa-store-01.config.lab.site.hostIp}/store";
+    device = "//mesa-store-01.mesa.tetra.cool/store";
     fsType = "cifs";
     options = [
       "credentials=${config.sops.secrets."smb/store".path}"
