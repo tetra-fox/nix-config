@@ -43,6 +43,10 @@ in {
   # is a no-op on a fresh tmpfs
   boot.tmp.useTmpfs = true;
 
+  # /etc is an erofs image under a writable overlay at /.rw-etc/upper, which holds the state
+  # nothing generates: ssh host keys (sops' age key), userborn's passwd/shadow, machine-id
+  system.etc.overlay.enable = true;
+
   # sched_ext scheduler tuned for interactive and game threads under load
   services.scx = {
     enable = true;
