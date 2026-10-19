@@ -59,6 +59,8 @@
   # perl, and disko + proxmox-vm stand in for the hardware config it writes
   system.tools.nixos-generate-config.enable = false;
 
+  zramSwap.enable = lib.mkDefault true;
+
   # also replaces su with sudo-rs's
   security.sudo-rs.enable = true;
 
