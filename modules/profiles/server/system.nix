@@ -32,7 +32,7 @@
   environment.variables.BROWSER = "echo";
 
   # safe only because servers are ssh-key only with no physical access
-  security.sudo.wheelNeedsPassword = lib.mkDefault false;
+  security.sudo-rs.wheelNeedsPassword = lib.mkDefault false;
 
   networking = {
     useDHCP = lib.mkDefault true;

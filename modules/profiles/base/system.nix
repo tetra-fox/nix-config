@@ -57,6 +57,9 @@
   # the nixpkgs default minus perl
   environment.defaultPackages = [pkgs.rsync pkgs.strace];
 
+  # also replaces su with sudo-rs's
+  security.sudo-rs.enable = true;
+
   # earlyoom is the only oom killer
   systemd.oomd.enable = lib.mkForce false;
 
