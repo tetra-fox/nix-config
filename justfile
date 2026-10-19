@@ -25,9 +25,9 @@ fleet-test:
 vm-test name:
     nix build .#checks.x86_64-linux.{{name}} -L --no-link
 
-# rebuild this host; args pass through to rebuild.sh (e.g. `just rebuild boot`, `just rebuild --target-host mesa-svc-01`)
-rebuild *args:
-    bash modules/cli/rebuild/_rebuild.sh {{ args }}
+# rebuild this host with nh (e.g. `just rebuild boot`). servers deploy through colmena
+rebuild action="switch" *args:
+    nh {{ if os() == "macos" { "darwin" } else { "os" } }} {{ action }} . {{ args }}
 
 # regenerate topology SVGs under images/topology
 update-topology:

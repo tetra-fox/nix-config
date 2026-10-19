@@ -7,7 +7,6 @@
 }: {
   imports = [
     modules.profiles.base.system
-    modules.cli.rebuild.system
 
     modules.services.monitoring.system
 
