@@ -1,0 +1,11 @@
+div.pf-c-brand {
+  display: none !important;
+}
+
+.pf-c-login::before {
+  background-color: rgba(0, 0, 0, 0.33);
+}
+
+ak-brand-links {
+  display: none;
+}

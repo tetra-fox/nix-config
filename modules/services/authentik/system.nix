@@ -87,12 +87,52 @@
       attrs: { order: 10 }
   '';
 
+  # the folders users sit under in the admin ui. authentik keeps its outpost accounts
+  # under goauthentik.io/outposts and resets that path itself
+  usersPath = "${config.lab.site.domain}/users";
+  pathsBlueprint = pkgs.writeText "paths.yaml" ''
+    version: 1
+    metadata:
+      name: paths
+    entries:
+    - model: authentik_stages_user_write.userwritestage
+      identifiers: { name: enroll-user-write }
+      attrs: { user_path_template: ${q usersPath} }
+    - model: authentik_core.user
+      identifiers: { username: ${q cfg.ldapBindUser} }
+      attrs: { path: ${q "${config.lab.site.domain}/service-accounts"} }
+  '';
+
+  # ./assets is mounted read-only at this path under the server's file storage root
+  # (/data/media/public), so file fields name it relative to that. an app picks up
+  # assets/icons/<slug>.svg by its file name
+  assetsDir = "repo";
+  assetsBlueprint = pkgs.writeText "assets.yaml" ''
+    version: 1
+    metadata:
+      name: assets
+    entries:
+    - model: authentik_brands.brand
+      identifiers: { default: true }
+      attrs:
+        branding_logo: /static/dist/assets/icons/icon_left_brand.svg
+        branding_favicon: /static/dist/assets/icons/icon_pride_trans.png
+        branding_default_flow_background: ${q "${assetsDir}/background.png"}
+        branding_custom_css: ${q (builtins.readFile ./assets/custom.css)}
+    ${lib.concatMapStrings (icon: ''
+      - model: authentik_core.application
+        identifiers: { slug: ${q (lib.removeSuffix ".svg" icon)} }
+        attrs: { meta_icon: ${q "${assetsDir}/icons/${icon}"} }
+    '') (lib.attrNames (builtins.readDir ./assets/icons))}'';
+
   # copied, not symlinked: links into the store don't resolve inside the container
   blueprintsDir = pkgs.runCommand "authentik-blueprints" {nativeBuildInputs = [pkgs.yq-go];} ''
     mkdir $out
     cp ${./blueprints}/*.yaml $out/
     cp ${forwardAuthBlueprint} $out/forward-auth.yaml
     cp ${ldapBlueprint} $out/ldap.yaml
+    cp ${pathsBlueprint} $out/paths.yaml
+    cp ${assetsBlueprint} $out/assets.yaml
     for f in $out/*.yaml; do yq e . "$f" > /dev/null; done
   '';
 
@@ -111,6 +151,9 @@
       AUTHENTIK_WEB__WORKERS = "4";
       # scheme and host only, no path
       AUTHENTIK_WEB__BASE_URL = "https://${authHost}";
+      # seconds a failed-login score lasts before the reputation policies forget it.
+      # each failure restarts it
+      AUTHENTIK_REPUTATION__EXPIRY = "3600";
     };
     environmentFiles = [config.sops.templates."authentik.env".path];
     extraOptions = [
@@ -213,6 +256,7 @@ in {
           volumes = [
             authentikDataVol
             authentikTemplatesVol
+            "${./assets}:/data/media/public/${assetsDir}:ro"
           ];
         };
 
