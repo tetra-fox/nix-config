@@ -12,9 +12,10 @@
   configFile = "${config.services.jellyfin.dataDir}/plugins/configurations/LDAP-Auth.xml";
 
   # group names from modules/services/authentik/blueprints/groups.yaml. ldap memberOf
-  # only carries direct memberships, so superadmin, which inherits sysadmin, is matched
-  # on its own
+  # only carries direct memberships, so every group that inherits jellyfin_users (or
+  # sysadmin, for admins) is listed itself
   memberOf = group: "(memberOf=cn=${group},ou=groups,${ldap.baseDn})";
+  anyOf = groups: "(|${lib.concatMapStrings memberOf groups})";
   settings = pkgs.writeText "ldap-auth-settings.json" (builtins.toJSON {
     LdapServer = ldap.ip;
     LdapPort = ldap.port;
@@ -23,11 +24,13 @@
     UseStartTls = false;
     LdapBindUser = "cn=${ldap.bindUser},ou=users,${ldap.baseDn}";
     LdapBaseDn = ldap.baseDn;
-    LdapSearchFilter = memberOf "jellyfin_users";
-    LdapAdminFilter = "(|${memberOf "sysadmin"}${memberOf "superadmin"})";
+    LdapSearchFilter = anyOf ["jellyfin_users" "local_users" "superadmin"];
+    LdapAdminFilter = anyOf ["sysadmin" "superadmin"];
     LdapUidAttribute = "uid";
     LdapUsernameAttribute = "cn";
     CreateUsersFromLdap = true;
+    # applied to accounts the plugin creates, existing accounts keep their own library access
+    EnableAllFolders = true;
   });
 
   # the password comes from a file so it never lands in an argv

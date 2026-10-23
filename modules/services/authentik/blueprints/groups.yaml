@@ -36,7 +36,7 @@ entries:
   - model: authentik_core.group
     id: local_users
     identifiers: { name: local_users }
-    attrs: { is_superuser: false, parents: [] }
+    attrs: { is_superuser: false, parents: [!KeyOf jellyfin_users] }
 
   - model: authentik_core.group
     identifiers: { name: superadmin }
