@@ -3,9 +3,10 @@ metadata:
   name: groups
 entries:
   # the tree only, members stay runtime. a group inherits from its parents, so a member of
-  # superadmin is in every group below it. superadmin is everything, sysadmin is admin on
-  # the infra (proxmox, grafana). the oidc groups claim carries the inherited groups (see
-  # oidc-providers.yaml), ldap memberOf only carries direct ones
+  # superadmin is in every group below it. superadmin is everything, sysadmin is the admin
+  # role inside whichever apps a user can reach, *_users groups gate access. the oidc
+  # groups claim carries the inherited groups (see oidc-providers.yaml), ldap memberOf
+  # only carries direct ones
   - model: authentik_core.group
     id: pve_viewer
     identifiers: { name: pve_viewer }
@@ -23,10 +24,6 @@ entries:
     id: immich_users
     identifiers: { name: immich_users }
     attrs: { is_superuser: false, parents: [] }
-  - model: authentik_core.group
-    id: immich_admins
-    identifiers: { name: immich_admins }
-    attrs: { is_superuser: false, parents: [!KeyOf immich_users] }
 
   - model: authentik_core.group
     id: arr_users
@@ -47,7 +44,12 @@ entries:
       is_superuser: true
       parents:
         - !KeyOf sysadmin
-        - !KeyOf immich_admins
+        - !KeyOf immich_users
         - !KeyOf arr_users
         - !KeyOf jellyfin_users
         - !KeyOf local_users
+
+  # replaced by sysadmin
+  - model: authentik_core.group
+    identifiers: { name: immich_admins }
+    state: absent
