@@ -2,8 +2,22 @@ version: 1
 metadata:
   name: grafana-access
 entries:
-  # an unbound app admits every user. grafana's role mapping (hosts/mesa-mon-01) makes
-  # anyone outside superadmin and sysadmin a Viewer, which can't edit dashboards or settings
+  # the tenant's core_default_app_access flag is off (set through the api, it isn't
+  # blueprintable), so an app with no binding admits nobody. grafana is open to every
+  # user, and its role mapping (hosts/mesa-mon-01) makes anyone outside superadmin and
+  # sysadmin a Viewer, which can't edit dashboards or settings
+  - model: authentik_policies_expression.expressionpolicy
+    id: any-user
+    identifiers: { name: any-authenticated-user }
+    attrs:
+      expression: |
+        return request.user.is_authenticated
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !Find [authentik_core.application, [slug, grafana]]
+      policy: !KeyOf any-user
+    attrs: { order: 0 }
+
   - model: authentik_policies.policybinding
     identifiers:
       target: !Find [authentik_core.application, [slug, grafana]]

@@ -100,6 +100,22 @@ entries:
         order: 4,
       }
 
+  # the 2fa setup screens have no way back to the method picker, only retry, so this
+  # says how to choose again
+  - model: authentik_stages_prompt.prompt
+    id: field-mfa-notice
+    identifiers: { name: enroll-field-mfa-notice }
+    attrs:
+      field_key: mfa_notice
+      label: Two-factor sign in
+      type: alert_info
+      required: false
+      order: 5
+      initial_value: >-
+        Next you'll set up a passkey or an authenticator app. If you change your mind
+        partway through, close the page, sign in with your new username and password,
+        and you'll get to pick again.
+
   - model: authentik_stages_prompt.promptstage
     id: prompt
     identifiers: { name: enroll-prompt }
@@ -110,6 +126,7 @@ entries:
         - !KeyOf field-email
         - !KeyOf field-password
         - !KeyOf field-password-repeat
+        - !KeyOf field-mfa-notice
       # every validation policy has to pass, so only the password rules go here
       validation_policies:
         - !Find [
@@ -117,7 +134,8 @@ entries:
             [name, default-password-change-password-policy],
           ]
 
-  # external users are refused the user interface, so no apps or password change
+  # external users are refused the user interface, so no apps or password change. the
+  # path template comes from the site domain (system.nix, paths.yaml)
   - model: authentik_stages_user_write.userwritestage
     id: write
     identifiers: { name: enroll-user-write }
@@ -136,5 +154,11 @@ entries:
     identifiers: { target: !KeyOf flow, stage: !KeyOf prompt, order: 20 }
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf flow, stage: !KeyOf write, order: 30 }
+  # 2fa setup before the first login, the same stage login.yaml enforces on every login
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, login-mfa]]
+      order: 35
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf flow, stage: !KeyOf login, order: 40 }

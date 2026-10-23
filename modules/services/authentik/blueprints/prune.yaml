@@ -11,6 +11,8 @@ entries:
   #   default/flow-default-provider-authorization-explicit-consent.yaml
   #   default/flow-default-request-flow.yaml
   #   default/flow-default-source-{authentication,enrollment,pre-authentication}.yaml
+  #   default/flow-default-authenticator-static-setup.yaml
+  #   default/flow-default-authenticator-{totp,webauthn}-setup.yaml (replaced in login.yaml)
   #   default/flow-oobe.yaml
   #   default/rbac-role-{agents,read-only}.yaml
   # a blueprint can't do it: the instance serializer requires path, and validating path
@@ -61,6 +63,14 @@ entries:
 
   - model: authentik_flows.flow
     identifiers: { slug: default-source-pre-authentication }
+    state: absent
+
+  # 2fa is totp or passkeys only (login.yaml)
+  - model: authentik_flows.flow
+    identifiers: { slug: default-authenticator-static-setup }
+    state: absent
+  - model: authentik_stages_authenticator_static.authenticatorstaticstage
+    identifiers: { name: default-authenticator-static-setup }
     state: absent
 
   # setup is recorded on the tenant, nothing reads this flow afterwards. its login stage

@@ -14,13 +14,57 @@ entries:
       configure_flow: !Find [authentik_flows.flow, [slug, default-password-change]]
       failed_attempts_before_cancel: 5
 
-  # also the identification stage's passkey stage
+  # the 2fa methods. the method picker titles each with its stage name, and a new device
+  # is called by friendly_name. each configure_flow is what the settings page runs to
+  # add a device
+  - model: authentik_flows.flow
+    id: passkey-setup
+    identifiers: { slug: passkey-setup }
+    attrs:
+      name: Set up a passkey
+      title: Set up a passkey
+      designation: stage_configuration
+      authentication: require_authenticated
+  - model: authentik_stages_authenticator_webauthn.authenticatorwebauthnstage
+    id: passkey
+    identifiers: { name: Passkey }
+    attrs:
+      friendly_name: Passkey
+      configure_flow: !KeyOf passkey-setup
+      # discoverable, so it can sign in from the identification stage without a username
+      resident_key_requirement: required
+      user_verification: preferred
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf passkey-setup, stage: !KeyOf passkey, order: 0 }
+
+  - model: authentik_flows.flow
+    id: totp-setup
+    identifiers: { slug: authenticator-app-setup }
+    attrs:
+      name: Set up an authenticator app
+      title: Set up an authenticator app
+      designation: stage_configuration
+      authentication: require_authenticated
+  - model: authentik_stages_authenticator_totp.authenticatortotpstage
+    id: totp
+    identifiers: { name: Authenticator app }
+    attrs:
+      friendly_name: Authenticator app
+      configure_flow: !KeyOf totp-setup
+      digits: "6"
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf totp-setup, stage: !KeyOf totp, order: 0 }
+
+  # also the identification stage's passkey stage, and enroll and recovery bind it too.
+  # a user with no device sets one up here, so every login ends with 2fa
   - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
     id: mfa
     identifiers: { name: login-mfa }
     attrs:
-      device_classes: [static, totp, webauthn]
-      not_configured_action: skip
+      # no static recovery codes, a locked out user gets an admin recovery link instead
+      device_classes: [totp, webauthn]
+      not_configured_action: configure
+      configuration_stages: [!KeyOf passkey, !KeyOf totp]
       last_auth_threshold: minutes=1
       webauthn_user_verification: preferred
 
@@ -65,6 +109,17 @@ entries:
       layout: sidebar_left
       compatibility_mode: true
       denied_action: message_continue
+
+  # passes for an address whose failed logins brought its score down to the threshold,
+  # so the binding is negated. by ip only: a username check would let anyone lock a user
+  # out by guessing at their name. scores expire after AUTHENTIK_REPUTATION__EXPIRY
+  - model: authentik_policies_reputation.reputationpolicy
+    id: reputation
+    identifiers: { name: login-reputation }
+    attrs: { check_ip: true, check_username: false, threshold: -5 }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf login, policy: !KeyOf reputation, order: 0 }
+    attrs: { negate: true }
 
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf login, stage: !KeyOf identification, order: 10 }
@@ -122,4 +177,18 @@ entries:
     state: absent
   - model: authentik_policies_expression.expressionpolicy
     identifiers: { name: default-authentication-flow-authenticator-validate-stage }
+    state: absent
+  # replaced by the passkey and authenticator app stages above. devices only reference
+  # their user, so existing ones survive
+  - model: authentik_flows.flow
+    identifiers: { slug: default-authenticator-webauthn-setup }
+    state: absent
+  - model: authentik_stages_authenticator_webauthn.authenticatorwebauthnstage
+    identifiers: { name: default-authenticator-webauthn-setup }
+    state: absent
+  - model: authentik_flows.flow
+    identifiers: { slug: default-authenticator-totp-setup }
+    state: absent
+  - model: authentik_stages_authenticator_totp.authenticatortotpstage
+    identifiers: { name: default-authenticator-totp-setup }
     state: absent

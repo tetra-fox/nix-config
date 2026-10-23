@@ -23,6 +23,13 @@ entries:
       target: !KeyOf flow
       stage: !Find [authentik_stages_user_write.userwritestage, [name, default-password-change-write]]
       order: 20
+  # a link resets the password, not 2fa. someone who lost their device needs it deleted
+  # by an admin first, then this sets up a new one
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf flow
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, login-mfa]]
+      order: 25
   - model: authentik_flows.flowstagebinding
     identifiers:
       target: !KeyOf flow

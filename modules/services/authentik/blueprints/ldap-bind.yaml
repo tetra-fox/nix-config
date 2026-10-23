@@ -39,4 +39,16 @@ entries:
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf flow, stage: !KeyOf identification, order: 10 }
   - model: authentik_flows.flowstagebinding
+    id: login-binding
     identifiers: { target: !KeyOf flow, stage: !KeyOf login, order: 20 }
+
+  # every bind arrives from the ldap client's address (jellyfin's), so this goes by
+  # username instead of ip. it sits on the login stage because the username is only
+  # known after identification. negated: it passes for a username that failed too often
+  - model: authentik_policies_reputation.reputationpolicy
+    id: reputation
+    identifiers: { name: ldap-bind-reputation }
+    attrs: { check_ip: false, check_username: true, threshold: -5 }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf login-binding, policy: !KeyOf reputation, order: 0 }
+    attrs: { negate: true }
