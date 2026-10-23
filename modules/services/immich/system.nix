@@ -280,8 +280,9 @@ in {
           mobileRedirectUri = "";
           profileSigningAlgorithm = "none";
           prompt = "";
-          roleClaim = "immich_role";
-          scope = "openid email profile";
+          # authentik's application entitlements (admin, user) arrive as `roles`
+          roleClaim = "roles";
+          scope = "openid email profile entitlements";
           signingAlgorithm = "RS256";
           storageLabelClaim = "preferred_username";
           storageQuotaClaim = "immich_quota";

@@ -22,14 +22,38 @@ entries:
             "picture": avatar if avatar and not avatar.startswith("data:") else None,
         })
 
-  # immich's oauth roleClaim. sysadmin is the admin group across apps
+  # roles inside an app, granted to groups. a client that asks for the entitlements scope
+  # gets their names in the `roles` claim. sysadmin is the admin role across apps
+  - model: authentik_core.applicationentitlement
+    id: immich-admin
+    identifiers: { app: !Find [authentik_core.application, [slug, immich]], name: admin }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf immich-admin, group: !Find [authentik_core.group, [name, sysadmin]] }
+    attrs: { order: 0 }
+  # immich only applies a role claim of admin or user, anything else leaves the account as is
+  - model: authentik_core.applicationentitlement
+    id: immich-user
+    identifiers: { app: !Find [authentik_core.application, [slug, immich]], name: user }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf immich-user, group: !Find [authentik_core.group, [name, immich_users]] }
+    attrs: { order: 0 }
+
+  - model: authentik_core.applicationentitlement
+    id: grafana-server-admin
+    identifiers: { app: !Find [authentik_core.application, [slug, grafana]], name: GrafanaAdmin }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf grafana-server-admin, group: !Find [authentik_core.group, [name, superadmin]] }
+    attrs: { order: 0 }
+  - model: authentik_core.applicationentitlement
+    id: grafana-admin
+    identifiers: { app: !Find [authentik_core.application, [slug, grafana]], name: Admin }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf grafana-admin, group: !Find [authentik_core.group, [name, sysadmin]] }
+    attrs: { order: 0 }
+
   - model: authentik_providers_oauth2.scopemapping
-    id: immich-role
     identifiers: { name: immich role }
-    attrs:
-      scope_name: profile
-      expression: |
-        return {"immich_role": "admin" if ak_is_group_member(request.user, name="sysadmin") else "user"}
+    state: absent
 
   # every client here does an authorization code login. proxy providers reset their own
   # grant types and mappings on save, so they aren't listed
@@ -37,26 +61,28 @@ entries:
     identifiers: { name: Provider for Grafana }
     attrs:
       grant_types: [authorization_code, refresh_token]
+      # generated once through the api (10 years), the key itself stays out of the repo
+      signing_key: &signing !Find [authentik_crypto.certificatekeypair, [name, oidc-signing]]
       property_mappings: &mappings
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
         - !KeyOf profile
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-entitlements]]
   - model: authentik_providers_oauth2.oauth2provider
     identifiers: { name: Provider for Home Assistant }
     attrs:
       grant_types: [authorization_code, refresh_token]
+      signing_key: *signing
       property_mappings: *mappings
   - model: authentik_providers_oauth2.oauth2provider
     identifiers: { name: Provider for Proxmox VE }
     attrs:
       grant_types: [authorization_code, refresh_token]
+      signing_key: *signing
       property_mappings: *mappings
   - model: authentik_providers_oauth2.oauth2provider
     identifiers: { name: Provider for Immich }
     attrs:
       grant_types: [authorization_code, refresh_token]
-      property_mappings:
-        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
-        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
-        - !KeyOf profile
-        - !KeyOf immich-role
+      signing_key: *signing
+      property_mappings: *mappings

@@ -42,15 +42,16 @@ in {
       # not a secret
       client_id = "Wn5qil44lN5vTsbO7qDzpjl34ZB0oK2tzD3UrOaE";
       client_secret = "$__file{${config.sops.secrets."monitoring/grafana_oauth_client_secret".path}}";
-      scopes = "openid email profile";
+      scopes = "openid email profile entitlements";
       auth_url = "${authUrl}/application/o/authorize/";
       token_url = "${authUrl}/application/o/token/";
       api_url = "${authUrl}/application/o/userinfo/";
       signout_redirect_url = "${authUrl}/application/o/grafana/end-session/";
       login_attribute_path = "preferred_username";
       email_attribute_name = "email";
-      # every authentik user gets in, everyone below sysadmin as a read-only Viewer
-      role_attribute_path = "contains(groups, 'superadmin') && 'GrafanaAdmin' || contains(groups, 'sysadmin') && 'Admin' || 'Viewer'";
+      # every authentik user gets in. grafana's application entitlements (GrafanaAdmin,
+      # Admin) arrive as `roles`, anyone with neither is a read-only Viewer
+      role_attribute_path = "contains(roles || `[]`, 'GrafanaAdmin') && 'GrafanaAdmin' || contains(roles || `[]`, 'Admin') && 'Admin' || 'Viewer'";
     };
   };
 }
