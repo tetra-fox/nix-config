@@ -268,21 +268,21 @@ in {
           # input firewall. sabnzbd is outside the netns
           routes = let
             mw = ["lan_only"] ++ lib.optional (topo.authServerIp != null) "forward_auth";
-            arrRoute = openFirewall: sub: port: {
+            arrRoute = openFirewall: title: sub: port: {
               host = routeHost sub;
-              inherit port openFirewall;
+              inherit title port openFirewall;
               middlewares = mw;
             };
             netnsRoute = arrRoute false;
           in
             [
-              (netnsRoute "qb" cfg.lanProxyPorts.qbittorrent)
-              (netnsRoute "sonarr" cfg.lanProxyPorts.sonarr)
-              (netnsRoute "radarr" cfg.lanProxyPorts.radarr)
-              (netnsRoute "prowlarr" cfg.lanProxyPorts.prowlarr)
-              (arrRoute true "sabnzbd" config.services.sabnzbd.settings.misc.port)
+              (netnsRoute "qBittorrent" "qb" cfg.lanProxyPorts.qbittorrent)
+              (netnsRoute "Sonarr" "sonarr" cfg.lanProxyPorts.sonarr)
+              (netnsRoute "Radarr" "radarr" cfg.lanProxyPorts.radarr)
+              (netnsRoute "Prowlarr" "prowlarr" cfg.lanProxyPorts.prowlarr)
+              (arrRoute true "SABnzbd" "sabnzbd" config.services.sabnzbd.settings.misc.port)
             ]
-            ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" config.services.slskd.settings.web.port);
+            ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" "slskd" config.services.slskd.settings.web.port);
         };
 
         # bindsTo takes the arrs down with the netns unit: they end up stopped, not

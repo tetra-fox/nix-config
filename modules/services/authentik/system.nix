@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   modules,
   topo,
   caps,
@@ -17,6 +18,83 @@
 
   dbHost = topo.dbEndpointIp;
   authHost = "auth.${config.lab.site.domain}";
+
+  # a proxy provider, application and group binding per forward_auth route, all served
+  # by the embedded outpost. blueprints never delete what they stop declaring, so a
+  # route that drops forward_auth leaves its app behind, detached from the outpost
+  forwardAuthApps = map (r: rec {
+    inherit (r) host;
+    title =
+      if r.title != null
+      then r.title
+      else lib.head (lib.splitString "." r.host);
+    slug = lib.replaceStrings [" "] ["-"] (lib.toLower title);
+  }) (lib.filter (r: lib.elem "forward_auth" r.middlewares) topo.routesInSite);
+  q = builtins.toJSON;
+  forwardAuthEntries = a: ''
+    - model: authentik_providers_proxy.proxyprovider
+      id: provider-${a.slug}
+      identifiers: { name: ${q "Provider for ${a.title}"} }
+      attrs:
+        mode: forward_single
+        external_host: ${q "https://${a.host}"}
+        authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+        invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+    - model: authentik_core.application
+      id: app-${a.slug}
+      identifiers: { slug: ${q a.slug} }
+      attrs: { name: ${q a.title}, provider: !KeyOf provider-${a.slug} }
+    - model: authentik_policies.policybinding
+      identifiers:
+        target: !KeyOf app-${a.slug}
+        group: !Find [authentik_core.group, [name, ${q cfg.forwardAuthGroup}]]
+      attrs: { order: 0 }
+  '';
+  forwardAuthBlueprint = pkgs.writeText "forward-auth.yaml" ''
+    version: 1
+    metadata:
+      name: forward-auth
+    entries:
+    ${lib.concatMapStrings forwardAuthEntries forwardAuthApps}
+    - model: authentik_outposts.outpost
+      identifiers: { managed: goauthentik.io/outposts/embedded }
+      attrs:
+        providers:
+    ${lib.concatMapStrings (a: "      - !KeyOf provider-${a.slug}\n") forwardAuthApps}'';
+
+  ldapBlueprint = pkgs.writeText "ldap.yaml" ''
+    version: 1
+    metadata:
+      name: ldap
+    entries:
+    - model: authentik_providers_ldap.ldapprovider
+      identifiers: { name: Provider for Jellyfin }
+      attrs:
+        base_dn: ${q cfg.ldapBaseDn}
+        authorization_flow: !Find [authentik_flows.flow, [slug, ldap-bind]]
+    ${lib.optionalString (topo.mediaHost != null) ''
+      # the dashboard hides apps without a launch url, and an ldap provider has none
+      - model: authentik_core.application
+        identifiers: { slug: jellyfin }
+        attrs: { meta_launch_url: ${q "https://${topo.mediaHost}"} }
+    ''}
+    # bound to the app directly rather than through jellyfin_users, which jellyfin's
+    # user search filters on
+    - model: authentik_policies.policybinding
+      identifiers:
+        target: !Find [authentik_core.application, [slug, jellyfin]]
+        user: !Find [authentik_core.user, [username, ${q cfg.ldapBindUser}]]
+      attrs: { order: 10 }
+  '';
+
+  # copied, not symlinked: links into the store don't resolve inside the container
+  blueprintsDir = pkgs.runCommand "authentik-blueprints" {nativeBuildInputs = [pkgs.yq-go];} ''
+    mkdir $out
+    cp ${./blueprints}/*.yaml $out/
+    cp ${forwardAuthBlueprint} $out/forward-auth.yaml
+    cp ${ldapBlueprint} $out/ldap.yaml
+    for f in $out/*.yaml; do yq e . "$f" > /dev/null; done
+  '';
 
   authentikBase = {
     image = "ghcr.io/goauthentik/server:${authentikTag}";
@@ -56,6 +134,25 @@ in {
       type = lib.types.port;
       readOnly = true;
       default = 9000;
+    };
+
+    forwardAuthGroup = lib.mkOption {
+      type = lib.types.str;
+      default = "arr_users";
+      description = "group bound to every forward_auth route's app; must already exist in authentik";
+    };
+
+    ldapBaseDn = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      default = lib.concatMapStringsSep "," (part: "DC=${part}") (lib.splitString "." config.lab.site.domain);
+      description = "base DN of the LDAP outpost, built from the site domain";
+    };
+
+    ldapBindUser = lib.mkOption {
+      type = lib.types.str;
+      default = "ldapservice";
+      description = "service account LDAP clients bind and search as; its app password is the bind password";
     };
 
     ldapPort = lib.mkOption {
@@ -128,7 +225,7 @@ in {
             authentikDataVol
             "${siteData}/authentik/certs:/certs"
             authentikTemplatesVol
-            "${./blueprints}:/blueprints/custom:ro"
+            "${blueprintsDir}:/blueprints/custom:ro"
           ];
         };
 

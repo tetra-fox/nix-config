@@ -4,7 +4,7 @@
   caps,
   ...
 }: {
-  imports = [./apikey.nix];
+  imports = [./apikey.nix ./ldap.nix];
 
   # upstream has no port option, 8096 is baked into its kestrel config
   options.lab.jellyfin.port = lib.mkOption {
@@ -13,12 +13,18 @@
     default = 8096;
   };
 
+  # read by authentik for the app's launch url, the ldap provider has none of its own
+  options.lab.jellyfin.host = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    default = "jellyfin.${config.lab.site.domain}";
+  };
+
   config = {
     lab.topology.provides = [caps.media.name];
     lab.topology.routes = [
       {
-        host = "jellyfin.${config.lab.site.domain}";
-        port = config.lab.jellyfin.port;
+        inherit (config.lab.jellyfin) host port;
       }
     ];
 

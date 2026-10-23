@@ -69,4 +69,19 @@ in
 
     # for caddy's forward-auth upstream
     authServerPort = inputOfProviding caps.authServer.name (c: c.lab.authentik.port) null;
+
+    # for the authentik app's launch url
+    mediaHost = inputOfProviding caps.media.name (c: c.lab.jellyfin.host) null;
+
+    # for ldap clients (jellyfin). the outpost publishes on the internal VLAN, which ipOf picks
+    authLdap = let
+      ip = ipProviding caps.authLdap.name;
+    in
+      inputOfProviding caps.authLdap.name (c: {
+        inherit ip;
+        port = c.lab.authentik.ldapPort;
+        baseDn = c.lab.authentik.ldapBaseDn;
+        bindUser = c.lab.authentik.ldapBindUser;
+      })
+      null;
   }

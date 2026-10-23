@@ -24,6 +24,12 @@
               description = "the vhost FQDN, e.g. immich.mesa.tetra.cool";
               example = "immich.mesa.tetra.cool";
             };
+            title = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "display name, used for the authentik app a forward_auth route gets; null = the host's first label";
+              example = "qBittorrent";
+            };
             port = lib.mkOption {
               type = lib.types.port;
               description = "the port the service listens on, on the declaring host";

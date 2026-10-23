@@ -3,7 +3,8 @@ metadata:
   name: ldap-bind
 entries:
   # the login flow's mfa stage can't be answered by ldap clients, so a user with an
-  # authenticator could never bind. this flow is password only
+  # authenticator could never bind. this flow is password only. the provider that uses
+  # it is rendered in nix (system.nix, ldap.yaml)
   - model: authentik_flows.flow
     id: flow
     identifiers: { slug: ldap-bind }
@@ -39,8 +40,3 @@ entries:
     identifiers: { target: !KeyOf flow, stage: !KeyOf identification, order: 10 }
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf flow, stage: !KeyOf login, order: 20 }
-
-  - model: authentik_providers_ldap.ldapprovider
-    identifiers: { name: Provider for Jellyfin }
-    attrs:
-      authorization_flow: !KeyOf flow
