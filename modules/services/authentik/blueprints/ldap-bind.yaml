@@ -1,0 +1,46 @@
+version: 1
+metadata:
+  name: ldap-bind
+entries:
+  # the login flow's mfa stage can't be answered by ldap clients, so a user with an
+  # authenticator could never bind. this flow is password only
+  - model: authentik_flows.flow
+    id: flow
+    identifiers: { slug: ldap-bind }
+    attrs:
+      name: LDAP bind
+      title: LDAP bind
+      designation: authentication
+      authentication: none
+
+  # token backend so service accounts can bind with an app password
+  - model: authentik_stages_password.passwordstage
+    id: password
+    identifiers: { name: ldap-bind-password }
+    attrs:
+      backends:
+        - authentik.core.auth.InbuiltBackend
+        - authentik.core.auth.TokenBackend
+
+  # the outpost sends the password with the identification challenge, so the password
+  # stage is embedded here rather than bound to the flow
+  - model: authentik_stages_identification.identificationstage
+    id: identification
+    identifiers: { name: ldap-bind-identification }
+    attrs:
+      user_fields: [username]
+      password_stage: !KeyOf password
+
+  - model: authentik_stages_user_login.userloginstage
+    id: login
+    identifiers: { name: ldap-bind-login }
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf flow, stage: !KeyOf identification, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf flow, stage: !KeyOf login, order: 20 }
+
+  - model: authentik_providers_ldap.ldapprovider
+    identifiers: { name: Provider for Jellyfin }
+    attrs:
+      authorization_flow: !KeyOf flow
