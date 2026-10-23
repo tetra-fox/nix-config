@@ -374,28 +374,33 @@ ak-form-static {
   border-radius: 10px;
 }
 
-/* the 2fa method picker: each option is a row with an icon tile and a chevron. modal
-   footers are ak-c-fieldsets too, hence the scope */
-ak-flow-executor fieldset.ak-c-fieldset {
+/* the 2fa method picker: each option is a row with an icon tile and a chevron. shadycss
+   adds a scope class to authentik's own selectors, so these carry the card's class to
+   outrank them. it also keeps them off modal footers, which are ak-c-fieldsets too.
+   fieldsets default to min-content width, which lets the rows push past the card */
+.pf-c-login__main fieldset.ak-c-fieldset {
   border: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
+  min-inline-size: 0 !important;
   background: none !important;
 }
-ak-flow-executor fieldset.ak-c-fieldset legend.pf-c-title {
-  margin-bottom: 8px !important;
+.pf-c-login__main fieldset.ak-c-fieldset legend.pf-c-title {
+  margin: 0 0 8px !important;
   padding: 0 !important;
   font-size: 0.8125rem !important;
   font-weight: 500 !important;
   color: var(--mesa-muted) !important;
 }
-.pf-c-button.authenticator-button {
+.pf-c-login__main .pf-c-button.authenticator-button {
   display: flex !important;
   align-items: center;
   gap: 12px;
   width: 100%;
   margin: 0 0 8px !important;
   padding: 12px 14px !important;
+  min-width: 0;
+  white-space: normal !important;
   text-align: left;
   color: var(--mesa-text) !important;
   background: var(--mesa-field) !important;
@@ -403,12 +408,12 @@ ak-flow-executor fieldset.ak-c-fieldset legend.pf-c-title {
   border-radius: 12px !important;
   transition: border-color var(--mesa-fast) var(--mesa-ease), background-color var(--mesa-fast) var(--mesa-ease);
 }
-.pf-c-button.authenticator-button:hover {
+.pf-c-login__main .pf-c-button.authenticator-button:hover {
   background: rgb(255 255 255 / 0.06) !important;
   border-color: var(--mesa-line-strong) !important;
 }
 /* patternfly draws button borders on ::after, here it becomes the chevron */
-.pf-c-button.authenticator-button::after {
+.pf-c-login__main .pf-c-button.authenticator-button::after {
   content: "" !important;
   position: static !important;
   flex: none;
@@ -420,34 +425,35 @@ ak-flow-executor fieldset.ak-c-fieldset legend.pf-c-title {
   border-radius: 0 !important;
   transform: rotate(45deg);
 }
-.pf-c-button.authenticator-button i {
-  display: grid;
+.pf-c-login__main .pf-c-button.authenticator-button i {
+  display: grid !important;
   place-items: center;
   flex: none;
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.875rem !important;
+  line-height: 1 !important;
   color: var(--mesa-accent);
   background: rgb(154 92 245 / 0.12);
 }
-.pf-c-button.authenticator-button .content {
+.pf-c-login__main .pf-c-button.authenticator-button .content {
   flex: 1;
   min-width: 0;
 }
-.pf-c-button.authenticator-button h1.pf-c-title {
+.pf-c-login__main .pf-c-button.authenticator-button h1.pf-c-title {
   font-size: 0.9375rem !important;
   font-weight: 500 !important;
   color: var(--mesa-text) !important;
 }
-.pf-c-button.authenticator-button .pf-c-form__helper-text {
+.pf-c-login__main .pf-c-button.authenticator-button .pf-c-form__helper-text {
   margin: 2px 0 0 !important;
   font-size: 0.8125rem !important;
   color: var(--mesa-muted) !important;
 }
 /* without an icon the option is a setup stage, and its helper text is authentik's
    internal stage type ("WebAuthn Authenticator Setup Stage") */
-.pf-c-button.authenticator-button:not(:has(i)) .pf-c-form__helper-text {
+.pf-c-login__main .pf-c-button.authenticator-button:not(:has(i)) .pf-c-form__helper-text {
   display: none !important;
 }
 
