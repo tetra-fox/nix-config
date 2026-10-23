@@ -192,7 +192,7 @@ textarea.pf-c-form-control:focus {
   box-shadow: 0 0 0 3px var(--mesa-accent-ring) !important;
   outline: none !important;
 }
-/* read-only values (the settings page's username) look disabled and ignore the mouse */
+/* read-only inputs look disabled and ignore the mouse */
 input.pf-c-form-control[readonly],
 input.pf-c-form-control[readonly]:hover,
 input.pf-c-form-control[readonly]:focus {
@@ -202,6 +202,39 @@ input.pf-c-form-control[readonly]:focus {
   box-shadow: none !important;
   cursor: default;
   pointer-events: none;
+}
+/* the settings page's username: a static prompt rendering its own label and a value
+   styled like a disabled field (blueprints/account.yaml) */
+.mesa-static-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mesa-muted);
+}
+/* from 768px the settings page lays its fields out as rows, a 150px label column and a
+   16px gap, the static prompt's paragraph follows the same columns */
+@media (min-width: 768px) {
+  p:has(.mesa-static-label) {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    column-gap: 16px;
+    margin: 0;
+  }
+  p:has(.mesa-static-label) .mesa-static-label {
+    margin: 0;
+    padding-top: 9px;
+  }
+}
+.mesa-static-value {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 0.9375rem;
+  color: var(--mesa-muted);
+  border: 1px dashed var(--mesa-line);
+  border-radius: 10px;
 }
 /* every field has a label above it, the placeholder only repeated it */
 input.pf-c-form-control::placeholder {
@@ -341,14 +374,15 @@ ak-form-static {
   border-radius: 10px;
 }
 
-/* the 2fa method picker: each option is a row with an icon tile and a chevron */
-fieldset.ak-c-fieldset {
+/* the 2fa method picker: each option is a row with an icon tile and a chevron. modal
+   footers are ak-c-fieldsets too, hence the scope */
+ak-flow-executor fieldset.ak-c-fieldset {
   border: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
   background: none !important;
 }
-fieldset.ak-c-fieldset legend.pf-c-title {
+ak-flow-executor fieldset.ak-c-fieldset legend.pf-c-title {
   margin-bottom: 8px !important;
   padding: 0 !important;
   font-size: 0.8125rem !important;

@@ -171,8 +171,8 @@ entries:
     identifiers: { name: login-password }
     attrs: { configure_flow: !KeyOf password-change }
 
-  # the settings page form. username changes are off for every user, so it's shown read
-  # only. the policy keeps the tenant's name and email switches enforced
+  # the settings page form. username changes are off for every user, so it's shown as
+  # text. the policy keeps the tenant's name and email switches enforced
   - model: authentik_flows.flow
     id: settings
     identifiers: { slug: settings }
@@ -185,13 +185,22 @@ entries:
     id: settings-username
     identifiers: { name: settings-field-username }
     attrs:
-      field_key: username
+      # static, so it's plain text nothing can focus. static fields render without their
+      # label and send their value back, so the label is in the html and the key is one
+      # the user write stage ignores (a "username" key would write this html as the name)
+      field_key: username_display
       label: Username
-      type: text_read_only
+      type: static
       required: false
       order: 0
       initial_value_expression: true
-      initial_value: return user.username
+      initial_value: |
+        from django.utils.html import format_html
+        return format_html(
+            '<span class="mesa-static-label">Username</span>'
+            '<span class="mesa-static-value">{}</span>',
+            user.username,
+        )
   - model: authentik_stages_prompt.prompt
     id: settings-name
     identifiers: { name: settings-field-name }
