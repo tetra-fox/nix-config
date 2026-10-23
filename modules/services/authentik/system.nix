@@ -11,7 +11,7 @@
 
   # full patch tag: no podman-auto-update here, so a floating tag never re-pulls. bump one
   # major at a time, latest patch first
-  authentikTag = "2026.8.2";
+  authentikTag = "2026.8.5";
   authentikDataVol = "${siteData}/authentik/data:/data";
   authentikTemplatesVol = "${siteData}/authentik/custom-templates:/templates";
 
