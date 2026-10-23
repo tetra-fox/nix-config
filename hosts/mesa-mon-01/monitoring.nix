@@ -49,7 +49,8 @@ in {
       signout_redirect_url = "${authUrl}/application/o/grafana/end-session/";
       login_attribute_path = "preferred_username";
       email_attribute_name = "email";
-      role_attribute_path = "contains(groups, 'superadmin') && 'GrafanaAdmin' || contains(groups, 'grafana_editors') && 'Editor' || 'Viewer'";
+      # every authentik user gets in, everyone below sysadmin as a read-only Viewer
+      role_attribute_path = "contains(groups, 'superadmin') && 'GrafanaAdmin' || contains(groups, 'sysadmin') && 'Admin' || 'Viewer'";
     };
   };
 }

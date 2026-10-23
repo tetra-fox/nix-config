@@ -1,0 +1,53 @@
+version: 1
+metadata:
+  name: groups
+entries:
+  # the tree only, members stay runtime. a group inherits from its parents, so a member of
+  # superadmin is in every group below it. superadmin is everything, sysadmin is admin on
+  # the infra (proxmox, grafana). the oidc groups claim carries the inherited groups (see
+  # oidc-providers.yaml), ldap memberOf only carries direct ones
+  - model: authentik_core.group
+    id: pve_viewer
+    identifiers: { name: pve_viewer }
+    attrs: { is_superuser: false, parents: [] }
+  - model: authentik_core.group
+    id: pve_admin
+    identifiers: { name: pve_admin }
+    attrs: { is_superuser: false, parents: [!KeyOf pve_viewer] }
+  - model: authentik_core.group
+    id: sysadmin
+    identifiers: { name: sysadmin }
+    attrs: { is_superuser: false, parents: [!KeyOf pve_admin] }
+
+  - model: authentik_core.group
+    id: immich_users
+    identifiers: { name: immich_users }
+    attrs: { is_superuser: false, parents: [] }
+  - model: authentik_core.group
+    id: immich_admins
+    identifiers: { name: immich_admins }
+    attrs: { is_superuser: false, parents: [!KeyOf immich_users] }
+
+  - model: authentik_core.group
+    id: arr_users
+    identifiers: { name: arr_users }
+    attrs: { is_superuser: false, parents: [] }
+  - model: authentik_core.group
+    id: jellyfin_users
+    identifiers: { name: jellyfin_users }
+    attrs: { is_superuser: false, parents: [] }
+  - model: authentik_core.group
+    id: local_users
+    identifiers: { name: local_users }
+    attrs: { is_superuser: false, parents: [] }
+
+  - model: authentik_core.group
+    identifiers: { name: superadmin }
+    attrs:
+      is_superuser: true
+      parents:
+        - !KeyOf sysadmin
+        - !KeyOf immich_admins
+        - !KeyOf arr_users
+        - !KeyOf jellyfin_users
+        - !KeyOf local_users

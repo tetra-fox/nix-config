@@ -1,0 +1,53 @@
+version: 1
+metadata:
+  name: oidc-providers
+entries:
+  # the stock profile mapping's groups claim lists direct memberships only, so proxmox and
+  # grafana would never see a group inherited through superadmin or sysadmin
+  - model: authentik_providers_oauth2.scopemapping
+    id: profile
+    identifiers: { name: profile with inherited groups }
+    attrs:
+      scope_name: profile
+      description: General Profile Information
+      expression: |
+        avatar = request.user.avatar
+        return delete_none_values({
+            "name": request.user.name,
+            "given_name": ak_obj_attr(request.user, "given_name", "name"),
+            "family_name": ak_obj_attr(request.user, "family_name"),
+            "preferred_username": request.user.username,
+            "nickname": request.user.username,
+            "groups": [group.name for group in request.user.all_groups()],
+            "picture": avatar if avatar and not avatar.startswith("data:") else None,
+        })
+
+  # every client here does an authorization code login. proxy providers reset their own
+  # grant types and mappings on save, so they aren't listed
+  - model: authentik_providers_oauth2.oauth2provider
+    identifiers: { name: Provider for Grafana }
+    attrs:
+      grant_types: [authorization_code, refresh_token]
+      property_mappings: &mappings
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
+        - !KeyOf profile
+  - model: authentik_providers_oauth2.oauth2provider
+    identifiers: { name: Provider for Home Assistant }
+    attrs:
+      grant_types: [authorization_code, refresh_token]
+      property_mappings: *mappings
+  - model: authentik_providers_oauth2.oauth2provider
+    identifiers: { name: Provider for Proxmox VE }
+    attrs:
+      grant_types: [authorization_code, refresh_token]
+      property_mappings: *mappings
+  - model: authentik_providers_oauth2.oauth2provider
+    identifiers: { name: Provider for Immich }
+    attrs:
+      grant_types: [authorization_code, refresh_token]
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
+        - !KeyOf profile
+        - !Find [authentik_providers_oauth2.scopemapping, [name, immich role]]
