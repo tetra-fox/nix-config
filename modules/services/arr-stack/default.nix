@@ -21,6 +21,8 @@
   vpn = config.vpnNamespaces.${vpnNs};
 
   inherit (topo) dbEndpointIp;
+  edgeCidrs = map (ip: "${ip}/32") topo.edgeHostIps;
+  routeHost = sub: "${sub}.${config.lab.site.domain}";
 
   # local db is reached over the veth bridge
   defaultPostgresHost =
@@ -61,6 +63,9 @@
       # LAN access (api key readable via /initialize.json) is blocked by accessibleFrom
       required = "DisabledForLocalAddresses";
     };
+    # the local-address bypass is skipped while an untrusted X-Forwarded-For is present
+    # (radarr 6+), so caddy's header has to be consumed for the bypass to see the client
+    server.trustednetworks = lib.concatStringsSep "," edgeCidrs;
     log.level = "info";
     postgres = {
       host = cfg.postgresHost;
@@ -76,6 +81,9 @@
         main_db = "${name}-main";
         log_db = "${name}-log";
       };
+      # caddy's hostname plus the netns address the on-host helpers dial. prowlarr's
+      # app sync uses localhost, which the arrs always allow
+      server.allowedhosts = "${routeHost name},${vpn.namespaceAddress}";
       auth = lib.optionalAttrs (svc.apiKey != null) {apikey = svc.apiKey;};
     };
 
@@ -191,7 +199,7 @@ in {
 
     accessibleFrom = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = map (ip: "${ip}/32") topo.edgeHostIps;
+      default = edgeCidrs;
       description = ''
         sources allowed to reach the namespace via portMappings. edge hosts only, so
         LAN clients can't skip caddy's lan_only and forward_auth. on-host helpers use
@@ -261,7 +269,7 @@ in {
           routes = let
             mw = ["lan_only"] ++ lib.optional (topo.authServerIp != null) "forward_auth";
             arrRoute = openFirewall: sub: port: {
-              host = "${sub}.${config.lab.site.domain}";
+              host = routeHost sub;
               inherit port openFirewall;
               middlewares = mw;
             };
@@ -368,6 +376,7 @@ in {
         // lib.mapAttrs' (name: svc:
           lib.nameValuePair "${name}.env" {
             content = mkEnvFileContent name svc;
+            restartUnits = ["${name}.service"];
             # default root 0400 on purpose: systemd reads EnvironmentFile as root, and a
             # media-group mode would leak the pg password to every media member
           })
