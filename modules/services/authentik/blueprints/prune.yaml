@@ -1,0 +1,139 @@
+version: 1
+metadata:
+  name: prune
+entries:
+  # the stock blueprints that create these are disabled by hand through the api, and
+  # discovery never re-enables an instance, so what they made stays deleted:
+  #   default/default-brand.yaml (its metaapplyblueprint entries apply the auth and
+  #     invalidation blueprints even when those are disabled)
+  #   default/flow-default-authentication-flow.yaml
+  #   default/flow-default-invalidation-flow.yaml
+  #   default/flow-default-provider-authorization-explicit-consent.yaml
+  #   default/flow-default-request-flow.yaml
+  #   default/flow-default-source-{authentication,enrollment,pre-authentication}.yaml
+  #   default/flow-oobe.yaml
+  #   default/rbac-role-{agents,read-only}.yaml
+  # a blueprint can't do it: the instance serializer requires path, and validating path
+  # blocks a worker thread on another worker task, which deadlocks the 2-thread pool
+
+  - model: authentik_flows.flow
+    identifiers: { slug: default-provider-authorization-explicit-consent }
+    state: absent
+  - model: authentik_stages_consent.consentstage
+    identifiers: { name: default-provider-authorization-consent }
+    state: absent
+
+  - model: authentik_flows.flow
+    identifiers: { slug: default-request }
+    state: absent
+
+  - model: authentik_flows.flow
+    identifiers: { slug: default-source-authentication }
+    state: absent
+  - model: authentik_stages_user_login.userloginstage
+    identifiers: { name: default-source-authentication-login }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-source-authentication-if-sso }
+    state: absent
+
+  - model: authentik_flows.flow
+    identifiers: { slug: default-source-enrollment }
+    state: absent
+  - model: authentik_stages_prompt.promptstage
+    identifiers: { name: default-source-enrollment-prompt }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-source-enrollment-field-username }
+    state: absent
+  - model: authentik_stages_user_write.userwritestage
+    identifiers: { name: default-source-enrollment-write }
+    state: absent
+  - model: authentik_stages_user_login.userloginstage
+    identifiers: { name: default-source-enrollment-login }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-source-enrollment-if-username }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-source-enrollment-if-sso }
+    state: absent
+
+  - model: authentik_flows.flow
+    identifiers: { slug: default-source-pre-authentication }
+    state: absent
+
+  # setup is recorded on the tenant, nothing reads this flow afterwards. its login stage
+  # and password-change write stage are shared with flows that stay, so they aren't here
+  - model: authentik_flows.flow
+    identifiers: { slug: initial-setup }
+    state: absent
+  - model: authentik_stages_prompt.promptstage
+    identifiers: { name: stage-default-oobe-password }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: initial-setup-field-header }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: initial-setup-field-email }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: initial-setup-field-password }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: initial-setup-field-password-repeat }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: initial-setup-field-base-url }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-oobe-prefill-user }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-oobe-password-usable }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-oobe-base-url-valid }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-oobe-flow-set-authentication }
+    state: absent
+
+  - model: authentik_core.group
+    identifiers: { name: authentik Agent-Users }
+    state: absent
+  - model: authentik_rbac.role
+    identifiers: { name: authentik Agent-Users }
+    state: absent
+  - model: authentik_core.group
+    identifiers: { name: authentik Read-only }
+    state: absent
+  - model: authentik_rbac.role
+    identifiers: { name: authentik Read-only }
+    state: absent
+
+  # hand-made leftovers. the managed roles belong to users 9 and 19, which no longer exist
+  - model: authentik_rbac.role
+    identifiers: { name: readonly }
+    state: absent
+  - model: authentik_rbac.role
+    identifiers: { name: ak-managed-role--user-9 }
+    state: absent
+  - model: authentik_rbac.role
+    identifiers: { name: ak-managed-role--user-19 }
+    state: absent
+  - model: authentik_core.group
+    identifiers: { name: hass_admin }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: user-settings-image }
+    state: absent
+  - model: authentik_providers_oauth2.scopemapping
+    identifiers: { name: arr proxy no image }
+    state: absent
+  - model: authentik_providers_ldap.ldapprovider
+    identifiers: { name: samba-provider }
+    state: absent
+  - model: authentik_core.user
+    identifiers: { username: testuser }
+    state: absent

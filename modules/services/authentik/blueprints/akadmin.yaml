@@ -1,0 +1,8 @@
+version: 1
+metadata:
+  name: akadmin
+entries:
+  # deactivated rather than deleted, the bootstrap blueprint recreates a missing akadmin
+  - model: authentik_core.user
+    identifiers: { username: akadmin }
+    attrs: { is_active: false }

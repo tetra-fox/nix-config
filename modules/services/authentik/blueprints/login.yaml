@@ -1,0 +1,125 @@
+version: 1
+metadata:
+  name: login
+entries:
+  # replaces the stock authentication and invalidation flows, whose blueprints are
+  # disabled by hand (see prune.yaml)
+
+  # embedded in identification, never bound to the flow on its own
+  - model: authentik_stages_password.passwordstage
+    id: password
+    identifiers: { name: login-password }
+    attrs:
+      backends: [authentik.core.auth.InbuiltBackend]
+      configure_flow: !Find [authentik_flows.flow, [slug, default-password-change]]
+      failed_attempts_before_cancel: 5
+
+  # also the identification stage's passkey stage
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: mfa
+    identifiers: { name: login-mfa }
+    attrs:
+      device_classes: [static, totp, webauthn]
+      not_configured_action: skip
+      last_auth_threshold: minutes=1
+      webauthn_user_verification: preferred
+
+  - model: authentik_stages_identification.identificationstage
+    id: identification
+    identifiers: { name: login-identification }
+    attrs:
+      user_fields: [email, username]
+      password_stage: !KeyOf password
+      webauthn_stage: !KeyOf mfa
+      case_insensitive_matching: true
+      show_matched_user: true
+      pretend_user_exists: true
+      enable_remember_me: true
+
+  - model: authentik_stages_user_login.userloginstage
+    id: session
+    identifiers: { name: login-session }
+    attrs:
+      session_duration: hours=24
+      remember_me_offset: days=30
+      remember_device: days=30
+
+  - model: authentik_policies_expression.expressionpolicy
+    id: mfa-unless-passkey
+    identifiers: { name: login-mfa-unless-passkey }
+    attrs:
+      expression: |
+        flow_plan = request.context.get("flow_plan")
+        if not flow_plan:
+            return True
+        return flow_plan.context.get("auth_method") != "auth_webauthn_pwl"
+
+  - model: authentik_flows.flow
+    id: login
+    identifiers: { slug: login }
+    attrs:
+      name: Log in
+      title: Log in
+      designation: authentication
+      authentication: none
+      layout: sidebar_left
+      compatibility_mode: true
+      denied_action: message_continue
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf login, stage: !KeyOf identification, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    id: mfa-binding
+    identifiers: { target: !KeyOf login, stage: !KeyOf mfa, order: 20 }
+    attrs: { re_evaluate_policies: true }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf login, stage: !KeyOf session, order: 30 }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf mfa-binding, policy: !KeyOf mfa-unless-passkey, order: 0 }
+    attrs: { failure_result: true }
+
+  - model: authentik_stages_user_logout.userlogoutstage
+    id: logout-stage
+    identifiers: { name: logout }
+
+  - model: authentik_flows.flow
+    id: logout
+    identifiers: { slug: logout }
+    attrs:
+      name: Log out
+      title: Log out
+      designation: invalidation
+      authentication: none
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf logout, stage: !KeyOf logout-stage, order: 0 }
+
+  # deleting a stage drops its flow bindings, so login and logout lose the stock stages
+  # in the same transaction that binds the ones above
+  - model: authentik_flows.flow
+    identifiers: { slug: default-authentication-flow }
+    state: absent
+  - model: authentik_flows.flow
+    identifiers: { slug: default-invalidation-flow }
+    state: absent
+  - model: authentik_stages_identification.identificationstage
+    identifiers: { name: default-authentication-identification }
+    state: absent
+  - model: authentik_stages_password.passwordstage
+    identifiers: { name: default-authentication-password }
+    state: absent
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    identifiers: { name: default-authentication-mfa-validation }
+    state: absent
+  - model: authentik_stages_user_login.userloginstage
+    identifiers: { name: default-authentication-login }
+    state: absent
+  - model: authentik_stages_user_logout.userlogoutstage
+    identifiers: { name: default-invalidation-logout }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-authentication-flow-password-stage }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-authentication-flow-authenticator-validate-stage }
+    state: absent
