@@ -1,0 +1,316 @@
+version: 1
+metadata:
+  name: account
+entries:
+  # everything a user does to their own account: sign up, recover, change password, edit
+  # their info. the stock password change and user settings blueprints are disabled by
+  # hand (see prune.yaml) and what they made is deleted at the bottom
+
+  - model: authentik_policies_password.passwordpolicy
+    id: password-policy
+    identifiers: { name: password-policy }
+    attrs:
+      password_field: password
+      length_min: 8
+      check_static_rules: true
+      check_zxcvbn: true
+      zxcvbn_score_threshold: 2
+      error_message: Password needs to be 8 characters or longer.
+
+  # the one password pair every flow below uses
+  - model: authentik_stages_prompt.prompt
+    id: field-password
+    identifiers: { name: account-field-password }
+    attrs: { field_key: password, label: Password, type: password, required: true, order: 30 }
+  - model: authentik_stages_prompt.prompt
+    id: field-password-repeat
+    identifiers: { name: account-field-password-repeat }
+    attrs:
+      { field_key: password_repeat, label: Confirm password, type: password, required: true, order: 31 }
+
+  - model: authentik_stages_prompt.promptstage
+    id: password-prompt
+    identifiers: { name: password-prompt }
+    attrs:
+      fields: [!KeyOf field-password, !KeyOf field-password-repeat]
+      validation_policies: [!KeyOf password-policy]
+  - model: authentik_stages_user_write.userwritestage
+    id: password-write
+    identifiers: { name: password-write }
+    attrs: { user_creation_mode: never_create }
+
+  # sign up, from an invite link only
+  - model: authentik_flows.flow
+    id: enroll
+    identifiers: { slug: enroll }
+    attrs:
+      name: Enroll
+      title: Create your account
+      designation: enrollment
+      authentication: require_unauthenticated
+      layout: stacked
+      compatibility_mode: true
+  - model: authentik_stages_invitation.invitationstage
+    id: invitation
+    identifiers: { name: enroll-invitation }
+    attrs: { continue_flow_without_invitation: false }
+
+  - model: authentik_stages_prompt.prompt
+    id: field-username
+    identifiers: { name: enroll-field-username }
+    attrs: { field_key: username, label: Username, type: username, required: true, placeholder: "", order: 0 }
+  - model: authentik_stages_prompt.prompt
+    id: field-name
+    identifiers: { name: enroll-field-name }
+    attrs: { field_key: name, label: Name, type: text, required: true, placeholder: "", order: 1 }
+  - model: authentik_stages_prompt.prompt
+    id: field-email
+    identifiers: { name: enroll-field-email }
+    attrs: { field_key: email, label: Email, type: email, required: true, placeholder: "", order: 2 }
+  # the 2fa setup screens have no way back to the method picker, only retry, so this
+  # says how to choose again
+  - model: authentik_stages_prompt.prompt
+    id: field-mfa-notice
+    identifiers: { name: enroll-field-mfa-notice }
+    attrs:
+      field_key: mfa_notice
+      label: Two-factor sign in
+      type: alert_info
+      required: false
+      order: 40
+      initial_value: >-
+        Next you'll set up a passkey or an authenticator app. If you change your mind
+        partway through, close the page, sign in with your new username and password,
+        and you'll get to pick again.
+
+  - model: authentik_stages_prompt.promptstage
+    id: enroll-prompt
+    identifiers: { name: enroll-prompt }
+    attrs:
+      fields:
+        - !KeyOf field-username
+        - !KeyOf field-name
+        - !KeyOf field-email
+        - !KeyOf field-password
+        - !KeyOf field-password-repeat
+        - !KeyOf field-mfa-notice
+      validation_policies: [!KeyOf password-policy]
+  # internal, so new users get the dashboard. the path template comes from the site
+  # domain (system.nix, paths.yaml)
+  - model: authentik_stages_user_write.userwritestage
+    id: enroll-write
+    identifiers: { name: enroll-user-write }
+    attrs:
+      user_creation_mode: always_create
+      user_type: internal
+      create_users_group: !Find [authentik_core.group, [name, jellyfin_users]]
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf enroll, stage: !KeyOf invitation, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf enroll, stage: !KeyOf enroll-prompt, order: 20 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf enroll, stage: !KeyOf enroll-write, order: 30 }
+  # 2fa setup and the session come from login.yaml, the same ones every login uses
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf enroll
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, login-mfa]]
+      order: 35
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf enroll
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, login-session]]
+      order: 40
+
+  # an admin creates a single-use link for a user (users > create recovery link) and sends
+  # it to them, the flow then runs as that user. no email, so the login page doesn't link
+  # here. the link resets the password, not 2fa: someone who lost their device needs it
+  # deleted by an admin first, then the 2fa stage sets up a new one
+  - model: authentik_flows.flow
+    id: recovery
+    identifiers: { slug: recovery }
+    attrs:
+      name: Recovery
+      title: Set a new password
+      designation: recovery
+      authentication: none
+      layout: stacked
+      compatibility_mode: true
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf recovery, stage: !KeyOf password-prompt, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf recovery, stage: !KeyOf password-write, order: 20 }
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery
+      stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, login-mfa]]
+      order: 25
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      target: !KeyOf recovery
+      stage: !Find [authentik_stages_user_login.userloginstage, [name, login-session]]
+      order: 30
+
+  - model: authentik_flows.flow
+    id: password-change
+    identifiers: { slug: password-change }
+    attrs:
+      name: Change password
+      title: Change password
+      designation: stage_configuration
+      authentication: require_authenticated
+      layout: stacked
+      compatibility_mode: true
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf password-change, stage: !KeyOf password-prompt, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf password-change, stage: !KeyOf password-write, order: 20 }
+  # the settings page's "change password" goes through the password stage's configure flow
+  - model: authentik_stages_password.passwordstage
+    identifiers: { name: login-password }
+    attrs: { configure_flow: !KeyOf password-change }
+
+  # the settings page form. username changes are off for every user, so it's shown read
+  # only. the policy keeps the tenant's name and email switches enforced
+  - model: authentik_flows.flow
+    id: settings
+    identifiers: { slug: settings }
+    attrs:
+      name: User settings
+      title: Update your info
+      designation: stage_configuration
+      authentication: require_authenticated
+  - model: authentik_stages_prompt.prompt
+    id: settings-username
+    identifiers: { name: settings-field-username }
+    attrs:
+      field_key: username
+      label: Username
+      type: text_read_only
+      required: false
+      order: 0
+      initial_value_expression: true
+      initial_value: return user.username
+  - model: authentik_stages_prompt.prompt
+    id: settings-name
+    identifiers: { name: settings-field-name }
+    attrs:
+      field_key: name
+      label: Name
+      type: text
+      required: true
+      order: 1
+      initial_value_expression: true
+      initial_value: return user.name
+  - model: authentik_stages_prompt.prompt
+    id: settings-email
+    identifiers: { name: settings-field-email }
+    attrs:
+      field_key: email
+      label: Email
+      type: email
+      required: true
+      order: 2
+      initial_value_expression: true
+      initial_value: return user.email
+  - model: authentik_stages_prompt.prompt
+    id: settings-locale
+    identifiers: { name: settings-field-locale }
+    attrs:
+      field_key: attributes.settings.locale
+      label: Language
+      type: ak-locale
+      required: true
+      order: 3
+      initial_value_expression: true
+      initial_value: return user.attributes.get("settings", {}).get("locale", "")
+  - model: authentik_policies_expression.expressionpolicy
+    id: settings-authorization
+    identifiers: { name: settings-authorization }
+    attrs:
+      expression: |
+        from authentik.core.models import USER_ATTRIBUTE_CHANGE_EMAIL, USER_ATTRIBUTE_CHANGE_NAME
+
+        prompt_data = request.context.get("prompt_data")
+        attributes = request.user.group_attributes(request.http_request)
+        tenant = request.http_request.tenant
+        if not attributes.get(USER_ATTRIBUTE_CHANGE_EMAIL, tenant.default_user_change_email):
+            if prompt_data.get("email") != request.user.email:
+                ak_message("Not allowed to change email address.")
+                return False
+        if not attributes.get(USER_ATTRIBUTE_CHANGE_NAME, tenant.default_user_change_name):
+            if prompt_data.get("name") != request.user.name:
+                ak_message("Not allowed to change name.")
+                return False
+        return True
+  - model: authentik_stages_prompt.promptstage
+    id: settings-prompt
+    identifiers: { name: settings-prompt }
+    attrs:
+      fields: [!KeyOf settings-username, !KeyOf settings-name, !KeyOf settings-email, !KeyOf settings-locale]
+      validation_policies: [!KeyOf settings-authorization]
+  - model: authentik_stages_user_write.userwritestage
+    id: settings-write
+    identifiers: { name: settings-write }
+    attrs: { user_creation_mode: never_create }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf settings, stage: !KeyOf settings-prompt, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf settings, stage: !KeyOf settings-write, order: 20 }
+
+  - model: authentik_brands.brand
+    identifiers: { default: true }
+    attrs:
+      flow_recovery: !KeyOf recovery
+      flow_user_settings: !KeyOf settings
+
+  # replaced by the objects above
+  - model: authentik_flows.flow
+    identifiers: { slug: default-password-change }
+    state: absent
+  - model: authentik_flows.flow
+    identifiers: { slug: default-user-settings-flow }
+    state: absent
+  - model: authentik_stages_prompt.promptstage
+    identifiers: { name: default-password-change-prompt }
+    state: absent
+  - model: authentik_stages_user_write.userwritestage
+    identifiers: { name: default-password-change-write }
+    state: absent
+  - model: authentik_stages_prompt.promptstage
+    identifiers: { name: default-user-settings }
+    state: absent
+  - model: authentik_stages_user_write.userwritestage
+    identifiers: { name: default-user-settings-write }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-password-change-field-password }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-password-change-field-password-repeat }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-user-settings-field-username }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-user-settings-field-name }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-user-settings-field-email }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: default-user-settings-field-locale }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: enroll-field-password }
+    state: absent
+  - model: authentik_stages_prompt.prompt
+    identifiers: { name: enroll-field-password-repeat }
+    state: absent
+  - model: authentik_policies_password.passwordpolicy
+    identifiers: { name: default-password-change-password-policy }
+    state: absent
+  - model: authentik_policies_expression.expressionpolicy
+    identifiers: { name: default-user-settings-authorization }
+    state: absent

@@ -5,13 +5,14 @@ entries:
   # replaces the stock authentication and invalidation flows, whose blueprints are
   # disabled by hand (see prune.yaml)
 
-  # embedded in identification, never bound to the flow on its own
+  # embedded in identification, never bound to the flow on its own. account.yaml sets its
+  # configure_flow, the settings page's change password
   - model: authentik_stages_password.passwordstage
     id: password
     identifiers: { name: login-password }
     attrs:
       backends: [authentik.core.auth.InbuiltBackend]
-      configure_flow: !Find [authentik_flows.flow, [slug, default-password-change]]
+      allow_show_password: true
       failed_attempts_before_cancel: 5
 
   # the 2fa methods. the method picker titles each with its stage name, and a new device
@@ -25,6 +26,8 @@ entries:
       title: Set up a passkey
       designation: stage_configuration
       authentication: require_authenticated
+      layout: stacked
+      compatibility_mode: true
   - model: authentik_stages_authenticator_webauthn.authenticatorwebauthnstage
     id: passkey
     identifiers: { name: Passkey }
@@ -45,6 +48,8 @@ entries:
       title: Set up an authenticator app
       designation: stage_configuration
       authentication: require_authenticated
+      layout: stacked
+      compatibility_mode: true
   - model: authentik_stages_authenticator_totp.authenticatortotpstage
     id: totp
     identifiers: { name: Authenticator app }
@@ -68,6 +73,27 @@ entries:
       last_auth_threshold: minutes=1
       webauthn_user_verification: preferred
 
+  # the login form's manual passkey button, for when the browser's passkey suggestion was
+  # dismissed. no username comes first, so the passkey is the whole login and has to be
+  # verified (biometric or pin)
+  - model: authentik_flows.flow
+    id: passkey-login
+    identifiers: { slug: passkey-login }
+    attrs:
+      name: Log in with a passkey
+      title: Log in with a passkey
+      designation: authentication
+      authentication: none
+      layout: stacked
+      compatibility_mode: true
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    id: passkey-validate
+    identifiers: { name: passkey-login-validate }
+    attrs:
+      device_classes: [webauthn]
+      not_configured_action: deny
+      webauthn_user_verification: required
+
   - model: authentik_stages_identification.identificationstage
     id: identification
     identifiers: { name: login-identification }
@@ -75,6 +101,7 @@ entries:
       user_fields: [email, username]
       password_stage: !KeyOf password
       webauthn_stage: !KeyOf mfa
+      passwordless_flow: !KeyOf passkey-login
       case_insensitive_matching: true
       show_matched_user: true
       pretend_user_exists: true
@@ -87,6 +114,11 @@ entries:
       session_duration: hours=24
       remember_me_offset: days=30
       remember_device: days=30
+
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf passkey-login, stage: !KeyOf passkey-validate, order: 10 }
+  - model: authentik_flows.flowstagebinding
+    identifiers: { target: !KeyOf passkey-login, stage: !KeyOf session, order: 20 }
 
   - model: authentik_policies_expression.expressionpolicy
     id: mfa-unless-passkey
@@ -106,7 +138,7 @@ entries:
       title: Log in
       designation: authentication
       authentication: none
-      layout: sidebar_left
+      layout: stacked
       compatibility_mode: true
       denied_action: message_continue
 
@@ -145,9 +177,17 @@ entries:
       title: Log out
       designation: invalidation
       authentication: none
+      layout: stacked
+      compatibility_mode: true
 
   - model: authentik_flows.flowstagebinding
     identifiers: { target: !KeyOf logout, stage: !KeyOf logout-stage, order: 0 }
+
+  # the page apps send people to after they log out of them. custom.css is written for
+  # the compatibility mode render (shadydom), so every flow with a screen has it on
+  - model: authentik_flows.flow
+    identifiers: { slug: default-provider-invalidation-flow }
+    attrs: { layout: stacked, compatibility_mode: true }
 
   # deleting a stage drops its flow bindings, so login and logout lose the stock stages
   # in the same transaction that binds the ones above

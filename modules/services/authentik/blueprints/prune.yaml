@@ -13,6 +13,8 @@ entries:
   #   default/flow-default-source-{authentication,enrollment,pre-authentication}.yaml
   #   default/flow-default-authenticator-static-setup.yaml
   #   default/flow-default-authenticator-{totp,webauthn}-setup.yaml (replaced in login.yaml)
+  #   default/flow-password-change.yaml, default/flow-default-user-settings-flow.yaml
+  #     (replaced in account.yaml)
   #   default/flow-oobe.yaml
   #   default/rbac-role-{agents,read-only}.yaml
   # a blueprint can't do it: the instance serializer requires path, and validating path
