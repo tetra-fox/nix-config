@@ -73,14 +73,15 @@
       }
     ''
     # trusted_proxies so the outpost resolves the app by the original Host.
-    # no Authorization header: the arrs skip auth for local addresses
+    # no Authorization header: the arrs skip auth for local addresses. no X-Authentik-Jwt:
+    # it carries every user attribute and can overflow a backend's header limit
     + lib.optionalString (authOutpost != null) ''
 
       (authentik) {
       	reverse_proxy /outpost.goauthentik.io/* ${authOutpost}
       	forward_auth ${authOutpost} {
       		uri /outpost.goauthentik.io/auth/caddy
-      		copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+      		copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
       		trusted_proxies private_ranges
       	}
       }
