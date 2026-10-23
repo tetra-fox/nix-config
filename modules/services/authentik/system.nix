@@ -134,6 +134,11 @@
     cp ${pathsBlueprint} $out/paths.yaml
     cp ${assetsBlueprint} $out/assets.yaml
     for f in $out/*.yaml; do yq e . "$f" > /dev/null; done
+    # authentik escapes these when it embeds the brand css and never unescapes them
+    if grep -n '[>&]' ${./assets/custom.css}; then
+      echo "custom.css: > and & break once authentik embeds it" >&2
+      exit 1
+    fi
   '';
 
   authentikBase = {

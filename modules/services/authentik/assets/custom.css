@@ -1,11 +1,666 @@
-div.pf-c-brand {
+/* every flow with a screen has compatibility mode on (blueprints/login.yaml, account.yaml),
+   which renders it through shadydom, so this is one document stylesheet that reaches every
+   component. without it the selectors here stop matching. component rules carry extra scope
+   classes, which is why most overrides here need !important. authentik escapes the
+   greater-than and ampersand characters when it embeds this file in the page and never
+   unescapes them, so neither may appear (no child combinators, a single url parameter).
+   system.nix fails the build if one does */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600");
+
+:root,
+html.pf-theme-dark {
+  --mesa-surface: rgb(17 12 22 / 0.86);
+  --mesa-field: rgb(255 255 255 / 0.04);
+  --mesa-line: rgb(255 255 255 / 0.1);
+  --mesa-line-strong: rgb(255 255 255 / 0.18);
+  --mesa-accent: #9a5cf5;
+  --mesa-accent-hover: #8a4ae8;
+  --mesa-accent-ring: rgb(154 92 245 / 0.35);
+  --mesa-danger: #f2555a;
+  --mesa-text: #f4f1f7;
+  --mesa-muted: #a39cab;
+  --mesa-faint: #6f6877;
+  --mesa-card: 400px;
+  /* interactions start at once and settle, rather than easing in */
+  --mesa-fast: 90ms;
+  --mesa-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --pf-global--FontFamily--sans-serif: "Geist", system-ui, sans-serif !important;
+  --pf-global--FontFamily--heading--sans-serif: "Geist", system-ui, sans-serif !important;
+  --pf-global--primary-color--100: var(--mesa-accent) !important;
+  --pf-global--primary-color--200: var(--mesa-accent-hover) !important;
+  --pf-global--link--Color: #c4a1ff !important;
+  --pf-global--link--Color--hover: #dcc6ff !important;
+  --pf-global--danger-color--100: var(--mesa-danger) !important;
+  --pf-global--Color--100: var(--mesa-text) !important;
+  --pf-global--Color--200: var(--mesa-muted) !important;
+}
+
+/* authentik fades the page and the language select in over 200ms with ease-in, which
+   reads as lag */
+body,
+ak-locale-select select {
+  transition-duration: var(--mesa-fast) !important;
+  transition-timing-function: var(--mesa-ease) !important;
+}
+
+/* every flow uses the stacked layout: patternfly's own overlay layers (::before,
+   ::after) go so the art runs edge to edge, and the form is one card in the middle
+   column, sat a little above the middle where it reads as centered. safe centering pins a
+   form taller than the window (sign up) to the top instead of under the language picker */
+ak-flow-executor .pf-c-login::before,
+ak-flow-executor .pf-c-login::after {
+  display: none !important;
+}
+ak-flow-executor .pf-c-login__main {
+  width: var(--mesa-card) !important;
+  max-width: calc(100vw - 32px) !important;
+  justify-self: center !important;
+  align-self: safe center !important;
+  margin: 24px 0 calc(24px + 6vh) !important;
+  padding: 32px 0 8px !important;
+  background: var(--mesa-surface) !important;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  /* a lighter top edge reads as light catching the card */
+  border: 1px solid var(--mesa-line) !important;
+  border-top-color: rgb(255 255 255 / 0.16) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.04) inset,
+    0 30px 80px -24px rgb(0 0 0 / 0.75) !important;
+}
+ak-flow-executor .pf-c-login__footer {
+  background: transparent !important;
+}
+
+form.pf-c-form {
+  gap: 16px !important;
+}
+
+/* inline notices (sign up's 2fa note, field errors) */
+.pf-c-alert.pf-m-inline {
+  background: rgb(154 92 245 / 0.08) !important;
+  border: 1px solid rgb(154 92 245 / 0.28) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  box-shadow: none !important;
+}
+.pf-c-alert.pf-m-inline.pf-m-danger {
+  background: rgb(242 85 90 / 0.08) !important;
+  border-color: rgb(242 85 90 / 0.35) !important;
+}
+.pf-c-alert.pf-m-inline .pf-c-alert__icon {
+  color: var(--mesa-accent) !important;
+  font-size: 0.875rem !important;
+}
+.pf-c-alert.pf-m-inline.pf-m-danger .pf-c-alert__icon {
+  color: var(--mesa-danger) !important;
+}
+.pf-c-alert.pf-m-inline .pf-c-alert__title {
+  color: var(--mesa-text) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+}
+.pf-c-alert.pf-m-inline .pf-c-alert__description {
+  color: var(--mesa-muted) !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.5 !important;
+}
+
+/* patternfly lays the card header out as a two column grid, the wordmark and title stack */
+ak-flow-card .pf-c-login__main-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  padding: 0 32px 20px !important;
+}
+/* the stage element carries its own bottom padding under the button */
+ak-flow-executor .pf-c-login__main [part="challenge"] {
+  padding-bottom: 24px !important;
+}
+.pf-c-login__main-body {
+  padding-inline: 32px !important;
+}
+/* the wordmark above the title: a small saguaro, then the brand name */
+ak-flow-executor ak-flow-card .pf-c-login__main-header::before {
+  content: "mesa";
+  display: block;
+  margin-bottom: 24px;
+  padding-left: 26px !important;
+  line-height: 22px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--mesa-text);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21V4.5M12 14.5H9.25A1.75 1.75 0 0 1 7.5 12.75V9.5M12 11.5h2.75a1.75 1.75 0 0 0 1.75-1.75V7' fill='none' stroke='%239a5cf5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") left center / 20px no-repeat;
+}
+
+ak-flow-card .pf-c-login__main-header h1.pf-c-title {
+  font-family: "Geist", system-ui, sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 1.375rem !important;
+  letter-spacing: -0.02em;
+  line-height: 1.25 !important;
+  color: var(--mesa-text) !important;
+}
+
+/* labels focus their field on click, they shouldn't highlight as text when they do */
+.pf-c-form__label,
+.pf-c-form__label-text {
+  color: var(--mesa-muted) !important;
+  font-weight: 500 !important;
+  font-size: 0.8125rem !important;
+  cursor: pointer;
+  user-select: none;
+}
+/* every field on these forms is required (the inputs still say so to screen readers),
+   so the red asterisk only reads as an error before anything is typed */
+.pf-c-form__label-text::after {
+  content: none !important;
+}
+.pf-c-form__group.pf-m-action {
+  margin-top: 8px !important;
+}
+
+input.pf-c-form-control,
+select.pf-c-form-control,
+textarea.pf-c-form-control {
+  background: var(--mesa-field) !important;
+  color: var(--mesa-text) !important;
+  border: 1px solid var(--mesa-line) !important;
+  border-radius: 10px !important;
+  padding: 0 12px !important;
+  height: 40px !important;
+  font-size: 0.9375rem !important;
+  transition: border-color var(--mesa-fast) var(--mesa-ease), box-shadow var(--mesa-fast) var(--mesa-ease), background-color var(--mesa-fast) var(--mesa-ease);
+}
+textarea.pf-c-form-control {
+  height: auto !important;
+  padding: 10px 12px !important;
+}
+input.pf-c-form-control:hover {
+  border-color: var(--mesa-line-strong) !important;
+}
+input.pf-c-form-control:focus,
+select.pf-c-form-control:focus,
+textarea.pf-c-form-control:focus {
+  border-color: var(--mesa-accent) !important;
+  background: rgb(255 255 255 / 0.06) !important;
+  box-shadow: 0 0 0 3px var(--mesa-accent-ring) !important;
+  outline: none !important;
+}
+/* read-only values (the settings page's username) look disabled and ignore the mouse */
+input.pf-c-form-control[readonly],
+input.pf-c-form-control[readonly]:hover,
+input.pf-c-form-control[readonly]:focus {
+  color: var(--mesa-muted) !important;
+  background: transparent !important;
+  border: 1px dashed var(--mesa-line) !important;
+  box-shadow: none !important;
+  cursor: default;
+  pointer-events: none;
+}
+/* every field has a label above it, the placeholder only repeated it */
+input.pf-c-form-control::placeholder {
+  color: transparent !important;
+}
+input.pf-c-form-control[aria-invalid="true"] {
+  border-color: var(--mesa-danger) !important;
+}
+
+.pf-c-form__helper-text {
+  margin-top: 6px !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.5;
+  color: var(--mesa-muted) !important;
+}
+.pf-c-form__helper-text.pf-m-error {
+  color: var(--mesa-danger) !important;
+}
+/* 2fa codes read in clean groups */
+input.pf-c-form-control[autocomplete="one-time-code"] {
+  font-size: 1.125rem !important;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the show-password toggle sits inside the field instead of hanging off its end */
+.pf-c-input-group {
+  position: relative;
+  background: transparent !important;
+}
+.pf-c-input-group input.pf-c-form-control {
+  padding-right: 44px !important;
+}
+.pf-c-input-group .pf-c-button.pf-m-control {
+  position: absolute !important;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--mesa-faint) !important;
+}
+.pf-c-input-group .pf-c-button.pf-m-control:hover {
+  color: var(--mesa-text) !important;
+}
+.pf-c-input-group .pf-c-button.pf-m-control::after {
+  border: 0 !important;
+}
+
+.pf-c-button.pf-m-primary {
+  height: 40px;
+  background: var(--mesa-accent) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  font-weight: 500 !important;
+  font-size: 0.9375rem !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 1px 2px rgb(0 0 0 / 0.4) !important;
+  transition: background-color var(--mesa-fast) var(--mesa-ease), transform 60ms var(--mesa-ease);
+}
+.pf-c-button.pf-m-primary:hover {
+  background: var(--mesa-accent-hover) !important;
+}
+.pf-c-button.pf-m-primary:active {
+  transform: scale(0.99);
+}
+.pf-c-button::after {
+  border-radius: 10px !important;
+}
+.pf-c-button:focus-visible {
+  outline: 2px solid var(--mesa-accent) !important;
+  outline-offset: 2px;
+}
+/* patternfly's secondary buttons are blue outlines with more specific selectors, the
+   form and card prefixes out-rank them */
+form .pf-c-button.pf-m-secondary,
+.pf-c-login__main .pf-c-button.pf-m-secondary {
+  height: 40px;
+  border-radius: 10px !important;
+  color: var(--mesa-text) !important;
+  background: var(--mesa-field) !important;
+}
+form .pf-c-button.pf-m-secondary:hover,
+.pf-c-login__main .pf-c-button.pf-m-secondary:hover {
+  background: rgb(255 255 255 / 0.07) !important;
+}
+form .pf-c-button.pf-m-secondary::after,
+.pf-c-login__main .pf-c-button.pf-m-secondary::after {
+  border: 1px solid var(--mesa-line-strong) !important;
+  border-radius: 10px !important;
+}
+
+.pf-c-switch__label,
+.pf-c-check__label,
+.pf-c-check {
+  color: var(--mesa-muted) !important;
+  cursor: pointer;
+  user-select: none;
+}
+input[type="checkbox"] {
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--mesa-line-strong);
+  border-radius: 4px;
+  background: var(--mesa-field) center / 10px no-repeat;
+  cursor: pointer;
+  transition: background-color var(--mesa-fast) var(--mesa-ease), border-color var(--mesa-fast) var(--mesa-ease);
+}
+input[type="checkbox"]:hover {
+  border-color: var(--mesa-muted);
+}
+input[type="checkbox"]:checked {
+  border-color: var(--mesa-accent);
+  background-color: var(--mesa-accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.6l4.6-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--mesa-accent);
+  outline-offset: 2px;
+}
+
+/* the user strip above stages that already know who's signing in ("tetra  Not you?") */
+ak-form-static {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding: 8px 12px !important;
+  font-size: 0.875rem;
+  color: var(--mesa-text) !important;
+  background: var(--mesa-field);
+  border: 1px solid var(--mesa-line);
+  border-radius: 10px;
+}
+
+/* the 2fa method picker: each option is a row with an icon tile and a chevron */
+fieldset.ak-c-fieldset {
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+}
+fieldset.ak-c-fieldset legend.pf-c-title {
+  margin-bottom: 8px !important;
+  padding: 0 !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--mesa-muted) !important;
+}
+.pf-c-button.authenticator-button {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 8px !important;
+  padding: 12px 14px !important;
+  text-align: left;
+  color: var(--mesa-text) !important;
+  background: var(--mesa-field) !important;
+  border: 1px solid var(--mesa-line) !important;
+  border-radius: 12px !important;
+  transition: border-color var(--mesa-fast) var(--mesa-ease), background-color var(--mesa-fast) var(--mesa-ease);
+}
+.pf-c-button.authenticator-button:hover {
+  background: rgb(255 255 255 / 0.06) !important;
+  border-color: var(--mesa-line-strong) !important;
+}
+/* patternfly draws button borders on ::after, here it becomes the chevron */
+.pf-c-button.authenticator-button::after {
+  content: "" !important;
+  position: static !important;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border: solid var(--mesa-faint) !important;
+  border-width: 1.5px 1.5px 0 0 !important;
+  border-radius: 0 !important;
+  transform: rotate(45deg);
+}
+.pf-c-button.authenticator-button i {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--mesa-accent);
+  background: rgb(154 92 245 / 0.12);
+}
+.pf-c-button.authenticator-button .content {
+  flex: 1;
+  min-width: 0;
+}
+.pf-c-button.authenticator-button h1.pf-c-title {
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  color: var(--mesa-text) !important;
+}
+.pf-c-button.authenticator-button .pf-c-form__helper-text {
+  margin: 2px 0 0 !important;
+  font-size: 0.8125rem !important;
+  color: var(--mesa-muted) !important;
+}
+/* without an icon the option is a setup stage, and its helper text is authentik's
+   internal stage type ("WebAuthn Authenticator Setup Stage") */
+.pf-c-button.authenticator-button:not(:has(i)) .pf-c-form__helper-text {
   display: none !important;
 }
 
-.pf-c-login::before {
-  background-color: rgba(0, 0, 0, 0.33);
+/* authenticator app setup: the qr sits on a white plate (scanners want the light quiet
+   zone), the copy actions are small neutral buttons, the instructions are secondary */
+.qr-container {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.qr-container qr-code {
+  padding: 10px;
+  background: #fff;
+  border-radius: 12px;
+}
+.qr-buttons {
+  display: flex !important;
+  gap: 8px;
+}
+form .qr-buttons .pf-c-button.pf-m-secondary {
+  height: 32px;
+  /* progress buttons keep their icon in an absolute slot on the left */
+  padding: 0 12px 0 34px !important;
+  font-size: 0.8125rem !important;
+  color: var(--mesa-text) !important;
+  background: var(--mesa-field) !important;
+  border-radius: 8px !important;
+}
+form .qr-buttons .pf-c-button.pf-m-secondary::after {
+  border: 1px solid var(--mesa-line) !important;
+  border-radius: 8px !important;
+}
+form .qr-buttons .pf-c-button.pf-m-secondary i {
+  color: var(--mesa-muted);
+}
+form .qr-buttons .pf-c-button__progress {
+  left: 12px !important;
+}
+ak-stage-authenticator-totp form p {
+  font-size: 0.8125rem !important;
+  line-height: 1.5;
+  color: var(--mesa-muted) !important;
 }
 
+/* access denied and similar end states */
+.pf-c-empty-state__icon {
+  font-size: 2rem !important;
+  color: var(--mesa-muted) !important;
+}
+.pf-c-empty-state__icon.fa-times {
+  color: var(--mesa-danger) !important;
+}
+.pf-c-empty-state h1.pf-c-title {
+  font-size: 1.0625rem !important;
+  font-weight: 600 !important;
+}
+
+/* login form: remember me moves from under the username to just above the button. it
+   lives inside the username's group, so that group dissolves into the form's own flex
+   column and every row gets an explicit order and spacing. the scope classes only exist
+   while compatibility mode forces shadydom, which login has on */
+form.pf-c-form.ak-stage-identification {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0 !important;
+}
+form.pf-c-form.ak-stage-identification .pf-c-form__group:has(.remember-me-switch) {
+  display: contents !important;
+}
+form.pf-c-form.ak-stage-identification .pf-c-form__group:has(.remember-me-switch) label.pf-c-form__label {
+  order: 1;
+  margin-bottom: 6px;
+}
+form.pf-c-form.ak-stage-identification .pf-c-form__group:has(.remember-me-switch) input.pf-c-form-control {
+  order: 2;
+  margin-bottom: 16px;
+}
+form.pf-c-form.ak-stage-identification ak-flow-input-password {
+  order: 3;
+}
+form.pf-c-form.ak-stage-identification .remember-me-switch {
+  order: 4;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+form.pf-c-form.ak-stage-identification .pf-c-form__group.pf-m-action {
+  order: 5;
+}
+/* the manual passkey button (the identification stage's passwordless flow) and its
+   "Or" divider come after the log in button */
+form.pf-c-form.ak-stage-identification ak-divider {
+  order: 6;
+  margin: 20px 0 12px;
+  font-size: 0.75rem;
+  color: var(--mesa-faint) !important;
+}
+form.pf-c-form.ak-stage-identification a[data-ouia-component-id="passwordless"] {
+  order: 7;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0 !important;
+}
+/* authentik hard-codes "Use a security key", relabelled the same way as remember me */
+form.pf-c-form.ak-stage-identification a[data-ouia-component-id="passwordless"]::before {
+  content: "Log in with a passkey";
+  padding-left: 24px;
+  font-size: 0.9375rem;
+  line-height: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a39cab' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='15' r='4'/%3E%3Cpath d='m10.85 12.15 8.65-8.65M17 6l2.5 2.5M14.5 8.5 16.5 10.5'/%3E%3C/svg%3E") left center / 16px no-repeat;
+}
+/* authentik has no setting for this string, so it's swapped here and won't follow a
+   language change */
+.remember-me-switch .pf-c-form__label {
+  font-size: 0 !important;
+}
+.remember-me-switch .pf-c-form__label::before {
+  content: "Remember me";
+  font-size: 0.8125rem;
+}
+
+.pf-c-login__footer {
+  color: var(--mesa-muted) !important;
+}
+
+/* the language picker floats on the art too, so it gets a small dark backing */
+ak-locale-select {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  width: fit-content !important;
+  margin: 20px 0 0 48px !important;
+  padding: 5px 10px 5px 9px !important;
+  color: var(--mesa-text) !important;
+  background: rgb(17 12 22 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--mesa-line);
+  border-radius: 8px;
+}
+ak-locale-select svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--mesa-muted);
+}
+/* on phones patternfly pads the select 36px a side and bumps its font, which clips the
+   language name out of its auto-sized box */
+ak-locale-select select {
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--mesa-text) !important;
+  border: 0 !important;
+  font: inherit;
+  font-size: 0.8125rem !important;
+  field-sizing: content;
+  cursor: pointer;
+}
+/* authentik marks the picker with a trailing "..." and underlines the focused select,
+   keyboard focus shows on the whole chip instead */
+ak-locale-select::after {
+  display: none !important;
+}
+ak-locale-select select,
+ak-locale-select select:hover,
+ak-locale-select select:focus,
+ak-locale-select select:focus-visible,
+ak-locale-select select:open {
+  text-decoration: none !important;
+  padding: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+ak-locale-select:focus-within {
+  border-color: var(--mesa-accent);
+  box-shadow: 0 0 0 3px var(--mesa-accent-ring);
+}
+
+/* the language list: browsers with customizable selects (chromium) draw it as a dark
+   panel, others keep their native list with these option colors */
+ak-locale-select select,
+ak-locale-select select::picker(select) {
+  appearance: base-select !important;
+}
+ak-locale-select select::picker-icon {
+  color: var(--mesa-faint);
+  font-size: 0.75em;
+}
+ak-locale-select select::picker(select) {
+  margin-top: 8px;
+  padding: 6px;
+  max-height: min(360px, 70vh);
+  background: #17101d;
+  border: 1px solid var(--mesa-line);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -12px rgb(0 0 0 / 0.7);
+  scrollbar-width: thin;
+  scrollbar-color: var(--mesa-line-strong) transparent;
+}
+ak-locale-select option {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--mesa-muted);
+  background: #17101d;
+}
+ak-locale-select option:hover,
+ak-locale-select option:focus-visible {
+  color: var(--mesa-text);
+  background: rgb(255 255 255 / 0.06);
+  outline: none;
+}
+ak-locale-select option:checked {
+  color: var(--mesa-text);
+  background: rgb(154 92 245 / 0.16);
+}
+ak-locale-select option::checkmark {
+  color: var(--mesa-accent);
+}
+
+/* the logo and the "powered by" links stay hidden, the wordmark replaces them */
+div.pf-c-brand,
 ak-brand-links {
-  display: none;
+  display: none !important;
+}
+
+/* patternfly drops the background image on a phone, the card takes the width there */
+@media (max-width: 767px) {
+  body {
+    background: #110c16 !important;
+  }
+  ak-flow-executor .pf-c-login__main {
+    width: auto !important;
+    justify-self: stretch !important;
+    margin: 16px !important;
+  }
+  ak-locale-select {
+    margin-left: 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
