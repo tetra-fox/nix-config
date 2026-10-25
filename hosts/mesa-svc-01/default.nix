@@ -1,14 +1,10 @@
-{modules, ...}: {
+{
   imports = [
     ../common/arr-host.nix
     ./storage.nix
     ./asf.nix
     ./nowplaying.nix
-
-    modules.hardware.nvidia.system
   ];
-
-  hardware.nvidia-container-toolkit.enable = true;
 
   lab = {
     arrStack = {
@@ -27,7 +23,5 @@
     site.internalIp = "10.10.0.130";
 
     podman.cadvisor.enable = true;
-
-    nvidia.exporter.enable = true;
   };
 }
