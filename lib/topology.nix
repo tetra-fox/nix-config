@@ -58,8 +58,8 @@ in
     # caddy proxies from its own box IP, not the VIP
     edgeHostIps = ipsProviding caps.edge.name;
 
-    # any of them can be the patroni leader running the dump
-    dbHaNodeIps = ipsProviding caps.dbHaNode.name;
+    # every host that can run the dump: the single server, or any patroni member since each can lead
+    dbNodeIps = ipsProviding caps.dbServer.name ++ ipsProviding caps.dbHaNode.name;
 
     # cycle-safe: readOnly, defaulted from static attrsets
     arrDbRole = inputOfProviding caps.arr.name (c: c.lab.arrStack.dbRole) null;

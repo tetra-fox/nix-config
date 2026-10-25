@@ -13,6 +13,11 @@
 
   effectiveCidrs = lib.unique (dbClientCidrs ++ cfg.extraAllowedCidrs);
 
+  # lab.storage only exists where store-mount is imported
+  onStoreMount = dir:
+    lib.any (m: dir == m.mountpoint || lib.hasPrefix "${m.mountpoint}/" dir)
+    (lib.attrValues (config.lab.storage.mounts or {}));
+
   # idempotent, so running it after ensureUsers is fine
   roleSql = import modules.services.postgres.role-sql {inherit lib;};
 
@@ -130,7 +135,8 @@ in {
           };
         };
 
-        tmpfiles.rules = ["d ${cfg.backup.dir} 0700 postgres postgres -"];
+        # a dir on a store mount is made by the store host, a chown through an all_squash export fails
+        tmpfiles.rules = lib.mkIf (!onStoreMount cfg.backup.dir) ["d ${cfg.backup.dir} 0700 postgres postgres -"];
       };
     })
   ];

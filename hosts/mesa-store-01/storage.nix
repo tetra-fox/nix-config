@@ -21,8 +21,7 @@
   immichIp = topo.immichHostIp;
   # HAOS's internal-VLAN leg, so HAOS must mount this box's internal IP
   haIp = config.lab.appliances.haosIp;
-  # any node can be the leader, so all are admitted
-  dbIps = topo.dbHaNodeIps;
+  dbIps = topo.dbNodeIps;
 
   # store/timemachine are per-user 0700 subdirs owned via samba root preexec, a recursive
   # chgrp would fight that

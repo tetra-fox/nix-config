@@ -1,4 +1,4 @@
-# identical on all three nodes, any one can be leader and must be able to bootstrap
+# the db config every mesa db node shares, single server or patroni member
 {
   config,
   lib,
@@ -10,17 +10,13 @@
     modules.profiles.server.system
 
     modules.services.store-mount.system
-    modules.services.postgres-ha.system
+    modules.services.postgres.options
   ];
 
   # the dump unit orders on the mount itself
   lab.storage.mounts."backup/postgres".mountpoint = "/mnt/pgbackup";
 
   lab.postgres = {
-    ha = {
-      enable = true;
-      vip = "10.10.0.115";
-    };
     admin.enable = true;
 
     backup = {

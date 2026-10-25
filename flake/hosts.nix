@@ -14,7 +14,18 @@
     signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHseoQ278Qrc45S8MUE8vwXnmdxd8OiWXViK0yHYYELz";
   };
 
-  serverNames = lib.filter (name: fleet.site-prefix name != name) (lib.attrNames (builtins.readDir ../hosts));
+  # left out of the fleet but kept in hosts/: mesa runs on one proxmox node, so a second HA
+  # member only adds a VM. their -01 partners run solo until a second node exists
+  parked = [
+    "mesa-db-02"
+    "mesa-db-03"
+    "mesa-edge-02"
+    "mesa-dns-02"
+  ];
+
+  serverNames =
+    lib.filter (name: fleet.site-prefix name != name && !lib.elem name parked)
+    (lib.attrNames (builtins.readDir ../hosts));
 
   specialArgs = {
     inherit username serverUsername identity modules fleet;
