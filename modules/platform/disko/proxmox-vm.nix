@@ -4,6 +4,10 @@
 {inputs, ...}: {
   imports = [inputs.disko.nixosModules.disko];
 
+  # root is the last partition, so a disk grown in pve is picked up on the next boot
+  boot.growPartition = true;
+  fileSystems."/".autoResize = true;
+
   disko.devices.disk.main = {
     type = "disk";
     device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0";
