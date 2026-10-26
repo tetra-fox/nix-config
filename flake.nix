@@ -63,6 +63,10 @@
     };
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+    asterix = {
+      url = "github:tetra-fox/asterix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-topology = {
       url = "github:oddlama/nix-topology";
       inputs.nixpkgs.follows = "nixpkgs";

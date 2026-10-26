@@ -66,6 +66,26 @@
         "type": "github"
       }
     },
+    "asterix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792311422,
+        "narHash": "sha256-WZMMTpstvefaaLQmD24YvmPbejZn/SfYLGploo32GWc=",
+        "owner": "tetra-fox",
+        "repo": "asterix",
+        "rev": "f2eaa10a0c4148261dd4ff320280ee3546dddf1d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tetra-fox",
+        "repo": "asterix",
+        "type": "github"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -1110,6 +1130,7 @@
         "ableton-linux": "ableton-linux",
         "apple-fonts": "apple-fonts",
         "artcraft": "artcraft",
+        "asterix": "asterix",
         "catppuccin": "catppuccin",
         "colmena": "colmena",
         "disko": "disko",
