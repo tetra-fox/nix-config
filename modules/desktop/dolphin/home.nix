@@ -48,12 +48,12 @@
         MainWindow.MenuBar = "Disabled";
         UiSettings.ColorScheme = "BreezeDark";
         DetailsMode = {
-          PreviewSize = 80;
+          PreviewSize = 22;
           LeftPadding = 0;
           RightPadding = 0;
         };
         IconsMode = {
-          PreviewSize = 48;
+          PreviewSize = 80;
           TextWidthIndex = 0;
         };
         "KFileDialog Settings" = {
