@@ -4,6 +4,7 @@
     ./storage.nix
     ./asf.nix
     ./nowplaying.nix
+    ./radio.nix
   ];
 
   lab = {

@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   inputs,
   ...
 }: let
@@ -23,6 +24,19 @@
 
   # home assistant's voip integration, which answers with assist and calls phones itself
   haNumber = "2";
+
+  radio = import ../common/fc05-radio.nix;
+  radioNumber = "05";
+  # asterisk restarts a program that exits, but can crash reloading music on hold while it is
+  # down, so this keeps retrying the stream instead of exiting
+  radioHold = pkgs.writeShellScript "fc05-hold" ''
+    while true; do
+      ${lib.getExe pkgs.ffmpeg-headless} -nostdin -loglevel error \
+        -i https://${radio.subdomain}.${site.domain}/${radio.mount} \
+        -f s16le -ar 8000 -ac 1 -
+      ${pkgs.coreutils}/bin/sleep 5
+    done
+  '';
 in {
   imports = [inputs.asterix.nixosModules.default];
 
@@ -131,10 +145,24 @@ in {
       # the network's interface, plus home assistant's leg
       firewallInterfaces = [voip.interface site.internalInterface];
 
-      dialplan.contexts.pbx-internal.extensions.${haNumber} = [
-        "Dial(PJSIP/homeass)"
-        "Hangup()"
-      ];
+      dialplan.contexts.pbx-internal.extensions = {
+        ${haNumber} = [
+          "Dial(PJSIP/homeass)"
+          "Hangup()"
+        ];
+        ${radioNumber} = [
+          "Answer()"
+          "MusicOnHold(default)"
+        ];
+      };
+
+      # holds, parking and the radio number all play the default class
+      musicOnHold.classes.default = {
+        mode = "custom";
+        # spawn_mp3 passes the files of the directory to the program, which takes none
+        directory = "nodir";
+        application = "${radioHold}";
+      };
     };
   };
 }
