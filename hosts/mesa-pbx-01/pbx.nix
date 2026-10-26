@@ -57,7 +57,10 @@ in {
         restartUnits = ["asterix-provisioning.service"];
       };
     })
-    extensions;
+    extensions
+    // {
+      "pbx/trunk_voipms".reloadUnits = ["asterisk.service"];
+    };
 
   services = {
     asterix = {
@@ -102,6 +105,24 @@ in {
       };
 
       parking.number = "70";
+
+      trunks.voipms = {
+        host = "seattle1.voip.ms";
+        username = "579864_pbx";
+        password = secret "trunk_voipms";
+        # seattle1.voip.ms, which the sip acl needs as an address. calls to a number come from
+        # the pop it is routed to, so the numbers stay on seattle1
+        identify.match = ["208.100.60.42"];
+      };
+
+      # no prefix, 10 digits go out as dialled
+      outbound = {
+        prefix = "";
+        trunk = "voipms";
+      };
+
+      # TODO: callerId once the numbers arrive and 911's address is registered to one
+      emergency.numbers = ["911"];
 
       phones = {
         listenAddress = voip.address;
