@@ -86,7 +86,12 @@
     autostart.enable = lib.mkDefault false;
   };
 
-  hardware.nvidia.powerManagement.enable = false;
+  # headless: the settings gui pulls gtk, va-api pulls gstreamer and pipewire, cuda and nvenc need neither
+  hardware.nvidia = {
+    powerManagement.enable = false;
+    nvidiaSettings = false;
+    videoAcceleration = false;
+  };
 
   systemd = {
     # emergency mode waits on a console nobody watches, let the watchdog reboot instead

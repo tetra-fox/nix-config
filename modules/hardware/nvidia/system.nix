@@ -36,7 +36,7 @@ in {
         modesetting.enable = true;
         # without it resume shows garbage framebuffers on turing+
         powerManagement.enable = lib.mkDefault true;
-        nvidiaSettings = true;
+        nvidiaSettings = lib.mkDefault true;
       };
     };
 
