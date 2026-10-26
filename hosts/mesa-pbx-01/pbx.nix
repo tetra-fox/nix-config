@@ -131,6 +131,8 @@ in {
         allowedNetworks = [voip.cidr];
         cisco.timeZone = "Pacific Standard/Daylight Time";
         grandstream.timeZone = "PST8PDT,M3.2.0/02:00:00,M11.1.0/02:00:00";
+        # config over tftp, the protocol the adapters came set to, so they never switch
+        grandstream.settings.P212 = 0;
 
         devices = {
           "273" = {
@@ -150,12 +152,20 @@ in {
             mac = "1c:1d:86:c4:b5:39";
           };
         };
+
+        # the grandstreams fetch their files over tftp, see P212 above
+        files =
+          lib.mapAttrs' (_: device: {
+            name = "cfg${lib.toLower (lib.replaceStrings [":"] [""] device.mac)}.xml";
+            value.tftp = true;
+          })
+          (lib.filterAttrs (_: device: lib.hasPrefix "grandstream-" device.model) config.services.asterix.phones.devices);
       };
     };
 
     asterisk = {
       # home assistant has no sip account, so it is let in by address
-      pjsip.endpoints.homeass = {
+      pjsip.endpoints.homeassistant = {
         context = "pbx-internal";
         allow = ["opus"];
         identify.match = [appliances.haosIp];
@@ -170,7 +180,7 @@ in {
 
       dialplan.contexts.pbx-internal.extensions = {
         ${haNumber} = [
-          "Dial(PJSIP/homeass)"
+          "Dial(PJSIP/homeassistant)"
           "Hangup()"
         ];
         ${radioNumber} = [
