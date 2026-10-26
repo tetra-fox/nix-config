@@ -58,6 +58,11 @@ in {
       };
     })
     extensions
+    // lib.mapAttrs' (number: _: {
+      name = "pbx/vm_${number}";
+      value.reloadUnits = ["asterisk.service"];
+    })
+    extensions
     // {
       "pbx/trunk_voipms".reloadUnits = ["asterisk.service"];
     };
@@ -82,8 +87,12 @@ in {
         lib.mapAttrs (number: e: {
           inherit (e) name;
           password = secret "sip_${number}";
+          voicemail.pin = secret "vm_${number}";
         })
         extensions;
+
+      # also the ciscos' messages button
+      voicemailMenu = "*97";
 
       featureCodes = {
         dnd = "*76";
