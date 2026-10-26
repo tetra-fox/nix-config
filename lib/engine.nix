@@ -100,19 +100,20 @@
     then ipOf (builtins.head singleHosts)
     else vipAmong haHosts vipPath capLabel;
 
-  # edge, dns: a lone provider is used directly, two resolve to the VIP
+  # edge, dns: the VIP whenever the providers declare one, even a lone provider holding it solo,
+  # since clients and the router point at it. a lone provider without a VIP is used directly
   haEndpointFor = {
     cap,
     vipPath,
   }: let
     hosts = hostsProviding cap;
+    vip = vipAmong hosts vipPath cap;
   in
-    resolveEndpoint {
-      singleHosts = hosts;
-      haHosts = hosts;
-      inherit vipPath;
-      capLabel = cap;
-    };
+    if vip != null
+    then vip
+    else if lib.length hosts == 1
+    then ipOf (builtins.head hosts)
+    else null;
 
   # postgres: separate single-server and HA caps
   optionalHaEndpointFor = {

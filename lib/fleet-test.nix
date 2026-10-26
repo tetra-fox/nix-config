@@ -158,13 +158,22 @@
       ok = !(builtins.tryEval (f.ipProviding "cache-node")).success;
     }
     {
-      name = "haEndpointFor points at the sole provider before the pair exists";
+      name = "haEndpointFor points at a sole provider that declares no VIP";
+      ok =
+        f.haEndpointFor {
+          cap = "metrics";
+          vipPath = ["lab" "novip" "vip"];
+        }
+        == "10.1.0.1";
+    }
+    {
+      name = "haEndpointFor resolves to the VIP a sole provider holds solo";
       ok =
         f.haEndpointFor {
           cap = "metrics";
           vipPath = ["lab" "cachevip" "vip"];
         }
-        == "10.1.0.1";
+        == "10.1.0.100";
     }
     {
       name = "haEndpointFor resolves to the VIP when two hosts provide the cap";
