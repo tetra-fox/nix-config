@@ -73,11 +73,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792311422,
-        "narHash": "sha256-WZMMTpstvefaaLQmD24YvmPbejZn/SfYLGploo32GWc=",
+        "lastModified": 1792986900,
+        "narHash": "sha256-9C6pVVl4xNQcBOR8hFUI6ay0C6R6GahojxIgVQ5LU3w=",
         "owner": "tetra-fox",
         "repo": "asterix",
-        "rev": "f2eaa10a0c4148261dd4ff320280ee3546dddf1d",
+        "rev": "68d17ad401d7e8d9c2092307636bbbd966991825",
         "type": "github"
       },
       "original": {

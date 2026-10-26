@@ -33,7 +33,7 @@
     while true; do
       ${lib.getExe pkgs.ffmpeg-headless} -nostdin -loglevel error \
         -i https://${radio.subdomain}.${site.domain}/${radio.mount} \
-        -f s16le -ar 8000 -ac 1 -
+        -f s16le -ar 16000 -ac 1 -
       ${pkgs.coreutils}/bin/sleep 5
     done
   '';
@@ -110,6 +110,8 @@ in {
         host = "seattle1.voip.ms";
         username = "579864_pbx";
         password = secret "trunk_voipms";
+        # the codec the sub-account allows
+        allow = ["ulaw"];
         # seattle1.voip.ms, which the sip acl needs as an address. calls to a number come from
         # the pop it is routed to, so the numbers stay on seattle1
         identify.match = ["208.100.60.42"];
@@ -183,6 +185,8 @@ in {
         # spawn_mp3 passes the files of the directory to the program, which takes none
         directory = "nodir";
         application = "${radioHold}";
+        # 16 khz to match the program's output, so g722 calls hear wideband
+        settings.format = "slin16";
       };
     };
   };
