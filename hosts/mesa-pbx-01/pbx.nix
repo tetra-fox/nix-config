@@ -16,11 +16,29 @@
   };
 
   extensions = {
-    "273".name = "creek";
-    "567".name = "lori";
-    "838".name = "tetra";
-    "839".name = "tetra_2";
+    "273" = {
+      name = "creek";
+      model = "grandstream-ht801";
+      mac = "ec:74:d7:29:d7:e8";
+    };
+    "567" = {
+      name = "lori";
+      model = "cisco-7962g";
+      mac = "3c:0e:23:6d:3e:50";
+    };
+    "838" = {
+      name = "tetra";
+      model = "cisco-7962g";
+      mac = "3c:0e:23:6c:b6:d1";
+    };
+    "839" = {
+      name = "tetra_2";
+      model = "cisco-7962g";
+      mac = "1c:1d:86:c4:b5:39";
+    };
   };
+  # the ciscos answer pages on a line of their own, the ht801s have no speaker to answer on
+  ciscos = lib.filterAttrs (_: e: lib.hasPrefix "cisco-" e.model) extensions;
 
   # home assistant's voip integration, which answers with assist and calls phones itself
   haNumber = "2";
@@ -57,7 +75,7 @@ in {
         restartUnits = ["asterix-provisioning.service"];
       };
     })
-    extensions
+    (extensions // lib.mapAttrs' (number: e: lib.nameValuePair "${number}_page" e) ciscos)
     // lib.mapAttrs' (number: _: {
       name = "pbx/vm_${number}";
       value.reloadUnits = ["asterisk.service"];
@@ -88,6 +106,7 @@ in {
           inherit (e) name;
           password = secret "sip_${number}";
           voicemail.pin = secret "vm_${number}";
+          pagingLine = lib.mkIf (ciscos ? ${number}) {password = secret "sip_${number}_page";};
         })
         extensions;
 
@@ -115,10 +134,9 @@ in {
 
       parking.number = "70";
 
-      # the ciscos answer on speaker, the ht801 has no speaker to answer on
       paging.all = {
         number = "*80";
-        members = lib.attrNames (lib.filterAttrs (_: device: lib.hasPrefix "cisco-" device.model) config.services.asterix.phones.devices);
+        members = lib.attrNames ciscos;
       };
 
       trunks.voipms = {
@@ -162,32 +180,24 @@ in {
         # config over tftp, the protocol the adapters came set to, so they never switch
         grandstream.settings.P212 = 0;
 
-        devices = {
-          "273" = {
-            model = "grandstream-ht801";
-            mac = "ec:74:d7:29:d7:e8";
-          };
-          "567" = {
-            model = "cisco-7962g";
-            mac = "3c:0e:23:6d:3e:50";
-          };
-          "838" = {
-            model = "cisco-7962g";
-            mac = "3c:0e:23:6c:b6:d1";
-          };
-          "839" = {
-            model = "cisco-7962g";
-            mac = "1c:1d:86:c4:b5:39";
-          };
-        };
+        devices =
+          lib.mapAttrs (number: e: {
+            inherit (e) model mac;
+            # the paging line on the last button
+            lines =
+              if ciscos ? ${number}
+              then [number null null null null "${number}-page"]
+              else [number];
+          })
+          extensions;
 
         # the grandstreams fetch their files over tftp, see P212 above
         files =
-          lib.mapAttrs' (_: device: {
-            name = "cfg${lib.toLower (lib.replaceStrings [":"] [""] device.mac)}.xml";
+          lib.mapAttrs' (_: e: {
+            name = "cfg${lib.toLower (lib.replaceStrings [":"] [""] e.mac)}.xml";
             value.tftp = true;
           })
-          (lib.filterAttrs (_: device: lib.hasPrefix "grandstream-" device.model) config.services.asterix.phones.devices);
+          (lib.filterAttrs (_: e: lib.hasPrefix "grandstream-" e.model) extensions);
       };
     };
 
