@@ -115,6 +115,12 @@ in {
 
       parking.number = "70";
 
+      # the ciscos answer on speaker, the ht801 has no speaker to answer on
+      paging.all = {
+        number = "*80";
+        members = lib.attrNames (lib.filterAttrs (_: device: lib.hasPrefix "cisco-" device.model) config.services.asterix.phones.devices);
+      };
+
       trunks.voipms = {
         host = "seattle1.voip.ms";
         username = "579864_pbx";
