@@ -138,7 +138,20 @@ in {
       phones = {
         listenAddress = voip.address;
         allowedNetworks = [voip.cidr];
-        cisco.timeZone = "Pacific Standard/Daylight Time";
+        cisco = {
+          timeZone = "Pacific Standard/Daylight Time";
+          # so sccp and factory reset phones flash to sip. cisco's license keeps it out of this
+          # public repo, so it is added to the store by hand
+          firmware = {
+            load = "SIP42.9-4-2SR3-1S";
+            directory = pkgs.requireFile {
+              name = "cisco-7962-sip-9.4.2SR3";
+              hashMode = "recursive";
+              hash = "sha256-OVsE++6cBetYQ5FVVvc8X1CPKrqsn6zQd5CZ/Vv+Flo=";
+              message = "add cmterm-7942_7962-sip.9-4-2SR3-1.zip's files with: nix-store --add-fixed --recursive sha256 cisco-7962-sip-9.4.2SR3";
+            };
+          };
+        };
         grandstream.timeZone = "PST8PDT,M3.2.0/02:00:00,M11.1.0/02:00:00";
         # config over tftp, the protocol the adapters came set to, so they never switch
         grandstream.settings.P212 = 0;
@@ -149,8 +162,8 @@ in {
             mac = "ec:74:d7:29:d7:e8";
           };
           "567" = {
-            model = "grandstream-ht801";
-            mac = "ec:74:d7:97:73:f2";
+            model = "cisco-7962g";
+            mac = "3c:0e:23:6d:3e:50";
           };
           "838" = {
             model = "cisco-7962g";
