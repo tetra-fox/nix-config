@@ -217,6 +217,10 @@ in {
         ];
       };
 
+      # the host runs on utc, so messages give their time in the house's zone
+      voicemail.settings.tz = "pacific";
+      settings."voicemail.conf".zonemessages.pacific = "America/Los_Angeles|'vm-received' Q 'digits/at' IMp";
+
       # holds, parking and the radio number all play the default class
       musicOnHold.classes.default = {
         mode = "custom";
