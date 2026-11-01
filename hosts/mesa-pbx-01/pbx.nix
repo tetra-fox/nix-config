@@ -1,8 +1,10 @@
 {
+  caps,
   config,
   lib,
   pkgs,
   inputs,
+  topo,
   ...
 }: let
   inherit (config.lab) site appliances;
@@ -45,6 +47,11 @@
 
   radio = import ../common/fc05-radio.nix;
   radioNumber = "05";
+  radioControl = path: "http://${topo.radioHostIp}:${toString radio.control.port}${path}";
+  radioKey = path: [
+    "NoOp(\${CURL(${radioControl path})})"
+    "Goto(s,listen)"
+  ];
   # asterisk restarts a program that exits, but can crash reloading music on hold while it is
   # down, so this keeps retrying the stream instead of exiting
   radioHold = pkgs.writeShellScript "fc05-hold" ''
@@ -57,6 +64,8 @@
   '';
 in {
   imports = [inputs.asterix.nixosModules.default];
+
+  lab.topology.provides = [caps.pbx.name];
 
   # on-link only: the phones are on this subnet, everything else goes out the server vlan
   networking.interfaces.${voip.interface}.ipv4.addresses = [
@@ -216,16 +225,36 @@ in {
       # the network's interface, plus home assistant's leg
       firewallInterfaces = [voip.interface site.internalInterface];
 
-      dialplan.contexts.pbx-internal.extensions = {
-        ${haNumber} = [
-          "Dial(PJSIP/homeassistant)"
-          "Hangup()"
-        ];
-        ${radioNumber} = [
-          "Answer()"
-          "MusicOnHold(default)"
-        ];
+      dialplan.contexts = {
+        pbx-internal.extensions = {
+          ${haNumber} = [
+            "Dial(PJSIP/homeassistant)"
+            "Hangup()"
+          ];
+          ${radioNumber} = ["Goto(radio,s,1)"];
+        };
+
+        # a context of its own, so a key press matches only these extensions
+        radio.extensions = {
+          s = [
+            "Answer()"
+            # the caller hears nothing while CURL waits
+            "Set(CURLOPT(httptimeout)=2)"
+            {
+              app = "WaitExten";
+              args = [3600 "m(default)"];
+              label = "listen";
+            }
+            "Goto(listen)"
+          ];
+          "4" = radioKey radio.control.previous;
+          "6" = radioKey radio.control.next;
+          # asterisk hangs up on a key with no extension
+          i = ["Goto(s,listen)"];
+        };
       };
+
+      modules.needed."the radio's keypad" = ["res_curl.so" "func_curl.so"];
 
       # the host runs on utc, so messages give their time in the house's zone
       voicemail.settings.tz = "pacific";

@@ -35,6 +35,8 @@ in
     mediaHostIp = ipProviding caps.media.name;
     storageHostIp = ipProviding caps.storage.name;
     immichHostIp = ipProviding caps.immich.name;
+    radioHostIp = ipProviding caps.radio.name;
+    pbxHostIp = ipProviding caps.pbx.name;
 
     # for immich's oauth issuerUrl. safe because it never feeds authentik's own config
     authServerUrl = publicUrlProviding caps.authServer.name;

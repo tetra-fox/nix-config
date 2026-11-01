@@ -2,4 +2,10 @@
 {
   subdomain = "fc05";
   mount = "stream";
+  # has no route through the edge, so only the pbx reaches it
+  control = {
+    port = 8011;
+    previous = "/previous";
+    next = "/next";
+  };
 }

@@ -9,6 +9,8 @@
   storage = {name = "storage";};
   immich = {name = "immich";};
   arr = {name = "arr";};
+  radio = {name = "radio";};
+  pbx = {name = "pbx";};
 
   dbServer = {name = "db-server";};
   dbClient = {name = "db-client";};
