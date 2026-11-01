@@ -28,6 +28,23 @@
     };
   };
 
+  # TODO: remove when nixpkgs#578265 lands. my fucking god please merge this shit
+  nixpkgs.overlays = [
+    (_: prev: {
+      pythonPackagesExtensions =
+        prev.pythonPackagesExtensions
+        ++ [
+          (_: pyPrev: {
+            # TODO: remove when nixpkgs unbreaks posthog. its test suite pins mcp<2, runtime doesn't need mcp
+            posthog = pyPrev.posthog.overridePythonAttrs (old: {
+              doCheck = false;
+              meta = old.meta // {broken = false;};
+            });
+          })
+        ];
+    })
+  ];
+
   # open-webui defaults to 8080; ollama listens on 11434. both bind 127.0.0.1,
   # so nothing leaves the box and no firewall port is opened.
   assertions = [
