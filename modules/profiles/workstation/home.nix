@@ -14,6 +14,17 @@
         --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.sops pkgs.age]}
     '';
   };
+
+  # TODO: remove when gtk3 stops mixing shm and egl commits on one surface
+  orca-slicer-no-dmabuf = pkgs.symlinkJoin {
+    name = "orca-slicer-no-dmabuf";
+    paths = [pkgs.orca-slicer];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/orca-slicer \
+        --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+    '';
+  };
 in {
   imports = [
     ./home-common.nix
@@ -62,6 +73,8 @@ in {
     strawberry
 
     kicad
+    freecad
+    orca-slicer-no-dmabuf
 
     onlyoffice-desktopeditors
     obsidian-with-sops
