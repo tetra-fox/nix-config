@@ -81,8 +81,14 @@ in {
       BAMBUDDY_OIDC_ISSUER_URL = "${topo.authServerUrl}/application/o/bambuddy/";
       BAMBUDDY_OIDC_CLIENT_ID = "bambuddy";
       BAMBUDDY_OIDC_AUTO_CREATE_USERS = "true";
-      # authentik only lets sysadmin into the app
-      BAMBUDDY_OIDC_GROUP_MAPPING = builtins.toJSON {sysadmin = "Administrators";};
+      # authentik releases only these to bambuddy, see oidc-providers.yaml
+      BAMBUDDY_OIDC_SCOPES = "openid profile";
+      # authentik admits exactly these three groups to the app
+      BAMBUDDY_OIDC_GROUP_MAPPING = builtins.toJSON {
+        sysadmin = "Administrators";
+        printer_admin = "Operators";
+        local_users = "Viewers";
+      };
     };
   };
 }

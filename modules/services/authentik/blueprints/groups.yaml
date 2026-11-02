@@ -27,6 +27,11 @@ entries:
     attrs: { is_superuser: false, parents: [] }
 
   - model: authentik_core.group
+    id: printer_admin
+    identifiers: { name: printer_admin }
+    attrs: { is_superuser: false, parents: [] }
+
+  - model: authentik_core.group
     id: arr_users
     identifiers: { name: arr_users }
     attrs: { is_superuser: false, parents: [] }
@@ -47,6 +52,7 @@ entries:
         - !KeyOf sysadmin
         - !KeyOf immich_users
         - !KeyOf arr_users
+        - !KeyOf printer_admin
         - !KeyOf jellyfin_users
         - !KeyOf local_users
 
