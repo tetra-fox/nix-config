@@ -86,7 +86,6 @@ in {
   boot.zfs.extraPools = ["megamax"];
 
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
-  lab.site.dataDirGroup = config.lab.media.group;
 
   users.users = lib.genAttrs sambaUsers (_name: {
     isSystemUser = true;
@@ -158,9 +157,11 @@ in {
     };
   };
 
-  lab.topology.provides = [caps.storage.name];
-
-  lab.backup.restic.datasets = protectedDatasets;
+  lab = {
+    site.dataDirGroup = config.lab.media.group;
+    topology.provides = [caps.storage.name];
+    backup.restic.datasets = protectedDatasets;
+  };
 
   services.nfs.server = {
     enable = true;
