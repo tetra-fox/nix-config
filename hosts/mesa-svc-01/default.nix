@@ -3,6 +3,7 @@
     ../common/arr-host.nix
     ./storage.nix
     ./asf.nix
+    ./bambuddy.nix
     ./nowplaying.nix
     ./radio.nix
   ];

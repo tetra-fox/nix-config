@@ -5,9 +5,15 @@
   topo,
   ...
 }: let
+  # full patch tag: no podman-auto-update, and upstream's releases can need manual migrations.
+  # the slicer sidecar is published per bambuddy release under the same version
+  version = "1.2.5.7";
   port = 8000;
   dataDir = "${config.lab.site.dataDir}/bambuddy";
   fqdn = "bb.${config.lab.site.domain}";
+  # 3000 and 3002 belong to bambuddy's virtual printers
+  slicerPort = 3003;
+  slicerDataDir = "${config.lab.site.dataDir}/orca-slicer-api";
 in {
   lab.topology.routes = [
     {
@@ -27,7 +33,11 @@ in {
     groups.bambuddy.gid = 969;
   };
 
-  systemd.tmpfiles.rules = ["d ${dataDir} 0750 bambuddy bambuddy -"];
+  systemd.tmpfiles.rules = [
+    "d ${dataDir} 0750 bambuddy bambuddy -"
+    # the sidecar image runs as root
+    "d ${slicerDataDir} 0750 root root -"
+  ];
 
   sops.secrets."apps/bambuddy_oidc_client_secret" = {};
 
@@ -38,9 +48,16 @@ in {
     restartUnits = ["podman-bambuddy.service"];
   };
 
+  # orcaslicer's cli behind http, for bambuddy's server-side slice
+  virtualisation.oci-containers.containers.orca-slicer-api = {
+    image = "ghcr.io/maziggy/orca-slicer-api:bambuddy-${version}";
+    # loopback only, bambuddy is its one client
+    ports = ["127.0.0.1:${toString slicerPort}:3000"];
+    volumes = ["${slicerDataDir}:/app/data"];
+  };
+
   virtualisation.oci-containers.containers.bambuddy = {
-    # full patch tag: no podman-auto-update, and upstream's releases can need manual migrations
-    image = "ghcr.io/maziggy/bambuddy:1.2.5.7";
+    image = "ghcr.io/maziggy/bambuddy:${version}";
     # upstream's supported mode on linux, virtual printers bind their own set of ports.
     # those stay closed, the firewall only admits the edge hosts to the route's port
     networks = ["host"];
@@ -57,6 +74,8 @@ in {
       APP_URL = "https://${fqdn}";
       # login rate limits key on the client address, not the edge's
       TRUSTED_PROXY_IPS = lib.concatStringsSep "," topo.edgeHostIps;
+      # host networking, so the sidecar's loopback port is reachable
+      SLICER_API_URL = "http://127.0.0.1:${toString slicerPort}";
 
       BAMBUDDY_OIDC_NAME = "Authentik";
       BAMBUDDY_OIDC_ISSUER_URL = "${topo.authServerUrl}/application/o/bambuddy/";
