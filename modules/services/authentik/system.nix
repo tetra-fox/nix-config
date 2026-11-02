@@ -23,7 +23,7 @@
   # by the embedded outpost. blueprints never delete what they stop declaring, so a
   # route that drops forward_auth leaves its app behind, detached from the outpost
   forwardAuthApps = map (r: rec {
-    inherit (r) host;
+    inherit (r) host appGroup;
     title =
       if r.title != null
       then r.title
@@ -31,6 +31,11 @@
     slug = lib.replaceStrings [" "] ["-"] (lib.toLower title);
   }) (lib.filter (r: lib.elem "forward_auth" r.middlewares) topo.routesInSite);
   q = builtins.toJSON;
+
+  # each secret reaches oidc-providers.yaml as <NAME>_OIDC_CLIENT_SECRET through authentik.env
+  oidcClients = ["bambuddy" "grafana" "home_assistant" "immich" "proxmox"];
+  oidcClientSecret = name: "auth/${name}_oidc_client_secret";
+
   forwardAuthEntries = a: ''
     - model: authentik_providers_proxy.proxyprovider
       id: provider-${a.slug}
@@ -43,7 +48,7 @@
     - model: authentik_core.application
       id: app-${a.slug}
       identifiers: { slug: ${q a.slug} }
-      attrs: { name: ${q a.title}, provider: !KeyOf provider-${a.slug} }
+      attrs: { name: ${q a.title}, group: ${q a.appGroup}, provider: !KeyOf provider-${a.slug} }
     - model: authentik_policies.policybinding
       identifiers:
         target: !KeyOf app-${a.slug}
@@ -68,21 +73,37 @@
       name: ldap
     entries:
     - model: authentik_providers_ldap.ldapprovider
+      id: provider-jellyfin
       identifiers: { name: Provider for Jellyfin }
       attrs:
         base_dn: ${q cfg.ldapBaseDn}
         authorization_flow: !Find [authentik_flows.flow, [slug, ldap-bind]]
+        bind_mode: direct
+        search_mode: direct
+        mfa_support: false
+    - model: authentik_core.application
+      id: app-jellyfin
+      identifiers: { slug: jellyfin }
+      attrs:
+        name: Jellyfin
+        group: Media
+        provider: !KeyOf provider-jellyfin
     ${lib.optionalString (topo.mediaHost != null) ''
       # the dashboard hides apps without a launch url, and an ldap provider has none
       - model: authentik_core.application
         identifiers: { slug: jellyfin }
         attrs: { meta_launch_url: ${q "https://${topo.mediaHost}"} }
     ''}
+    - model: authentik_policies.policybinding
+      identifiers:
+        target: !KeyOf app-jellyfin
+        group: !Find [authentik_core.group, [name, jellyfin_users]]
+      attrs: { order: 0 }
     # bound to the app directly rather than through jellyfin_users, which jellyfin's
     # user search filters on
     - model: authentik_policies.policybinding
       identifiers:
-        target: !Find [authentik_core.application, [slug, jellyfin]]
+        target: !KeyOf app-jellyfin
         user: !Find [authentik_core.user, [username, ${q cfg.ldapBindUser}]]
       attrs: { order: 10 }
   '';
@@ -234,17 +255,29 @@ in {
       }
     ];
 
-    sops.secrets = {
-      "auth/pg_pass" = {};
-      "auth/authentik_secret_key" = {};
-      "auth/ldap_outpost_token" = {};
-    };
+    sops.secrets =
+      {
+        "auth/pg_pass" = {};
+        "auth/authentik_secret_key" = {};
+        "auth/ldap_outpost_token" = {};
+        # a whole blueprint, so usernames and emails stay out of the repo. the worker runs as 1000
+        "auth/users_blueprint" = {
+          uid = 1000;
+          restartUnits = ["podman-auth-worker.service"];
+        };
+      }
+      // lib.genAttrs (map oidcClientSecret oidcClients) (_: {});
 
     sops.templates = {
-      "authentik.env".content = ''
-        AUTHENTIK_POSTGRESQL__PASSWORD=${config.sops.placeholder."auth/pg_pass"}
-        AUTHENTIK_SECRET_KEY=${config.sops.placeholder."auth/authentik_secret_key"}
-      '';
+      "authentik.env".content =
+        ''
+          AUTHENTIK_POSTGRESQL__PASSWORD=${config.sops.placeholder."auth/pg_pass"}
+          AUTHENTIK_SECRET_KEY=${config.sops.placeholder."auth/authentik_secret_key"}
+        ''
+        + lib.concatMapStrings (name: ''
+          ${lib.toUpper name}_OIDC_CLIENT_SECRET=${config.sops.placeholder.${oidcClientSecret name}}
+        '')
+        oidcClients;
       "authentik-ldap.env".content = "AUTHENTIK_TOKEN=${config.sops.placeholder."auth/ldap_outpost_token"}\n";
     };
 
@@ -275,6 +308,7 @@ in {
             "${siteData}/authentik/certs:/certs"
             authentikTemplatesVol
             "${blueprintsDir}:/blueprints/custom:ro"
+            "${config.sops.secrets."auth/users_blueprint".path}:/blueprints/private/users.yaml:ro"
           ];
         };
 

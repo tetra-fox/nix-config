@@ -2,9 +2,10 @@ version: 1
 metadata:
   name: groups
 entries:
-  # the tree only, members stay runtime. a group inherits from its parents, so a member of
-  # superadmin is in every group below it. superadmin is everything, sysadmin is the admin
-  # role inside whichever apps a user can reach, *_users groups gate access. the oidc
+  # the tree only, members are in the auth/users_blueprint secret. a group inherits from its
+  # parents, so a member of superadmin is in every group below it. superadmin is everything,
+  # sysadmin is the admin role inside whichever apps a user can reach, *_users groups gate
+  # access. the oidc
   # groups claim carries the inherited groups (see oidc-providers.yaml), ldap memberOf
   # only carries direct ones
   - model: authentik_core.group

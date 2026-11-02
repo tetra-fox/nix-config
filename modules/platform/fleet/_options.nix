@@ -30,6 +30,12 @@
               description = "display name, used for the authentik app a forward_auth route gets; null = the host's first label";
               example = "qBittorrent";
             };
+            appGroup = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "dashboard section of the authentik app a forward_auth route gets; empty = ungrouped";
+              example = "Media";
+            };
             port = lib.mkOption {
               type = lib.types.port;
               description = "the port the service listens on, on the declaring host";

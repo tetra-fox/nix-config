@@ -271,6 +271,7 @@ in {
             arrRoute = openFirewall: title: sub: port: {
               host = routeHost sub;
               inherit title port openFirewall;
+              appGroup = "stealing";
               middlewares = mw;
             };
             netnsRoute = arrRoute false;
