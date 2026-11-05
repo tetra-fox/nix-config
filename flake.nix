@@ -125,6 +125,24 @@
     };
     # TODO: revert to shibco/ableton-linux once #342 merges
     ableton-linux.url = "github:tetra-fox/ableton-linux/fix/fractional-config-rounding";
+
+    # agent skills
+    agent-skills = {
+      url = "github:Kyure-A/agent-skills-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    mattpocock-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
+    emilkowalski-skills = {
+      url = "github:emilkowalski/skills";
+      flake = false;
+    };
+    unslop-skill = {
+      url = "github:heydamir/unslop";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {flake-parts, ...}:

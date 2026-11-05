@@ -8,6 +8,7 @@
   imports = [
     modules.profiles.base.home
 
+    modules.cli.agent-skills.home
     modules.cli.direnv.home
     modules.cli.fastfetch.home
     modules.cli.git.home
