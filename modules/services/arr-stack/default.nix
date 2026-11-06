@@ -169,7 +169,7 @@ in {
     inputs.vpn-confinement.nixosModules.default
     ./qbittorrent.nix
     ./sabnzbd.nix
-    ./slskd.nix
+    ./reseek.nix
     ./recyclarr.nix
     ./downloadclients.nix
     ./jellyfin-notify.nix
@@ -275,15 +275,13 @@ in {
               middlewares = mw;
             };
             netnsRoute = arrRoute false;
-          in
-            [
-              (netnsRoute "qBittorrent" "qb" cfg.lanProxyPorts.qbittorrent)
-              (netnsRoute "Sonarr" "sonarr" cfg.lanProxyPorts.sonarr)
-              (netnsRoute "Radarr" "radarr" cfg.lanProxyPorts.radarr)
-              (netnsRoute "Prowlarr" "prowlarr" cfg.lanProxyPorts.prowlarr)
-              (arrRoute true "SABnzbd" "sabnzbd" config.services.sabnzbd.settings.misc.port)
-            ]
-            ++ lib.optional cfg.slskd.enable (netnsRoute "slskd" "slskd" config.services.slskd.settings.web.port);
+          in [
+            (netnsRoute "qBittorrent" "qb" cfg.lanProxyPorts.qbittorrent)
+            (netnsRoute "Sonarr" "sonarr" cfg.lanProxyPorts.sonarr)
+            (netnsRoute "Radarr" "radarr" cfg.lanProxyPorts.radarr)
+            (netnsRoute "Prowlarr" "prowlarr" cfg.lanProxyPorts.prowlarr)
+            (arrRoute true "SABnzbd" "sabnzbd" config.services.sabnzbd.settings.misc.port)
+          ];
         };
 
         # bindsTo takes the arrs down with the netns unit: they end up stopped, not

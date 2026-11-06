@@ -123,6 +123,26 @@ entries:
       signing_key: *signing
       # bambuddy reads preferred_username and groups only
       property_mappings: [*scope-openid, *scope-profile]
+  - model: authentik_providers_oauth2.oauth2provider
+    id: provider-reseek
+    identifiers: { name: Provider for reseek }
+    attrs:
+      authorization_flow: *authorization
+      invalidation_flow: *invalidation
+      client_type: confidential
+      client_id: reseek
+      client_secret: !Env RESEEK_OIDC_CLIENT_SECRET
+      redirect_uris:
+        - { matching_mode: strict, url: https://reseek.mesa.tetra.cool/api/v0/auth/oidc/authentik/callback }
+      # ends the reseek session when the authentik session ends
+      logout_uri: https://reseek.mesa.tetra.cool/api/v0/auth/oidc/authentik/backchannel
+      logout_method: backchannel
+      grant_types: *grants
+      access_token_validity: *access-validity
+      refresh_token_threshold: *refresh-threshold
+      signing_key: *signing
+      # reseek reads preferred_username and groups only
+      property_mappings: [*scope-openid, *scope-profile]
 
   # grafana's binding is in grafana-access.yaml
   - model: authentik_core.application
@@ -166,6 +186,20 @@ entries:
     attrs: { order: 1 }
   - model: authentik_policies.policybinding
     identifiers: { target: !KeyOf app-bambuddy, group: !Find [authentik_core.group, [name, local_users]] }
+    attrs: { order: 2 }
+  - model: authentik_core.application
+    id: app-reseek
+    identifiers: { slug: reseek }
+    attrs: { name: reseek, group: stealing, provider: !KeyOf provider-reseek, meta_launch_url: https://reseek.mesa.tetra.cool }
+  # roles come from reseek's group mapping (modules/services/arr-stack/reseek.nix)
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf app-reseek, group: !Find [authentik_core.group, [name, sysadmin]] }
+    attrs: { order: 0 }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf app-reseek, group: !Find [authentik_core.group, [name, arr_users]] }
+    attrs: { order: 1 }
+  - model: authentik_policies.policybinding
+    identifiers: { target: !KeyOf app-reseek, group: !Find [authentik_core.group, [name, local_users]] }
     attrs: { order: 2 }
 
   # roles inside an app, granted to groups. a client that asks for the entitlements scope

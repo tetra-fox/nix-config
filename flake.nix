@@ -119,6 +119,11 @@
       url = "github:tetra-fox/nowplaying";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    reseek = {
+      url = "git+ssh://git@github.com/tetra-fox/reseek.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     artcraft = {
       url = "github:olafkfreund/nix-craftapps";
       inputs.nixpkgs.follows = "nixpkgs";

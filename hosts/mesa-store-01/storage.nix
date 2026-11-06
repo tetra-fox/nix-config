@@ -1,5 +1,5 @@
 # megamax is a hand-created raidz1 pool, zfs mounts its datasets itself:
-#   megamax/media                  library/ torrents/ nzb/ slskd/ as dirs in ONE dataset, arr hardlinks can't cross datasets
+#   megamax/media                  library/ torrents/ nzb/ soulseek/ as dirs in ONE dataset, arr hardlinks can't cross datasets
 #   megamax/music                  hand-curated library, edited over samba, read by services over NFS
 #   megamax/store                  per-user %U subdirs
 #   megamax/backup/homeassistant   HA backups pushed over NFS by HAOS
@@ -101,9 +101,9 @@ in {
         "d /mnt/megamax/media/library 2775 admin media -"
         "d /mnt/megamax/media/torrents 2775 admin media -"
         "d /mnt/megamax/media/nzb 2775 admin media -"
-        "d /mnt/megamax/media/slskd 2775 admin media -"
-        "d /mnt/megamax/media/slskd/downloads 2775 admin media -"
-        "d /mnt/megamax/media/slskd/incomplete 2775 admin media -"
+        "d /mnt/megamax/media/soulseek 2775 admin media -"
+        "d /mnt/megamax/media/soulseek/downloads 2775 admin media -"
+        "d /mnt/megamax/media/soulseek/incomplete 2775 admin media -"
         "d /mnt/megamax/music 2775 admin media -"
         "d /mnt/megamax/store 2775 admin media -"
         "d /mnt/megamax/backup/timemachine 2775 admin media -"

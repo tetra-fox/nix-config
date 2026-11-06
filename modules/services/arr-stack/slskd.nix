@@ -8,18 +8,9 @@
   webPort = config.services.slskd.settings.web.port;
   media = config.lab.storage.mounts.media.mountpoint;
   music = config.lab.storage.mounts.music.mountpoint;
+  arrLib = import ./lib.nix {inherit lib;};
 in {
-  options.lab.arrStack.slskd = {
-    enable = lib.mkEnableOption "slskd, a soulseek client with a web ui, in the vpn netns";
-
-    soulseekPort = lib.mkOption {
-      type = lib.types.port;
-      description = ''
-        slskd's soulseek listen port, a second port forwarded by the VPN provider. without
-        it peers that are also firewalled can't reach this client at all
-      '';
-    };
-  };
+  options.lab.arrStack.slskd.enable = lib.mkEnableOption "slskd, a soulseek client with a web ui, in the vpn netns";
 
   config = lib.mkIf cfg.slskd.enable {
     sops.secrets = {
@@ -43,24 +34,12 @@ in {
       settings = {
         # the upstream unit mounts shares read-only
         shares.directories = [music];
-        # sidecars and analysis files that aren't music
-        shares.filters = [
-          "\\.DS_Store$"
-          "(^|/)\\._"
-          "Thumbs\\.db$"
-          "\\.asd$"
-          "\\.json$"
-          # picard's saved session at the share root
-          "^${lib.escapeRegex music}/picard\\.mbps\\.gz$"
-        ];
-        directories = {
-          downloads = "${media}/slskd/downloads";
-          incomplete = "${media}/slskd/incomplete";
-        };
+        shares.filters = arrLib.soulseekShareFilters music;
+        directories = arrLib.soulseekDirectories media;
         # upstream leaves it unset, and then slskd restores its cached share list on start
         # instead of picking up library changes
         flags.force_share_scan = true;
-        soulseek.listen_port = cfg.slskd.soulseekPort;
+        soulseek.listen_port = cfg.soulseekPort;
         # same model as the arrs: only the edge hosts can reach the web port (accessibleFrom),
         # and caddy's lan_only and forward_auth are the login
         web.authentication.disabled = true;
@@ -70,7 +49,7 @@ in {
     vpnNamespaces.${vpnNs} = {
       openVPNPorts = [
         {
-          port = cfg.slskd.soulseekPort;
+          port = cfg.soulseekPort;
           protocol = "tcp";
         }
       ];

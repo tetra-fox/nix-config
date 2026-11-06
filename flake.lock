@@ -1225,6 +1225,30 @@
         "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
       }
     },
+    "reseek": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1793937328,
+        "narHash": "sha256-PH/xQBCCatFGIgYJWwGj2ZisvubP6rWea1f9sqgf/ws=",
+        "ref": "refs/heads/main",
+        "rev": "14b6ce019b11353f92602544ae3392d4a9e224c0",
+        "revCount": 1634,
+        "type": "git",
+        "url": "ssh://git@github.com/tetra-fox/reseek.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/tetra-fox/reseek.git"
+      }
+    },
     "root": {
       "inputs": {
         "ableton-linux": "ableton-linux",
@@ -1259,6 +1283,7 @@
         "plasma-manager": "plasma-manager",
         "ponytail": "ponytail",
         "quickshell": "quickshell",
+        "reseek": "reseek",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
         "taste-skill": "taste-skill",
@@ -1271,6 +1296,27 @@
       }
     },
     "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "reseek",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792739799,
+        "narHash": "sha256-M2rr/yPbTHvgAzCyZ+zHJHflFM0XU7t42Sw2skA3TQM=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "b0829a2cc9f7b596583331d78a942c1e5170d8a0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "yazi",
@@ -1695,7 +1741,7 @@
       "inputs": {
         "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs_6",
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay_2"
       },
       "locked": {
         "lastModified": 1793562752,

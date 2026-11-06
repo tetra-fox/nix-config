@@ -13,6 +13,9 @@ in {
     group = "grafana";
   };
 
+  # same value as reseek/metrics_password in mesa-svc-01's sops file
+  sops.secrets."monitoring/reseek_metrics_password".owner = "prometheus";
+
   lab = {
     monitoring = {
       # needs monitoring/telegram_env in this host's sops file
@@ -25,6 +28,22 @@ in {
         {
           job_name = "node-haos";
           static_configs = [{targets = ["${config.lab.appliances.haosIp}:9100"];}];
+        }
+        {
+          # reseek runs in mesa-svc-01's vpn netns, reachable only through the edge's caddy
+          job_name = "reseek";
+          scheme = "https";
+          metrics_path = "/metrics";
+          basic_auth = {
+            username = "prometheus";
+            password_file = config.sops.secrets."monitoring/reseek_metrics_password".path;
+          };
+          static_configs = [
+            {
+              targets = ["reseek.${config.lab.site.domain}"];
+              labels.instance = "mesa-svc-01";
+            }
+          ];
         }
       ];
     };

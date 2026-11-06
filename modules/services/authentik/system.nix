@@ -33,7 +33,7 @@
   q = builtins.toJSON;
 
   # each secret reaches oidc-providers.yaml as <NAME>_OIDC_CLIENT_SECRET through authentik.env
-  oidcClients = ["bambuddy" "grafana" "home_assistant" "immich" "proxmox"];
+  oidcClients = ["bambuddy" "grafana" "home_assistant" "immich" "proxmox" "reseek"];
   oidcClientSecret = name: "auth/${name}_oidc_client_secret";
 
   forwardAuthEntries = a: ''
