@@ -14,6 +14,10 @@
         input = "emilkowalski-skills";
         subdir = "skills";
       };
+      caldoai = {
+        input = "caldoai-skills";
+        subdir = "skills";
+      };
       unslop = {
         input = "unslop-skill";
         subdir = "skills";
@@ -21,7 +25,7 @@
     };
 
     skills = {
-      enableAll = ["local" "emil" "unslop"];
+      enableAll = ["local" "caldoai" "emil" "unslop"];
       enable = ["grilling" "grill-me"];
     };
 

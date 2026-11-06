@@ -139,6 +139,10 @@
       url = "github:emilkowalski/skills";
       flake = false;
     };
+    caldoai-skills = {
+      url = "github:caldoai/skills";
+      flake = false;
+    };
     unslop-skill = {
       url = "github:heydamir/unslop";
       flake = false;
