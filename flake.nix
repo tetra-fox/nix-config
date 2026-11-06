@@ -143,6 +143,18 @@
       url = "github:caldoai/skills";
       flake = false;
     };
+    ponytail = {
+      url = "github:DietrichGebert/ponytail";
+      flake = false;
+    };
+    cloudflare-security-audit = {
+      url = "github:cloudflare/security-audit-skill";
+      flake = false;
+    };
+    taste-skill = {
+      url = "github:Leonxlnx/taste-skill";
+      flake = false;
+    };
     unslop-skill = {
       url = "github:heydamir/unslop";
       flake = false;

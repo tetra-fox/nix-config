@@ -258,6 +258,22 @@
         "type": "github"
       }
     },
+    "cloudflare-security-audit": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789414134,
+        "narHash": "sha256-oVVACjotkHvllQGxEP8yWaEt4c3GxT0d909TUM5P3NM=",
+        "owner": "cloudflare",
+        "repo": "security-audit-skill",
+        "rev": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cloudflare",
+        "repo": "security-audit-skill",
+        "type": "github"
+      }
+    },
     "colmena": {
       "inputs": {
         "nix-github-actions": "nix-github-actions",
@@ -1173,6 +1189,22 @@
         "type": "github"
       }
     },
+    "ponytail": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793275171,
+        "narHash": "sha256-PhPtZbeX2wBp19GtWRy+fV93+fFYZe5S487eXPDl/us=",
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "rev": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "type": "github"
+      }
+    },
     "quickshell": {
       "inputs": {
         "nixpkgs": [
@@ -1202,6 +1234,7 @@
         "asterix": "asterix",
         "caldoai-skills": "caldoai-skills",
         "catppuccin": "catppuccin",
+        "cloudflare-security-audit": "cloudflare-security-audit",
         "colmena": "colmena",
         "disko": "disko",
         "easy-hosts": "easy-hosts",
@@ -1224,9 +1257,11 @@
         "nowplaying": "nowplaying",
         "nur": "nur",
         "plasma-manager": "plasma-manager",
+        "ponytail": "ponytail",
         "quickshell": "quickshell",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
+        "taste-skill": "taste-skill",
         "tetra-nurpkgs": "tetra-nurpkgs",
         "unslop-skill": "unslop-skill",
         "vpn-confinement": "vpn-confinement",
@@ -1482,6 +1517,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "taste-skill": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793841132,
+        "narHash": "sha256-BASbXznKYEcCUOEd0rm+ajcaGNhZ3wjONJP6tkpGEww=",
+        "owner": "Leonxlnx",
+        "repo": "taste-skill",
+        "rev": "9b4bf937a1f69348126959c15d2f99a73e65699b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Leonxlnx",
+        "repo": "taste-skill",
         "type": "github"
       }
     },

@@ -18,6 +18,18 @@
         input = "caldoai-skills";
         subdir = "skills";
       };
+      ponytail = {
+        input = "ponytail";
+        subdir = "skills";
+      };
+      cloudflare-security-audit = {
+        input = "cloudflare-security-audit";
+        subdir = "skills";
+      };
+      taste-skill = {
+        input = "taste-skill";
+        subdir = "skills";
+      };
       unslop = {
         input = "unslop-skill";
         subdir = "skills";
@@ -25,7 +37,7 @@
     };
 
     skills = {
-      enableAll = ["local" "caldoai" "emil" "unslop"];
+      enableAll = ["local" "caldoai" "emil" "ponytail" "cloudflare-security-audit" "taste-skill" "unslop"];
       enable = ["grilling" "grill-me"];
     };
 
