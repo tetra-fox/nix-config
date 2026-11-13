@@ -1601,11 +1601,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1794509041,
-        "narHash": "sha256-ArLslLyItAq7PfPsXmRxDE58J6HHd5OUT+AI8/IRKno=",
+        "lastModified": 1794550137,
+        "narHash": "sha256-LdC9FgQEbSQ00R+TB2xsdvB3lI89tZW+QITUc70/xbA=",
         "owner": "tetra-fox",
         "repo": "nurpkgs",
-        "rev": "94fcba742222235e84fa17bdd5e949f3d5901bdb",
+        "rev": "cefab751f721afef2afbc0a2f7b98c3ec8b6d8b0",
         "type": "github"
       },
       "original": {
