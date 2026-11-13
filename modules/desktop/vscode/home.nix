@@ -72,7 +72,7 @@ in {
         "telemetry.telemetryLevel" = "off";
         "update.mode" = "none";
         "extensions.autoCheckUpdates" = false;
-        "extensions.autoUpdate" = false;
+        "extensions.autoUpdate" = "off";
 
         "prettier.prettierPath" = "${pkgs.prettier}/lib/node_modules/prettier";
 
