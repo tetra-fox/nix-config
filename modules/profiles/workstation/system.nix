@@ -63,7 +63,22 @@
     # prebuilt FHS binaries (vscode extensions, steam tools) want /lib64/ld-linux
     nix-ld = {
       enable = true;
-      libraries = [pkgs.glibc];
+      libraries = with pkgs; [
+        glibc
+        libx11
+        libxcursor
+        libxrandr
+        libxi
+        libxext
+        libxkbcommon
+        libGL
+        vulkan-loader
+        wayland
+        fontconfig
+        freetype
+        alsa-lib
+        pipewire
+      ];
     };
   };
 

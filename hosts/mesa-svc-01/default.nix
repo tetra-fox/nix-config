@@ -45,7 +45,7 @@
     soulseek = {
       username = "portapuppy";
       description = ''
-        average transbian age regressor nixos sysadmin rust dev seattleite puppygirl =w=
+        average transbian therian age regressor nixos sysadmin rust dev seattleite puppygirl =w=
 
         i tend to keep 24bit aiffs for proper ID3 tagging + archival (sowwy no flacs), with mp3 320s as a fallback and 256k aac as a last resort (soundcloud rips xwx)
 
@@ -55,6 +55,21 @@
       picture = pkgs.runCommand "slsk_pic.jpg" {nativeBuildInputs = [pkgs.imagemagick];} ''
         magick ${./slsk_pic.png} -resize '512x512>' -quality 90 $out
       '';
+      interests = {
+        liked = ["diapers" "lossless" "p2p" ":3" "knots" "t4t" "girls" "linux" "open source" "preservation" "nixos"];
+      };
+    };
+    remote_file_management = true;
+    schedules = {
+      cleanup = "5m";
+      vacuum = "1d";
+      release_check = "1d";
+    };
+    shares = {
+      cache = {
+        retention = "12h";
+        storage_mode = "memory";
+      };
     };
   };
 

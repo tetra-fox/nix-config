@@ -48,9 +48,11 @@ in {
   system.etc.overlay.enable = true;
 
   # sched_ext scheduler tuned for interactive and game threads under load
-  services.scx = {
+  services.scx-loader = {
     enable = true;
-    scheduler = "scx_lavd";
+    config = {
+      scheduler = "scx_lavd";
+    };
   };
 
   # TODO: temporary

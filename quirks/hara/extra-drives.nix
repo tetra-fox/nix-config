@@ -1,21 +1,25 @@
 {lib, ...}: let
-  baseOptions = [
+  mountOptions = [
     "noauto"
     "nofail"
     "noatime"
     "x-systemd.automount"
-    "uid=1000"
-    "gid=100"
-    "umask=0022"
-    "nocase"
   ];
+  ntfsOptions =
+    mountOptions
+    ++ [
+      "uid=1000"
+      "gid=100"
+      "umask=0022"
+      "nocase"
+    ];
   roOptions =
-    baseOptions
+    ntfsOptions
     ++ [
       "ro"
     ];
   rwOptions =
-    baseOptions
+    ntfsOptions
     ++ [
       "rw"
       "windows_names"
@@ -41,9 +45,27 @@
     };
 
     "/mnt/wd-black" = {
-      device = "/dev/disk/by-uuid/10AAA832AAA8166E";
-      fsType = "ntfs";
-      options = rwOptions;
+      device = "/dev/disk/by-uuid/ff07fc22-f7ee-4f5e-a8d2-f45613fbd709";
+      fsType = "btrfs";
+      # spinning disk, so compression saves more io time than it costs in cpu
+      # and autodefrag keeps cow rewrites from scattering files across the platter
+      options =
+        mountOptions
+        ++ [
+          "compress=zstd"
+          "autodefrag"
+        ];
+    };
+
+    "/home/tetra/Documents/git" = {
+      device = "/mnt/wd-black/git";
+      fsType = "none";
+      # nofail so a missing disk or source dir does not fail local-fs.target
+      options = [
+        "bind"
+        "nofail"
+        "x-systemd.requires-mounts-for=/mnt/wd-black"
+      ];
     };
 
     "/mnt/vault" = {
@@ -60,4 +82,10 @@
   };
 in {
   fileSystems = lib.mapAttrs (_: drive: drive // {noCheck = true;}) drives;
+
+  services.btrfs.autoScrub = {
+    enable = true;
+    interval = "monthly";
+    fileSystems = ["/mnt/wd-black"];
+  };
 }

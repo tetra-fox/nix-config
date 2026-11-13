@@ -13,7 +13,7 @@ the acme issuer defaults to cloudflare DNS-01 (`lab.caddy.certIssuer`), with the
 
 two fail2ban jails run against `/var/log/caddy/access.log`:
 
-- `caddy-status` (`files/caddy-status.conf`): bans IPs that hit 401/403/429 too often (5 in 10m, 1h base ban doubling up to 1 week). auth/rate abuse.
+- `caddy-status` (`files/caddy-status.conf`): bans IPs that hit 401/429 too often (5 in 10m, 1h base ban doubling up to 1 week). auth/rate abuse. 403 is left out because apps return it to signed-in users their role doesn't allow.
 - `caddy-probe` (`files/caddy-probe.conf`): instabans (maxretry=1, 24h base) any request whose PATH matches a known vulnerability-scanner probe (`.php`, `/.env`, `/.git/`, wordpress paths, phpunit, shells). matches on the path, not the status, so it also catches probes that get a 200/302 (a scanner path caddy proxied to a real backend). the `.php` catch-all is safe because nothing behind this caddy serves php.
 
 ## curating the probe list

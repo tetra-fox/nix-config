@@ -14,13 +14,22 @@
   security.rtkit.enable = true;
 
   # apps that set SCHED_FIFO themselves (jack clients, the ableton launcher's
-  # `chrt -r 10` probe) need RLIMIT_RTPRIO, rtkit alone doesn't grant it
+  # `chrt -r 10` probe) need RLIMIT_RTPRIO, rtkit alone doesn't grant it.
+  # pipewire's module-rt only takes the rlimit path if it can also set its
+  # nice level, otherwise it asks rtkit, which refuses while the graphical
+  # session is inactive and is never retried
   security.pam.loginLimits = [
     {
       domain = "@realtime";
       item = "rtprio";
       type = "-";
       value = "99";
+    }
+    {
+      domain = "@realtime";
+      item = "nice";
+      type = "-";
+      value = "-20";
     }
     {
       domain = "@realtime";
