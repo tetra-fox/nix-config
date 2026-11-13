@@ -19,6 +19,14 @@
       "qt-qml.qmlls.additionalImportPaths" = ["${config.xdg.stateHome}/quickshell/qmlls-vfs"];
       "qt-qml.qmlls.customExePath" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlls";
       "qt-qml.doNotAskForQmllsDownload" = true;
+      # qt-core writes any qtpaths found on PATH into this list on activation, which fails
+      # on the read-only settings.json. it skips the write when the path is already listed
+      "qt-core.additionalQtPaths" = [
+        {
+          name = "system-qt";
+          path = "/run/current-system/sw/bin/qtpaths";
+        }
+      ];
       "qmlFormat.command" = "${pkgs.kdePackages.qtdeclarative}/bin/qmlformat";
       "[qml]" = {
         "editor.defaultFormatter" = "delgan.qml-format";
