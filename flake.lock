@@ -1028,6 +1028,22 @@
     },
     "nixpkgs_5": {
       "locked": {
+        "lastModified": 1794386569,
+        "narHash": "sha256-x9sADJvoVG0L6RejZB+/BB4YiGZFBZrfTlhF4uBq1tQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "d4f25a3e562008648d45bcf2d70bcc7422cad84e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_6": {
+      "locked": {
         "lastModified": 1794408178,
         "narHash": "sha256-OUDRQTMmN/6cQ/ebDsazUmLj84RxSLaHznKv5As9E1k=",
         "owner": "NixOS",
@@ -1042,7 +1058,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1790769526,
         "narHash": "sha256-5AIVFLRcx8YAwbFTVPTs7YhwJH7JyHfAQsvXmpovcXI=",
@@ -1230,17 +1246,15 @@
         "home-manager": [
           "home-manager"
         ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "nixpkgs": "nixpkgs_5",
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1794529887,
-        "narHash": "sha256-xmrRILJBWt/azZV8LvB1HUD3RLeLEaKlNvThFNfdUqw=",
+        "lastModified": 1794539615,
+        "narHash": "sha256-jl3QZaEc2d4LU6VRwwuA0H86ZDaBgt/UkiqWkYXufCg=",
         "ref": "refs/heads/main",
-        "rev": "df4fcb7ed5ce0f9e2c31b04c22c660a8ea930bfb",
-        "revCount": 2109,
+        "rev": "2e135b0dd65daa48f2c938cb1ab2109e8ce59d4d",
+        "revCount": 2112,
         "type": "git",
         "url": "ssh://git@github.com/tetra-fox/reseek.git"
       },
@@ -1584,7 +1598,7 @@
     },
     "tetra-nurpkgs": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1794509041,
@@ -1740,7 +1754,7 @@
     "yazi": {
       "inputs": {
         "flake-utils": "flake-utils_3",
-        "nixpkgs": "nixpkgs_6",
+        "nixpkgs": "nixpkgs_7",
         "rust-overlay": "rust-overlay_2"
       },
       "locked": {

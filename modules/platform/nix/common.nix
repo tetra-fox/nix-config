@@ -16,14 +16,15 @@ _: {
       flake-registry = "";
 
       # nix-community serves nixpkgs-xr, sops-install-secrets and the home-manager manual,
-      # nurpkgs serves tetra-nurpkgs. both deployers build server closures, so not hara only
+      # tetra-fox serves tetra-nurpkgs and reseek. both deployers build server closures, so not
+      # hara only
       substituters = [
         "https://nix-community.cachix.org"
-        "https://tetra-fox-nurpkgs.cachix.org"
+        "https://tetra-fox.cachix.org"
       ];
       trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-        "tetra-fox-nurpkgs.cachix.org-1:UPmzw8DqV1QLd7YC58exrtKuPFo0JdmO+ywu34+zHiE="
+        "tetra-fox.cachix.org-1:l70MnHbfeZm2unwKH47I42/imLanZMMSxJbqoS0FvEs="
       ];
     };
 
