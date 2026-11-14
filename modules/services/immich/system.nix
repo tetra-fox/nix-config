@@ -67,6 +67,10 @@ in {
 
     users.users.immich.uid = cfg.uid;
 
+    # nixpkgs adds a tmpfiles rule that chmods mediaLocation to 0700. root is squashed on the nfs
+    # export, so it fails on every tmpfiles run, and the store box already creates the dir 0700
+    systemd.tmpfiles.settings.immich = lib.mkForce {};
+
     services.immich = {
       enable = true;
       inherit (cfg) mediaLocation;
