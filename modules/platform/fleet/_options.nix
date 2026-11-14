@@ -62,6 +62,12 @@
               '';
               example = ["lan_only" "forward_auth"];
             };
+            probePath = lib.mkOption {
+              type = lib.types.str;
+              default = "/";
+              description = "path the site's blackbox probe requests; it has to return a finite 2xx response";
+              example = "/status";
+            };
             openFirewall = lib.mkOption {
               type = lib.types.bool;
               default = true;

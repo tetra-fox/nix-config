@@ -13,7 +13,7 @@
 
   blackboxPort = config.services.prometheus.exporters.blackbox.port;
 
-  vhosts = lib.unique (map (r: r.host) routesInSite);
+  probeUrls = lib.unique (map (r: "https://${r.host}${r.probePath}") routesInSite);
 
   # a name the resolver must answer; every monitored site publishes its stats vhost
   dnsProbeName = "stats.${config.lab.site.domain}";
@@ -89,10 +89,10 @@ in {
 
     lab.monitoring = {
       extraScrapeConfigs =
-        lib.optional (vhosts != []) (probeJob {
+        lib.optional (probeUrls != []) (probeJob {
           name = "blackbox-https";
           module = "https";
-          targets = map (h: "https://${h}") vhosts;
+          targets = probeUrls;
         })
         ++ lib.optional (dnsEndpointIp != null) (probeJob {
           name = "blackbox-dns";

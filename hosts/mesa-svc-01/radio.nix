@@ -10,6 +10,8 @@
 }: let
   radio = import ../common/fc05-radio.nix;
   port = 8010;
+  # the mount never ends its response, so the edge probe checks this instead
+  statusPath = "/status";
   library = "${config.lab.storage.mounts.music.mountpoint}/furryconvention2005/_ARCHIVE";
   # file names, wherever they are in the library
   excluded = [
@@ -75,6 +77,12 @@
       fun (_, _) -> music.skip()
     )
 
+    harbor.http.register(
+      port=${toString port},
+      ${builtins.toJSON statusPath},
+      fun (_, response) -> if not music.is_ready() then response.status_code(503) end
+    )
+
     output.harbor(
       %mp3(bitrate=192),
       port=${toString port},
@@ -89,6 +97,7 @@ in {
       {
         host = "${radio.subdomain}.${config.lab.site.domain}";
         inherit port;
+        probePath = statusPath;
       }
     ];
   };
