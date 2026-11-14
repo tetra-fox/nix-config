@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   fleet,
   modules,
@@ -48,6 +49,17 @@ in {
     zeroconf.enable = false;
   };
 
+  # nixpkgs puts HF_HOME in /tmp, which DynamicUser makes private per start, so every start refetches
+  # the tokenizer and fails without internet. the state dir keeps it across starts
+  systemd.services.wyoming-faster-whisper-ha = {
+    environment.HF_HOME = lib.mkForce "/var/lib/wyoming/faster-whisper/huggingface";
+    # the first start still needs the hub
+    serviceConfig = {
+      Restart = "on-failure";
+      RestartSec = 10;
+    };
+  };
+
   # the vision projector widens llama.cpp's fit target by its size plus 1GiB, which pushes layers
   # onto the cpu next to whisper. assist never sends images, so it uses a copy without it
   systemd.services.ollama-text-model = {
@@ -66,9 +78,12 @@ in {
       # ollama.service is Type=exec, so it counts as started before the api listens
       until curl -sf "$api/version" >/dev/null; do sleep 1; done
       # pulled here, not via loadModels: the loader is Type=exec and returns before the pull ends.
-      # a no-op when the model is already present. assist needs a model with tool calling
-      curl -sf "$api/pull" -d '{"model": "${baseModel}", "stream": false}' >/dev/null
-      show=$(curl -sf "$api/show" -d '{"model": "${baseModel}"}')
+      # only when missing, a pull contacts the registry even for a present model and fails offline.
+      # assist needs a model with tool calling
+      show=$(curl -sf "$api/show" -d '{"model": "${baseModel}"}') || {
+        curl -sf "$api/pull" -d '{"model": "${baseModel}", "stream": false}' >/dev/null
+        show=$(curl -sf "$api/show" -d '{"model": "${baseModel}"}')
+      }
       modelfile=$(jq -r .modelfile <<<"$show")
       # ollama lists the weights first and the projector second
       weights=$(sed -n 's#^FROM .*/blobs/sha256-\([0-9a-f]*\)$#\1#p' <<<"$modelfile" | head -n 1)
