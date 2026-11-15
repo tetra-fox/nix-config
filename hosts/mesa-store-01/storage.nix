@@ -81,7 +81,7 @@
 
   # samba needs a linux user to map uids, no login. the samba password is set by hand with
   # `smbpasswd -a <user>` so it never lives in the repo
-  sambaUsers = ["tetra" "melody" "riley"];
+  sambaUsers = ["tetra" "melody" "riley" "lori"];
 in {
   boot.zfs.extraPools = ["megamax"];
 
