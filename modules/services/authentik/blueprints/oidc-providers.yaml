@@ -178,7 +178,7 @@ entries:
     id: app-bambuddy
     identifiers: { slug: bambuddy }
     attrs: { name: Bambuddy, provider: !KeyOf provider-bambuddy, meta_launch_url: https://bb.mesa.tetra.cool }
-  # roles come from bambuddy's group mapping (hosts/mesa-svc-01/bambuddy.nix)
+  # roles come from bambuddy's group mapping (hosts/mesa-svc-03/bambuddy.nix)
   - model: authentik_policies.policybinding
     identifiers: { target: !KeyOf app-bambuddy, group: !Find [authentik_core.group, [name, sysadmin]] }
     attrs: { order: 0 }

@@ -104,7 +104,11 @@ in {
 
   networking.firewall.extraInputRules = fleet.allow-from [topo.pbxHostIp] [radio.control.port];
 
-  lab.storage.mounts.music.gatedServices = ["radio-fc05"];
+  lab.storage.mounts.music = {
+    mountpoint = "/mnt/music";
+    gatedServices = ["radio-fc05"];
+  };
+  users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
   services.liquidsoap.streams.radio-fc05 = script;
   # library directories are group media and not world-readable

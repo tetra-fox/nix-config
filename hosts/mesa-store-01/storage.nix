@@ -19,6 +19,7 @@
   svcIp = topo.mediaHostIp;
   # null until a host advertises the immich capability
   immichIp = topo.immichHostIp;
+  radioIp = topo.radioHostIp;
   # HAOS's internal-VLAN leg, so HAOS must mount this box's internal IP
   haIp = config.lab.appliances.haosIp;
   dbIps = topo.dbNodeIps;
@@ -61,7 +62,7 @@
     };
     # services only read the library, writes go through samba
     music = {
-      ips = [svcIp];
+      ips = lib.unique ([svcIp] ++ lib.optional (radioIp != null) radioIp);
       options = "ro,sync,no_subtree_check";
     };
     immich = {
