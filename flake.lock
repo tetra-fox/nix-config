@@ -1266,15 +1266,15 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1794624567,
-        "narHash": "sha256-b3Dq6wqb+iQmT3RS843VmIVcNWA9ESKI5XeNxlC9dJU=",
-        "owner": "tetra-fox",
+        "lastModified": 1794735980,
+        "narHash": "sha256-QoEEF6S6wnESHrR75UZNmDkXbb7PJ59hrgtAPhbreUY=",
+        "owner": "reseek-rs",
         "repo": "reseek",
-        "rev": "731ed031628cb0df77bd0bc9adeecbc0f058b1ba",
+        "rev": "acc0383ea694acad9d5b29df6407d11b26eea9fa",
         "type": "github"
       },
       "original": {
-        "owner": "tetra-fox",
+        "owner": "reseek-rs",
         "repo": "reseek",
         "type": "github"
       }

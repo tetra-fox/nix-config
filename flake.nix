@@ -120,8 +120,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     reseek = {
-      url = "github:tetra-fox/reseek";
-      # no nixpkgs.follows: tetra-fox.cachix.org is built against reseek's own pinned nixpkgs,
+      url = "github:reseek-rs/reseek";
+      # no nixpkgs.follows: reseek.cachix.org is built against reseek's own pinned nixpkgs,
       # following ours changes the derivation hash and misses the cache
       inputs.home-manager.follows = "home-manager";
     };
