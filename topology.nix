@@ -89,7 +89,7 @@ in {
           addresses = [];
         };
         "vmbr0.10" = {
-          addresses = [mesaAppliances.proxmoxIp];
+          addresses = [mesaAppliances.proxmoxNodes.milkfish];
           network = "mesa-server-vlan";
           virtual = true;
         };
@@ -104,6 +104,26 @@ in {
           virtual = true;
         };
         # no host address: milkfish doesn't participate, it just bridges the segment
+        "vmbr0.1010" = {
+          addresses = [];
+          network = "mesa-internal-vlan";
+          virtual = true;
+        };
+      };
+    };
+
+    # TODO: link bickle to its switch port once it's known
+    bickle = {
+      name = "bickle";
+      deviceType = "server";
+      hardware.info = "Proxmox VE 9";
+      icon = ./images/icons/proxmox.svg;
+      interfaces = {
+        "vmbr0.10" = {
+          addresses = [mesaAppliances.proxmoxNodes.bickle];
+          network = "mesa-server-vlan";
+          virtual = true;
+        };
         "vmbr0.1010" = {
           addresses = [];
           network = "mesa-internal-vlan";

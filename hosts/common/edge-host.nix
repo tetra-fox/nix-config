@@ -1,6 +1,7 @@
 # each node has its own ACME certs
 {
   config,
+  lib,
   modules,
   fleet,
   ...
@@ -14,7 +15,10 @@ in {
   ];
 
   # no pathExists guard, an edge site without a tail file should fail loudly
-  lab.caddy.staticTail = import (./. + "/${site}-caddy-tail.nix") {inherit (config) lab;};
+  lab.caddy.staticTail = import (./. + "/${site}-caddy-tail.nix") {
+    inherit lib;
+    inherit (config) lab;
+  };
 
   lab.caddy.ha = {
     enable = true;

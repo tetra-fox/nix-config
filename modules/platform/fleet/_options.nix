@@ -1,6 +1,5 @@
 # fleet-wide, not per site: the topology layer and colmena read these on every host
 {
-  config,
   lib,
   caps,
   ...
@@ -184,18 +183,7 @@
         type = lib.types.attrsOf lib.types.str;
         default = {};
         example = {milkfish = "192.168.10.2";};
-        description = "the site's proxmox nodes as name -> server-VLAN address; the site's mon host scrapes each one's node exporter";
-      };
-
-      proxmoxIp = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = let
-          addrs = builtins.attrValues config.lab.appliances.proxmoxNodes;
-        in
-          if builtins.length addrs == 1
-          then builtins.head addrs
-          else null;
-        description = "the proxmox web UI address the edge proxies and the topology draws; null unless the site has exactly one node";
+        description = "the site's proxmox nodes as name -> server-VLAN address; the site's mon host scrapes each one's node exporter, and mesa's edge gives each a <name>.<domain> vhost";
       };
     };
 

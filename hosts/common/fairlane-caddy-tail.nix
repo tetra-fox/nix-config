@@ -1,5 +1,5 @@
 # vhosts the route engine can't derive
-{lab}: ''
+{lab, ...}: ''
   # public
   ${lab.site.domain} {
   	import log

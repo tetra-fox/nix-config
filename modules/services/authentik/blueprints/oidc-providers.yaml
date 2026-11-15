@@ -80,7 +80,8 @@ entries:
       client_id: 4GEjBmZiMxN9j6TTVKLne6KmRozYc08bPUzzkHSS
       client_secret: !Env PROXMOX_OIDC_CLIENT_SECRET
       redirect_uris:
-        - { matching_mode: strict, url: https://pve.mesa.tetra.cool }
+        - { matching_mode: strict, url: https://milkfish.mesa.tetra.cool }
+        - { matching_mode: strict, url: https://bickle.mesa.tetra.cool }
       grant_types: *grants
       access_token_validity: *access-validity
       refresh_token_threshold: *refresh-threshold
