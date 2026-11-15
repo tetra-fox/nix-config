@@ -4,6 +4,8 @@
 
 | utc         | pst   | pdt   | host(s)                            | job                                                                                            |
 | ----------- | ----- | ----- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 11:30       | 3:30a | 4:30a | milkfish (external)                | unattended-upgrades: debian stable + security only, pve packages stay manual, no reboot        |
+| 11:45       | 3:45a | 4:45a | bickle (external)                  | unattended-upgrades, same as milkfish, staggered so the two nodes never upgrade at once        |
 | 12:00       | 4:00a | 5:00a | all nixos servers                  | nh clean, two day window                                                                       |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich nightly tasks (db cleanup, face clustering, memories, missing thumbnails, quota sync)   |
 | 12:00       | 4:00a | 5:00a | mesa-svc-02                        | immich external library scan                                                                   |
@@ -44,6 +46,7 @@ hara runs pacific local time, so its "Mon 12:00" lands monday noon; gc on an idl
 
 ## external, not in this repo
 
+- unattended-upgrades on the proxmox nodes: debian's shipped 50unattended-upgrades, so the proxmox repo is never touched (proxmox wants `apt full-upgrade` for its packages). the times live in systemd drop-ins at /etc/systemd/system/apt-daily{,-upgrade}.timer.d/override.conf on each node, lists fetched at 11:00
 - proxmox vzdump at 14:00: assuming the pve clock is UTC like everything else, that's 6a/7a pacific, already in the window. worth confirming in pve which vms it covers, where it writes, and that the target isn't a dataset restic reads at 14:30
 - haos backups land in megamax/backup/homeassistant (mesa) and /mnt/bigdisk/backup/homeassistant
   (fairlane) over nfs. each site's HAOS is multihomed onto the internal vlan and mounts its own
