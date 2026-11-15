@@ -111,26 +111,25 @@
   # grafana 13.2 moved the prometheus and loki datasources out of core and the nixpkgs grafana
   # package ships neither, so the provisioned datasources and every alert rule have no plugin
   # TODO: drop once nixpkgs packages them
-  coreDatasourcePlugins =
-    map (p:
-      pkgs.grafanaPlugins.grafanaPlugin {
-        inherit (p) pname version;
-        packages.linux-amd64 = {
-          url = "https://grafana.com/api/plugins/${p.pname}/versions/${p.version}/download?os=linux&arch=amd64";
-          inherit (p) hash;
-        };
-      }) [
-      {
-        pname = "prometheus";
-        version = "13.2.6";
-        hash = "sha256-E4TlgohpmMUFvnHjOn5qsF7rtFquXdmXpLz6tHjm9QM=";
-      }
-      {
-        pname = "loki";
-        version = "13.2.5";
-        hash = "sha256-mCz7gZdzUttlQEzsZxlSRTRUZDvZpsiDBBw4vlGadOo=";
-      }
-    ];
+  coreDatasourcePlugins = map (p:
+    pkgs.grafanaPlugins.grafanaPlugin {
+      inherit (p) pname version;
+      packages.linux-amd64 = {
+        url = "https://grafana.com/api/plugins/${p.pname}/versions/${p.version}/download?os=linux&arch=amd64";
+        inherit (p) hash;
+      };
+    }) [
+    {
+      pname = "prometheus";
+      version = "13.2.6";
+      hash = "sha256-E4TlgohpmMUFvnHjOn5qsF7rtFquXdmXpLz6tHjm9QM=";
+    }
+    {
+      pname = "loki";
+      version = "13.2.5";
+      hash = "sha256-mCz7gZdzUttlQEzsZxlSRTRUZDvZpsiDBBw4vlGadOo=";
+    }
+  ];
 
   dashboardPlugins = with pkgs.grafanaPlugins; [grafana-clock-panel] ++ coreDatasourcePlugins;
 
