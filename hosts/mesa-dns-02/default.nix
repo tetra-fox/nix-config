@@ -7,5 +7,6 @@
   lab.site = {
     hostIp = "192.168.10.161";
     internalIp = "10.10.0.161";
+    proxmoxParent = "bickle";
   };
 }
