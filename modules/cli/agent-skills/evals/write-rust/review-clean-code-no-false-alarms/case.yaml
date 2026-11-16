@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: review-clean-code-no-false-alarms
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  The review recognises the crate as already idiomatic: the cloned senders release the read lock
+  before sending, the per-member message clone gives each queue its own copy, the client clone
+  into the spawned task is a reference-count bump, and the to_owned calls build an owned message.
+  It explains why each clone is fine rather than removing them on reflex, makes no change that
+  alters behaviour, and at most suggests minor, clearly optional polish (a must_use, an # Errors
+  doc section, sharing one message through an Arc). Removing the sender snapshot is acceptable
+  with a reason, since try_send never waits; it is a trade-off, not a defect either way.

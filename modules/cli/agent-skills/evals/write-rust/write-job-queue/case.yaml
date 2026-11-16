@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: write-job-queue
+expected_outcome: |
+  A library crate in ./jobs that builds offline, passes its own tests and is clippy clean, with
+  bounded concurrency (a semaphore or equivalent), cancellation that works for queued and running
+  jobs, a shutdown that refuses new jobs and waits for running ones, a real error type for the
+  library's own failures, no panics on fallible paths outside tests, no std Mutex guard held across
+  an .await, no unsafe, and no blocking calls inside async code.

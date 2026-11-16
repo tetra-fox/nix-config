@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: review-seeded-crate
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  The review finds the planted problems, real bugs first: the MutexGuard held across .await,
+  blocking std::fs in async, the cancel-unsafe read_exact in select!, the unsound get_unchecked,
+  parse_price panicking and mis-parsing "12.5", owner_of returning the wrong owner, the swallowed
+  autosave error; then the smells: &String params, owned-key lookup, whole-map clones, index loop,
+  String error type, two bools for one state. The fixed crate builds offline, its tests pass, and
+  clippy is clean.

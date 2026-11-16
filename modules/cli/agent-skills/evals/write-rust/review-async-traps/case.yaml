@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: review-async-traps
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  The review finds that drop(entries) before the .await does not make get_or_load's future Send
+  (the comment is wrong; a block scope or a non-async helper is the fix), that apply_with_progress
+  deadlocks when a tick fires while apply holds the balance lock (futurelock: the select! arm awaits
+  the lock that the pinned, unpolled apply future holds), that the event log's task is detached so a
+  panic in it is lost and later lines vanish silently, and that its unbounded channel has no
+  backpressure. It does not tell the user to replace the std Mutex in Cache with tokio's on
+  principle. Fixes build, pass tests and keep clippy clean.

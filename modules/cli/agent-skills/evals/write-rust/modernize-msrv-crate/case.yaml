@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: modernize-msrv-crate
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  lazy_static and once_cell are replaced by std's LazyLock and OnceLock and removed from
+  Cargo.toml; async-trait is replaced by native async fn in traits, with the trait method returning
+  a Send future (impl Future + Send) so spawn_flusher still compiles; parking_lot is replaced by
+  std's Mutex; #[allow] becomes #[expect(.., reason)] or the dead code goes; the swallowed flush
+  error is dealt with; and nothing newer than Rust 1.85 is used: no let chains (1.88), no
+  assert_matches! (1.96), no cfg_select! (1.95), no DropGuard (1.100), no if-let guards (1.95).
