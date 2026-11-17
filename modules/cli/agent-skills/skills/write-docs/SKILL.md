@@ -47,12 +47,23 @@ The owner's rules win where the field disagrees with them (no "you", see below).
 ## Rules for all text
 
 - **Say what a thing is, then stop.** No contrast framing: "x, not y", "it's not y, it's x",
-  "evidence, not proof", "a dependency rather than a subproject". State the positive fact.
+  "evidence, not proof", "a dependency rather than a subproject", "the name is not proof".
+  State the positive fact ("a peer names itself; `confirmed` says whether that is known").
+- **No negative tail** that restates the sentence before it ("Policy belongs to the
+  application ... and the client decides none of them itself"), and no twist ending ("the same
+  types have the same names and do not match"; say "are different types").
+- **Show a pattern with code** when describing it takes an abstract sentence ("an operation
+  with settings of its own returns a value to set up and await" becomes one line of
+  `client.download(user, file).size(n).to_file(path).await`).
+- **The first sentence names concrete things** a reader recognizes ("Connects to the Soulseek
+  network: searches, transfers, rooms"), never an abstraction ("offers actions and reports what
+  happens as events").
 - **No lead-in sentence** that announces or summarizes the list or section under it.
 - **No three-item lists by reflex** and no parallel triplets ("fast, reliable, simple").
 - **Headings and table headers are nouns**, the plain ones a reader expects: "Option" and
-  "Description", "Exit code" and "Description", "Usage", "Limitations". Never verbs or
-  questions ("Does", "When", "Means", "Adds", "What it reads", "How to use").
+  "Description", "Exit code" and "Description", "Usage", "Limitations". Never verbs, verb
+  phrases or questions ("Does", "When", "Means", "Adds", "Asked for", "What it reads", "How to
+  use").
 - **Present tense, current state.** No session narrative: what was tried, what changed, "now",
   "no longer", "new". Those belong in the commit message.
 - **Claims come from the code.** A rewrite keeps exactly the claims the old text made. A claim
@@ -142,6 +153,7 @@ Run this over every line of text you added or changed:
 
 - [ ] no "x, not y" or "not y, x" framing; no lead-in sentence summarizing what follows
 - [ ] headings and table headers are plain nouns ("Option", "Exit code", "Description")
+- [ ] no negative tail or twist ending; patterns shown as code; the first sentence concrete
 - [ ] no forbidden words from `~/.claude/CLAUDE.md`; ASCII only
 - [ ] no first or second person in docs, READMEs, help or messages
 - [ ] every claim traced to the code; no invented rationale, guarantee or default

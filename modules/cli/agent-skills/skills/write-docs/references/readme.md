@@ -19,7 +19,8 @@ their wording.
 
 Use the sections that apply, in this order, with these plain names:
 
-1. `# name`, an italic tagline line, badges, then one or two sentences on what it is
+1. `# name`, the italic tagline directly under it, badges, then one or two sentences on what
+   it is, naming concrete things it does
 2. `## Features`: one-line bullets of what it does
 3. `## Methodology` (or `## How it works`): a short paragraph and a table, only for projects
    whose method matters to whether a reader trusts the output
@@ -37,7 +38,12 @@ Use the sections that apply, in this order, with these plain names:
 
 - Tables for anything with columns: formats, options, exit codes, verdicts, feature flags.
 - Bullets fit on one line where they can; two at most.
-- Paragraphs only where a list cannot carry the content, and short.
+- Paragraphs only where a list cannot carry the content, and short. A paragraph that states
+  three separate facts is three bullets (an events section: "a stream on the client", "grouped
+  by topic", "one stream per topic on its handle").
+- A table carries the whole entry: no paragraph under it that restates or extends its rows;
+  put that into the Description cell or one bullet.
+- An API pattern is shown with a line of code, never described in the abstract.
 - No heading that is a phrase or a joke ("What it reads", "The program"). A reader scans for
   "Usage" and "Installation".
 - The library example is compiled as a doc test from the crate (`#[cfg(doctest)]` including
