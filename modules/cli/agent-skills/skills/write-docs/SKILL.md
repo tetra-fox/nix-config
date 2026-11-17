@@ -50,6 +50,9 @@ The owner's rules win where the field disagrees with them (no "you", see below).
   "evidence, not proof", "a dependency rather than a subproject". State the positive fact.
 - **No lead-in sentence** that announces or summarizes the list or section under it.
 - **No three-item lists by reflex** and no parallel triplets ("fast, reliable, simple").
+- **Headings and table headers are nouns**, the plain ones a reader expects: "Option" and
+  "Description", "Exit code" and "Description", "Usage", "Limitations". Never verbs or
+  questions ("Does", "When", "Means", "Adds", "What it reads", "How to use").
 - **Present tense, current state.** No session narrative: what was tried, what changed, "now",
   "no longer", "new". Those belong in the commit message.
 - **Claims come from the code.** A rewrite keeps exactly the claims the old text made. A claim
@@ -138,6 +141,7 @@ The first thing a stranger reads. It must be skimmable in under a minute.
 Run this over every line of text you added or changed:
 
 - [ ] no "x, not y" or "not y, x" framing; no lead-in sentence summarizing what follows
+- [ ] headings and table headers are plain nouns ("Option", "Exit code", "Description")
 - [ ] no forbidden words from `~/.claude/CLAUDE.md`; ASCII only
 - [ ] no first or second person in docs, READMEs, help or messages
 - [ ] every claim traced to the code; no invented rationale, guarantee or default
