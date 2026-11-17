@@ -127,9 +127,13 @@ Rendered documentation: the crate or module docs and docs on public items.
 
 The first thing a stranger reads. It must be skimmable in under a minute.
 
-- Plain section names a reader expects: Features, Installation, Usage (with `### CLI` and
-  `### Library` when both exist), Methodology or How it works, Supported formats, Limitations,
-  References, License. Never clever headings ("What it reads", "The program").
+- The smallest README that does the job: the top block, Usage and License always; every other
+  section only when it has content a reader could not infer from the summary. Most library
+  crates have no Installation or Limitations section. `references/readme.md` says when each
+  section earns its place.
+- Plain section names when a section is there (Features, Usage with `### CLI` and
+  `### Library`, Methodology, Limitations, References). Never clever headings ("What it
+  reads", "The program").
 - Tables for anything with columns (formats, options, exit codes, verdicts, feature flags).
   One-line bullets for lists. A paragraph only when a list cannot carry it, and then short.
 - A tagline under the title, then a one or two sentence summary of what it is.
