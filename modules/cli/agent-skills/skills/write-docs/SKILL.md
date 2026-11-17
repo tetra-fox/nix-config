@@ -136,7 +136,8 @@ The first thing a stranger reads. It must be skimmable in under a minute.
   `### Library`, Methodology, Limitations, References). Never clever headings ("What it
   reads", "The program").
 - Tables for anything with columns (formats, options, exit codes, verdicts, feature flags).
-  One-line bullets for lists. A paragraph only when a list cannot carry it, and then short.
+  One-line bullets for lists of facts. A paragraph that explains is fine under about 50 words
+  (the median popular README paragraph is 15).
 - After the title and badges, one or two plain sentences on what it is ("A push parser for the
   HTTP 1.x protocol."). A tagline only when the project has one worth keeping; 2% of popular
   crates use one.
