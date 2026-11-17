@@ -127,16 +127,19 @@ Rendered documentation: the crate or module docs and docs on public items.
 
 The first thing a stranger reads. It must be skimmable in under a minute.
 
-- The smallest README that does the job: the top block, Usage and License always; every other
-  section only when it has content a reader could not infer from the summary. Most library
-  crates have no Installation or Limitations section. `references/readme.md` says when each
-  section earns its place.
+- The smallest README that does the job. A popular library's README is about 300 words, four
+  headings and one or two code blocks; a CLI's is about 800 words, ten headings and eight code
+  blocks (`references/readme.md` has the survey). Every section beyond the top block and
+  Usage earns its place with content a reader could not infer from the summary; libraries
+  almost never have Installation or Limitations.
 - Plain section names when a section is there (Features, Usage with `### CLI` and
   `### Library`, Methodology, Limitations, References). Never clever headings ("What it
   reads", "The program").
 - Tables for anything with columns (formats, options, exit codes, verdicts, feature flags).
   One-line bullets for lists. A paragraph only when a list cannot carry it, and then short.
-- A tagline under the title, then a one or two sentence summary of what it is.
+- After the title and badges, one or two plain sentences on what it is ("A push parser for the
+  HTTP 1.x protocol."). A tagline only when the project has one worth keeping; 2% of popular
+  crates use one.
 - Code first in Usage: a real command with real output, then the options.
 - The library example is compiled as a doc test from the crate (`#[cfg(doctest)]` including the
   README) so it cannot drift.
