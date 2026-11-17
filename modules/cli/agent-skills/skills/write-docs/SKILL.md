@@ -72,6 +72,9 @@ The owner's rules win where the field disagrees with them (no "you", see below).
 - **No first or second person** in docs, READMEs, help or messages: no I, we, us, our, you,
   your. Name the role instead: the caller, the client, the server, the user, the file. Many
   reference projects say "you"; the owner wants none.
+- **Standard boilerplate stays word for word**: license notices (the Rust "Licensed under
+  either of ... at your option" block), contribution terms, legal headers. None of these rules
+  apply inside them, including the one on "you".
 - **ASCII only**, no em-dashes, no arrows, no curly quotes.
 - **No spec section numbers, ticket ids or finding ids** in code text. Papers and specs go in a
   README's References section, with full citations.
