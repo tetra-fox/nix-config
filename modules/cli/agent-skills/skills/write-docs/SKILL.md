@@ -49,6 +49,14 @@ The owner's rules win where the field disagrees with them (no "you", see below).
 - **Say what a thing is, then stop.** No contrast framing: "x, not y", "it's not y, it's x",
   "evidence, not proof", "a dependency rather than a subproject", "the name is not proof".
   State the positive fact ("a peer names itself; `confirmed` says whether that is known").
+- **Nothing that is true of every project of its kind.** A client library's caller decides
+  policy; a codec crate does no I/O; a CLI takes arguments. Saying so ("Policy is the
+  application's", "No I/O and no async runtime") tells the reader nothing and reads as
+  padding. Write only what sets this project apart or what a reader needs to use it.
+- **No possessive predicates** ("is the application's", "is the caller's to run"). Name who
+  does what, or drop the sentence.
+- **A sentence listing more than three things is a list:** bullets, or a table when each item
+  has attributes (a method and its default, an option and its effect).
 - **No negative tail** that restates the sentence before it ("Policy belongs to the
   application ... and the client decides none of them itself"), and no twist ending ("the same
   types have the same names and do not match"; say "are different types").
@@ -176,6 +184,9 @@ Run this over every line of text you added or changed:
 - [ ] no negative tail or twist ending; patterns shown as code; the first sentence concrete
 - [ ] no prose retelling a code block; no placeholder phrases; short active sentences
 - [ ] table cells one phrase each, caveats as bullets under the table
+- [ ] no sentence true of every project of its kind; no possessive predicates
+- [ ] sentences listing more than three things turned into bullets or a table
+- [ ] every claim about a default or behaviour checked against the code
 - [ ] no forbidden words from `~/.claude/CLAUDE.md`; ASCII only
 - [ ] no first or second person in docs, READMEs, help or messages
 - [ ] every claim traced to the code; no invented rationale, guarantee or default
