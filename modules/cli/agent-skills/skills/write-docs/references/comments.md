@@ -1,9 +1,9 @@
----
-name: "comment-audit"
-description: "Audit a codebase's comments: fix or delete inaccurate ones, cut noise and big blocks, rewrite unclear code instead of explaining it, keep only terse why-comments, and cut session narrative (what was tried, what broke, which hosts it was verified on) down to the present-tense constraint."
----
-
 # Comment audit
+
+Part of the `write-docs` skill: its rules for all text apply here, and comments are written in
+the comment voice of `~/.claude/CLAUDE.md` (lowercase, plain, one or two lines, no trailing
+period on a single line, ASCII only, no forbidden words). Doc comments on public items and
+READMEs are `SKILL.md`'s and `docs-pass.md`'s; this file covers implementation comments.
 
 Goal: after this pass, every surviving comment is **true, short, and necessary**. The code is the source of truth; comments exist only to carry information the code cannot.
 
@@ -11,7 +11,7 @@ The default for any implementation **commentary** is deletion. Commentary must e
 
 Not every comment is commentary. **If removing or changing a comment could alter how the code builds, runs, formats, type-checks, lints, is covered by tests, or is processed by any tool, it is not commentary** and is out of scope (see Never touch). When in doubt about whether a comment is read by some tool, treat it as a directive.
 
-## Scope: comments are not documentation
+## Scope
 
 This skill audits **implementation comments**: the notes inside and around code that explain it to maintainers.
 
@@ -185,7 +185,9 @@ Tells: past tense about the work, "we"/"I", "tried", "first", "then", "turned ou
 - One line when possible; wrap to a second only if truly needed.
 - Concrete: `// Safari <17 fires resize twice` beats `// browser quirk` (but only if you know it's Safari <17).
 - Links a bug/issue/spec when that's the real explanation.
-- Matches the repo's existing comment style (case, punctuation, `//` vs `/* */`).
+- In the owner's comment voice: lowercase, no trailing period on a single line, plain words.
+  Where a repository has its own established style, its `CLAUDE.md` says so; follow that.
+- States the fact directly, without contrast framing ("x, not y").
 
 Legit keepers, examples:
 - `// workaround for libfoo#1234; remove after 3.2`
@@ -256,4 +258,3 @@ Legit keepers, examples:
 - When unsure whether a rationale or correction is true, it stays in its original meaning and gets flagged. Uncertainty is never a license to rewrite.
 - When unsure whether a comment is read by a tool, treat it as a directive and leave it.
 - A file with zero comments is a fine outcome.
-- Don't add new comments except to replace a worse one or to document a surprise you uncovered and verified while auditing.
