@@ -52,6 +52,15 @@ The owner's rules win where the field disagrees with them (no "you", see below).
 - **No negative tail** that restates the sentence before it ("Policy belongs to the
   application ... and the client decides none of them itself"), and no twist ending ("the same
   types have the same names and do not match"; say "are different types").
+- **No prose that retells an adjacent code block.** If the code needs a caption, one plain line
+  naming what comes back ("A search returns a stream of responses; a started transfer returns a
+  handle."); otherwise none.
+- **Name things; no placeholder phrases.** "What starts something of its own", "the rest",
+  "things like that" become the actual list ("the operations: `connect`, `search`,
+  `download`, `upload`").
+- **Short active sentences.** Lead with the verb or the subject and keep stacked prepositional
+  phrases out: "Each is given as `Config`, through the handler or as a setting of an operation"
+  becomes "Set in `Config`, through the `Handler`, or per operation."
 - **Show a pattern with code** when describing it takes an abstract sentence ("an operation
   with settings of its own returns a value to set up and await" becomes one line of
   `client.download(user, file).size(n).to_file(path).await`).
@@ -157,6 +166,8 @@ Run this over every line of text you added or changed:
 - [ ] no "x, not y" or "not y, x" framing; no lead-in sentence summarizing what follows
 - [ ] headings and table headers are plain nouns ("Option", "Exit code", "Description")
 - [ ] no negative tail or twist ending; patterns shown as code; the first sentence concrete
+- [ ] no prose retelling a code block; no placeholder phrases; short active sentences
+- [ ] table cells one phrase each, caveats as bullets under the table
 - [ ] no forbidden words from `~/.claude/CLAUDE.md`; ASCII only
 - [ ] no first or second person in docs, READMEs, help or messages
 - [ ] every claim traced to the code; no invented rationale, guarantee or default

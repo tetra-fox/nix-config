@@ -41,8 +41,9 @@ Use the sections that apply, in this order, with these plain names:
 - Paragraphs only where a list cannot carry the content, and short. A paragraph that states
   three separate facts is three bullets (an events section: "a stream on the client", "grouped
   by topic", "one stream per topic on its handle").
-- A table carries the whole entry: no paragraph under it that restates or extends its rows;
-  put that into the Description cell or one bullet.
+- A table cell is one short phrase. Caveats about a row (what is excluded, a security note)
+  go in bullets directly under the table, one fact each; never several sentences in a cell,
+  and never a paragraph under the table that restates its rows.
 - An API pattern is shown with a line of code, never described in the abstract.
 - No heading that is a phrase or a joke ("What it reads", "The program"). A reader scans for
   "Usage" and "Installation".
