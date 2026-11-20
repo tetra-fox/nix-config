@@ -52,7 +52,7 @@
   '';
 in {
   config = lib.mkIf (ldap != null) {
-    sops.secrets."jellyfin/ldap_bind_password" = {
+    sops.secrets."jellyfin/ldap/bind_password" = {
       owner = config.services.jellyfin.user;
       restartUnits = ["jellyfin.service"];
     };
@@ -62,7 +62,7 @@ in {
     systemd.services.jellyfin.preStart = ''
       if [ -e ${lib.escapeShellArg configFile} ]; then
         ${pkgs.python3}/bin/python3 ${patch} ${lib.escapeShellArg configFile} ${settings} \
-          ${config.sops.secrets."jellyfin/ldap_bind_password".path}
+          ${config.sops.secrets."jellyfin/ldap/bind_password".path}
       fi
     '';
   };

@@ -14,7 +14,7 @@
   };
 in {
   config = {
-    sops.secrets."apps/jellyfin_api_key" = {};
+    sops.secrets."jellyfin/api_key" = {};
 
     systemd.services.jellyfin-apikey = {
       description = "Set *arr API key in Jellyfin";
@@ -31,7 +31,7 @@ in {
         RemainAfterExit = true;
         User = config.services.jellyfin.user;
         Group = config.services.jellyfin.group;
-        LoadCredential = ["${cred}:${config.sops.secrets."apps/jellyfin_api_key".path}"];
+        LoadCredential = ["${cred}:${config.sops.secrets."jellyfin/api_key".path}"];
         ExecStart = lib.getExe apikey;
       };
     };

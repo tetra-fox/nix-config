@@ -112,7 +112,7 @@ in {
       enable = lib.mkEnableOption "an `admin` superuser role for dbeaver/psql access";
       passwordSecret = lib.mkOption {
         type = lib.types.str;
-        default = "postgres/admin_pass";
+        default = "postgres/admin/password";
       };
     };
 

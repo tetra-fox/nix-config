@@ -19,11 +19,11 @@
   arrs = {
     sonarr = {
       port = cfg.lanProxyPorts.sonarr;
-      apiKeySecret = "apps/sonarr_api_key";
+      apiKeySecret = "sonarr/api_key";
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
-      apiKeySecret = "apps/radarr_api_key";
+      apiKeySecret = "radarr/api_key";
     };
   };
 

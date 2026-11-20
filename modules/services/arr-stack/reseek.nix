@@ -37,19 +37,19 @@ in {
     ];
 
     sops.secrets = {
-      "reseek/soulseek_username" = {};
-      "reseek/soulseek_password" = {};
-      "reseek/admin_password" = {};
-      "reseek/oidc_client_secret" = {};
+      "reseek/soulseek/username" = {};
+      "reseek/soulseek/password" = {};
+      "reseek/admin/password" = {};
+      "reseek/oidc/client_secret" = {};
     };
 
     sops.templates = {
       # default root 0400: systemd reads EnvironmentFile as root
       "reseek.env" = {
         content = ''
-          RESEEK_SLSK_USERNAME=${config.sops.placeholder."reseek/soulseek_username"}
-          RESEEK_SLSK_PASSWORD=${config.sops.placeholder."reseek/soulseek_password"}
-          RESEEK_PASSWORD=${config.sops.placeholder."reseek/admin_password"}
+          RESEEK_SLSK_USERNAME=${config.sops.placeholder."reseek/soulseek/username"}
+          RESEEK_SLSK_PASSWORD=${config.sops.placeholder."reseek/soulseek/password"}
+          RESEEK_PASSWORD=${config.sops.placeholder."reseek/admin/password"}
         '';
         restartUnits = ["reseek.service"];
       };
@@ -63,7 +63,7 @@ in {
           web.authentication.oidc.authentik = {
             issuer = "${topo.authServerUrl}/application/o/reseek/";
             client_id = "reseek";
-            client_secret = config.sops.placeholder."reseek/oidc_client_secret";
+            client_secret = config.sops.placeholder."reseek/oidc/client_secret";
             display_name = "Authentik";
             # authentik releases only these to reseek, see oidc-providers.yaml
             scopes = ["openid" "profile"];

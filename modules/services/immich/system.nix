@@ -60,7 +60,7 @@ in {
       }
     ];
 
-    sops.secrets."immich/oauth_client_secret" = lib.mkIf (cfg.oauth.clientId != null) {
+    sops.secrets."immich/oidc/client_secret" = lib.mkIf (cfg.oauth.clientId != null) {
       owner = config.services.immich.user;
       group = config.services.immich.group;
     };
@@ -271,7 +271,7 @@ in {
             else "";
           clientSecret =
             if cfg.oauth.clientId != null
-            then {_secret = config.sops.secrets."immich/oauth_client_secret".path;}
+            then {_secret = config.sops.secrets."immich/oidc/client_secret".path;}
             else "";
           defaultStorageQuota = null;
           enabled = cfg.oauth.clientId != null;

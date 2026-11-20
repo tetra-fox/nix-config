@@ -60,7 +60,7 @@ notifications are declarative too (`lab.monitoring.telegram.enable`, per mon hos
 provisioned telegram contact point + a policy routing everything to it, grouped per
 rule, plus a message template (one bold header per notification, one summary bullet
 per alert instance, inline view/silence links). the bot token and chat id come from
-the `monitoring/telegram_env` sops secret, an env file grafana's unit loads;
+the `telegram/bot_token` and `telegram/chat_id` sops secrets, rendered into an env file grafana's unit loads;
 provisioning interpolates `$TELEGRAM_BOT_TOKEN` / `$TELEGRAM_CHAT_ID` so the values
 never land in the store. rule summaries should round() any float they template,
 they render verbatim.

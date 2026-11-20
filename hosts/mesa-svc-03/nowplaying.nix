@@ -14,10 +14,10 @@ in {
     }
   ];
 
-  sops.secrets."apps/lastfm_api_key" = {};
+  sops.secrets."lastfm/api_key" = {};
 
   sops.templates."nowplaying.env".content = ''
-    LASTFM_API_KEY=${config.sops.placeholder."apps/lastfm_api_key"}
+    LASTFM_API_KEY=${config.sops.placeholder."lastfm/api_key"}
   '';
 
   services.nowplaying = {

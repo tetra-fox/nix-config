@@ -6,7 +6,7 @@
   username,
   ...
 }: let
-  nmSecrets = ["nm/puppygirlplaypen" "nm/fairlane"];
+  secret = name: config.sops.placeholder.${name};
 in {
   imports = [
     modules.profiles.workstation.system
@@ -70,16 +70,34 @@ in {
     wifi0 = "8c:c6:81:9e:a8:c2"; # iwlwifi
   };
 
-  # one dotenv block per NM profile in secrets/hara.yaml, plus the mount.cifs credentials file
-  sops.secrets =
-    lib.genAttrs (nmSecrets ++ ["smb/store"]) (_: {})
-    // {
+  # each key in secrets/hara.yaml is one bare value, the files programs read are the templates
+  sops.secrets = lib.genAttrs [
+    "networkmanager/puppygirlplaypen/psk"
+    "networkmanager/fairlane/private_key"
+    "samba/password"
+    "nix/github_token"
+  ] (_: {});
+
+  sops.templates = {
+    "nm.env".content = ''
+      PUPPYGIRLPLAYPEN_PSK=${secret "networkmanager/puppygirlplaypen/psk"}
+      FAIRLANE_WG_PRIVATE_KEY=${secret "networkmanager/fairlane/private_key"}
+    '';
+    "samba-credentials".content = ''
+      username=${username}
+      password=${secret "samba/password"}
+    '';
+    "nix-access-tokens.conf" = {
       # flake evaluation runs as the user, so the user has to read it
-      "nix/access-tokens".owner = username;
+      owner = username;
+      content = ''
+        access-tokens = github.com=${secret "nix/github_token"}
+      '';
     };
+  };
 
   # a github token lifts the 60/hour unauthenticated api limit. !include skips a missing file
-  nix.extraOptions = "!include ${config.sops.secrets."nix/access-tokens".path}";
+  nix.extraOptions = "!include ${config.sops.templates."nix-access-tokens.conf".path}";
 
   # samba shares on mesa-store-01, mounted at /mnt/mesa/<share>. fully qualified because only the
   # wired profile sets the mesa search domain
@@ -88,7 +106,7 @@ in {
       device = "//mesa-store-01.mesa.tetra.cool/${share}";
       fsType = "cifs";
       options = [
-        "credentials=${config.sops.secrets."smb/store".path}"
+        "credentials=${config.sops.templates."samba-credentials".path}"
         "vers=3.1.1"
         # the server requires encryption
         "seal"
@@ -110,7 +128,7 @@ in {
       settings.main.no-auto-default = "*";
 
       ensureProfiles = {
-        environmentFiles = map (s: config.sops.secrets.${s}.path) nmSecrets;
+        environmentFiles = [config.sops.templates."nm.env".path];
 
         profiles = {
           ethernet = {

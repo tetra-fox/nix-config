@@ -45,7 +45,7 @@
       # exercised by the admin subtest on HA nodes
       admin.enable = true;
       roles.app = {
-        passwordSecret = "postgres/app_pass";
+        passwordSecret = "postgres/roles/app/password";
         owns = ["app"];
       };
     };

@@ -14,7 +14,7 @@
   arrLib = import ./lib.nix {inherit lib;};
 
   arrPgUser = "arr";
-  arrPgPassSecret = "arr/pg_pass";
+  arrPgPassSecret = "postgres/roles/arr/password";
 
   # VPN-Confinement caps namespace names at 7 chars (used as unit + iface suffix)
   vpnNs = "wg";
@@ -34,14 +34,14 @@
     sonarr = {
       port = cfg.lanProxyPorts.sonarr;
       inNetns = true;
-      apiKey = {_sops = "apps/sonarr_api_key";};
+      apiKey = {_sops = "sonarr/api_key";};
       hasNixosModule = true;
       uid = 274; # pin uids: NFS squashes on uid, so they must match across boxes
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
       inNetns = true;
-      apiKey = {_sops = "apps/radarr_api_key";};
+      apiKey = {_sops = "radarr/api_key";};
       hasNixosModule = true;
       uid = 275;
     };
@@ -153,14 +153,14 @@
 
   wgConfTemplate = ''
     [Interface]
-    PrivateKey = ${config.sops.placeholder."arr/wg_private_key"}
-    Address = ${config.sops.placeholder."arr/wg_address"}
+    PrivateKey = ${config.sops.placeholder."vpn/wireguard/private_key"}
+    Address = ${config.sops.placeholder."vpn/wireguard/address"}
     DNS = 1.1.1.1
 
     [Peer]
-    PublicKey = ${config.sops.placeholder."arr/wg_peer_public_key"}
-    PresharedKey = ${config.sops.placeholder."arr/wg_preshared_key"}
-    Endpoint = ${config.sops.placeholder."arr/wg_peer_endpoint"}
+    PublicKey = ${config.sops.placeholder."vpn/wireguard/peer_public_key"}
+    PresharedKey = ${config.sops.placeholder."vpn/wireguard/preshared_key"}
+    Endpoint = ${config.sops.placeholder."vpn/wireguard/peer_endpoint"}
     AllowedIPs = 0.0.0.0/0,::/0
     PersistentKeepalive = 15
   '';
@@ -358,11 +358,11 @@ in {
       sops.secrets =
         lib.genAttrs allSopsRefs (_: {})
         // lib.genAttrs [
-          "arr/wg_private_key"
-          "arr/wg_peer_public_key"
-          "arr/wg_preshared_key"
-          "arr/wg_peer_endpoint"
-          "arr/wg_address"
+          "vpn/wireguard/private_key"
+          "vpn/wireguard/peer_public_key"
+          "vpn/wireguard/preshared_key"
+          "vpn/wireguard/peer_endpoint"
+          "vpn/wireguard/address"
         ] (_: {});
 
       sops.templates =

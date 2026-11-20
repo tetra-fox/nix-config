@@ -53,11 +53,11 @@
   arrs = {
     sonarr = {
       port = cfg.lanProxyPorts.sonarr;
-      apiKeySecret = "apps/sonarr_api_key";
+      apiKeySecret = "sonarr/api_key";
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
-      apiKeySecret = "apps/radarr_api_key";
+      apiKeySecret = "radarr/api_key";
     };
   };
 
@@ -84,7 +84,7 @@
         RemainAfterExit = true;
         LoadCredential = [
           "${arrKeyCred}:${config.sops.secrets.${spec.apiKeySecret}.path}"
-          "${sabKeyCred}:${config.sops.secrets."apps/sabnzbd_api_key".path}"
+          "${sabKeyCred}:${config.sops.secrets."sabnzbd/api_key".path}"
         ];
         ExecStart = lib.getExe reconcile;
       };

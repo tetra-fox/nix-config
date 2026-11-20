@@ -69,13 +69,13 @@
     };
   };
 
-  sops.secrets."reseek/metrics_password" = {};
+  sops.secrets."reseek/metrics/password" = {};
   sops.templates."reseek-metrics.toml" = {
     owner = config.services.reseek.user;
     content = ''
       [metrics.authentication]
       username = "prometheus"
-      password = "${config.sops.placeholder."reseek/metrics_password"}"
+      password = "${config.sops.placeholder."reseek/metrics/password"}"
     '';
     restartUnits = ["reseek.service"];
   };

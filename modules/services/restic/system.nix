@@ -1,5 +1,5 @@
-# per-host sops secrets: backup/b2_env (B2_ACCOUNT_ID, B2_ACCOUNT_KEY) and
-# backup/restic_password (the repo key, lose it and the backups are gone)
+# per-host sops secrets: restic/b2/account_id, restic/b2/account_key and
+# restic/password (the repo key, lose it and the backups are gone)
 {
   config,
   lib,
@@ -101,13 +101,22 @@ in {
       }
     ];
 
-    sops.secrets."backup/b2_env" = {};
-    sops.secrets."backup/restic_password" = {};
+    sops = {
+      secrets = {
+        "restic/b2/account_id" = {};
+        "restic/b2/account_key" = {};
+        "restic/password" = {};
+      };
+      templates."restic-b2.env".content = ''
+        B2_ACCOUNT_ID=${config.sops.placeholder."restic/b2/account_id"}
+        B2_ACCOUNT_KEY=${config.sops.placeholder."restic/b2/account_key"}
+      '';
+    };
 
     services.restic.backups.b2 = {
       repository = "b2:${cfg.bucket}:${hn}";
-      environmentFile = config.sops.secrets."backup/b2_env".path;
-      passwordFile = config.sops.secrets."backup/restic_password".path;
+      environmentFile = config.sops.templates."restic-b2.env".path;
+      passwordFile = config.sops.secrets."restic/password".path;
 
       initialize = true;
 

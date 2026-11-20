@@ -19,25 +19,25 @@
     {
       echo "[servers]"
       ${lib.getExe pkgs.jq} -r '.[] | "[[\(.host)]]", (to_entries[] | "\(.key) = \(.value)")' \
-        ${config.sops.secrets."apps/sabnzbd_servers".path}
+        ${config.sops.secrets."sabnzbd/servers".path}
     } > ${serversIni}
   '';
 in {
   config = {
     sops.secrets = {
-      "apps/sabnzbd_api_key" = {};
-      "apps/sabnzbd_nzb_key" = {};
+      "sabnzbd/api_key" = {};
+      "sabnzbd/nzb_key" = {};
       # json array of objects keyed like sabnzbd's server config, e.g.
       #   [{"host":"news.example.com","port":563,"ssl":1,"username":"<u>","password":"<p>"}]
-      "apps/sabnzbd_servers" = {owner = "sabnzbd";};
+      "sabnzbd/servers" = {owner = "sabnzbd";};
     };
 
     sops.templates."sabnzbd-secrets.ini" = {
       owner = "sabnzbd";
       content = ''
         [misc]
-        api_key = ${config.sops.placeholder."apps/sabnzbd_api_key"}
-        nzb_key = ${config.sops.placeholder."apps/sabnzbd_nzb_key"}
+        api_key = ${config.sops.placeholder."sabnzbd/api_key"}
+        nzb_key = ${config.sops.placeholder."sabnzbd/nzb_key"}
       '';
     };
 

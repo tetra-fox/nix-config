@@ -8,17 +8,17 @@
 in {
   imports = [modules.services.monitoring.unifi];
 
-  sops.secrets."monitoring/grafana_oauth_client_secret" = {
+  sops.secrets."grafana/oidc/client_secret" = {
     owner = "grafana";
     group = "grafana";
   };
 
-  # same value as reseek/metrics_password in mesa-svc-01's sops file
-  sops.secrets."monitoring/reseek_metrics_password".owner = "prometheus";
+  # same value as reseek/metrics/password in mesa-svc-01's sops file
+  sops.secrets."reseek/metrics/password".owner = "prometheus";
 
   lab = {
     monitoring = {
-      # needs monitoring/telegram_env in this host's sops file
+      # needs telegram/bot_token and telegram/chat_id in this host's sops file
       telegram.enable = true;
 
       unifi.enable = true;
@@ -36,7 +36,7 @@ in {
           metrics_path = "/metrics";
           basic_auth = {
             username = "prometheus";
-            password_file = config.sops.secrets."monitoring/reseek_metrics_password".path;
+            password_file = config.sops.secrets."reseek/metrics/password".path;
           };
           static_configs = [
             {
@@ -60,7 +60,7 @@ in {
       allow_assign_grafana_admin = true;
       # not a secret
       client_id = "Wn5qil44lN5vTsbO7qDzpjl34ZB0oK2tzD3UrOaE";
-      client_secret = "$__file{${config.sops.secrets."monitoring/grafana_oauth_client_secret".path}}";
+      client_secret = "$__file{${config.sops.secrets."grafana/oidc/client_secret".path}}";
       scopes = "openid email profile entitlements";
       auth_url = "${authUrl}/application/o/authorize/";
       token_url = "${authUrl}/application/o/token/";

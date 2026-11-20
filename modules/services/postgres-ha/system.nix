@@ -169,8 +169,8 @@ in {
         softwareWatchdog = true;
 
         environmentFiles = {
-          PATRONI_SUPERUSER_PASSWORD = config.sops.secrets."postgres/superuser_pass".path;
-          PATRONI_REPLICATION_PASSWORD = config.sops.secrets."postgres/replication_pass".path;
+          PATRONI_SUPERUSER_PASSWORD = config.sops.secrets."postgres/superuser/password".path;
+          PATRONI_REPLICATION_PASSWORD = config.sops.secrets."postgres/replication/password".path;
         };
 
         settings = {
@@ -342,8 +342,8 @@ in {
     # patroni reads these directly, per-role secrets go through LoadCredential
     sops.secrets = lib.mkMerge [
       {
-        "postgres/superuser_pass" = lib.mkDefault {owner = "patroni";};
-        "postgres/replication_pass" = lib.mkDefault {owner = "patroni";};
+        "postgres/superuser/password" = lib.mkDefault {owner = "patroni";};
+        "postgres/replication/password" = lib.mkDefault {owner = "patroni";};
       }
       (lib.mapAttrs' (_name: role:
         lib.nameValuePair role.passwordSecret (lib.mkDefault {}))

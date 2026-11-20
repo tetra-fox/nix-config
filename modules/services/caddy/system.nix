@@ -133,7 +133,7 @@ in {
 
     environmentSecrets = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = {CF_TOKEN = "net/cf_token";};
+      default = {CF_TOKEN = "caddy/cloudflare/token";};
       description = "env var name -> sops secret name, rendered into caddy's EnvironmentFile. the default carries the cloudflare acme token.";
     };
 

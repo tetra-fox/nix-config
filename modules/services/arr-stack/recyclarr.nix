@@ -271,7 +271,7 @@ in {
     configuration = {
       sonarr.sonarr = {
         base_url = "http://${nsVethIp}:8989";
-        api_key._secret = config.sops.secrets."apps/sonarr_api_key".path;
+        api_key._secret = config.sops.secrets."sonarr/api_key".path;
         delete_old_custom_formats = true;
         quality_definition.type = "series";
         quality_profiles = mkProfiles sonarrLadder;
@@ -279,7 +279,7 @@ in {
       };
       radarr.radarr = {
         base_url = "http://${nsVethIp}:7878";
-        api_key._secret = config.sops.secrets."apps/radarr_api_key".path;
+        api_key._secret = config.sops.secrets."radarr/api_key".path;
         delete_old_custom_formats = true;
         quality_definition.type = "movie";
         quality_profiles = mkProfiles radarrLadder;

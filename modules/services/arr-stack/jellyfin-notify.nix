@@ -1,4 +1,4 @@
-# arrs tell jellyfin to rescan on import/upgrade/rename. apps/jellyfin_api_key is the
+# arrs tell jellyfin to rescan on import/upgrade/rename. jellyfin/api_key is the
 # same key jellyfin-apikey writes into jellyfin's ApiKeys table
 {
   config,
@@ -47,11 +47,11 @@
   arrs = {
     sonarr = {
       port = cfg.lanProxyPorts.sonarr;
-      apiKeySecret = "apps/sonarr_api_key";
+      apiKeySecret = "sonarr/api_key";
     };
     radarr = {
       port = cfg.lanProxyPorts.radarr;
-      apiKeySecret = "apps/radarr_api_key";
+      apiKeySecret = "radarr/api_key";
     };
   };
 
@@ -78,7 +78,7 @@
         RemainAfterExit = true;
         LoadCredential = [
           "${arrKeyCred}:${config.sops.secrets.${spec.apiKeySecret}.path}"
-          "${jfKeyCred}:${config.sops.secrets."apps/jellyfin_api_key".path}"
+          "${jfKeyCred}:${config.sops.secrets."jellyfin/api_key".path}"
         ];
         ExecStart = lib.getExe reconcile;
       };
@@ -87,7 +87,7 @@
 in {
   config = {
     # also declared by jellyfin-apikey, identical decls merge
-    sops.secrets."apps/jellyfin_api_key" = {};
+    sops.secrets."jellyfin/api_key" = {};
 
     systemd.services = lib.mapAttrs' mkUnit arrs;
   };

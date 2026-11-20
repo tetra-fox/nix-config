@@ -39,11 +39,11 @@ in {
     "d ${slicerDataDir} 0750 root root -"
   ];
 
-  sops.secrets."apps/bambuddy_oidc_client_secret" = {};
+  sops.secrets."bambuddy/oidc/client_secret" = {};
 
   sops.templates."bambuddy.env" = {
     content = ''
-      BAMBUDDY_OIDC_CLIENT_SECRET=${config.sops.placeholder."apps/bambuddy_oidc_client_secret"}
+      BAMBUDDY_OIDC_CLIENT_SECRET=${config.sops.placeholder."bambuddy/oidc/client_secret"}
     '';
     restartUnits = ["podman-bambuddy.service"];
   };

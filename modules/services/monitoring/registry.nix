@@ -98,7 +98,7 @@ in {
     };
 
     telegram.enable =
-      lib.mkEnableOption "declaratively provisioned telegram contact point + notification policy (needs the monitoring/telegram_env sops secret)"
+      lib.mkEnableOption "declaratively provisioned telegram contact point + notification policy (needs the telegram/bot_token and telegram/chat_id sops secrets)"
       // {default = false;};
 
     retiredAlerts = lib.mkOption {

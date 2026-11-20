@@ -29,7 +29,7 @@
     roles =
       {
         authentik = {
-          passwordSecret = "auth/pg_pass";
+          passwordSecret = "postgres/roles/authentik/password";
           owns = ["authentik"];
         };
       }

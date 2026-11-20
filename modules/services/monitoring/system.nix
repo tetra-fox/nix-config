@@ -335,17 +335,24 @@ in {
           group = "grafana";
         };
       in {
-        "monitoring/grafana_secret_key" = ownedByGrafana;
+        "grafana/secret_key" = ownedByGrafana;
 
         # nixpkgs defaults this to "admin", and fairlane keeps the login form (no oauth).
         # grafana only reads it when creating the admin user, grafana-admin-password applies it after
-        "monitoring/grafana_admin_password" = ownedByGrafana;
+        "grafana/admin/password" = ownedByGrafana;
 
-        # env file with TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, interpolated into the contact point
-        "monitoring/telegram_env" = lib.mkIf cfg.telegram.enable {};
+        "telegram/bot_token" = lib.mkIf cfg.telegram.enable {};
+        "telegram/chat_id" = lib.mkIf cfg.telegram.enable {};
+      };
+      # grafana interpolates these into the contact point
+      sops.templates."grafana-telegram.env" = lib.mkIf cfg.telegram.enable {
+        content = ''
+          TELEGRAM_BOT_TOKEN=${config.sops.placeholder."telegram/bot_token"}
+          TELEGRAM_CHAT_ID=${config.sops.placeholder."telegram/chat_id"}
+        '';
       };
       systemd.services.grafana.serviceConfig.EnvironmentFile =
-        lib.mkIf cfg.telegram.enable config.sops.secrets."monitoring/telegram_env".path;
+        lib.mkIf cfg.telegram.enable config.sops.templates."grafana-telegram.env".path;
 
       # grafana can't declaratively change an existing admin password, so reset it on every start
       systemd.services.grafana-admin-password = {
@@ -358,7 +365,7 @@ in {
           User = "grafana";
           Group = "grafana";
           RemainAfterExit = true;
-          LoadCredential = "adminpass:${config.sops.secrets."monitoring/grafana_admin_password".path}";
+          LoadCredential = "adminpass:${config.sops.secrets."grafana/admin/password".path}";
           # bounds the health wait loop
           TimeoutStartSec = 180;
         };
@@ -406,8 +413,8 @@ in {
             };
             analytics = analyticsOff;
             security = {
-              secret_key = "$__file{${config.sops.secrets."monitoring/grafana_secret_key".path}}";
-              admin_password = "$__file{${config.sops.secrets."monitoring/grafana_admin_password".path}}";
+              secret_key = "$__file{${config.sops.secrets."grafana/secret_key".path}}";
+              admin_password = "$__file{${config.sops.secrets."grafana/admin/password".path}}";
             };
 
             # basic auth on /api/* is separate from the login form and defaults on, it would

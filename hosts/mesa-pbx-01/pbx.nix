@@ -9,6 +9,7 @@
 }: let
   inherit (config.lab) site appliances;
   secret = name: config.lib.asterisk.secret config.sops.secrets."pbx/${name}".path;
+  extensionSecret = number: kind: "extensions/${number}/${kind}";
 
   # vlan 100, the phones' own, so calls don't depend on the router's inter-vlan routing
   voip = {
@@ -76,22 +77,23 @@ in {
   ];
 
   sops.secrets =
-    lib.mapAttrs' (number: _: {
-      name = "pbx/sip_${number}";
-      value = {
-        reloadUnits = ["asterisk.service"];
-        # the provisioning files embed the passwords
-        restartUnits = ["asterix-provisioning.service"];
-      };
-    })
-    (extensions // lib.mapAttrs' (number: e: lib.nameValuePair "${number}_page" e) ciscos)
+    lib.listToAttrs (map (name: {
+        name = "pbx/${name}";
+        value = {
+          reloadUnits = ["asterisk.service"];
+          # the provisioning files embed the passwords
+          restartUnits = ["asterix-provisioning.service"];
+        };
+      })
+      (map (number: extensionSecret number "sip") (lib.attrNames extensions)
+        ++ map (number: extensionSecret number "page") (lib.attrNames ciscos)))
     // lib.mapAttrs' (number: _: {
-      name = "pbx/vm_${number}";
+      name = "pbx/${extensionSecret number "voicemail"}";
       value.reloadUnits = ["asterisk.service"];
     })
     extensions
     // {
-      "pbx/trunk_voipms".reloadUnits = ["asterisk.service"];
+      "pbx/trunks/voipms".reloadUnits = ["asterisk.service"];
     };
 
   services = {
@@ -113,9 +115,9 @@ in {
       extensions =
         lib.mapAttrs (number: e: {
           inherit (e) name;
-          password = secret "sip_${number}";
-          voicemail.pin = secret "vm_${number}";
-          pagingLine = lib.mkIf (ciscos ? ${number}) {password = secret "sip_${number}_page";};
+          password = secret (extensionSecret number "sip");
+          voicemail.pin = secret (extensionSecret number "voicemail");
+          pagingLine = lib.mkIf (ciscos ? ${number}) {password = secret (extensionSecret number "page");};
         })
         extensions;
 
@@ -151,7 +153,7 @@ in {
       trunks.voipms = {
         host = "seattle1.voip.ms";
         username = "579864_pbx";
-        password = secret "trunk_voipms";
+        password = secret "trunks/voipms";
         # the codec the sub-account allows
         allow = ["ulaw"];
         # seattle1.voip.ms, which the sip acl needs as an address. calls to a number come from

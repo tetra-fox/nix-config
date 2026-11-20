@@ -4,11 +4,11 @@
   ...
 }: {
   sops.secrets = {
-    "apps/asf_tetra_username" = {
+    "asf/tetra/username" = {
       owner = "archisteamfarm";
       group = "archisteamfarm";
     };
-    "apps/asf_tetra_password" = {
+    "asf/tetra/password" = {
       owner = "archisteamfarm";
       group = "archisteamfarm";
     };
@@ -42,8 +42,8 @@
       GamesPlayedWhileIdle = [250820];
       OnlineStatus = 0;
       RemoteCommunication = 0;
-      SteamLogin = config.sops.placeholder."apps/asf_tetra_username";
-      SteamPassword = config.sops.placeholder."apps/asf_tetra_password";
+      SteamLogin = config.sops.placeholder."asf/tetra/username";
+      SteamPassword = config.sops.placeholder."asf/tetra/password";
       EnableFreePackages = true;
       FreePackagesFilters = [
         {

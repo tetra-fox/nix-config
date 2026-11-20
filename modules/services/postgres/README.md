@@ -16,7 +16,7 @@ cluster a drop-in later -- the derives swap to a VIP/leader without touching any
     server.enable = true;
     extraAllowedCidrs = ["192.168.20.0/24"]; # non-fleet sources only (admin VLAN, tools)
     roles.myapp = {
-      passwordSecret = "myapp/pg_pass";
+      passwordSecret = "postgres/roles/myapp/password";
       owns = ["myapp_db"];
     };
   };
@@ -43,7 +43,7 @@ cluster a drop-in later -- the derives swap to a VIP/leader without touching any
 - `openFirewall` - 5432/tcp on the host firewall
 - `passwordUnits` (read-only) - `role -> generated unit name`. use this in `requires`/`after` so consumers don't hardcode unit names
 - `admin.enable` - shorthand for an `admin` superuser role (superuser, createdb, createrole, replication)
-- `admin.passwordSecret` (default `"postgres/admin_pass"`)
+- `admin.passwordSecret` (default `"postgres/admin/password"`)
 - `roles.<name>.passwordSecret` - sops path
 - `roles.<name>.clauses` - forwarded to `ensureUsers[].ensureClauses`
 - `roles.<name>.owns` - dbs this role owns; auto-added to `ensureDatabases`

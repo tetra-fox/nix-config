@@ -34,7 +34,7 @@
 
   # each secret reaches oidc-providers.yaml as <NAME>_OIDC_CLIENT_SECRET through authentik.env
   oidcClients = ["bambuddy" "grafana" "home_assistant" "immich" "proxmox" "reseek"];
-  oidcClientSecret = name: "auth/${name}_oidc_client_secret";
+  oidcClientSecret = name: "${name}/oidc/client_secret";
 
   forwardAuthEntries = a: ''
     - model: authentik_providers_proxy.proxyprovider
@@ -257,11 +257,11 @@ in {
 
     sops.secrets =
       {
-        "auth/pg_pass" = {};
-        "auth/authentik_secret_key" = {};
-        "auth/ldap_outpost_token" = {};
+        "postgres/roles/authentik/password" = {};
+        "authentik/secret_key" = {};
+        "authentik/ldap_outpost/token" = {};
         # a whole blueprint, so usernames and emails stay out of the repo. the worker runs as 1000
-        "auth/users_blueprint" = {
+        "authentik/users_blueprint" = {
           uid = 1000;
           restartUnits = ["podman-auth-worker.service"];
         };
@@ -271,14 +271,14 @@ in {
     sops.templates = {
       "authentik.env".content =
         ''
-          AUTHENTIK_POSTGRESQL__PASSWORD=${config.sops.placeholder."auth/pg_pass"}
-          AUTHENTIK_SECRET_KEY=${config.sops.placeholder."auth/authentik_secret_key"}
+          AUTHENTIK_POSTGRESQL__PASSWORD=${config.sops.placeholder."postgres/roles/authentik/password"}
+          AUTHENTIK_SECRET_KEY=${config.sops.placeholder."authentik/secret_key"}
         ''
         + lib.concatMapStrings (name: ''
           ${lib.toUpper name}_OIDC_CLIENT_SECRET=${config.sops.placeholder.${oidcClientSecret name}}
         '')
         oidcClients;
-      "authentik-ldap.env".content = "AUTHENTIK_TOKEN=${config.sops.placeholder."auth/ldap_outpost_token"}\n";
+      "authentik-ldap.env".content = "AUTHENTIK_TOKEN=${config.sops.placeholder."authentik/ldap_outpost/token"}\n";
     };
 
     virtualisation.oci-containers.containers = {
@@ -308,7 +308,7 @@ in {
             "${siteData}/authentik/certs:/certs"
             authentikTemplatesVol
             "${blueprintsDir}:/blueprints/custom:ro"
-            "${config.sops.secrets."auth/users_blueprint".path}:/blueprints/private/users.yaml:ro"
+            "${config.sops.secrets."authentik/users_blueprint".path}:/blueprints/private/users.yaml:ro"
           ];
         };
 

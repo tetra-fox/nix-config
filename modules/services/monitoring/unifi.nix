@@ -29,7 +29,7 @@ in {
       }
     ];
 
-    sops.secrets."monitoring/unpoller_password" = {
+    sops.secrets."unpoller/password" = {
       owner = "unpoller-exporter";
       group = "unpoller-exporter";
     };
@@ -43,7 +43,7 @@ in {
         {
           url = cfg.controllerUrl;
           user = "unpoller";
-          pass = config.sops.secrets."monitoring/unpoller_password".path;
+          pass = config.sops.secrets."unpoller/password".path;
           verify_ssl = false;
           save_dpi = true;
         }
