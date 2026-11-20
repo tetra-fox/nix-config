@@ -1,6 +1,6 @@
 # user key: `age-keygen -o ~/.config/sops/age/keys.txt`. modules/cli/sops/home.nix sets
 # SOPS_AGE_KEY_FILE there since darwin's default differs; on a fresh mac export it by hand
-# host key: ssh <host> 'cat /etc/ssh/ssh_host_ed25519_key.pub' | ssh-to-age
+# host key: ssh-keyscan -t ed25519 <host> | ssh-to-age
 # after editing: sops updatekeys secrets/<path>.yaml
 
 keys:

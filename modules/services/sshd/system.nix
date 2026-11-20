@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   shared,
@@ -6,23 +7,30 @@
   ...
 }: let
   common = import ./_common.nix;
+  keyDir = config.lab.sshd.hostKeyDir;
 in {
-  users.users.${username}.openssh.authorizedKeys.keys =
+  options.lab.sshd.hostKeyDir = lib.mkOption {
+    type = lib.types.str;
+    default = "/etc/ssh";
+    description = "directory holding the host keys. sops derives the host's age key from the ed25519 one";
+  };
+
+  config.users.users.${username}.openssh.authorizedKeys.keys =
     common.keyringKeys lib shared.keyring;
 
-  services.openssh = {
+  config.services.openssh = {
     enable = true;
     startWhenNeeded = true;
 
     hostKeys = [
       {
         type = "ed25519";
-        path = "/etc/ssh/ssh_host_ed25519_key";
+        path = "${keyDir}/ssh_host_ed25519_key";
       }
       {
         type = "rsa";
         bits = 4096;
-        path = "/etc/ssh/ssh_host_rsa_key";
+        path = "${keyDir}/ssh_host_rsa_key";
       }
     ];
 

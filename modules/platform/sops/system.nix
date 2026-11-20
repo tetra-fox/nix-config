@@ -25,8 +25,8 @@ in {
     }));
 
     sops = {
+      # sshKeyPaths defaults to the ed25519 key in services.openssh.hostKeys
       age = {
-        sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
         keyFile = null;
         generateKey = false;
       };
