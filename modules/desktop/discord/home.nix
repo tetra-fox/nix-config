@@ -10,6 +10,11 @@
 
   programs.nixcord = {
     enable = true;
+    # nixcord's openasar.patch and nixpkgs' openasar postPatch both rewrite the openh264
+    # filename in cmdSwitches.js, so the --replace-fail in nixpkgs finds nothing to match.
+    # nixcord's pinned nixpkgs predates that postPatch.
+    # TODO: remove once nixcord drops the cmdSwitches.js hunks from its patch
+    useGlobalPkgs = false;
     discord = {
       vencord.enable = true;
       krisp.enable = true;
