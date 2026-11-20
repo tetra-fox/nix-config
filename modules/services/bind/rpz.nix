@@ -46,9 +46,20 @@ in {
       description = "fetch RPZ blocklists and reload named";
       after = ["network-online.target" "bind.service"];
       wants = ["network-online.target"];
+      # the lists are not kept across boots, a boot starts from the empty stubs. the timer
+      # only covers the daily refresh after that
+      wantedBy = ["multi-user.target"];
+      # about half an hour of retries, then the unit stays failed
+      unitConfig = {
+        StartLimitIntervalSec = "1h";
+        StartLimitBurst = 15;
+      };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = lib.getExe refresh;
+        # the uplink can come up after this host does
+        Restart = "on-failure";
+        RestartSec = "2min";
         # the rndc key is named-readable and the zone files must be named-owned
         User = "named";
         Group = "named";
@@ -62,8 +73,6 @@ in {
       timerConfig = {
         # 12:00 UTC plus the random hour, see SCHEDULE.md
         OnCalendar = "12:00";
-        # a fresh boot has only empty stubs, so don't wait for the daily tick
-        OnBootSec = "3min";
         RandomizedDelaySec = "1h";
         Persistent = true;
       };
