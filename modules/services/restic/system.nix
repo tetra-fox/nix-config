@@ -113,6 +113,9 @@ in {
       '';
     };
 
+    # restic's cache of repository metadata, over a gb and too large for a tmpfs root
+    environment.persistence.main.directories = ["/var/cache/restic-backups-b2"];
+
     services.restic.backups.b2 = {
       repository = "b2:${cfg.bucket}:${hn}";
       environmentFile = config.sops.templates."restic-b2.env".path;

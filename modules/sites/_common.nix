@@ -38,6 +38,8 @@ in {
     };
   };
 
+  environment.persistence.main.directories = lib.optional (config.lab.site.dataDir != null) config.lab.site.dataDir;
+
   systemd.tmpfiles.rules = lib.mkIf (config.lab.site.dataDir != null) [
     "d ${config.lab.site.dataDir} 0755 root ${config.lab.site.dataDirGroup} -"
   ];

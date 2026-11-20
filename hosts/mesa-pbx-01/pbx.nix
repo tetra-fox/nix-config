@@ -68,6 +68,9 @@ in {
 
   lab.topology.provides = [caps.pbx.name];
 
+  # astdb, voicemail
+  environment.persistence.main.directories = ["/var/lib/asterisk"];
+
   # on-link only: the phones are on this subnet, everything else goes out the server vlan
   networking.interfaces.${voip.interface}.ipv4.addresses = [
     {

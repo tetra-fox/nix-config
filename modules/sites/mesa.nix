@@ -3,6 +3,8 @@
 {lib, ...}: {
   imports = [./_common.nix];
 
+  config.environment.persistence.main.enable = true;
+
   config.lab = {
     site = {
       domain = "mesa.tetra.cool";

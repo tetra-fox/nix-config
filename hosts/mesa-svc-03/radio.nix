@@ -110,6 +110,9 @@ in {
   };
   users.groups.${config.lab.media.group}.gid = config.lab.media.gid;
 
+  # the liquidsoap user's home, which holds the compiled script cache
+  environment.persistence.main.directories = ["/var/lib/liquidsoap"];
+
   services.liquidsoap.streams.radio-fc05 = script;
   # library directories are group media and not world-readable
   systemd.services.radio-fc05.serviceConfig.SupplementaryGroups = [config.lab.media.group];

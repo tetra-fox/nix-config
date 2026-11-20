@@ -47,6 +47,9 @@ in {
       oci-containers.backend = "podman";
     };
 
+    # images, containers and named volumes
+    environment.persistence.main.directories = ["/var/lib/containers"];
+
     # systemd.packages skips the [Install] section
     systemd.timers.podman-auto-update = lib.mkIf cfg.autoUpdate.enable {
       wantedBy = ["timers.target"];

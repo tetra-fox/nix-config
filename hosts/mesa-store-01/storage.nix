@@ -164,6 +164,9 @@ in {
     backup.restic.datasets = protectedDatasets;
   };
 
+  # nfsd's v4 client records
+  environment.persistence.main.directories = ["/var/lib/nfs"];
+
   services.nfs.server = {
     enable = true;
     inherit (nfs) exports;

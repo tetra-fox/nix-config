@@ -27,6 +27,12 @@
     podman.cadvisor.enable = true;
   };
 
+  # data of services that no longer run on this host
+  environment.persistence.main.directories = [
+    "/var/lib/qBittorrent"
+    "/var/lib/asf"
+  ];
+
   services.reseek = {
     settings = {
       transfers.upload.slots = 32;

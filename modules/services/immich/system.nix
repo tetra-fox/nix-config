@@ -67,6 +67,14 @@ in {
 
     users.users.immich.uid = cfg.uid;
 
+    environment.persistence.main.directories = [
+      "/var/lib/immich"
+      "/var/lib/postgresql"
+      "/var/lib/redis-immich"
+      # the machine-learning models, several gb
+      "/var/cache/immich"
+    ];
+
     # nixpkgs adds a tmpfiles rule that chmods mediaLocation to 0700. root is squashed on the nfs
     # export, so it fails on every tmpfiles run, and the store box already creates the dir 0700
     systemd.tmpfiles.settings.immich = lib.mkForce {};

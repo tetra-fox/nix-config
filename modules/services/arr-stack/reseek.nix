@@ -81,6 +81,8 @@ in {
     # pin the uid: NFS squashes on uid, not name
     users.users.${config.services.reseek.user}.uid = 968;
 
+    environment.persistence.main.directories = [config.services.reseek.dataDir];
+
     services.reseek = {
       enable = true;
       group = config.lab.media.group;
