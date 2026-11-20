@@ -9,6 +9,8 @@
     ./common.nix
     modules.platform.fstrim.system
     modules.platform.nix.system
+    # off until a site turns environment.persistence.main on
+    modules.platform.impermanence.system
     modules.services.sshd.system
     modules.cli.nh.system
     modules.platform.systemd-boot.system

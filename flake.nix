@@ -61,6 +61,11 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence = {
+      url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
     nix-secrets.url = "git+ssh://git@github.com/tetra-fox/nix-secrets.git";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     asterix = {
@@ -213,7 +218,7 @@
 
         # vm tests need kvm
         checks = lib.mkIf (system == "x86_64-linux") (import ./tests {
-          inherit pkgs modules fleet;
+          inherit pkgs inputs modules fleet;
           inherit (fleet) caps;
         });
         # not inputs': nurpkgs has no x86_64-darwin output and the throwing accessor
