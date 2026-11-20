@@ -80,8 +80,7 @@
     };
   };
 
-  # samba needs a linux user to map uids, no login. the samba password is set by hand with
-  # `smbpasswd -a <user>` so it never lives in the repo
+  # samba needs a linux user to map uids, no login. lab.samba.accounts lists who has a password
   sambaUsers = ["tetra" "melody" "riley" "lori"];
 in {
   boot.zfs.extraPools = ["megamax"];
@@ -159,6 +158,10 @@ in {
   };
 
   lab = {
+    samba = {
+      localSid = "S-1-5-21-3417838047-1076818958-320801294";
+      accounts = ["tetra" "lori"];
+    };
     site.dataDirGroup = config.lab.media.group;
     topology.provides = [caps.storage.name];
     backup.restic.datasets = protectedDatasets;
