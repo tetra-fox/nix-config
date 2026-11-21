@@ -8,8 +8,8 @@
   line = path: ips: options: "${path} ${lib.concatMapStringsSep " " (ip: "${ip}(${options})") ips}";
 in {
   inherit ips;
-  # subtree_check on the root: it can sit on the store's root filesystem, and without the check
-  # a crafted file handle could reach anything else on that filesystem
+  # subtree_check on the root: where it is a directory inside a larger filesystem, a crafted file
+  # handle could otherwise reach the rest of it. nfsd returns ESTALE below such a root on tmpfs
   exports =
     lib.concatStringsSep "\n" (
       [(line root ips "ro,sync,subtree_check,fsid=0")]

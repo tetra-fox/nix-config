@@ -1,4 +1,5 @@
 # megamax is a hand-created raidz1 pool, zfs mounts its datasets itself:
+#   megamax                        /mnt/megamax, the NFS v4 root, holds only the mountpoint dirs
 #   megamax/media                  library/ torrents/ nzb/ soulseek/ as dirs in ONE dataset, arr hardlinks can't cross datasets
 #   megamax/music                  hand-curated library, edited over samba, read by services over NFS
 #   megamax/store                  per-user %U subdirs
@@ -174,6 +175,9 @@ in {
     enable = true;
     inherit (nfs) exports;
   };
+
+  # with the pool root unmounted the v4 root is a directory on the tmpfs /, see fleet.nfs-exports
+  systemd.services.nfs-server.unitConfig.AssertPathIsMountPoint = "/mnt/megamax";
 
   networking.firewall.extraInputRules = fleet.allow-from nfs.ips [2049];
 
