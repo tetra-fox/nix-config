@@ -3,6 +3,7 @@
     ./hardware-configuration.nix
     ./acpi-thermal-shutdown-fix.nix
     ./cpu-governor.nix
+    ./disk.nix
     ./extra-drives.nix
     ./kernel-tuning.nix
     ./network-tuning.nix
