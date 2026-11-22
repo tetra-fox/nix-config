@@ -1,5 +1,5 @@
 # secure boot. lanzaboote signs systemd-boot and one uki per generation with the keys in
-# pkiBundle, which `sbctl create-keys` writes once per host
+# pkiBundle. `sbctl create-keys` writes them, or autoGenerateKeys on the first boot
 {
   config,
   inputs,
@@ -20,20 +20,28 @@
 
   installExtra = dest: src:
     if lib.hasSuffix ".efi" (lib.toLower dest)
-    then ''
-      mkdir -p "$(dirname ${lib.escapeShellArg "${esp}/${dest}"})"
-      sbsign --key ${cfg.privateKeyFile} --cert ${cfg.publicKeyFile} \
-        --output ${lib.escapeShellArg "${esp}/${dest}"} ${src}
-    ''
-    else ''
-      install -Dp ${src} ${lib.escapeShellArg "${esp}/${dest}"}
-    '';
+    then "install_efi ${src} ${lib.escapeShellArg "${esp}/${dest}"}\n"
+    else "install -Dp ${src} ${lib.escapeShellArg "${esp}/${dest}"}\n";
 
-  installBootLoader = pkgs.writeShellScript "install-lanzaboote-with-extras" ''
+  installExtras = pkgs.writeShellScript "install-boot-extras" ''
     set -euo pipefail
     PATH=${lib.makeBinPath [pkgs.coreutils pkgs.sbsigntool]}
 
-    ${config.boot.loader.external.installHook} "$@"
+    install_efi() {
+      ${lib.optionalString cfg.allowUnsigned ''
+      # as lzbt does with allowUnsigned, before the keys exist
+      if [ ! -e ${cfg.privateKeyFile} ]; then
+        install -Dp "$1" "$2"
+        return
+      fi
+    ''}
+      mkdir -p "$(dirname "$2")"
+      sbsign --key ${cfg.privateKeyFile} --cert ${cfg.publicKeyFile} --output "$2" "$1"
+    }
+
+    # entries the nixpkgs systemd-boot installer wrote before lanzaboote took over the esp.
+    # lzbt removes their kernels but not the entries
+    rm -f ${esp}/loader/entries/nixos-*.conf
 
     if [ -e ${manifest} ]; then
       while IFS= read -r path; do
@@ -42,6 +50,12 @@
     fi
     ${lib.concatStrings (lib.mapAttrsToList installExtra extras)}
     printf '%s\n' ${lib.escapeShellArgs (lib.attrNames extras)} > ${manifest}
+  '';
+
+  installBootLoader = pkgs.writeShellScript "install-lanzaboote-with-extras" ''
+    set -euo pipefail
+    ${config.boot.loader.external.installHook} "$@"
+    ${installExtras}
   '';
 in {
   imports = [inputs.lanzaboote.nixosModules.lanzaboote];
@@ -58,4 +72,18 @@ in {
   system.build.installBootLoader = lib.mkForce installBootLoader;
 
   environment.systemPackages = [pkgs.sbctl];
+
+  environment.persistence.main.directories = [cfg.pkiBundle];
+
+  systemd.services = {
+    # on a persistent host the keys have to land on the volume, not under its mountpoint
+    generate-sb-keys = lib.mkIf cfg.autoGenerateKeys.enable {
+      unitConfig.RequiresMountsFor = cfg.pkiBundle;
+    };
+    # it re-signs what lanzaboote installed once the keys exist, the extras need the same
+    prepare-sb-auto-enroll = lib.mkIf cfg.autoEnrollKeys.enable {
+      unitConfig.RequiresMountsFor = cfg.pkiBundle;
+      serviceConfig.ExecStartPost = installExtras;
+    };
+  };
 }

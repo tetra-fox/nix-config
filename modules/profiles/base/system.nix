@@ -14,6 +14,7 @@
     modules.services.sshd.system
     modules.cli.nh.system
     modules.platform.systemd-boot.system
+    modules.platform.lanzaboote.system
   ];
 
   users.users.${username} = {

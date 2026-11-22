@@ -29,6 +29,13 @@
     extraArgs = "--keep-since 2d";
   };
 
+  # a vm makes its own secure boot keys on first boot and systemd-boot enrolls them on the
+  # next, which needs the pve efi disk created without pre-enrolled keys
+  boot.lanzaboote = {
+    autoGenerateKeys.enable = true;
+    autoEnrollKeys.enable = true;
+  };
+
   environment.variables.BROWSER = "echo";
 
   # safe only because servers are ssh-key only with no physical access
