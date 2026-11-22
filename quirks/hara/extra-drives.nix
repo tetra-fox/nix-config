@@ -57,17 +57,6 @@
         ];
     };
 
-    "/home/tetra/Documents/git" = {
-      device = "/mnt/wd-black/git";
-      fsType = "none";
-      # nofail so a missing disk or source dir does not fail local-fs.target
-      options = [
-        "bind"
-        "nofail"
-        "x-systemd.requires-mounts-for=/mnt/wd-black"
-      ];
-    };
-
     "/mnt/vault" = {
       device = "/dev/disk/by-uuid/D6A03453A0343BF5";
       fsType = "ntfs";
