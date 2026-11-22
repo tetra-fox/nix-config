@@ -12,6 +12,7 @@ in {
     modules.profiles.workstation.system
     # defaults to secrets/hara.yaml
     modules.platform.sops.system
+    modules.platform.lanzaboote.system
 
     modules.desktop.drkonqi.system
     modules.desktop.greetd.system
