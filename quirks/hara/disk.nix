@@ -14,7 +14,7 @@ in {
 
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/disk/by-id/nvme-WD_BLACK_SN770_1TB_24105X801275";
+    device = "/dev/disk/by-id/nvme-Samsung_SSD_9100_PRO_2TB_S7YCNJ0L918683L";
     content = {
       type = "gpt";
       partitions = {
