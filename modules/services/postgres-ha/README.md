@@ -94,6 +94,31 @@ blind).
 6. If the VIP changed too, restart haproxy and keepalived -- a stale haproxy stays bound to
    the old VIP.
 
+### A replica was away too long
+
+Patroni keeps a replication slot per member so the leader holds the WAL an absent member
+needs. The slot is dropped `member_slots_ttl` (1d) after the member leaves, and invalidated
+earlier if it pins more than `max_slot_wal_keep_size` (2GB, about 16h at the 2MB/min this
+cluster writes). There is no WAL archive, so past either limit the replica can't catch up.
+It stays `running` instead of `streaming` in `patronictl list`, on an old LSN, logging
+`requested WAL segment ... has already been removed`. Patroni does not rebuild it on its own:
+
+```
+patronictl reinit mesa-pg <member> --force --wait
+```
+
+That wipes the member's pgdata and takes a fresh basebackup from the leader (seconds at this
+size).
+
+## Changing DCS settings
+
+`settings.bootstrap.dcs` is read once, when the cluster is first initialised. On a running
+cluster the same change also has to go into the DCS by hand, on any member:
+
+```
+patronictl edit-config -s member_slots_ttl=1d -p max_slot_wal_keep_size=2GB --force
+```
+
 ## etcd db size
 
 Patroni rewrites its lease keys every loop and etcd keeps every revision until compacted, so
