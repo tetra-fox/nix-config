@@ -64,7 +64,8 @@ entries:
       client_secret: !Env HOME_ASSISTANT_OIDC_CLIENT_SECRET
       redirect_uris:
         - { matching_mode: strict, url: https://home.mesa.tetra.cool/auth/openid/callback }
-        - { matching_mode: strict, url: https://192.168.10.5/auth/openid/callback }
+        # hass-openid sends the browser's origin, so HA opened by its LAN address needs its own entry
+        - { matching_mode: strict, url: "http://192.168.10.5:8123/auth/openid/callback" }
       grant_types: *grants
       access_token_validity: *access-validity
       refresh_token_threshold: *refresh-threshold
